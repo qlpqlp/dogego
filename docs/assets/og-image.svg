@@ -1,0 +1,20 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="630" viewBox="0 0 1200 630" role="img" aria-label="DogeGo — Much Faster Full Dogecoin Node">
+  <defs>
+    <linearGradient id="gold" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#ffeb3b"/>
+      <stop offset="55%" stop-color="#ffc107"/>
+      <stop offset="100%" stop-color="#ff8f00"/>
+    </linearGradient>
+  </defs>
+  <rect width="1200" height="630" fill="#0a0a0a"/>
+  <rect x="0" y="0" width="1200" height="6" fill="url(#gold)"/>
+  <circle cx="980" cy="120" r="220" fill="#ffc107" opacity="0.06"/>
+  <circle cx="200" cy="520" r="180" fill="#ff8f00" opacity="0.05"/>
+  <text x="80" y="200" font-family="Comic Neue, Comic Sans MS, cursive" font-size="72" font-weight="700" fill="#ffffff">DogeGo</text>
+  <rect x="80" y="220" width="110" height="36" rx="18" fill="url(#gold)"/>
+  <text x="98" y="244" font-family="Comic Neue, Comic Sans MS, cursive" font-size="18" font-weight="700" fill="#0a0a0a">BETA</text>
+  <text x="80" y="310" font-family="Comic Neue, Comic Sans MS, cursive" font-size="42" font-weight="700" fill="#ffc107">Much Faster Full</text>
+  <text x="80" y="365" font-family="Comic Neue, Comic Sans MS, cursive" font-size="42" font-weight="700" fill="#ffc107">Dogecoin Node</text>
+  <text x="80" y="430" font-family="Comic Neue, Comic Sans MS, cursive" font-size="26" fill="#b0b0b0">Open source on GitHub in a few days</text>
+  <text x="80" y="540" font-family="Comic Neue, Comic Sans MS, cursive" font-size="22" fill="#808080">dogego.org</text>
+</svg>
