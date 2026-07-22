@@ -1,6 +1,6 @@
 {
   "catalog_version": 1,
-  "updated": "2026-07-20",
+  "updated": "2026-07-22",
   "source": "https://github.com/qlpqlp/dogego",
   "extensions": [
     {
@@ -12,14 +12,34 @@
       "homepage": "https://github.com/qlpqlp/dogego",
       "repository": "https://github.com/qlpqlp/dogego/tree/main/DogeGo/extensions/catalog/doginals",
       "download_url": "https://raw.githubusercontent.com/qlpqlp/dogego/main/DogeGo/extensions/catalog/doginals/dist/doginals.zip",
-      "sha256": "8d936e7ae9f316a9b346cfd5c84f6457db7b88cd0f2119bfd32d26dfd537c0df",
+      "sha256": "6bc9056981faa2ea0248e4f2997f97c39bc9459717c2d4c06cdab095700a3e21",
       "dogego_min_version": "0.1.0",
-      "networks": ["mainnet", "testnet"],
+      "networks": [
+        "mainnet",
+        "testnet"
+      ],
       "featured": false,
       "icon": "icon.png",
       "docs_path": "extensions/catalog/doginals/docs/USER_GUIDE.md",
-      "permissions": ["chain_read", "chain_index", "datadir_write", "rpc_register", "p2p_extension", "ui_panel", "wallet_rpc"],
-      "capabilities": ["rpc", "indexer", "l2_sync", "p2p", "ui_panel", "doginals", "drc20", "wallet_rpc"]
+      "permissions": [
+        "chain_read",
+        "chain_index",
+        "datadir_write",
+        "rpc_register",
+        "p2p_extension",
+        "ui_panel",
+        "wallet_rpc"
+      ],
+      "capabilities": [
+        "rpc",
+        "indexer",
+        "l2_sync",
+        "p2p",
+        "ui_panel",
+        "doginals",
+        "drc20",
+        "wallet_rpc"
+      ]
     },
     {
       "id": "dogego.bbpow",
@@ -30,12 +50,27 @@
       "homepage": "https://github.com/qlpqlp/dogego",
       "repository": "https://github.com/qlpqlp/dogego/tree/main/DogeGo/extensions/catalog/bbpow",
       "dogego_min_version": "0.1.0",
-      "networks": ["testnet"],
+      "networks": [
+        "testnet"
+      ],
       "featured": false,
       "icon": "icon.png",
       "docs_path": "extensions/catalog/bbpow/docs/USER_GUIDE.md",
-      "permissions": ["chain_read", "chain_index", "datadir_write", "rpc_register", "ui_panel"],
-      "capabilities": ["rpc", "indexer", "ui_panel", "research_bbpow"]
+      "permissions": [
+        "chain_read",
+        "chain_index",
+        "datadir_write",
+        "rpc_register",
+        "ui_panel"
+      ],
+      "capabilities": [
+        "rpc",
+        "indexer",
+        "ui_panel",
+        "research_bbpow"
+      ],
+      "sha256": "e7ba589fd2a0529d652ef70d8c5fb2b982c7e04c91ecf7aeca1f0f017f7d892c",
+      "download_url": "https://raw.githubusercontent.com/qlpqlp/dogego/main/DogeGo/extensions/catalog/bbpow/dist/bbpow.zip"
     },
     {
       "id": "dogego.zkl2",
@@ -46,20 +81,38 @@
       "homepage": "https://github.com/qlpqlp/dogego",
       "repository": "https://github.com/qlpqlp/dogego/tree/main/DogeGo/extensions/catalog/zkl2",
       "download_url": "https://raw.githubusercontent.com/qlpqlp/dogego/main/DogeGo/extensions/catalog/zkl2/dist/zkl2.zip",
-      "sha256": "fad8e6941743bd7f408dd42443dfd6c4256a9b85138c60acddaeab46fb498567",
+      "sha256": "c541a690e4fd1367b7591e9f018c56d83c311b2d1836e3a3d2bc2a1a1717aae4",
       "downloads": {
         "universal": {
           "download_url": "https://raw.githubusercontent.com/qlpqlp/dogego/main/DogeGo/extensions/catalog/zkl2/dist/zkl2-universal.zip",
-          "sha256": "fad8e6941743bd7f408dd42443dfd6c4256a9b85138c60acddaeab46fb498567"
+          "sha256": "c541a690e4fd1367b7591e9f018c56d83c311b2d1836e3a3d2bc2a1a1717aae4"
         }
       },
       "dogego_min_version": "0.1.0",
-      "networks": ["mainnet", "testnet"],
+      "networks": [
+        "mainnet",
+        "testnet"
+      ],
       "featured": true,
       "icon": "icon.png",
       "docs_path": "extensions/catalog/zkl2/docs/USER_GUIDE.md",
-      "permissions": ["chain_read", "chain_index", "datadir_write", "rpc_register", "p2p_extension", "ui_panel", "wallet_rpc"],
-      "capabilities": ["rpc", "indexer", "l2_sync", "p2p", "zkproof-v1", "ui_panel"]
+      "permissions": [
+        "chain_read",
+        "chain_index",
+        "datadir_write",
+        "rpc_register",
+        "p2p_extension",
+        "ui_panel",
+        "wallet_rpc"
+      ],
+      "capabilities": [
+        "rpc",
+        "indexer",
+        "l2_sync",
+        "p2p",
+        "zkproof-v1",
+        "ui_panel"
+      ]
     },
     {
       "id": "example.go",
@@ -72,16 +125,27 @@
       "downloads": {
         "universal": {
           "download_url": "https://raw.githubusercontent.com/qlpqlp/dogego/main/DogeGo/extensions/catalog/example-go/dist/hello-universal.zip",
-          "sha256": "b05a7b05545e0c3a67422dc89393b7f758586e66833f0b0ab4bbf7502cc74ca6"
+          "sha256": "a24948c1afe6bfd5e5668fa2505b6100ad1ed5f0427b2c3c980cb29bcdc8a6de"
         }
       },
       "dogego_min_version": "0.1.0",
-      "networks": ["mainnet", "testnet"],
+      "networks": [
+        "mainnet",
+        "testnet"
+      ],
       "featured": true,
       "icon": "icon.png",
       "docs_path": "extensions/catalog/example-go/docs/README.md",
-      "permissions": ["chain_read", "datadir_write", "rpc_register", "ui_panel"],
-      "capabilities": ["rpc", "ui_panel"]
+      "permissions": [
+        "chain_read",
+        "datadir_write",
+        "rpc_register",
+        "ui_panel"
+      ],
+      "capabilities": [
+        "rpc",
+        "ui_panel"
+      ]
     },
     {
       "id": "example.wasm",
@@ -93,12 +157,21 @@
       "repository": "https://github.com/qlpqlp/dogego/tree/main/DogeGo/extensions/catalog/example-wasm",
       "download_url": "https://raw.githubusercontent.com/qlpqlp/dogego/main/DogeGo/extensions/catalog/example-wasm/ping.zip",
       "sha256": "564d5d8bd61028bfeec5634724907d8590526746937126775df7b1e06cb1a8fb",
-      "networks": ["mainnet", "testnet"],
+      "networks": [
+        "mainnet",
+        "testnet"
+      ],
       "featured": false,
       "icon": "icon.png",
       "docs_path": "extensions/catalog/example-wasm/docs/README.md",
-      "permissions": ["chain_read", "datadir_write", "rpc_register"],
-      "capabilities": ["rpc"]
+      "permissions": [
+        "chain_read",
+        "datadir_write",
+        "rpc_register"
+      ],
+      "capabilities": [
+        "rpc"
+      ]
     }
   ]
 }
