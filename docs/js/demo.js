@@ -3,32 +3,144 @@
 
   var reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 
-  /* --- Dashboard tab demo --- */
-  var tabs = ["overview", "blockstep", "mempool"];
-  var tabIndex = 0;
+  var tabs = ["overview", "blockstep", "mempool", "features"];
+  var WIZARD_STEP_KEYS = ["profile", "data", "network", "sync", "finish"];
+  var EXPLAINER_ICONS = {
+    overview: "insights",
+    blockstep: "pets",
+    mempool: "pending_actions",
+    features: "verified"
+  };
+  var CONSOLE_TYPES = ["info", "dim", "ok", "ok", "info", "ok", "info", "ok", "warn", "info", "dim"];
+  var DEFAULT_MONTHS = ["Jan", "Mar", "Jun", "Sep", "Dec"];
+
   var navItems = document.querySelectorAll(".demo-nav-item[data-demo-tab]");
   var panels = document.querySelectorAll(".demo-panel");
   var syncFill = document.getElementById("demo-sync-fill");
   var syncPct = document.getElementById("demo-sync-pct");
-  var syncDockPct = document.getElementById("demo-sync-dock-pct");
   var tipEl = document.getElementById("demo-tip");
   var mempoolEl = document.getElementById("demo-mempool");
-  var peersOut = document.getElementById("demo-peers-out");
   var peersOutKpi = document.getElementById("demo-peers-out-kpi");
-  var peersIn = document.getElementById("demo-peers-in");
+  var peersInKpi = document.getElementById("demo-peers-in-kpi");
+  var peersShort = document.getElementById("demo-peers-short");
+  var txProcessedEl = document.getElementById("demo-tx-processed");
   var consoleEl = document.getElementById("demo-console-log");
   var bsThumb = document.getElementById("demo-bs-thumb");
   var bsSynced = document.getElementById("demo-bs-synced");
   var bsTime = document.getElementById("demo-bs-time");
   var bsHeight = document.getElementById("demo-bs-height");
+  var explainerEl = document.getElementById("demo-explainer");
+  var wizardSteps = document.querySelectorAll(".wiz-setup-steps li");
+  var wizardPanels = document.querySelectorAll(".wiz-demo-panel");
+  var wizKicker = document.getElementById("wiz-demo-kicker");
 
-  var syncVal = 42.3;
-  var tipVal = 4829102;
-  var mempoolVal = 87;
-  var peerOut = 4;
-  var peerIn = 0;
-  var bsPos = 78;
-  var bsBlock = 1024;
+  var syncVal = 68.4;
+  var tipVal = 5412884;
+  var connectedVal = 3701204;
+  var storedVal = 3842880;
+  var mempoolVal = 124;
+  var peerOut = 8;
+  var peerIn = 2;
+  var bsPos = 68;
+  var bsBlock = 3842016;
+  var downloadRate = 1840;
+
+  var tabIndex = 0;
+  var explainerIndex = 0;
+  var wizIndex = 0;
+  var consoleIdx = 0;
+  var charIdx = 0;
+  var currentLine = null;
+  var explainers = {};
+  var consoleLines = [];
+  var timers = [];
+
+  function t(key, params) {
+    if (window.DogeGoSiteI18n) return DogeGoSiteI18n.t(key, params);
+    return key;
+  }
+
+  function localeTag() {
+    if (!window.DogeGoSiteI18n) return "en-US";
+    var loc = DogeGoSiteI18n.locale();
+    if (loc === "pt-PT") return "pt-PT";
+    if (loc === "zh") return "zh-CN";
+    if (loc === "ja") return "ja-JP";
+    if (loc === "de") return "de-DE";
+    if (loc === "fr") return "fr-FR";
+    return "en-US";
+  }
+
+  function fmtNum(n) {
+    return n.toLocaleString(localeTag());
+  }
+
+  function loadExplainers() {
+    var result = {};
+    tabs.forEach(function (tab) {
+      var base = window.DogeGoSiteI18n ? DogeGoSiteI18n.get("demo.explainer." + tab) : null;
+      if (!base || typeof base !== "object") return;
+      result[tab] = {
+        icon: EXPLAINER_ICONS[tab],
+        title: base.title || "",
+        body: base.body || "",
+        tags: Array.isArray(base.tags) ? base.tags.slice() : []
+      };
+    });
+    return result;
+  }
+
+  function loadConsoleLines() {
+    var lines = window.DogeGoSiteI18n ? DogeGoSiteI18n.get("console.lines") : null;
+    if (!Array.isArray(lines)) return [];
+    return lines.map(function (m, i) {
+      return { t: CONSOLE_TYPES[i] || "info", m: String(m) };
+    });
+  }
+
+  function blockstepMonths() {
+    var months = window.DogeGoSiteI18n ? DogeGoSiteI18n.get("demo.blockstepMonths") : null;
+    return Array.isArray(months) && months.length ? months : DEFAULT_MONTHS;
+  }
+
+  function updateSyncDock(pctStr) {
+    var main = document.getElementById("demo-sync-dock-main");
+    if (main) main.textContent = t("demo.syncDockMain", { pct: pctStr });
+    var meta = document.getElementById("demo-sync-dock-meta");
+    if (meta) {
+      var behind = Math.max(0, tipVal - connectedVal);
+      meta.innerHTML = t("demo.syncDockMeta", {
+        connected: fmtNum(connectedVal),
+        stored: fmtNum(storedVal),
+        behind: fmtNum(behind),
+        rate: fmtNum(Math.round(downloadRate))
+      });
+    }
+  }
+
+  function updateWizardKicker() {
+    if (!wizKicker || !wizardSteps.length) return;
+    var shown = (wizIndex + wizardSteps.length - 1) % wizardSteps.length;
+    wizKicker.textContent = t("wizard.stepKicker", {
+      n: shown + 1,
+      label: t("wizard.steps." + WIZARD_STEP_KEYS[shown])
+    });
+  }
+
+  function showExplainer(data) {
+    if (!explainerEl || !data) return;
+    explainerEl.innerHTML =
+      '<div class="explainer-icon"><span class="material-icons-round">' + data.icon + "</span></div>" +
+      '<div class="explainer-body">' +
+      "<h3>" + data.title + "</h3>" +
+      "<p>" + data.body + "</p>" +
+      '<div class="explainer-tags">' +
+      data.tags.map(function (tag) { return "<span>" + tag + "</span>"; }).join("") +
+      "</div></div>";
+    explainerEl.classList.remove("explainer-fade");
+    void explainerEl.offsetWidth;
+    explainerEl.classList.add("explainer-fade");
+  }
 
   function switchTab() {
     if (reduced) return;
@@ -42,107 +154,59 @@
     });
     if (explainerIndex !== tab) {
       explainerIndex = tab;
-      showExplainer(explainers[tab]);
+      showExplainer(explainers[tab] || explainers.overview);
     }
   }
 
   function tickMetrics() {
     if (syncVal < 99.2) {
-      syncVal += 0.15 + Math.random() * 0.35;
+      syncVal += 0.08 + Math.random() * 0.22;
       if (syncVal > 99.2) syncVal = 99.2;
     }
-    tipVal += Math.floor(Math.random() * 3);
-    if (Math.random() > 0.6) mempoolVal += Math.floor(Math.random() * 5) - 2;
-    if (mempoolVal < 40) mempoolVal = 40;
-    if (mempoolVal > 220) mempoolVal = 220;
-    if (peerOut < 11 && Math.random() > 0.7) peerOut += 1;
-    if (peerIn < 3 && syncVal > 70 && Math.random() > 0.85) peerIn += 1;
+    tipVal += Math.floor(Math.random() * 4);
+    connectedVal += Math.floor(Math.random() * 120);
+    if (connectedVal > storedVal - 50000) storedVal += Math.floor(Math.random() * 200);
+    if (Math.random() > 0.55) mempoolVal += Math.floor(Math.random() * 6) - 2;
+    if (mempoolVal < 60) mempoolVal = 60;
+    if (mempoolVal > 280) mempoolVal = 280;
+    if (peerOut < 12 && Math.random() > 0.82) peerOut += 1;
+    if (peerIn < 4 && syncVal > 55 && Math.random() > 0.88) peerIn += 1;
+    downloadRate += (Math.random() - 0.45) * 80;
+    if (downloadRate < 900) downloadRate = 900;
+    if (downloadRate > 2400) downloadRate = 2400;
 
-    if (syncFill) syncFill.style.width = syncVal.toFixed(1) + "%";
     var pctStr = syncVal.toFixed(1);
+    if (syncFill) syncFill.style.width = pctStr + "%";
     if (syncPct) syncPct.textContent = pctStr;
-    if (syncDockPct) syncDockPct.textContent = pctStr;
-    if (tipEl) tipEl.textContent = tipVal.toLocaleString("en-US");
-    if (mempoolEl) mempoolEl.textContent = mempoolVal + " tx";
-    if (peersOut) peersOut.textContent = String(peerOut);
+    if (tipEl) tipEl.textContent = fmtNum(tipVal);
+    if (mempoolEl) mempoolEl.textContent = t("demo.mempoolTx", { n: mempoolVal });
     if (peersOutKpi) peersOutKpi.textContent = String(peerOut);
-    if (peersIn) peersIn.textContent = String(peerIn);
+    if (peersInKpi) peersInKpi.textContent = String(peerIn);
+    if (peersShort) {
+      peersShort.innerHTML =
+        t("demo.peersOutIn", { out: peerOut, in: peerIn });
+    }
+    if (txProcessedEl) {
+      txProcessedEl.textContent = t("demo.txProcessedM", { n: (connectedVal / 1e6).toFixed(1) });
+    }
+    updateSyncDock(pctStr);
 
     if (tabs[tabIndex] === "blockstep" && !reduced) {
-      bsPos += Math.random() > 0.45 ? 2.5 : -2.5;
+      bsPos += Math.random() > 0.45 ? 1.8 : -1.8;
       if (bsPos < 52) bsPos = 52;
-      if (bsPos > 90) bsPos = 90;
-      bsBlock += Math.floor(Math.random() * 800);
+      if (bsPos > 92) bsPos = 92;
+      bsBlock += Math.floor(Math.random() * 1200);
       if (bsThumb) bsThumb.style.left = bsPos.toFixed(1) + "%";
       if (bsSynced) bsSynced.style.width = bsPos.toFixed(1) + "%";
-      if (bsHeight) bsHeight.textContent = "Block #" + bsBlock.toLocaleString("en-US");
+      if (bsHeight) bsHeight.textContent = t("demo.blockHeight", { n: fmtNum(bsBlock) });
       if (bsTime) {
+        var months = blockstepMonths();
         var year = 2013 + Math.floor((bsPos / 100) * 12);
-        bsTime.textContent = "Dec " + (6 + Math.floor(bsPos / 15)) + ", " + year;
+        var month = months[Math.floor((bsPos / 20) % months.length)];
+        bsTime.textContent = month + " " + (4 + Math.floor(bsPos / 12)) + ", " + year;
       }
     }
   }
-
-  /* --- Feature explainer (separate block below dashboard) --- */
-  var explainers = {
-    overview: {
-      icon: "insights",
-      title: "Live operator metrics",
-      body: "Header tip, sync curve, mempool size, peer counts, and disk breakdown update in real time. Chart.js sparklines and an analytics SQLite sidecar track sync progress, block sizes, and miner distribution. Detail Core's Qt UI never surfaces in one place.",
-      tags: ["KPI dashboard", "Analytics DB", "Sync dock"]
-    },
-    blockstep: {
-      icon: "pets",
-      title: "BlockStep: search the public ledger",
-      body: "Dogecoin is a public ledger. DogeGo indexes the full chain so you can search height, hash, txid, or address from the dashboard. BlockStep turns history into an interactive timeline from December 2013 to tip. Drill into any block or transaction in a fun, visual way.",
-      tags: ["Tx index", "Explorer", "BlockStep timeline"]
-    },
-    mempool: {
-      icon: "pending_actions",
-      title: "Mempool policy you can see",
-      body: "Pause and resume admission, inspect feefilter and package limits, and compare against Core's policy corpus. Every transaction waiting for a block is visible with standardness and RBF status. Operator control without dropping to the CLI.",
-      tags: ["BIP125 RBF", "Fee estimate", "Mempool pause"]
-    }
-  };
-
-  var explainerEl = document.getElementById("demo-explainer");
-  var explainerIndex = 0;
-
-  function showExplainer(data) {
-    if (!explainerEl || !data) return;
-    explainerEl.innerHTML =
-      '<div class="explainer-icon"><span class="material-icons-round">' + data.icon + '</span></div>' +
-      '<div class="explainer-body">' +
-      '<h3>' + data.title + '</h3>' +
-      '<p>' + data.body + '</p>' +
-      '<div class="explainer-tags">' +
-      data.tags.map(function (t) { return '<span>' + t + '</span>'; }).join("") +
-      '</div></div>';
-    explainerEl.classList.remove("explainer-fade");
-    void explainerEl.offsetWidth;
-    explainerEl.classList.add("explainer-fade");
-  }
-
-  if (explainerEl) showExplainer(explainers.overview);
-
-  /* --- Console log (terminal block, separate from explainer) --- */
-  var consoleLines = [
-    { t: "info", m: "DogeGo 0.1.0-beta · user-agent /DogeGo:0.1.0-beta/" },
-    { t: "dim", m: "$ ./dogego node -network mainnet" },
-    { t: "ok", m: "Web UI  http://127.0.0.1:2013/" },
-    { t: "ok", m: "RPC     http://127.0.0.1:22557/" },
-    { t: "info", m: "P2P mode: both · up to 12 outbound, 16 inbound peers" },
-    { t: "ok", m: "CGNAT relay ready (outbound multi-peer, no port forward)" },
-    { t: "info", m: "Block storage: per-file layout + optional zstd compression" },
-    { t: "ok", m: "PQ commitments enabled (FLC1 tag on wallet sends)" },
-    { t: "info", m: "Tx index on · search height, hash, txid, address" },
-    { t: "warn", m: "IBD 42.3% · headers-first sync, bodies downloading …" },
-    { t: "dim", m: "Reboot testnet: addresses start with T · RelaxedPoW for solo mining" }
-  ];
-
-  var consoleIdx = 0;
-  var charIdx = 0;
-  var currentLine = null;
 
   function appendConsoleChar() {
     if (!consoleEl || consoleIdx >= consoleLines.length) return;
@@ -173,15 +237,14 @@
     }
   }
 
-  /* --- Setup wizard animation --- */
-  var wizardSteps = document.querySelectorAll(".wiz-setup-steps li");
-  var wizardPanels = document.querySelectorAll(".wiz-demo-panel");
-  var wizKicker = document.getElementById("wiz-demo-kicker");
-  var wizIndex = 0;
-
   function advanceWizard() {
     if (reduced || !wizardSteps.length) return;
-    if (wizKicker) wizKicker.textContent = "Step " + (wizIndex + 1) + " of 5";
+    if (wizKicker) {
+      wizKicker.textContent = t("wizard.stepKicker", {
+        n: wizIndex + 1,
+        label: t("wizard.steps." + WIZARD_STEP_KEYS[wizIndex])
+      });
+    }
     wizardSteps.forEach(function (s, i) {
       s.classList.toggle("active", i === wizIndex);
       s.classList.toggle("done", i < wizIndex);
@@ -192,13 +255,78 @@
     wizIndex = (wizIndex + 1) % wizardSteps.length;
   }
 
-  if (!reduced) {
-    window.setInterval(switchTab, 5000);
-    window.setInterval(tickMetrics, 900);
-    window.setInterval(appendConsoleChar, 22);
-    window.setInterval(advanceWizard, 3200);
+  function resetConsole() {
+    if (consoleEl) consoleEl.innerHTML = "";
+    consoleIdx = 0;
+    charIdx = 0;
+    currentLine = null;
   }
 
-  tickMetrics();
-  advanceWizard();
+  function stopTimers() {
+    timers.forEach(function (id) { window.clearInterval(id); });
+    timers = [];
+  }
+
+  function startSidebarScroll() {
+    var sidebar = document.querySelector(".demo-sidebar");
+    if (!sidebar || reduced) return;
+    var dir = 1;
+    var pauseUntil = 0;
+    timers.push(window.setInterval(function () {
+      if (window.matchMedia("(max-width: 960px)").matches) return;
+      var max = sidebar.scrollHeight - sidebar.clientHeight;
+      if (max <= 4) return;
+      var now = Date.now();
+      if (now < pauseUntil) return;
+      sidebar.scrollTop += dir * 0.55;
+      if (sidebar.scrollTop >= max - 0.5) {
+        dir = -1;
+        pauseUntil = now + 1600;
+      } else if (sidebar.scrollTop <= 0.5) {
+        dir = 1;
+        pauseUntil = now + 1600;
+      }
+    }, 40));
+  }
+
+  function startTimers() {
+    stopTimers();
+    if (reduced) return;
+    timers.push(window.setInterval(switchTab, 5200));
+    timers.push(window.setInterval(tickMetrics, 900));
+    timers.push(window.setInterval(appendConsoleChar, 22));
+    timers.push(window.setInterval(advanceWizard, 3400));
+    startSidebarScroll();
+  }
+
+  function refreshLocaleContent() {
+    explainers = loadExplainers();
+    consoleLines = loadConsoleLines();
+    showExplainer(explainers[tabs[explainerIndex]] || explainers.overview);
+    updateWizardKicker();
+    tickMetrics();
+  }
+
+  function boot() {
+    explainers = loadExplainers();
+    consoleLines = loadConsoleLines();
+    if (explainerEl) showExplainer(explainers.overview);
+    tickMetrics();
+    advanceWizard();
+    startTimers();
+  }
+
+  function onLocaleChange() {
+    stopTimers();
+    resetConsole();
+    refreshLocaleContent();
+    startTimers();
+  }
+
+  if (window.DogeGoSiteI18n) {
+    DogeGoSiteI18n.ready().then(boot);
+    document.addEventListener("dogego:locale", onLocaleChange);
+  } else {
+    boot();
+  }
 })();

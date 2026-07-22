@@ -1,0 +1,9 @@
+# DogeGo runtime data (do not publish)
+DogeGo/dogedata/
+
+# Local build outputs
+**/dist/
+*.exe
+DogeGo/dogego
+DogeGo/dogego.exe
+

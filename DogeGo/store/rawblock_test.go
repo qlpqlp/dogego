@@ -1,0 +1,145 @@
+// Copyright (c) 2026 Paulo Vidal (https://x.com/inevitable360, https://github.com/qlpqlp)
+// Copyright (c) 2026 Dogecoin Foundation
+//
+// SPDX-License-Identifier: MIT
+// See LICENSE for copyright attribution to upstream Bitcoin/Dogecoin Core.
+
+package store_test
+
+import (
+	"path/filepath"
+	"testing"
+	"time"
+
+	"dogego/pow"
+	"dogego/store"
+)
+
+func TestRawBlockStorePutHasCount(t *testing.T) {
+	dir := t.TempDir()
+	rs, err := store.OpenRawBlockStore(dir)
+	if err != nil {
+		t.Fatal(err)
+	}
+	raw, h := store.TestMinimalBlock()
+	if rs.Has(h) {
+		t.Fatal("unexpected Has before Put")
+	}
+	if err := rs.Put(h, raw); err != nil {
+		t.Fatal(err)
+	}
+	if !rs.Has(h) {
+		t.Fatal("expected Has after Put")
+	}
+	n, err := rs.Count()
+	if err != nil {
+		t.Fatal(err)
+	}
+	if n != 1 {
+		t.Fatalf("count %d", n)
+	}
+	raw2, h2 := store.TestMinimalBlock()
+	raw2[79] ^= 0x01
+	h2 = pow.BlockHashLE(raw2[:80])
+	if err := rs.Put(h2, raw2); err != nil {
+		t.Fatal(err)
+	}
+	n2, _ := rs.Count()
+	if n2 != 2 {
+		t.Fatalf("count2 %d", n2)
+	}
+	matches, err := filepath.Glob(filepath.Join(dir, "rawblocks", "*.bin"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(matches) != 2 {
+		t.Fatalf("glob want 2 files, got %d: %v", len(matches), matches)
+	}
+}
+
+func TestRawBlockStoreGet(t *testing.T) {
+	dir := t.TempDir()
+	rs, err := store.OpenRawBlockStore(dir)
+	if err != nil {
+		t.Fatal(err)
+	}
+	raw, h := store.TestMinimalBlock()
+	if err := rs.Put(h, raw); err != nil {
+		t.Fatal(err)
+	}
+	got, err := rs.Get(h)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if string(got) != string(raw) {
+		t.Fatalf("payload mismatch")
+	}
+	var missing [32]byte
+	missing[1] = 1
+	if _, err := rs.Get(missing); err == nil {
+		t.Fatal("expected error for missing block")
+	}
+}
+
+func TestRawBlockStoreBytesOnDisk(t *testing.T) {
+	dir := t.TempDir()
+	rs, err := store.OpenRawBlockStore(dir)
+	if err != nil {
+		t.Fatal(err)
+	}
+	raw, h := store.TestMinimalBlock()
+	if err := rs.Put(h, raw); err != nil {
+		t.Fatal(err)
+	}
+	n, err := rs.BytesOnDisk()
+	if err != nil {
+		t.Fatal(err)
+	}
+	if n != int64(len(raw)) {
+		t.Fatalf("BytesOnDisk %d want %d", n, len(raw))
+	}
+}
+
+func TestRawBlockStoreCachedBytesOnDisk(t *testing.T) {
+	dir := t.TempDir()
+	rs, err := store.OpenRawBlockStore(dir)
+	if err != nil {
+		t.Fatal(err)
+	}
+	raw, h := store.TestMinimalBlock()
+	if err := rs.Put(h, raw); err != nil {
+		t.Fatal(err)
+	}
+	n1, err := rs.CachedBytesOnDisk(time.Minute)
+	if err != nil {
+		t.Fatal(err)
+	}
+	n2, err := rs.CachedBytesOnDisk(time.Minute)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if n1 != n2 || n1 != int64(len(raw)) {
+		t.Fatalf("CachedBytesOnDisk %d %d want %d", n1, n2, len(raw))
+	}
+	rs.InvalidateBytesOnDiskCache()
+	n3, err := rs.CachedBytesOnDisk(time.Minute)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if n3 != int64(len(raw)) {
+		t.Fatalf("after invalidate CachedBytesOnDisk %d want %d", n3, len(raw))
+	}
+}
+
+func TestRawBlockStorePutRejectsBadMerkle(t *testing.T) {
+	dir := t.TempDir()
+	rs, err := store.OpenRawBlockStore(dir)
+	if err != nil {
+		t.Fatal(err)
+	}
+	raw, h := store.TestMinimalBlock()
+	raw[36] ^= 0x01
+	if err := rs.Put(h, raw); err == nil {
+		t.Fatal("expected merkle rejection")
+	}
+}

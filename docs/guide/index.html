@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Documentation | DogeGo</title>
+  <meta name="description" content="Read DogeGo documentation online: operator guides, JSON-RPC, architecture, extensions, DIPs, and Satoshi Nakamoto's Bitcoin white paper. No install required.">
+  <meta name="robots" content="index, follow">
+  <link rel="canonical" href="https://dogego.org/guide/">
+
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="https://dogego.org/guide/">
+  <meta property="og:title" content="DogeGo Documentation">
+  <meta property="og:description" content="Operator guides, RPC, architecture, extensions, and the Bitcoin white paper. Read how DogeGo works without installing.">
+  <meta property="og:image" content="https://dogego.org/assets/socialcard.png">
+  <meta property="og:site_name" content="DogeGo">
+
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="DogeGo Documentation">
+  <meta name="twitter:description" content="Read DogeGo docs and the Bitcoin white paper in your browser.">
+  <meta name="twitter:image" content="https://dogego.org/assets/socialcard.png">
+
+  <meta name="theme-color" content="#1b1f24">
+  <meta name="color-scheme" content="light dark">
+
+  <link rel="icon" href="../assets/dogecoin.svg" type="image/svg+xml">
+  <link rel="apple-touch-icon" href="../assets/dogecoin.svg">
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/icon?family=Material+Icons+Round" rel="stylesheet">
+
+  <link rel="stylesheet" href="../css/style.css">
+  <link rel="stylesheet" href="../css/app-shell.css">
+  <link rel="stylesheet" href="../css/guide.css">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css" crossorigin="anonymous">
+
+  <script src="https://cdn.jsdelivr.net/npm/marked@11.1.1/marked.min.js" crossorigin="anonymous"></script>
+  <script src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js" crossorigin="anonymous"></script>
+  <script src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js" crossorigin="anonymous"></script>
+</head>
+<body class="sidebar-collapsed" data-docs-page="1">
+  <a class="skip-link" href="#guide-main" data-i18n="skip">Skip to content</a>
+
+  <header class="topbar" id="top">
+    <a class="topbar-home" href="../" data-i18n-aria="nav.home">
+      <img src="../assets/dogecoin.svg" alt="" width="28" height="28">
+      <span class="topbar-brand">DogeGo</span>
+    </a>
+    <span class="badge badge-beta" data-i18n="beta">Beta</span>
+    <span class="topbar-ver" id="topbar-version" title="DogeGo version">Docs</span>
+    <span class="topbar-spacer"></span>
+    <a href="../#download" class="topbar-cta desktop-only">
+      <span class="material-icons-round" aria-hidden="true">download</span>
+      <span data-i18n="nav.download">Download</span>
+    </a>
+    <div class="lang-picker" id="site-lang-picker">
+      <button type="button" class="lang-picker-btn" id="site-lang-btn" aria-haspopup="listbox" data-i18n-aria="lang.aria" aria-expanded="false" aria-controls="site-lang-menu">
+        <span class="material-icons-round" aria-hidden="true">language</span>
+        <span id="site-lang-label">English</span>
+      </button>
+      <div class="lang-picker-menu" id="site-lang-menu" role="listbox" hidden></div>
+    </div>
+    <a href="https://foundation.dogecoin.com" class="topbar-foundation" rel="noopener noreferrer" target="_blank" data-i18n-title="nav.foundation">
+      <img src="../assets/dogecoin-foundation.svg" alt="Dogecoin Foundation" width="120" height="28">
+    </a>
+    <button type="button" class="nav-toggle" id="nav-toggle" aria-expanded="false" aria-controls="sidebar-nav" data-i18n-aria="nav.openMenu">
+      <span class="material-icons-round" aria-hidden="true">menu</span>
+    </button>
+  </header>
+
+  <div id="nav-backdrop" class="nav-backdrop" hidden aria-hidden="true"></div>
+
+  <div class="shell sidebar-collapsed" id="site-shell">
+    <nav class="sidebar" id="sidebar-nav" aria-label="Primary">
+      <p class="nav-group-label"><span class="nav-label" data-i18n="nav.groupExplore">Explore</span></p>
+      <a class="nav-item" href="../#features">
+        <span class="material-icons-round nav-icon" aria-hidden="true">star</span>
+        <span class="nav-label" data-i18n="nav.features">Features</span>
+      </a>
+      <a class="nav-item" href="../#fullnode">
+        <span class="material-icons-round nav-icon" aria-hidden="true">dns</span>
+        <span class="nav-label" data-i18n="nav.fullnode">Full node</span>
+      </a>
+      <a class="nav-item" href="../#roadmap">
+        <span class="material-icons-round nav-icon" aria-hidden="true">map</span>
+        <span class="nav-label" data-i18n="nav.roadmap">Roadmap</span>
+      </a>
+      <div class="nav-divider"></div>
+      <p class="nav-group-label"><span class="nav-label" data-i18n="nav.groupGetStarted">Get started</span></p>
+      <a class="nav-item is-active" href="./" data-nav-id="docs">
+        <span class="material-icons-round nav-icon" aria-hidden="true">menu_book</span>
+        <span class="nav-label" data-i18n="nav.docs">Docs</span>
+      </a>
+      <a class="nav-item" href="../#download">
+        <span class="material-icons-round nav-icon" aria-hidden="true">download</span>
+        <span class="nav-label" data-i18n="nav.download">Download</span>
+      </a>
+      <a class="nav-item" href="../#developers">
+        <span class="material-icons-round nav-icon" aria-hidden="true">terminal</span>
+        <span class="nav-label" data-i18n="nav.developers">Developers</span>
+      </a>
+      <div class="nav-divider"></div>
+      <a class="nav-item nav-item-external" href="https://github.com/qlpqlp/dogego" rel="noopener noreferrer" target="_blank">
+        <span class="material-icons-round nav-icon" aria-hidden="true">code</span>
+        <span class="nav-label" data-i18n="nav.github">GitHub</span>
+      </a>
+    </nav>
+
+    <div class="site-main">
+      <main id="guide-main" class="guide-layout">
+        <button type="button" class="guide-toc-fab" id="guide-toc-toggle" aria-expanded="false" aria-controls="guide-rail" data-i18n-aria="guide.tocOpen">
+          <span class="material-icons-round" aria-hidden="true">menu_book</span>
+          <span data-i18n="guide.toc">Docs menu</span>
+        </button>
+        <button type="button" class="guide-toc-backdrop" id="guide-toc-backdrop" hidden aria-hidden="true" tabindex="-1" data-i18n-aria="guide.tocClose"></button>
+        <aside class="guide-rail" id="guide-rail" aria-label="Documentation sections">
+          <div class="guide-rail-head">
+            <p class="guide-rail-head-title">
+              <span class="material-icons-round" aria-hidden="true">menu_book</span>
+              <span data-i18n="guide.toc">Docs menu</span>
+            </p>
+            <button type="button" class="guide-rail-close" id="guide-toc-close" data-i18n-aria="guide.tocClose">
+              <span class="material-icons-round" aria-hidden="true">close</span>
+            </button>
+          </div>
+          <input type="search" id="guide-search" class="guide-rail-search" placeholder="Search docs…" data-i18n-placeholder="guide.search" autocomplete="off">
+          <div id="guide-rail-sections"></div>
+        </aside>
+        <div class="guide-stage">
+          <header class="guide-hero">
+            <h1 id="guide-hero-title" data-i18n="guide.title">DogeGo documentation</h1>
+            <p id="guide-hero-lead" data-i18n="guide.lead">Read how DogeGo works without installing. Same guides as the in-app Docs tab, plus Satoshi's Bitcoin white paper.</p>
+          </header>
+          <div class="guide-toolbar">
+            <span class="guide-crumb" id="guide-crumb"></span>
+            <div class="guide-toolbar-actions">
+              <button type="button" class="btn btn-secondary btn-sm" id="guide-back" data-i18n="guide.back">Back</button>
+              <button type="button" class="btn btn-secondary btn-sm" id="guide-home-doc" data-i18n="guide.index">Index</button>
+              <a class="btn btn-primary btn-sm" href="../#download" data-i18n="guide.download">Download DogeGo</a>
+            </div>
+          </div>
+          <h2 id="guide-doc-title" class="visually-hidden">Document</h2>
+          <article id="guide-doc" class="guide-doc markdown-body" aria-live="polite">
+            <p data-i18n="guide.loading">Loading documentation…</p>
+          </article>
+        </div>
+      </main>
+
+      <footer class="site-footer">
+        <div class="container footer-grid">
+          <div class="footer-col footer-brand-col">
+            <a class="footer-brand" href="../">
+              <img src="../assets/dogecoin.svg" alt="" width="28" height="28">
+              <span class="footer-brand-name">DogeGo</span>
+            </a>
+            <p class="footer-tagline" data-i18n="footer.tagline">Much faster full Dogecoin node, written in Go and operated from your browser.</p>
+          </div>
+          <div class="footer-col">
+            <h3 class="footer-heading" data-i18n="footer.devHeading">Developers</h3>
+            <nav class="footer-links">
+              <a href="./" data-i18n="footer.devDocs">Documentation</a>
+              <a href="../#developers" data-i18n="footer.devRpc">JSON-RPC</a>
+              <a href="https://github.com/qlpqlp/dogego" rel="noopener noreferrer" target="_blank" data-i18n="footer.devGithub">GitHub</a>
+            </nav>
+          </div>
+        </div>
+        <div class="container footer-bottom">
+          <p data-i18n="footer.copyright">DogeGo v0.1.0-beta · Dogecoin Node · dogego.org</p>
+          <p class="footer-disclaimer" data-i18n="footer.disclaimer">Mainnet consensus follows Core (no protocol forks). Native Go storage; optional self-cert via Features / dogego cert live-soak.</p>
+        </div>
+      </footer>
+    </div>
+  </div>
+
+  <script>window.DogeGoSiteLocaleBase = "../locales/";</script>
+  <script src="../js/i18n.js"></script>
+  <script src="../js/main.js"></script>
+  <script src="../js/guide.js"></script>
+</body>
+</html>

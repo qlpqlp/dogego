@@ -1,0 +1,38 @@
+[
+  {
+    "name": "mainnet_get_next_work_30480",
+    "network": "mainnet",
+    "mode": "get_next_work",
+    "prev_height": 30479,
+    "tip0": 30238,
+    "last_retarget_time": 1388149872,
+    "prev_time": 1388163922,
+    "prev_bits": "0x1c00974f",
+    "candidate_time": 1388163982,
+    "want_bits": "0x1c0093a1"
+  },
+  {
+    "name": "mainnet_calculate_next_work_240",
+    "network": "mainnet",
+    "mode": "calculate_next_work",
+    "prev_height": 239,
+    "tip0": 238,
+    "last_retarget_time": 1386474927,
+    "prev_time": 1386475638,
+    "prev_bits": "0x1e0ffff0",
+    "candidate_time": 1386475698,
+    "want_bits": "0x1e00ffff"
+  },
+  {
+    "name": "reboot_testnet_calculate_next_work_1",
+    "network": "reboottestnet",
+    "mode": "calculate_next_work",
+    "prev_height": 1,
+    "tip0": 0,
+    "last_retarget_time": 1747000060,
+    "prev_time": 1747000060,
+    "prev_bits": "0x1e0ffff0",
+    "candidate_time": 1747000120,
+    "want_bits": "0x1e0e2214"
+  }
+]

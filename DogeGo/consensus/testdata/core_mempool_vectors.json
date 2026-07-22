@@ -1,0 +1,350 @@
+[
+  {
+    "name": "coinbase",
+    "template": "coinbase",
+    "want_accept": false,
+    "want_reject_reason": "coinbase"
+  },
+  {
+    "name": "duplicate_vin",
+    "template": "duplicate_vin",
+    "want_accept": false,
+    "want_reject_reason": "bad-txns-inputs-duplicate"
+  },
+  {
+    "name": "missing_prevout",
+    "template": "missing_prevout",
+    "want_accept": false,
+    "want_reject_reason": "Missing inputs"
+  },
+  {
+    "name": "min_relay_fee",
+    "template": "min_relay_fee",
+    "want_accept": false,
+    "want_reject_reason": "mempool min fee not met"
+  },
+  {
+    "name": "p2pkh_roundtrip",
+    "template": "p2pkh_roundtrip",
+    "want_accept": true,
+    "want_reject_reason": ""
+  },
+  {
+    "name": "p2sh_nested_p2pkh",
+    "template": "p2sh_nested_p2pkh",
+    "want_accept": true,
+    "want_reject_reason": ""
+  },
+  {
+    "name": "p2sh_multisig",
+    "template": "p2sh_multisig",
+    "want_accept": true,
+    "want_reject_reason": ""
+  },
+  {
+    "name": "bare_multisig",
+    "template": "bare_multisig",
+    "want_accept": true,
+    "want_reject_reason": ""
+  },
+  {
+    "name": "p2sh_cltv_p2pk",
+    "template": "p2sh_cltv_p2pk",
+    "want_accept": true,
+    "want_reject_reason": ""
+  },
+  {
+    "name": "p2sh_csv_p2pk",
+    "template": "p2sh_csv_p2pk",
+    "want_accept": true,
+    "want_reject_reason": ""
+  },
+  {
+    "name": "p2pk_non_standard_input",
+    "template": "p2pk_non_standard_input",
+    "want_accept": false,
+    "want_reject_reason": "non-standard-input"
+  },
+  {
+    "name": "dust_output_reject",
+    "template": "dust_output_reject",
+    "want_accept": false,
+    "want_reject_reason": "dust"
+  },
+  {
+    "name": "witness_reject",
+    "template": "witness_reject",
+    "want_accept": false,
+    "want_reject_reason": "bad-txns-witness-not-supported"
+  },
+  {
+    "name": "bare_multisig_output_disabled",
+    "template": "bare_multisig_output_disabled",
+    "want_accept": false,
+    "want_reject_reason": "bare-multisig"
+  },
+  {
+    "name": "op_return_nonzero_reject",
+    "template": "op_return_nonzero_reject",
+    "want_accept": false,
+    "want_reject_reason": "bad-txns-unspendable-output"
+  },
+  {
+    "name": "package_ancestor_limit",
+    "template": "package_ancestor_limit",
+    "want_accept": false,
+    "want_reject_reason": "too-long-mempool-chain"
+  },
+  {
+    "name": "package_descendant_limit",
+    "template": "package_descendant_limit",
+    "want_accept": false,
+    "want_reject_reason": "too-many-descendants for 8d72c46ff10b894c672c5c57393091ca9b2a22aa553dde0e8ed35e63a918f2fa"
+  },
+  {
+    "name": "package_ancestor_size",
+    "template": "package_ancestor_size",
+    "want_accept": false,
+    "want_reject_reason": "too-long-mempool-chain"
+  },
+  {
+    "name": "package_descendant_size",
+    "template": "package_descendant_size",
+    "want_accept": false,
+    "want_reject_reason": "too-long-mempool-chain"
+  },
+  {
+    "name": "mempool_double_spend",
+    "template": "mempool_double_spend",
+    "want_accept": false,
+    "want_reject_reason": "txn-mempool-conflict"
+  },
+  {
+    "name": "rbf_insufficient_fee",
+    "template": "rbf_insufficient_fee",
+    "want_accept": false,
+    "want_reject_reason": "insufficient fee"
+  },
+  {
+    "name": "rbf_sufficient_fee",
+    "template": "rbf_sufficient_fee",
+    "want_accept": true,
+    "want_reject_reason": ""
+  },
+  {
+    "name": "rbf_not_replaceable",
+    "template": "rbf_not_replaceable",
+    "want_accept": false,
+    "want_reject_reason": "txn-mempool-conflict"
+  },
+  {
+    "name": "rbf_fullrbf",
+    "template": "rbf_fullrbf",
+    "want_accept": true,
+    "want_reject_reason": ""
+  },
+  {
+    "name": "coinbase_immature",
+    "template": "coinbase_immature",
+    "want_accept": false,
+    "want_reject_reason": "bad-txns-premature-spend-of-coinbase"
+  },
+  {
+    "name": "vout_empty",
+    "template": "vout_empty",
+    "want_accept": false,
+    "want_reject_reason": "bad-txns-vout-empty"
+  },
+  {
+    "name": "vout_negative",
+    "template": "vout_negative",
+    "want_accept": false,
+    "want_reject_reason": "bad-txns-vout-negative"
+  },
+  {
+    "name": "vin_empty",
+    "template": "vin_empty",
+    "want_accept": false,
+    "want_reject_reason": "bad-txns-vin-empty"
+  },
+  {
+    "name": "vout_toolarge",
+    "template": "vout_toolarge",
+    "want_accept": false,
+    "want_reject_reason": "bad-txns-vout-toolarge"
+  },
+  {
+    "name": "prevout_null",
+    "template": "prevout_null",
+    "want_accept": false,
+    "want_reject_reason": "bad-txns-prevout-null"
+  },
+  {
+    "name": "vout_empty_scriptpubkey",
+    "template": "vout_empty_scriptpubkey",
+    "want_accept": false,
+    "want_reject_reason": "bad-txns-vout-empty-scriptpubkey"
+  },
+  {
+    "name": "txouttotal_toolarge",
+    "template": "txouttotal_toolarge",
+    "want_accept": false,
+    "want_reject_reason": "bad-txns-txouttotal-toolarge"
+  },
+  {
+    "name": "tx_oversize",
+    "template": "tx_oversize",
+    "want_accept": false,
+    "want_reject_reason": "bad-txns-oversize"
+  },
+  {
+    "name": "unspendable_output",
+    "template": "unspendable_output",
+    "want_accept": false,
+    "want_reject_reason": "bad-txns-unspendable-output"
+  },
+  {
+    "name": "op_return_zero",
+    "template": "op_return_zero",
+    "want_accept": true,
+    "want_reject_reason": ""
+  },
+  {
+    "name": "pq_commitment_op_return",
+    "template": "pq_commitment_op_return",
+    "want_accept": true,
+    "want_reject_reason": ""
+  },
+  {
+    "name": "pq_commitment_nonzero_reject",
+    "template": "pq_commitment_nonzero_reject",
+    "want_accept": false,
+    "want_reject_reason": "bad-txns-unspendable-output"
+  },
+  {
+    "name": "pq_carrier_p2sh_accept",
+    "template": "pq_carrier_p2sh_accept",
+    "want_accept": true,
+    "want_reject_reason": ""
+  },
+  {
+    "name": "absurd_fee",
+    "template": "absurd_fee",
+    "want_accept": false,
+    "want_reject_reason": "absurdly-high-fee"
+  },
+  {
+    "name": "multi_op_return",
+    "template": "multi_op_return",
+    "want_accept": false,
+    "want_reject_reason": "multi-op-return"
+  },
+  {
+    "name": "tx_version_nonstandard",
+    "template": "tx_version_nonstandard",
+    "want_accept": false,
+    "want_reject_reason": "version"
+  },
+  {
+    "name": "scriptsig_not_pushonly",
+    "template": "scriptsig_not_pushonly",
+    "want_accept": false,
+    "want_reject_reason": "scriptsig-not-pushonly"
+  },
+  {
+    "name": "non_final",
+    "template": "non_final",
+    "want_accept": false,
+    "want_reject_reason": "non-final"
+  },
+  {
+    "name": "tx_size_small_reject",
+    "template": "tx_size_small_reject",
+    "want_accept": false,
+    "want_reject_reason": "tx-size-small"
+  },
+  {
+    "name": "scriptsig_size_reject",
+    "template": "scriptsig_size_reject",
+    "want_accept": false,
+    "want_reject_reason": "scriptsig-size"
+  },
+  {
+    "name": "discourage_nop_reject",
+    "template": "discourage_nop_reject",
+    "want_accept": false,
+    "want_reject_reason": "mandatory-script-verify-flag-failed (OP_SUCCESSx reserved)"
+  },
+  {
+    "name": "op_return_oversize_reject",
+    "template": "op_return_oversize_reject",
+    "want_accept": false,
+    "want_reject_reason": "scriptpubkey"
+  },
+  {
+    "name": "p2sh_sigops_reject",
+    "template": "p2sh_sigops_reject",
+    "want_accept": false,
+    "want_reject_reason": "p2sh-sigops"
+  },
+  {
+    "name": "non_standard_output_reject",
+    "template": "non_standard_output_reject",
+    "want_accept": false,
+    "want_reject_reason": "scriptpubkey"
+  },
+  {
+    "name": "datacarrier_disabled_reject",
+    "template": "datacarrier_disabled_reject",
+    "want_accept": false,
+    "want_reject_reason": "scriptpubkey"
+  },
+  {
+    "name": "p2sh_redeem_missing_reject",
+    "template": "p2sh_redeem_missing_reject",
+    "want_accept": false,
+    "want_reject_reason": "p2sh-redeem"
+  },
+  {
+    "name": "discourage_nop1_reject",
+    "template": "discourage_nop1_reject",
+    "want_accept": false,
+    "want_reject_reason": "mandatory-script-verify-flag-failed (OP_SUCCESSx reserved)"
+  },
+  {
+    "name": "rbf_too_many_descendants",
+    "template": "rbf_too_many_descendants",
+    "want_accept": false,
+    "want_reject_reason": "too many potential replacements"
+  },
+  {
+    "name": "rbf_too_many_conflicts",
+    "template": "rbf_too_many_conflicts",
+    "want_accept": false,
+    "want_reject_reason": "too many potential replacements"
+  },
+  {
+    "name": "rbf_new_unconfirmed_input",
+    "template": "rbf_new_unconfirmed_input",
+    "want_accept": false,
+    "want_reject_reason": "replacement-adds-unconfirmed"
+  },
+  {
+    "name": "tx_version_zero_reject",
+    "template": "tx_version_zero_reject",
+    "want_accept": false,
+    "want_reject_reason": "version"
+  },
+  {
+    "name": "discourage_nop6_reject",
+    "template": "discourage_nop6_reject",
+    "want_accept": false,
+    "want_reject_reason": "mandatory-script-verify-flag-failed (OP_SUCCESSx reserved)"
+  },
+  {
+    "name": "non_bip68_final",
+    "template": "non_bip68_final",
+    "want_accept": false,
+    "want_reject_reason": "non-BIP68-final"
+  }
+]

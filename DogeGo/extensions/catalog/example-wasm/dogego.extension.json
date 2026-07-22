@@ -1,0 +1,20 @@
+{
+  "manifest_version": 1,
+  "id": "example.wasm",
+  "name": "Wasm Ping",
+  "version": "0.1.0",
+  "author": "DogeGo",
+  "description": "Example wasm extension (ping RPC). Source in extensions/catalog/example-wasm/ping.wat.",
+  "homepage": "https://github.com/qlpqlp/dogego",
+  "repository": "https://github.com/qlpqlp/dogego",
+  "dogego_min_version": "0.1.0",
+  "permissions": ["chain_read", "datadir_write", "rpc_register"],
+  "networks": ["mainnet", "testnet"],
+  "icon": "icon.png",
+  "entry": {
+    "type": "wasm",
+    "module": "example.wasm",
+    "wasm": "ping.wasm"
+  },
+  "capabilities": ["rpc"]
+}

@@ -1,0 +1,10 @@
+{
+  "id": "qlpqlp.dogego",
+  "name": "DogeGo",
+  "description": "DogeGo full node PUP source for DogeBox (builds from this GitHub repo).",
+  "pups": [
+    {
+      "location": "pup"
+    }
+  ]
+}

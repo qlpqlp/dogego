@@ -1,0 +1,41 @@
+{
+  "manifest_version": 1,
+  "id": "dogego.doginals",
+  "name": "Doginals / DRC-20 L2",
+  "version": "0.3.0",
+  "author": "DogeGo",
+  "description": "Experimental L2 for Doginals and DRC-20: modern forms, searchable tables, metrics, settings backup. Index L1 inscriptions/tokens; mint via wallet RPC. Does not change Dogecoin consensus.",
+  "homepage": "https://github.com/qlpqlp/dogego",
+  "repository": "https://github.com/qlpqlp/dogego/tree/main/DogeGo/extensions/catalog/doginals",
+  "dogego_min_version": "0.1.0",
+  "permissions": ["chain_read", "chain_index", "datadir_write", "rpc_register", "p2p_extension", "ui_panel", "wallet_rpc"],
+  "networks": ["mainnet", "testnet"],
+  "icon": "icon.png",
+  "docs_path": "extensions/catalog/doginals/docs/USER_GUIDE.md",
+  "ui": { "status_method": "info" },
+  "entry": {
+    "type": "subprocess",
+    "module": "dogego.doginals",
+    "binary": "doginals-ext"
+  },
+  "capabilities": ["rpc", "indexer", "l2_sync", "p2p", "ui_panel", "doginals", "drc20", "wallet_rpc"],
+  "rpc": [
+    { "name": "info", "help": "Status, counts, config, and modern UI workspace." },
+    { "name": "listinscriptions", "help": "List recent L1-indexed inscriptions / DRC-20 events. Param: [limit?]." },
+    { "name": "getinscription", "help": "Fetch one inscription by id. Param: [id]." },
+    { "name": "indexrange", "help": "Scan L1 heights into the local index. Params: [from_height, to_height]." },
+    { "name": "listtokens", "help": "List indexed DRC-20 token summaries. Param: [limit?]." },
+    { "name": "gettoken", "help": "Token summary by ticker. Param: [tick]." },
+    { "name": "listbytick", "help": "Events for a ticker. Params: [tick, limit?]." },
+    { "name": "previewinscription", "help": "Build DRC-20 JSON/hex without broadcasting." },
+    { "name": "inscribe", "help": "Fund/sign/optional broadcast OP_RETURN DRC-20 via wallet_rpc." },
+    { "name": "putasset", "help": "Create/update an off-L1 L2 asset." },
+    { "name": "getasset", "help": "Fetch L2 asset by id." },
+    { "name": "listassets", "help": "List recent L2 assets." },
+    { "name": "getconfig", "help": "Extension settings." },
+    { "name": "setconfig", "help": "Save extension settings (wallet RPC toggle, etc)." },
+    { "name": "exportbackup", "help": "Write settings backup under data/backups/." },
+    { "name": "importbackup", "help": "Restore settings from backup JSON." },
+    { "name": "syncstatus", "help": "Overlay protocol and peer hint." }
+  ]
+}

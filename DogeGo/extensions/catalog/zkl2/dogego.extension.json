@@ -1,0 +1,41 @@
+{
+  "manifest_version": 1,
+  "id": "dogego.zkl2",
+  "name": "DogeGo ZK Layer 2",
+  "version": "0.1.0",
+  "author": "DogeGo",
+  "description": "Optional zkproof-v1 overlay: tx-anchored ZK proofs with off-L1 OP_CHECKZKP verify. Inspired by Dogecoin #3869; no protocol fork.",
+  "homepage": "https://github.com/qlpqlp/dogego",
+  "repository": "https://github.com/qlpqlp/dogego/tree/main/DogeGo/extensions/catalog/zkl2",
+  "dogego_min_version": "0.1.0",
+  "permissions": ["chain_read", "chain_index", "datadir_write", "rpc_register", "p2p_extension", "ui_panel", "wallet_rpc"],
+  "networks": ["mainnet", "testnet"],
+  "icon": "icon.png",
+  "docs_path": "extensions/catalog/zkl2/docs/USER_GUIDE.md",
+  "ui": { "status_method": "info" },
+  "entry": {
+    "type": "subprocess",
+    "module": "dogego.zkl2",
+    "binary": "zkl2-ext"
+  },
+  "capabilities": ["rpc", "indexer", "l2_sync", "p2p", "zkproof-v1", "ui_panel"],
+  "rpc": [
+    { "name": "info", "help": "zkproof-v1 extension status (requires dogego.zkl2 enabled)." },
+    { "name": "installdefaultvk", "help": "Install bundled demo Groth16 verifying key to data/vk/default.vk." },
+    { "name": "submitproof", "help": "Accept a tx-anchored ZK proof after off-L1 CheckZKP verify." },
+    { "name": "generateproof", "help": "Generate a demo Groth16 proof (requires default VK)." },
+    { "name": "getproof", "help": "Fetch proof by proof_hash." },
+    { "name": "listproofs", "help": "List proofs for a block_hash." },
+    { "name": "verifyproof", "help": "Structural + CheckZKP verify without storing." },
+    { "name": "checkzkp", "help": "Alias for verifyproof (OP_CHECKZKP analogue off L1)." },
+    { "name": "proofroot", "help": "Overlay ProofRoot for a Dogecoin block (not in L1 header)." },
+    { "name": "listanchors", "help": "List indexed optional ZKDG OP_RETURN anchors." },
+    { "name": "verifyanchor", "help": "Verify ZKDG OP_RETURN script format." },
+    { "name": "prepareanchor", "help": "Prepare optional ZKDG anchor + signmessage payload." },
+    { "name": "signanchor", "help": "Prepare anchor and sign via wallet_rpc (walletpassphrase + signer_address)." },
+    { "name": "submitl2block", "help": "Store an L2 block in local Pebble index." },
+    { "name": "getl2block", "help": "Fetch L2 block by height." },
+    { "name": "listl2blocks", "help": "List recent L2 blocks." },
+    { "name": "verifyl2block", "help": "Structural L2 block verify." }
+  ]
+}

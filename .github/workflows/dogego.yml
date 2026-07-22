@@ -1,0 +1,140 @@
+# Copyright (c) 2026 Paulo Vidal (https://x.com/inevitable360, https://github.com/qlpqlp)
+# Copyright (c) 2026 Dogecoin Foundation
+# SPDX-License-Identifier: MIT
+#
+# DogeGo CI.
+#   - offline: docs/UI, mempool corpus, RPC recovery, wallet UTXO-cache fast path,
+#     Core wallet.dat migration (synthetic BDB fixtures), operator workflow, store corruption.
+#   - live-* jobs: self-hosted `dogego-live` runner with reboottestnet nodes.
+#     Gated by repo variables (weekly schedule) or workflow_dispatch inputs.
+#
+# Enable scheduled live CI repo variables with scripts/gh_enable_scheduled_live.ps1:
+#   DOGEGO_SCHEDULED_WEEKLY_LIVE, DOGEGO_SCHEDULED_CORE_GATE, DOGEGO_SCHEDULED_LIVE_SOAK
+#
+# Cross-platform cert on dogego-live (mirrors PS1 gates):
+#   go run ./cmd/dogego cert weekly-live -mine-bootstrap -require-wallet-dat
+#   go run ./cmd/dogego cert live-soak -duration-min 60 -require-soak-env
+name: DogeGo
+
+on:
+  push:
+    branches: [main, master]
+  pull_request:
+  schedule:
+    # Sunday 04:00 UTC - live jobs run only when the matching repo variable is "1".
+    - cron: "0 4 * * 0"
+  workflow_dispatch:
+    inputs:
+      live_weekly:
+        description: "Run live-weekly (Core 24/24 + corruption mini)"
+        type: boolean
+        default: false
+      require_wallet_dat:
+        description: "Require live Core wallet.dat probe in live-weekly preflight"
+        type: boolean
+        default: false
+      live_core_gate:
+        description: "Run live-core-gate (Core-aligned 24/24 only)"
+        type: boolean
+        default: false
+      live_soak:
+        description: "Run live-soak (Milestone B full corruption soak)"
+        type: boolean
+        default: false
+      live_e2e:
+        description: "Run live-reboottestnet (full E2E gate)"
+        type: boolean
+        default: false
+
+defaults:
+  run:
+    working-directory: DogeGo
+
+jobs:
+  offline:
+    name: Offline gate
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version: "1.22"
+          cache-dependency-path: DogeGo/go.sum
+      - name: Offline CI gate
+        env:
+          CGO_ENABLED: "0"
+        run: bash scripts/ci_offline_gate.sh
+
+  live-weekly:
+    name: Live weekly (Core 24/24 + corruption mini)
+    needs: offline
+    runs-on: [self-hosted, dogego-live]
+    if: >-
+      ${{ (github.event_name == 'schedule' && vars.DOGEGO_SCHEDULED_WEEKLY_LIVE == '1')
+      || (github.event_name == 'workflow_dispatch' && inputs.live_weekly) }}
+    env:
+      DOGEGO_WALLET_DAT_REQUIRED: >-
+        ${{ (github.event_name == 'workflow_dispatch' && inputs.require_wallet_dat && '1')
+        || (vars.DOGEGO_WALLET_DAT_REQUIRED == '1' && '1')
+        || '' }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Runner preflight
+        shell: pwsh
+        run: |
+          $pref = @('-File', 'scripts/ci_runner_preflight.ps1', '-RequireCore')
+          if ($env:DOGEGO_WALLET_DAT_REQUIRED -eq '1') { $pref += '-RequireWalletDat' }
+          & pwsh @pref
+      - name: Weekly live gate
+        shell: pwsh
+        env:
+          DOGEGO_SCHEDULED_WEEKLY_LIVE: "1"
+        run: |
+          $args = @('-File', 'scripts/ci_scheduled_weekly_live.ps1')
+          if ($env:DOGEGO_WALLET_DAT_REQUIRED -eq '1') { $args += '-RequireWalletDat' }
+          & pwsh @args
+
+  live-core-gate:
+    name: Live Core-aligned gate (24/24)
+    needs: offline
+    runs-on: [self-hosted, dogego-live]
+    if: >-
+      ${{ (github.event_name == 'schedule' && vars.DOGEGO_SCHEDULED_CORE_GATE == '1')
+      || (github.event_name == 'workflow_dispatch' && inputs.live_core_gate) }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Runner preflight
+        run: pwsh -File scripts/ci_runner_preflight.ps1 -RequireCore
+      - name: Core-aligned gate
+        env:
+          DOGEGO_CORE_COMPARE_MIN: "24"
+        run: pwsh -File scripts/core_reboottestnet_core_aligned_gate.ps1
+
+  live-reboottestnet:
+    name: Live reboottestnet E2E
+    needs: offline
+    runs-on: [self-hosted, dogego-live]
+    if: >-
+      ${{ github.event_name == 'workflow_dispatch' && inputs.live_e2e }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Runner preflight
+        run: pwsh -File scripts/ci_runner_preflight.ps1 -RequireCore
+      - name: Live reboottestnet gate
+        run: pwsh -File scripts/ci_live_reboottestnet_gate.ps1 -IncludeCoreAlignedGate -IncludeCorruptionMini
+
+  live-soak:
+    name: Live corruption soak (Milestone B full)
+    needs: offline
+    runs-on: [self-hosted, dogego-live]
+    if: >-
+      ${{ (github.event_name == 'schedule' && vars.DOGEGO_SCHEDULED_LIVE_SOAK == '1')
+      || (github.event_name == 'workflow_dispatch' && inputs.live_soak) }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Runner preflight
+        run: pwsh -File scripts/ci_runner_preflight.ps1 -RequireCore
+      - name: Milestone B full gate
+        env:
+          DOGEGO_SCHEDULED_LIVE_SOAK: "1"
+        run: pwsh -File scripts/ci_milestone_b_full_gate.ps1

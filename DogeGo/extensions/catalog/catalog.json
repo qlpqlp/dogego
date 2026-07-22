@@ -1,0 +1,104 @@
+{
+  "catalog_version": 1,
+  "updated": "2026-07-20",
+  "source": "https://github.com/qlpqlp/dogego",
+  "extensions": [
+    {
+      "id": "dogego.doginals",
+      "name": "Doginals / DRC-20 L2",
+      "version": "0.2.0",
+      "author": "DogeGo",
+      "description": "Experimental L2 for Doginals and DRC-20: index L1 inscriptions/tokens, deploy/mint via authenticated wallet RPC, off-L1 assets with P2P sync, modern workspace UI. Does not change Dogecoin consensus.",
+      "homepage": "https://github.com/qlpqlp/dogego",
+      "repository": "https://github.com/qlpqlp/dogego/tree/main/DogeGo/extensions/catalog/doginals",
+      "download_url": "https://raw.githubusercontent.com/qlpqlp/dogego/main/DogeGo/extensions/catalog/doginals/dist/doginals.zip",
+      "sha256": "8d936e7ae9f316a9b346cfd5c84f6457db7b88cd0f2119bfd32d26dfd537c0df",
+      "dogego_min_version": "0.1.0",
+      "networks": ["mainnet", "testnet"],
+      "featured": false,
+      "icon": "icon.png",
+      "docs_path": "extensions/catalog/doginals/docs/USER_GUIDE.md",
+      "permissions": ["chain_read", "chain_index", "datadir_write", "rpc_register", "p2p_extension", "ui_panel", "wallet_rpc"],
+      "capabilities": ["rpc", "indexer", "l2_sync", "p2p", "ui_panel", "doginals", "drc20", "wallet_rpc"]
+    },
+    {
+      "id": "dogego.bbpow",
+      "name": "BBPoW (Bitcoin-Backed PoW research)",
+      "version": "0.1.1",
+      "author": "DogeGo",
+      "description": "EXPERIMENTAL testnet-only: Bitcoin SHA-256 commitments as a Dogecoin security signal (BBPoW/CAuxPoW). Not AuxPoW; soft fork cannot OR-accept Bitcoin work. Off-L1 only. Hard fork if adopted as consensus.",
+      "homepage": "https://github.com/qlpqlp/dogego",
+      "repository": "https://github.com/qlpqlp/dogego/tree/main/DogeGo/extensions/catalog/bbpow",
+      "dogego_min_version": "0.1.0",
+      "networks": ["testnet"],
+      "featured": false,
+      "icon": "icon.png",
+      "docs_path": "extensions/catalog/bbpow/docs/USER_GUIDE.md",
+      "permissions": ["chain_read", "chain_index", "datadir_write", "rpc_register", "ui_panel"],
+      "capabilities": ["rpc", "indexer", "ui_panel", "research_bbpow"]
+    },
+    {
+      "id": "dogego.zkl2",
+      "name": "DogeGo ZK Layer 2",
+      "version": "0.1.0",
+      "author": "DogeGo",
+      "description": "Decentralized zkproof-v1 overlay: submit ZK proofs anchored to confirmed Dogecoin transactions. Syncs with other DogeGo nodes via exthello/extack and P2P zkinv/getzkproof. No L1 consensus fork.",
+      "homepage": "https://github.com/qlpqlp/dogego",
+      "repository": "https://github.com/qlpqlp/dogego/tree/main/DogeGo/extensions/catalog/zkl2",
+      "download_url": "https://raw.githubusercontent.com/qlpqlp/dogego/main/DogeGo/extensions/catalog/zkl2/dist/zkl2.zip",
+      "sha256": "fad8e6941743bd7f408dd42443dfd6c4256a9b85138c60acddaeab46fb498567",
+      "downloads": {
+        "universal": {
+          "download_url": "https://raw.githubusercontent.com/qlpqlp/dogego/main/DogeGo/extensions/catalog/zkl2/dist/zkl2-universal.zip",
+          "sha256": "fad8e6941743bd7f408dd42443dfd6c4256a9b85138c60acddaeab46fb498567"
+        }
+      },
+      "dogego_min_version": "0.1.0",
+      "networks": ["mainnet", "testnet"],
+      "featured": true,
+      "icon": "icon.png",
+      "docs_path": "extensions/catalog/zkl2/docs/USER_GUIDE.md",
+      "permissions": ["chain_read", "chain_index", "datadir_write", "rpc_register", "p2p_extension", "ui_panel", "wallet_rpc"],
+      "capabilities": ["rpc", "indexer", "l2_sync", "p2p", "zkproof-v1", "ui_panel"]
+    },
+    {
+      "id": "example.go",
+      "name": "Hello World Extension (Go)",
+      "version": "0.2.0",
+      "author": "DogeGo",
+      "description": "Hello-world subprocess demo (Go). Install: prebuilt zip per platform (catalog downloads), universal zip (entry.binaries), or source from GitHub (needs Go). See extensions/catalog/BUILDING.md.",
+      "homepage": "https://github.com/qlpqlp/dogego",
+      "repository": "https://github.com/qlpqlp/dogego/tree/main/DogeGo/extensions/catalog/example-go",
+      "downloads": {
+        "universal": {
+          "download_url": "https://raw.githubusercontent.com/qlpqlp/dogego/main/DogeGo/extensions/catalog/example-go/dist/hello-universal.zip",
+          "sha256": "b05a7b05545e0c3a67422dc89393b7f758586e66833f0b0ab4bbf7502cc74ca6"
+        }
+      },
+      "dogego_min_version": "0.1.0",
+      "networks": ["mainnet", "testnet"],
+      "featured": true,
+      "icon": "icon.png",
+      "docs_path": "extensions/catalog/example-go/docs/README.md",
+      "permissions": ["chain_read", "datadir_write", "rpc_register", "ui_panel"],
+      "capabilities": ["rpc", "ui_panel"]
+    },
+    {
+      "id": "example.wasm",
+      "name": "Wasm Ping",
+      "version": "0.1.0",
+      "author": "DogeGo",
+      "description": "Example wasm extension (ping RPC). Source in extensions/catalog/example-wasm/ping.wat.",
+      "homepage": "https://github.com/qlpqlp/dogego",
+      "repository": "https://github.com/qlpqlp/dogego/tree/main/DogeGo/extensions/catalog/example-wasm",
+      "download_url": "https://raw.githubusercontent.com/qlpqlp/dogego/main/DogeGo/extensions/catalog/example-wasm/ping.zip",
+      "sha256": "564d5d8bd61028bfeec5634724907d8590526746937126775df7b1e06cb1a8fb",
+      "networks": ["mainnet", "testnet"],
+      "featured": false,
+      "icon": "icon.png",
+      "docs_path": "extensions/catalog/example-wasm/docs/README.md",
+      "permissions": ["chain_read", "datadir_write", "rpc_register"],
+      "capabilities": ["rpc"]
+    }
+  ]
+}

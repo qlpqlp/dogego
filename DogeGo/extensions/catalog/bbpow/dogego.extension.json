@@ -1,0 +1,31 @@
+{
+  "manifest_version": 1,
+  "id": "dogego.bbpow",
+  "name": "BBPoW (Bitcoin-Backed PoW research)",
+  "version": "0.1.1",
+  "author": "DogeGo",
+  "description": "EXPERIMENTAL testnet-only: verify Bitcoin SHA-256 commitments as a Dogecoin security signal (BBPoW/CAuxPoW). Not AuxPoW; not a soft fork. Off-L1 only. Consensus adoption would be a Dogecoin hard fork (can reuse AuxPoW wire, not Scrypt validation).",
+  "homepage": "https://github.com/qlpqlp/dogego",
+  "repository": "https://github.com/qlpqlp/dogego/tree/main/DogeGo/extensions/catalog/bbpow",
+  "dogego_min_version": "0.1.0",
+  "permissions": ["chain_read", "chain_index", "datadir_write", "rpc_register", "ui_panel"],
+  "networks": ["testnet"],
+  "icon": "icon.png",
+  "docs_path": "extensions/catalog/bbpow/docs/USER_GUIDE.md",
+  "ui": { "status_method": "info" },
+  "entry": {
+    "type": "subprocess",
+    "module": "dogego.bbpow",
+    "binary": "bbpow-ext"
+  },
+  "capabilities": ["rpc", "indexer", "ui_panel", "research_bbpow"],
+  "rpc": [
+    { "name": "info", "help": "BBPoW research status + dual-lane difficulty sketch + AuxPoW comparison." },
+    { "name": "compare", "help": "Why this is not AuxPoW; hard-fork note; naming (BBPoW / CAuxPoW)." },
+    { "name": "dualmodel", "help": "Independent Scrypt vs SHA-256 difficulty research model snapshot." },
+    { "name": "buildcommitment", "help": "Build BBPoW||doge_block_hash commitment hex for a Bitcoin coinbase. Param: [doge_block_hash_hex]." },
+    { "name": "checkheader", "help": "Verify SHA-256 PoW on an 80-byte Bitcoin header hex. Param: [header_hex]." },
+    { "name": "verifyproof", "help": "Validate a research BitcoinProof JSON (header + coinbase + merkle). Param: [proof_object]." },
+    { "name": "recordlane", "help": "Record a research block on a lane. Params: [\"scrypt_auxpow\"|\"sha256_bbpow\", bits?]." }
+  ]
+}

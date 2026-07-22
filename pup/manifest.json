@@ -1,0 +1,131 @@
+{
+  "manifestVersion": 1,
+  "meta": {
+    "name": "DogeGo",
+    "version": "0.1.0",
+    "logoPath": "logo.png",
+    "shortDescription": "Much Faster Full Dogecoin Node",
+    "longDescription": "DogeGo is an open-source Dogecoin full node written in Go, with a built-in web dashboard, BlockStep explorer, HD wallet, and Core-compatible JSON-RPC. This PUP builds DogeGo from the qlpqlp/dogego GitHub source on DogeBox. Configure the node in the DogeGo web UI after it starts.",
+    "upstreamVersions": {
+      "DogeGo": "0.1.0-beta"
+    }
+  },
+  "config": {
+    "sections": []
+  },
+  "container": {
+    "build": {
+      "nixFile": "pup.nix",
+      "nixFileSha256": "92eaf6315f2944ca72f9f32c4886bd269bbcf00f79e29705562449538f2a0ec2"
+    },
+    "services": [
+      {
+        "name": "dogego",
+        "command": {
+          "exec": "/bin/run.sh",
+          "cwd": "",
+          "env": null
+        }
+      }
+    ],
+    "exposes": [
+      {
+        "name": "webui",
+        "type": "http",
+        "port": 2013,
+        "interfaces": ["dogego-webui"],
+        "listenOnHost": true,
+        "webUI": true
+      },
+      {
+        "name": "p2p-mainnet",
+        "type": "tcp",
+        "port": 22556,
+        "interfaces": ["dogego-p2p-mainnet"],
+        "listenOnHost": true,
+        "webUI": false
+      },
+      {
+        "name": "p2p-testnet",
+        "type": "tcp",
+        "port": 44556,
+        "interfaces": ["dogego-p2p-testnet"],
+        "listenOnHost": true,
+        "webUI": false
+      },
+      {
+        "name": "rpc-mainnet",
+        "type": "tcp",
+        "port": 22557,
+        "interfaces": ["dogego-rpc"],
+        "listenOnHost": false,
+        "webUI": false
+      },
+      {
+        "name": "rpc-testnet",
+        "type": "tcp",
+        "port": 44555,
+        "interfaces": ["dogego-rpc"],
+        "listenOnHost": false,
+        "webUI": false
+      }
+    ],
+    "requiresInternet": true
+  },
+  "interfaces": [
+    {
+      "name": "dogego-webui",
+      "version": "0.1.0",
+      "permissionGroups": [
+        {
+          "name": "WebUI",
+          "description": "DogeGo web dashboard",
+          "severity": 2,
+          "routes": ["/*"],
+          "port": 2013
+        }
+      ]
+    },
+    {
+      "name": "dogego-p2p-mainnet",
+      "version": "0.1.0",
+      "permissionGroups": [
+        {
+          "name": "P2P",
+          "description": "Dogecoin mainnet P2P (port 22556)",
+          "severity": 1,
+          "routes": null,
+          "port": 22556
+        }
+      ]
+    },
+    {
+      "name": "dogego-p2p-testnet",
+      "version": "0.1.0",
+      "permissionGroups": [
+        {
+          "name": "P2P",
+          "description": "Dogecoin testnet P2P (port 44556)",
+          "privilege": 1,
+          "routes": null,
+          "port": 44556
+        }
+      ]
+    },
+    {
+      "name": "dogego-rpc",
+      "version": "0.1.0",
+      "permissionGroups": [
+        {
+          "name": "RPC",
+          "description": "Core-compatible JSON-RPC",
+          "privilege": 3,
+          "routes": null,
+          "port": 0
+        }
+      ]
+    }
+  ],
+  "dependencies": [],
+  "metrics": null
+}

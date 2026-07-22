@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>DogeGo | Much Faster Full Dogecoin Node</title>
-  <meta name="description" content="DogeGo is an open-source Dogecoin full node written in Go. Run mainnet or testnet with a built-in web dashboard, BlockStep explorer, JSON-RPC, and binaries for every major platform.">
+  <meta name="description" content="DogeGo is an open-source Dogecoin full node in Go with a built-in web dashboard, auto-updates from GitHub, wallet backup reminders, BlockStep explorer, JSON-RPC, and binaries for every major platform.">
   <meta name="keywords" content="DogeGo, Dogecoin, full node, Go, blockchain, cryptocurrency, JSON-RPC, BlockStep, SPV, mainnet, testnet">
   <meta name="author" content="DogeGo">
   <meta name="robots" content="index, follow">
@@ -13,30 +13,32 @@
   <meta property="og:type" content="website">
   <meta property="og:url" content="https://dogego.org/">
   <meta property="og:title" content="DogeGo | Much Faster Full Dogecoin Node">
-  <meta property="og:description" content="Experimental Dogecoin full node in Go. Built-in web dashboard, BlockStep explorer, 180+ JSON-RPC methods. Beta on GitHub in a few days.">
-  <meta property="og:image" content="https://dogego.org/assets/og-image.svg">
-  <meta property="og:image:width" content="1200">
-  <meta property="og:image:height" content="630">
+  <meta property="og:description" content="Beta Dogecoin full node in Go. Auto-updates, wallet backup reminders, BlockStep explorer, embedded operator docs, and 180+ JSON-RPC methods.">
+  <meta property="og:image" content="https://dogego.org/assets/socialcard.png">
+  <meta property="og:image:type" content="image/png">
+  <meta property="og:image:width" content="2836">
+  <meta property="og:image:height" content="1512">
   <meta property="og:site_name" content="DogeGo">
   <meta property="og:locale" content="en_US">
 
   <meta name="twitter:card" content="summary_large_image">
   <meta name="twitter:title" content="DogeGo | Much Faster Full Dogecoin Node">
-  <meta name="twitter:description" content="Experimental Dogecoin full node in Go with a modern web dashboard, BlockStep explorer, and cross-platform binaries.">
-  <meta name="twitter:image" content="https://dogego.org/assets/og-image.svg">
+  <meta name="twitter:description" content="Dogecoin full node in Go with auto-updates, wallet backup care, CGNAT relay, and a full browser dashboard at :2013.">
+  <meta name="twitter:image" content="https://dogego.org/assets/socialcard.png">
 
-  <meta name="theme-color" content="#ffc107">
-  <meta name="color-scheme" content="dark">
+  <meta name="theme-color" content="#1b1f24">
+  <meta name="color-scheme" content="light dark">
 
   <link rel="icon" href="assets/dogecoin.svg" type="image/svg+xml">
   <link rel="apple-touch-icon" href="assets/dogecoin.svg">
 
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Comic+Neue:ital,wght@0,300;0,400;0,700;1,400&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
   <link href="https://fonts.googleapis.com/icon?family=Material+Icons+Round" rel="stylesheet">
 
   <link rel="stylesheet" href="css/style.css">
+  <link rel="stylesheet" href="css/app-shell.css">
 
   <script type="application/ld+json">
   {
@@ -45,7 +47,7 @@
     "name": "DogeGo",
     "applicationCategory": "FinanceApplication",
     "operatingSystem": "Windows, macOS, Linux, FreeBSD, OpenBSD, NetBSD",
-    "description": "An open-source Dogecoin full node written in Go with a built-in web dashboard, BlockStep chain explorer, and Core-compatible JSON-RPC.",
+    "description": "An open-source Dogecoin full node in Go with a built-in web dashboard, GitHub auto-updates, wallet backup reminders, BlockStep explorer, and Core-compatible JSON-RPC.",
     "url": "https://dogego.org",
     "softwareVersion": "0.1.0-beta",
     "author": { "@type": "Organization", "name": "DogeGo" },
@@ -53,100 +55,161 @@
   }
   </script>
 </head>
-<body>
-  <a class="skip-link" href="#main">Skip to content</a>
+<body class="sidebar-collapsed">
+  <a class="skip-link" href="#main" data-i18n="skip">Skip to content</a>
 
-  <header class="site-header" id="top">
-    <div class="container header-inner">
-      <a class="brand" href="#top" aria-label="DogeGo home">
-        <img src="assets/dogecoin.svg" alt="" width="32" height="32" class="brand-logo">
-        <span class="brand-name">DogeGo</span>
-        <span class="badge badge-beta">Beta</span>
-      </a>
-
-      <button class="nav-toggle" type="button" aria-expanded="false" aria-controls="site-nav" aria-label="Open menu">
-        <span class="material-icons-round" aria-hidden="true">menu</span>
+  <header class="topbar" id="top">
+    <a class="topbar-home" href="#top" data-i18n-aria="nav.home">
+      <img src="assets/dogecoin.svg" alt="" width="28" height="28">
+      <span class="topbar-brand">DogeGo</span>
+    </a>
+    <span class="badge badge-beta" data-i18n="beta">Beta</span>
+    <span class="topbar-ver" id="topbar-version" title="DogeGo version">0.1.0-beta (1.14.9)</span>
+    <span class="topbar-spacer"></span>
+    <a href="#download" class="topbar-cta desktop-only">
+      <span class="material-icons-round" aria-hidden="true">download</span>
+      <span data-i18n="nav.download">Download</span>
+    </a>
+    <div class="lang-picker" id="site-lang-picker">
+      <button type="button" class="lang-picker-btn" id="site-lang-btn" aria-haspopup="listbox" data-i18n-aria="lang.aria" aria-expanded="false" aria-controls="site-lang-menu">
+        <span class="material-icons-round" aria-hidden="true">language</span>
+        <span id="site-lang-label">English</span>
       </button>
-
-      <nav class="site-nav" id="site-nav" aria-label="Primary">
-        <a href="#features"><span class="material-icons-round nav-icon" aria-hidden="true">star</span> Features</a>
-        <a href="#blockstep"><span class="material-icons-round nav-icon" aria-hidden="true">pets</span> BlockStep</a>
-        <a href="#wizard"><span class="material-icons-round nav-icon" aria-hidden="true">touch_app</span> Setup</a>
-        <a href="#advantages"><span class="material-icons-round nav-icon" aria-hidden="true">compare</span> Why DogeGo</a>
-        <a href="#download"><span class="material-icons-round nav-icon" aria-hidden="true">download</span> Download</a>
-        <a href="#developers"><span class="material-icons-round nav-icon" aria-hidden="true">terminal</span> Developers</a>
-        <a href="https://foundation.dogecoin.com" class="nav-foundation" rel="noopener noreferrer" target="_blank" title="Dogecoin Foundation">
-          <img src="assets/dogecoin-foundation.svg" alt="Dogecoin Foundation" width="120" height="28">
-        </a>
-        <button type="button" class="nav-github" data-soon="github">
-          <span class="material-icons-round" aria-hidden="true">code</span>
-          GitHub
-        </button>
-      </nav>
+      <div class="lang-picker-menu" id="site-lang-menu" role="listbox" hidden></div>
     </div>
+    <a href="https://foundation.dogecoin.com" class="topbar-foundation" rel="noopener noreferrer" target="_blank" data-i18n-title="nav.foundation">
+      <img src="assets/dogecoin-foundation.svg" alt="Dogecoin Foundation" width="120" height="28">
+    </a>
+    <button type="button" class="nav-toggle" id="nav-toggle" aria-expanded="false" aria-controls="sidebar-nav" data-i18n-aria="nav.openMenu">
+      <span class="material-icons-round" aria-hidden="true">menu</span>
+    </button>
   </header>
 
+  <div id="nav-backdrop" class="nav-backdrop" hidden aria-hidden="true"></div>
+
+  <div class="shell sidebar-collapsed" id="site-shell">
+    <nav class="sidebar" id="sidebar-nav" aria-label="Primary">
+      <p class="nav-group-label"><span class="nav-label" data-i18n="nav.groupExplore">Explore</span></p>
+      <a class="nav-item" href="#features" data-nav-id="features">
+        <span class="material-icons-round nav-icon" aria-hidden="true">star</span>
+        <span class="nav-label" data-i18n="nav.features">Features</span>
+      </a>
+      <a class="nav-item" href="#fullnode" data-nav-id="fullnode">
+        <span class="material-icons-round nav-icon" aria-hidden="true">dns</span>
+        <span class="nav-label" data-i18n="nav.fullnode">Full node</span>
+      </a>
+      <a class="nav-item" href="#roadmap" data-nav-id="roadmap">
+        <span class="material-icons-round nav-icon" aria-hidden="true">map</span>
+        <span class="nav-label" data-i18n="nav.roadmap">Roadmap</span>
+      </a>
+      <a class="nav-item" href="#operator-ux" data-nav-id="operator-ux">
+        <span class="material-icons-round nav-icon" aria-hidden="true">favorite</span>
+        <span class="nav-label" data-i18n="nav.care">Care</span>
+      </a>
+      <a class="nav-item" href="#blockstep" data-nav-id="blockstep">
+        <span class="material-icons-round nav-icon" aria-hidden="true">pets</span>
+        <span class="nav-label" data-i18n="nav.blockstep">BlockStep</span>
+      </a>
+      <a class="nav-item" href="#wizard" data-nav-id="wizard">
+        <span class="material-icons-round nav-icon" aria-hidden="true">touch_app</span>
+        <span class="nav-label" data-i18n="nav.setup">Setup</span>
+      </a>
+      <a class="nav-item" href="#advantages" data-nav-id="advantages">
+        <span class="material-icons-round nav-icon" aria-hidden="true">compare</span>
+        <span class="nav-label" data-i18n="nav.why">Why DogeGo</span>
+      </a>
+      <div class="nav-divider"></div>
+      <p class="nav-group-label"><span class="nav-label" data-i18n="nav.groupGetStarted">Get started</span></p>
+      <a class="nav-item" href="#download" data-nav-id="download">
+        <span class="material-icons-round nav-icon" aria-hidden="true">download</span>
+        <span class="nav-label" data-i18n="nav.download">Download</span>
+      </a>
+      <a class="nav-item" href="#developers" data-nav-id="developers">
+        <span class="material-icons-round nav-icon" aria-hidden="true">terminal</span>
+        <span class="nav-label" data-i18n="nav.developers">Developers</span>
+      </a>
+      <a class="nav-item" href="guide/" data-nav-id="docs">
+        <span class="material-icons-round nav-icon" aria-hidden="true">menu_book</span>
+        <span class="nav-label" data-i18n="nav.docs">Docs</span>
+      </a>
+      <a class="nav-item" href="#networks" data-nav-id="networks">
+        <span class="material-icons-round nav-icon" aria-hidden="true">lan</span>
+        <span class="nav-label" data-i18n="footer.devNetworks">Ports &amp; networks</span>
+      </a>
+      <div class="nav-divider"></div>
+      <a class="nav-item nav-item-external" href="https://github.com/qlpqlp/dogego" rel="noopener noreferrer" target="_blank">
+        <span class="material-icons-round nav-icon" aria-hidden="true">code</span>
+        <span class="nav-label" data-i18n="nav.github">GitHub</span>
+      </a>
+    </nav>
+
+    <div class="site-main">
   <main id="main">
     <section class="hero" aria-labelledby="hero-title">
-      <div class="container hero-grid">
-        <div class="hero-text">
+      <div class="container hero-layout">
+        <div class="hero-top">
+          <div class="hero-copy">
           <p class="hero-eyebrow">
-            <span class="material-icons-round" aria-hidden="true">schedule</span>
-            Open source on GitHub in a few days
+            <span class="material-icons-round" aria-hidden="true">code</span>
+            <a href="https://github.com/qlpqlp/dogego" rel="noopener noreferrer" target="_blank" data-i18n="hero.eyebrow">Open source on GitHub</a>
           </p>
-          <h1 id="hero-title">Much Faster Full Dogecoin Node</h1>
-          <p class="hero-lead">
-            The first Dogecoin full node with post-quantum transaction commitments, zstd block compression,
-            CGNAT-friendly relay for Starlink, and a searchable public ledger. Full node or SPV, one Go binary.
+          <h1 id="hero-title" data-i18n="hero.title">Much Faster Full Dogecoin Node</h1>
+          <p class="hero-lead" data-i18n="hero.lead">
+            The first Dogecoin full node with post-quantum commitments, zstd compression, CGNAT-friendly relay,
+            faster multi-peer IBD with auto dbcache, and a browser dashboard that checks for updates, nags you to back up your wallet, and ships operator docs inside the app.
           </p>
           <div class="hero-actions">
-            <button type="button" class="btn btn-primary" data-soon="download">
+            <a href="#download" class="btn btn-primary" id="hero-download-btn">
               <span class="material-icons-round" aria-hidden="true">download</span>
-              Download
-            </button>
-            <button type="button" class="btn btn-secondary" data-soon="github">
-              <span class="material-icons-round" aria-hidden="true">lock</span>
-              View on GitHub
-            </button>
+              <span data-i18n="hero.download">Download</span>
+            </a>
+            <a href="https://github.com/qlpqlp/dogego" class="btn btn-secondary" rel="noopener noreferrer" target="_blank">
+              <span class="material-icons-round" aria-hidden="true">code</span>
+              <span data-i18n="hero.viewGithub">View on GitHub</span>
+            </a>
           </div>
-          <p class="hero-note">
-            <span class="material-icons-round" aria-hidden="true">info</span>
-            Beta software. Not a drop-in replacement for Dogecoin Core, yet.
-          </p>
-        </div>
+          </div>
 
-        <div class="hero-demo" aria-label="Interactive DogeGo dashboard preview">
+          <div class="hero-preview" data-i18n-aria="demo.aria">
           <div class="demo-stack">
-            <!-- Live-style web UI (matches DogeGo loopback dashboard) -->
             <div class="demo-webui">
+              <div class="demo-update-banner" aria-hidden="true">
+                <span class="material-icons-round">system_update</span>
+                <span data-i18n-html="demo.updateBanner">Update available - DogeGo <strong>0.1.0</strong> on GitHub Releases</span>
+              </div>
               <div class="demo-topbar">
                 <img src="assets/dogecoin.svg" alt="" width="24" height="24">
                 <span class="demo-topbar-brand">DogeGo</span>
-                <span class="badge badge-beta badge-sm">Beta</span>
-                <span class="demo-topbar-ver">0.1.0-beta</span>
-                <span class="demo-badge demo-badge-full">full</span>
-                <span class="demo-badge demo-badge-mainnet">mainnet</span>
+                <span class="badge badge-beta badge-sm" data-i18n="beta">Beta</span>
+                <span class="demo-topbar-ver">0.1.0-beta (1.14.9)</span>
+                <span class="demo-badge demo-badge-full" data-i18n="demo.full">full</span>
+                <span class="demo-badge demo-badge-mainnet" data-i18n="demo.mainnet">mainnet</span>
                 <span class="demo-topbar-spacer"></span>
-                <a href="https://foundation.dogecoin.com" class="demo-foundation" rel="noopener noreferrer" target="_blank" title="Dogecoin Foundation" tabindex="-1" aria-hidden="true">
-                  <img src="assets/dogecoin-foundation.svg" alt="" width="100" height="22">
-                </a>
-                <span class="demo-peers-short"><span class="material-icons-round">hub</span> <span id="demo-peers-out">4</span> out</span>
+                <button type="button" class="demo-lang-btn" tabindex="-1" aria-hidden="true">
+                  <span class="material-icons-round">language</span>
+                  <span class="demo-lang-label">English</span>
+                </button>
+                <span class="demo-peers-short" id="demo-peers-short"> 6 out · 7 in</span>
               </div>
 
               <div class="demo-shell">
                 <nav class="demo-sidebar" aria-hidden="true">
-                  <p class="demo-nav-label">Wallet</p>
-                  <span class="demo-nav-item"><span class="material-icons-round">send</span> Send</span>
-                  <span class="demo-nav-item"><span class="material-icons-round">call_received</span> Receive</span>
-                  <span class="demo-nav-item"><span class="material-icons-round">receipt_long</span> History</span>
+                  <p class="demo-nav-label" data-i18n="demo.navWallet">Wallet</p>
+                  <span class="demo-nav-item"><span class="material-icons-round">send</span> <span data-i18n="demo.navSend">Send</span></span>
+                  <span class="demo-nav-item"><span class="material-icons-round">call_received</span> <span data-i18n="demo.navReceive">Receive</span></span>
+                  <span class="demo-nav-item"><span class="material-icons-round">receipt_long</span> <span data-i18n="demo.navHistory">History</span></span>
                   <div class="demo-nav-divider"></div>
-                  <p class="demo-nav-label">Node</p>
-                  <span class="demo-nav-item demo-nav-active" data-demo-tab="overview"><span class="material-icons-round">home</span> Overview</span>
-                  <span class="demo-nav-item" data-demo-tab="blockstep"><span class="material-icons-round">pets</span> BlockStep</span>
-                  <span class="demo-nav-item"><span class="material-icons-round">search</span> Search</span>
-                  <span class="demo-nav-item" data-demo-tab="mempool"><span class="material-icons-round">pending_actions</span> Mempool</span>
-                  <span class="demo-nav-item"><span class="material-icons-round">insights</span> Analytics</span>
-                  <span class="demo-nav-item"><span class="material-icons-round">settings</span> Settings</span>
+                  <p class="demo-nav-label" data-i18n="demo.navNode">Node</p>
+                  <span class="demo-nav-item demo-nav-active" data-demo-tab="overview"><span class="material-icons-round">home</span> <span data-i18n="demo.navOverview">Overview</span></span>
+                  <span class="demo-nav-item" data-demo-tab="blockstep"><span class="material-icons-round">pets</span> <span data-i18n="demo.navBlockStep">BlockStep</span></span>
+                  <span class="demo-nav-item"><span class="material-icons-round">search</span> <span data-i18n="demo.navSearch">Search</span></span>
+                  <span class="demo-nav-item" data-demo-tab="mempool"><span class="material-icons-round">pending_actions</span> <span data-i18n="demo.navMempool">Mempool</span></span>
+                  <span class="demo-nav-item"><span class="material-icons-round">menu_book</span> <span data-i18n="demo.navDocs">Docs</span></span>
+                  <span class="demo-nav-item"><span class="material-icons-round">extension</span> <span data-i18n="demo.navExtensions">Extensions</span></span>
+                  <span class="demo-nav-item"><span class="material-icons-round">settings</span> <span data-i18n="demo.navSettings">Settings</span></span>
+                  <span class="demo-nav-item"><span class="material-icons-round">insights</span> <span data-i18n="demo.navAnalytics">Analytics</span></span>
+                  <span class="demo-nav-item" data-demo-tab="features"><span class="material-icons-round">verified</span> <span data-i18n="demo.navFeatures">Features</span></span>
+                  <span class="demo-nav-item"><span class="material-icons-round">terminal</span> <span data-i18n="demo.navConsole">Console</span></span>
                 </nav>
 
                 <div class="demo-main">
@@ -154,30 +217,51 @@
                     <div class="demo-page-hero">
                       <span class="material-icons-round">home</span>
                       <div>
-                        <strong>Dashboard</strong>
-                        <span>Live node metrics from this machine.</span>
+                        <strong data-i18n="demo.overviewTitle">Dashboard</strong>
+                        <span data-i18n="demo.overviewSub">Live node metrics from this machine.</span>
                       </div>
                     </div>
-                    <div class="demo-kpi-grid">
+                    <div class="demo-search-bar">
+                      <span class="material-icons-round">search</span>
+                      <span class="demo-search-placeholder" data-i18n="demo.searchPlaceholder">Height, hash, txid, or address…</span>
+                      <span class="demo-search-btn" data-i18n="demo.searchBtn">Search</span>
+                    </div>
+                    <p class="demo-kpi-section-title" data-i18n="demo.kpiNodeHealth">Node health</p>
+                    <div class="demo-kpi-grid demo-kpi-grid-6">
                       <div class="demo-kpi">
-                        <span class="demo-kpi-name">Header tip</span>
-                        <span class="demo-kpi-val" id="demo-tip">4,829,102</span>
+                        <span class="demo-kpi-name" data-i18n="demo.kpiHeaderTip">Header tip</span>
+                        <span class="demo-kpi-val" id="demo-tip">5,412,884</span>
+                        <span class="demo-kpi-spark" aria-hidden="true"></span>
                       </div>
                       <div class="demo-kpi">
-                        <span class="demo-kpi-name">Sync</span>
-                        <span class="demo-kpi-val demo-kpi-gold"><span id="demo-sync-pct">42.3</span>%</span>
+                        <span class="demo-kpi-name" data-i18n="demo.kpiSync">Sync</span>
+                        <span class="demo-kpi-val demo-kpi-gold"><span id="demo-sync-pct">68.4</span>%</span>
+                        <span class="demo-kpi-spark demo-kpi-spark-gold" aria-hidden="true"></span>
                       </div>
                       <div class="demo-kpi">
-                        <span class="demo-kpi-name">Mempool</span>
-                        <span class="demo-kpi-val" id="demo-mempool">87 tx</span>
+                        <span class="demo-kpi-name" data-i18n="demo.kpiMempool">Mempool</span>
+                        <span class="demo-kpi-val" id="demo-mempool">124 tx</span>
+                        <span class="demo-kpi-spark" aria-hidden="true"></span>
                       </div>
                       <div class="demo-kpi">
-                        <span class="demo-kpi-name">Peers</span>
-                        <span class="demo-kpi-val"><span id="demo-peers-out-kpi">4</span> / <span id="demo-peers-in">0</span></span>
+                        <span class="demo-kpi-name" data-i18n="demo.kpiPeers">Peers</span>
+                        <span class="demo-kpi-val"><span id="demo-peers-out-kpi">8</span> / <span id="demo-peers-in-kpi">2</span></span>
+                        <span class="demo-kpi-spark" aria-hidden="true"></span>
                       </div>
+                      <div class="demo-kpi demo-kpi-compact">
+                        <span class="demo-kpi-name" data-i18n="demo.kpiTxProcessed">Tx processed</span>
+                        <span class="demo-kpi-val demo-kpi-sm" id="demo-tx-processed">3.8M</span>
+                      </div>
+                      <div class="demo-kpi demo-kpi-compact">
+                        <span class="demo-kpi-name" data-i18n="demo.kpiChainDisk">Chain disk</span>
+                        <span class="demo-kpi-val demo-kpi-sm" id="demo-disk">142 GB</span>
+                      </div>
+                    </div>
+                    <div class="demo-storage-chips">
+                      <span data-i18n="demo.chipBundled">bundled</span><span data-i18n="demo.chipZstd">zstd</span><span data-i18n="demo.chipTxIndex">tx index</span><span data-i18n="demo.chipIbdOptimize">IBD optimize</span><span data-i18n="demo.chipP2pBoth">P2P both</span>
                     </div>
                     <div class="demo-sync-track">
-                      <div class="demo-sync-fill" id="demo-sync-fill" style="width:42.3%"></div>
+                      <div class="demo-sync-fill" id="demo-sync-fill" style="width:68.4%"></div>
                     </div>
                   </div>
 
@@ -185,14 +269,14 @@
                     <div class="demo-page-hero">
                       <span class="material-icons-round">pets</span>
                       <div>
-                        <strong>BlockStep</strong>
-                        <span>Walk the Dogecoin chain from 2013 to today.</span>
+                        <strong data-i18n="demo.blockstepTitle">BlockStep</strong>
+                        <span data-i18n="demo.blockstepSub">Walk the Dogecoin chain from 2013 to today.</span>
                       </div>
                     </div>
                     <div class="demo-bs-shell">
                       <div class="demo-bs-toolbar">
-                        <button type="button" class="demo-bs-btn-ghost" tabindex="-1">2013</button>
-                        <button type="button" class="demo-bs-btn-ghost" tabindex="-1">Synced</button>
+                        <button type="button" class="demo-bs-btn-ghost" tabindex="-1" data-i18n="demo.blockstepYear2013">2013</button>
+                        <button type="button" class="demo-bs-btn-ghost" tabindex="-1" data-i18n="demo.blockstepSynced">Synced</button>
                         <span class="demo-bs-spacer"></span>
                         <button type="button" class="demo-bs-btn" tabindex="-1" aria-hidden="true"><span class="material-icons-round">chevron_left</span></button>
                         <button type="button" class="demo-bs-btn" tabindex="-1" aria-hidden="true"><span class="material-icons-round">chevron_right</span></button>
@@ -200,30 +284,30 @@
                       <div class="demo-bs-timeline-card">
                         <div class="demo-bs-timeline-top">
                           <div>
-                            <p class="demo-bs-time" id="demo-bs-time">Dec 8, 2013</p>
-                            <p class="demo-bs-height" id="demo-bs-height">Block #1,024</p>
+                            <p class="demo-bs-time" id="demo-bs-time">Mar 14, 2021</p>
+                            <p class="demo-bs-height" id="demo-bs-height">Block #3,842,016</p>
                           </div>
-                          <p class="demo-bs-range">Dec 2013 to synced tip</p>
+                          <p class="demo-bs-range" data-i18n="demo.blockstepRange">Dec 2013 to synced tip</p>
                         </div>
                         <div class="demo-bs-timeline">
                           <div class="demo-bs-rail">
-                            <div class="demo-bs-synced" id="demo-bs-synced" style="width:78%"></div>
+                            <div class="demo-bs-synced" id="demo-bs-synced" style="width:68%"></div>
                             <span class="demo-bs-dot has-body" style="left:8%"></span>
                             <span class="demo-bs-dot has-body" style="left:28%"></span>
                             <span class="demo-bs-dot has-body" style="left:52%"></span>
                             <span class="demo-bs-dot has-body" style="left:68%"></span>
-                            <span class="demo-bs-thumb" id="demo-bs-thumb" style="left:78%"></span>
+                            <span class="demo-bs-thumb" id="demo-bs-thumb" style="left:68%"></span>
                           </div>
                           <div class="demo-bs-years">
-                            <span style="left:0%">2013</span>
+                            <span style="left:0%" data-i18n="demo.blockstepYear2013">2013</span>
                             <span style="left:25%">2016</span>
                             <span style="left:50%">2020</span>
                             <span style="left:75%">2024</span>
-                            <span style="left:100%">Tip</span>
+                            <span style="left:100%" data-i18n="demo.blockstepYearTip">Tip</span>
                           </div>
                         </div>
-                        <input type="range" class="demo-bs-slider" value="78" min="0" max="100" disabled aria-hidden="true" tabindex="-1">
-                        <button type="button" class="demo-bs-open-btn" tabindex="-1"><span class="material-icons-round">view_module</span> Open this block</button>
+                        <input type="range" class="demo-bs-slider" value="68" min="0" max="100" disabled aria-hidden="true" tabindex="-1">
+                        <button type="button" class="demo-bs-open-btn" tabindex="-1"><span class="material-icons-round">view_module</span> <span data-i18n="demo.blockstepOpenBlock">Open this block</span></button>
                       </div>
                     </div>
                   </div>
@@ -232,51 +316,102 @@
                     <div class="demo-page-hero">
                       <span class="material-icons-round">pending_actions</span>
                       <div>
-                        <strong>Mempool</strong>
-                        <span>Transactions waiting for the next block.</span>
+                        <strong data-i18n="demo.mempoolTitle">Mempool</strong>
+                        <span data-i18n="demo.mempoolSub">Admission policy, feefilter, package limits, RBF.</span>
                       </div>
                     </div>
+                    <div class="demo-mempool-meta" data-i18n="demo.mempoolMeta">124 txs · 0.42 MB · min relay 0.001 DOGE/kB · Full RBF off</div>
                     <div class="demo-mempool-rows">
-                      <div class="demo-mempool-row"><code>a3f9…c812</code><span>12.5 DOGE</span></div>
-                      <div class="demo-mempool-row"><code>7b2e…91fd</code><span>420 DOGE</span></div>
-                      <div class="demo-mempool-row"><code>c01a…44be</code><span>1.0 DOGE</span></div>
+                      <div class="demo-mempool-row"><code>a3f9…c812</code><span>12.5 DOGE</span><span class="demo-mempool-tag">BIP125</span></div>
+                      <div class="demo-mempool-row"><code>7b2e…91fd</code><span>420 DOGE</span><span class="demo-mempool-tag">standard</span></div>
+                      <div class="demo-mempool-row"><code>c01a…44be</code><span>PQ FLC1</span><span class="demo-mempool-tag">OP_RETURN</span></div>
                     </div>
+                  </div>
+
+                  <div class="demo-panel" data-demo-panel="features">
+                    <div class="demo-page-hero">
+                      <span class="material-icons-round">verified</span>
+                      <div>
+                        <strong data-i18n="demo.featuresTitle">Features &amp; parity</strong>
+                        <span data-i18n="demo.featuresSub">Live RPC capability manifest and operator cert probes.</span>
+                      </div>
+                    </div>
+                    <div class="demo-features-grid">
+                      <div class="demo-feature-pill demo-feature-ok"><span class="material-icons-round">check_circle</span> <span data-i18n="demo.featuresPillAuxpow">AuxPoW Core parity</span></div>
+                      <div class="demo-feature-pill demo-feature-ok"><span class="material-icons-round">check_circle</span> <span data-i18n="demo.featuresPillRpc">180+ JSON-RPC methods</span></div>
+                      <div class="demo-feature-pill demo-feature-ok"><span class="material-icons-round">check_circle</span> <span data-i18n="demo.featuresPillMempool">Mempool corpus (58/58)</span></div>
+                      <div class="demo-feature-pill demo-feature-warn"><span class="material-icons-round">schedule</span> <span data-i18n="demo.featuresPillPsbt">Hardware PSBT</span></div>
+                      <div class="demo-feature-pill demo-feature-ok"><span class="material-icons-round">check_circle</span> <span data-i18n="demo.featuresPillExtensions">Extensions · zkproof-v1</span></div>
+                    </div>
+                    <p class="demo-features-note" data-i18n-html="demo.featuresNote">Settings → Test Core connection · cached cert matrix · OpenRPC at <code>/api/openrpc.json</code></p>
                   </div>
                 </div>
               </div>
 
-              <div class="demo-sync-dock">
-                <span class="material-icons-round demo-spin" aria-hidden="true">sync</span>
-                Syncing Dogecoin mainnet, <span id="demo-sync-dock-pct">42.3</span>%
+              <div class="demo-sync-dock demo-sync-dock-rich">
+                <button type="button" class="demo-sync-dock-bar" tabindex="-1" aria-hidden="true">
+                  <span class="material-icons-round demo-spin">sync</span>
+                  <span class="demo-sync-dock-main" id="demo-sync-dock-main">Body IBD · mainnet · 68.4%</span>
+                  <span class="demo-sync-dock-meta" id="demo-sync-dock-meta">Connected <strong>3,701,204</strong> · Stored <strong>3,842,880</strong> · Behind <strong>1,570,004</strong></span>
+                  <span class="material-icons-round demo-sync-chevron">expand_less</span>
+                </button>
               </div>
             </div>
           </div>
-          <p class="demo-caption">Loopback dashboard preview. Opens at <code>127.0.0.1:2013</code> when you run the node.</p>
+          </div>
+        </div>
+
+        <div class="hero-after">
+          <div class="hero-status">
+            <p class="hero-status-card hero-release-note" id="hero-release-note">
+              <span class="material-icons-round" aria-hidden="true">system_update</span>
+              <span class="hero-status-text" data-i18n="download.soonHeroNote">No release published yet - build from source or check back soon.</span>
+            </p>
+            <p class="hero-status-card hero-note">
+              <span class="material-icons-round" aria-hidden="true">info</span>
+              <span class="hero-status-text" data-i18n="hero.note">Beta: ready to try. Help us test and tune.</span>
+            </p>
+          </div>
+
+          <div class="demo-explainer-wrap" aria-live="polite">
+            <div class="demo-explainer-head">
+              <span class="material-icons-round" aria-hidden="true">auto_awesome</span>
+              <span data-i18n="demo.explainerHead">Live dashboard highlights</span>
+            </div>
+            <div class="demo-explainer" id="demo-explainer"></div>
+          </div>
+
+          <p class="demo-caption" data-i18n-html="demo.caption">Loopback dashboard at <code>127.0.0.1:2013</code> - i18n, update banner, sync dock, embedded Docs, and operator Features tab match the running node.</p>
         </div>
       </div>
     </section>
 
-    <section class="stats-bar" aria-label="Key highlights">
+    <section class="stats-bar" data-i18n-aria="stats.aria">
       <div class="container stats-grid">
         <div class="stat">
           <span class="material-icons-round stat-icon" aria-hidden="true">shield</span>
-          <span class="stat-value">Quantum ready</span>
-          <span class="stat-label">Post-Quantum commitments</span>
+          <span class="stat-value" data-i18n="stats.quantum.value">Quantum ready</span>
+          <span class="stat-label" data-i18n="stats.quantum.label">Post-Quantum commitments</span>
         </div>
         <div class="stat">
           <span class="material-icons-round stat-icon" aria-hidden="true">science</span>
-          <span class="stat-value">T-addresses</span>
-          <span class="stat-label">New reboot testnet</span>
+          <span class="stat-value" data-i18n="stats.testnet.value">T-addresses</span>
+          <span class="stat-label" data-i18n="stats.testnet.label">New reboot testnet</span>
         </div>
         <div class="stat">
           <span class="material-icons-round stat-icon" aria-hidden="true">api</span>
-          <span class="stat-value">180+</span>
-          <span class="stat-label">JSON-RPC methods</span>
+          <span class="stat-value" data-i18n="stats.rpc.value">180+</span>
+          <span class="stat-label" data-i18n="stats.rpc.label">JSON-RPC methods</span>
         </div>
         <div class="stat">
-          <span class="material-icons-round stat-icon" aria-hidden="true">devices</span>
-          <span class="stat-value">12+</span>
-          <span class="stat-label">Supported platforms</span>
+          <span class="material-icons-round stat-icon" aria-hidden="true">system_update</span>
+          <span class="stat-value" data-i18n="stats.autoupdate.value">Auto-update</span>
+          <span class="stat-label" data-i18n="stats.autoupdate.label">GitHub Releases check</span>
+        </div>
+        <div class="stat">
+          <span class="material-icons-round stat-icon" aria-hidden="true">backup</span>
+          <span class="stat-value" data-i18n="stats.walletcare.value">Wallet care</span>
+          <span class="stat-label" data-i18n="stats.walletcare.label">Backup reminders · key rotation</span>
         </div>
       </div>
     </section>
@@ -286,8 +421,8 @@
         <header class="demo-section-header">
           <span class="material-icons-round demo-section-icon" aria-hidden="true">terminal</span>
           <div>
-            <h2 id="console-section-title">Run from the terminal</h2>
-            <p>DogeGo is a single Go binary. Download (soon) or build from source, then start the node. The dashboard and JSON-RPC come up automatically.</p>
+            <h2 id="console-section-title" data-i18n="console.title">Run from the terminal</h2>
+            <p data-i18n="console.lead">DogeGo is a single Go binary. Download from GitHub Releases or build from source, then start the node. The dashboard and JSON-RPC come up automatically.</p>
           </div>
         </header>
         <div class="console-howto">
@@ -295,28 +430,28 @@
             <div class="console-step">
               <span class="console-step-num">1</span>
               <div>
-                <strong>Download or build</strong>
-                <p><code>go build -o dogego ./cmd/dogego</code></p>
+                <strong data-i18n="console.step1Title">Download or build</strong>
+                <p data-i18n-html="console.step1Body"><code>cd DogeGo && go build -o dogego ./cmd/dogego</code></p>
               </div>
             </div>
             <div class="console-step">
               <span class="console-step-num">2</span>
               <div>
-                <strong>Start the node</strong>
-                <p><code>./dogego</code> or <code>./dogego node -network mainnet</code></p>
+                <strong data-i18n="console.step2Title">Start the node</strong>
+                <p data-i18n-html="console.step2Body"><code>./dogego</code> or <code>./dogego node -network mainnet</code></p>
               </div>
             </div>
             <div class="console-step">
               <span class="console-step-num">3</span>
               <div>
-                <strong>Open the dashboard</strong>
-                <p>Browser at <code>127.0.0.1:2013</code>. First run opens the setup wizard.</p>
+                <strong data-i18n="console.step3Title">Open the dashboard</strong>
+                <p data-i18n-html="console.step3Body">Browser at <code>127.0.0.1:2013</code>. First run opens the setup wizard.</p>
               </div>
             </div>
           </div>
           <p class="console-howto-note">
             <span class="material-icons-round" aria-hidden="true">info</span>
-            P2P user-agent announces <code>/DogeGo:0.1.0-beta/</code> on the network. Not Shibetoshi, not Core.
+            <span data-i18n-html="console.note">P2P user-agent announces <code>/DogeGo:0.1.0-beta/</code> on the network. Not Shibetoshi, not Core.</span>
           </p>
         </div>
         <div class="demo-console-wrap">
@@ -326,12 +461,12 @@
             <span class="dot dot-green"></span>
             <span class="demo-console-title">
               <span class="material-icons-round" aria-hidden="true">terminal</span>
-              dogego node
+              <span data-i18n="console.windowTitle">dogego node</span>
             </span>
             <code class="demo-ua">/DogeGo:0.1.0-beta/</code>
-            <span class="demo-console-live"><span class="demo-pulse"></span> Running</span>
+            <span class="demo-console-live"><span class="demo-pulse"></span> <span data-i18n="console.running">Running</span></span>
           </div>
-          <div class="demo-console-body" id="demo-console-log" aria-live="polite" aria-label="Node startup log"></div>
+          <div class="demo-console-body" id="demo-console-log" aria-live="polite" data-i18n-aria="console.logAria"></div>
         </div>
       </div>
     </section>
@@ -339,54 +474,242 @@
     <section class="section" id="features" aria-labelledby="features-title">
       <div class="container">
         <header class="section-header">
-          <h2 id="features-title">Built beyond Dogecoin Core</h2>
-          <p>DogeGo ships operator tooling, indexing, and modern network modes that Core never bundled, in one Go binary with a browser dashboard.</p>
+          <h2 id="features-title" data-i18n="features.title">Built beyond Dogecoin Core</h2>
+          <p data-i18n="features.lead">DogeGo ships operator tooling, indexing, and modern network modes that Core never bundled, in one Go binary with a browser dashboard.</p>
         </header>
         <div class="feature-grid feature-grid-lg">
           <article class="feature-card feature-highlight">
             <span class="material-icons-round feature-icon" aria-hidden="true">shield</span>
-            <h3>Post-Quantum commitments</h3>
-            <p>First Dogecoin full node with Phase-1 PQ OP_RETURN carriers (FLC1, DIL2, RCG4). Send with automatic wallet commitments, verify via <code>dogego_verifypqcommitment</code>, and inspect in the explorer.</p>
+            <h3 data-i18n="features.items.pq.title">Post-Quantum commitments</h3>
+            <p data-i18n-html="features.items.pq.body">First Dogecoin full node with Phase-1 PQ OP_RETURN carriers (FLC1, DIL2, RCG4). Send with automatic wallet commitments, verify via <code>dogego_verifypqcommitment</code>, and inspect in the explorer.</p>
           </article>
           <article class="feature-card">
             <span class="material-icons-round feature-icon" aria-hidden="true">compress</span>
-            <h3>zstd block compression</h3>
-            <p>Optional zstd on stored block bodies plus a bundled <code>blk*.dat</code> layout. Core keeps raw blocks uncompressed. DogeGo reports compression ratio and disk savings in the dashboard.</p>
+            <h3 data-i18n="features.items.zstd.title">zstd block compression</h3>
+            <p data-i18n-html="features.items.zstd.body">Optional zstd on stored block bodies plus a bundled <code>blk*.dat</code> layout. Core keeps raw blocks uncompressed. DogeGo reports compression ratio and disk savings in the dashboard.</p>
           </article>
           <article class="feature-card">
             <span class="material-icons-round feature-icon" aria-hidden="true">dns</span>
-            <h3>Full node or SPV</h3>
-            <p>Run headers-first IBD with full validation, or switch to lightweight SPV (headers only) for minimal disk. Same binary, same wizard. Pick your profile on first run.</p>
+            <h3 data-i18n="features.items.spv.title">Full node or SPV</h3>
+            <p data-i18n="features.items.spv.body">Run headers-first IBD with full validation, or switch to lightweight SPV (headers only) for minimal disk. Same binary, same wizard. Pick your profile on first run.</p>
           </article>
           <article class="feature-card">
             <span class="material-icons-round feature-icon" aria-hidden="true">satellite_alt</span>
-            <h3>CGNAT &amp; Starlink relay</h3>
-            <p>P2P modes: <code>classic</code>, <code>cgnat</code> (outbound-only), or <code>both</code>. Up to 12 outbound peers relay blocks without inbound port forwarding, built for carrier NAT and Starlink.</p>
+            <h3 data-i18n="features.items.cgnat.title">CGNAT &amp; Starlink relay</h3>
+            <p data-i18n-html="features.items.cgnat.body">P2P modes: <code>classic</code>, <code>cgnat</code> (outbound-only), or <code>both</code>. Up to 12 outbound peers relay blocks without inbound port forwarding, built for carrier NAT and Starlink.</p>
           </article>
           <article class="feature-card">
             <span class="material-icons-round feature-icon" aria-hidden="true">science</span>
-            <h3>Reboot testnet</h3>
-            <p>Fresh testnet with addresses starting with <strong>T</strong> (for test). RelaxedPoW enables solo mining at low hashrate, so the chain does not stall when hash power drops. Port <code>44556</code>.</p>
+            <h3 data-i18n="features.items.testnet.title">Reboot testnet</h3>
+            <p data-i18n-html="features.items.testnet.body">Fresh testnet with addresses starting with <strong>T</strong> (for test). Real scrypt PoW like Core (RelaxedPoW off). Digishield min-difficulty helps solo mining when hashrate is low. Port <code>44556</code>.</p>
           </article>
           <article class="feature-card">
             <span class="material-icons-round feature-icon" aria-hidden="true">search</span>
-            <h3>Search everything</h3>
-            <p>Full tx index by default. Search height, block hash, txid, or address from the dashboard. Dogecoin is a public ledger, and DogeGo makes every entry easy to find.</p>
+            <h3 data-i18n="features.items.search.title">Search everything</h3>
+            <p data-i18n="features.items.search.body">Full tx index by default. Search height, block hash, txid, or address from the dashboard. Dogecoin is a public ledger, and DogeGo makes every entry easy to find.</p>
           </article>
           <article class="feature-card">
             <span class="material-icons-round feature-icon" aria-hidden="true">dashboard</span>
-            <h3>Web dashboard</h3>
-            <p>Loopback UI at <code>:2013</code>: KPI cards, mempool, analytics charts, settings, docs, and a five-step setup wizard. No Qt install required.</p>
+            <h3 data-i18n="features.items.dashboard.title">Web dashboard</h3>
+            <p data-i18n-html="features.items.dashboard.body">Loopback UI at <code>:2013</code>: KPI cards, auto-update banner, sync dock, mempool, analytics, embedded Docs, Features cert matrix, and the five-step setup wizard. No Qt install required.</p>
           </article>
           <article class="feature-card">
             <span class="material-icons-round feature-icon" aria-hidden="true">integration_instructions</span>
-            <h3>180+ JSON-RPC methods</h3>
-            <p>Core-compatible HTTP JSON-RPC with cookie auth, ZMQ notifications, OpenRPC at <code>/api/openrpc.json</code>, and live capability flags in the Features tab.</p>
+            <h3 data-i18n="features.items.rpc.title">180+ JSON-RPC methods</h3>
+            <p data-i18n-html="features.items.rpc.body">Core-compatible HTTP JSON-RPC with cookie auth, ZMQ notifications, OpenRPC at <code>/api/openrpc.json</code>, and live capability flags in the Features tab.</p>
           </article>
           <article class="feature-card">
             <span class="material-icons-round feature-icon" aria-hidden="true">account_balance_wallet</span>
-            <h3>Built-in HD wallet</h3>
-            <p>Send, receive, and history with BIP44 HD wallet, PIN unlock, optional WebAuthn biometrics, and PQ commitment overrides on send.</p>
+            <h3 data-i18n="features.items.wallet.title">Built-in HD wallet</h3>
+            <p data-i18n="features.items.wallet.body">Send, receive, and history with BIP44 HD wallet, PIN unlock, optional WebAuthn biometrics, coin control, fee hints, and PQ commitment overrides on send.</p>
+          </article>
+          <article class="feature-card feature-highlight">
+            <span class="material-icons-round feature-icon" aria-hidden="true">system_update</span>
+            <h3 data-i18n="features.items.autoupdate.title">Built-in auto-update</h3>
+            <p data-i18n-html="features.items.autoupdate.body">The node checks <a href="https://github.com/qlpqlp/dogego/releases">GitHub Releases</a> daily for semver tags newer than your build. Overview and Settings show a banner with release notes and a direct binary download when a matching platform asset exists.</p>
+          </article>
+          <article class="feature-card feature-highlight">
+            <span class="material-icons-round feature-icon" aria-hidden="true">backup</span>
+            <h3 data-i18n="features.items.backup.title">Wallet backup reminders</h3>
+            <p data-i18n-html="features.items.backup.body">First-run setup requires downloading <code>wallet.json</code> before start. On Receive, a recurring banner reminds you to back up offline - dismiss for 30 days, or rotate HD keys with an guided sweep to a fresh wallet.</p>
+          </article>
+          <article class="feature-card">
+            <span class="material-icons-round feature-icon" aria-hidden="true">hub</span>
+            <h3 data-i18n="features.items.dgr.title">DogeGo relay CGNAT (DGR)</h3>
+            <p data-i18n-html="features.items.dgr.body">QUIC tunnel for peers behind carrier NAT. Wizard and Settings configure <code>dogego_relay_cgnat</code> roles (Off / Client / Operator), TLS cert pinning, relay DNS seeds, and live metrics on <code>GET /api/dgr</code>.</p>
+          </article>
+          <article class="feature-card">
+            <span class="material-icons-round feature-icon" aria-hidden="true">layers</span>
+            <h3 data-i18n="features.items.dual.title">Dual mainnet + testnet</h3>
+            <p data-i18n-html="features.items.dual.body">Run both networks from one data folder with the <strong>Mainnet + testnet</strong> wizard profile. Separate <code>mainnet/</code> and <code>testnet/</code> chain dirs, dual dashboards (<code>:2013</code> / <code>:2014</code>), solo mining on testnet only.</p>
+          </article>
+          <article class="feature-card feature-highlight">
+            <span class="material-icons-round feature-icon" aria-hidden="true">precision_manufacturing</span>
+            <h3 data-i18n="features.items.mining.title">Miner ready (Core parity)</h3>
+            <p data-i18n-html="features.items.mining.body"><code>getblocktemplate</code> with Digishield <code>NextBlockBits</code> + BIP22 longpoll, <code>createauxblock</code>/<code>submitauxblock</code> for merge-mining, and reboot-testnet solo mining with mempool txs. Certified live via <code>GET /api/core-mining-probe</code> and <code>dogego cert mining</code>.</p>
+          </article>
+          <article class="feature-card feature-highlight">
+            <span class="material-icons-round feature-icon" aria-hidden="true">currency_bitcoin</span>
+            <h3 data-i18n="features.items.bbpow.title">BBPoW research (Bitcoin + DOGE)</h3>
+            <p data-i18n-html="features.items.bbpow.body">Beta extension <code>dogego.bbpow</code>: research toward Bitcoin miners securing Dogecoin the way Litecoin already does via AuxPoW. Same SHA-256 ASICs keep mining Bitcoin; Litecoin Scrypt merge-mining stays. Testnet catalog package with proof verify RPC. Research only. Not mainnet consensus.</p>
+          </article>
+          <article class="feature-card feature-highlight">
+            <span class="material-icons-round feature-icon" aria-hidden="true">collections</span>
+            <h3 data-i18n="features.items.doginals.title">Doginals / DRC-20 L2</h3>
+            <p data-i18n-html="features.items.doginals.body">Beta extension <code>dogego.doginals</code>: index L1 Doginals/DRC-20 data carriers, create NFT/token/image metadata off-chain, and sync L2 assets among DogeGo peers (<code>doginals-v1</code>). Friendly dashboard UI. Mainnet + testnet. No consensus change.</p>
+          </article>
+          <article class="feature-card">
+            <span class="material-icons-round feature-icon" aria-hidden="true">bolt</span>
+            <h3 data-i18n="features.items.bip152.title">BIP152 compact blocks</h3>
+            <p data-i18n-html="features.items.bip152.body">sendcmpct HB negotiation with up to three peers, cmpctblock announce/reconstruct, and getblocktxn fallback. Live probe at <code>GET /api/core-bip152-probe</code>.</p>
+          </article>
+          <article class="feature-card">
+            <span class="material-icons-round feature-icon" aria-hidden="true">pending_actions</span>
+            <h3 data-i18n="features.items.mempoolPolicy.title">Mempool relay policy</h3>
+            <p data-i18n-html="features.items.mempoolPolicy.body">Wizard and Settings expose Core-shaped flags: <code>maxmempool</code>, <code>minrelaytxfee</code>, <code>incrementalrelayfee</code>, package limits, Full RBF, datacarrier, and bare multisig - plus a 58-template offline admission corpus.</p>
+          </article>
+          <article class="feature-card">
+            <span class="material-icons-round feature-icon" aria-hidden="true">download_for_offline</span>
+            <h3 data-i18n="features.items.ibd.title">Parallel block download</h3>
+            <p data-i18n="features.items.ibd.body">Faster, more stable multi-peer IBD: block-assist workers, height striping, auto UTXO dbcache, and Core-style IBD focus so download stays productive through long syncs.</p>
+          </article>
+          <article class="feature-card feature-highlight">
+            <span class="material-icons-round feature-icon" aria-hidden="true">extension</span>
+            <h3 data-i18n="features.items.extensions.title">Installable extensions</h3>
+            <p data-i18n-html="features.items.extensions.body">Install zip packages with <code>dogego.extension.json</code>, enable/disable from Settings or RPC, and ship subprocess or wasm plugins. Built-in <code>dogego.zkl2</code> (ZK L2), beta <code>dogego.doginals</code> (Doginals/DRC-20 L2), and <code>dogego.bbpow</code> (Bitcoin-backed mining research). Extensions may use allowlisted wallet RPC when granted <code>wallet_rpc</code> (authenticated dashboard/RPC; no key export).</p>
+          </article>
+          <article class="feature-card">
+            <span class="material-icons-round feature-icon" aria-hidden="true">verified</span>
+            <h3 data-i18n="features.items.segwit.title">SegWit ready</h3>
+            <p data-i18n-html="features.items.segwit.body">BIP141 interpreter, witness serialization, and weight/vsize helpers ship today, Core-aligned with Dogecoin Core. CLTV is already active. Softfork follows Core’s schedule; see <a href="https://github.com/qlpqlp/dogego/blob/main/DogeGo/docs/SEGWIT_STATUS.md">SEGWIT_STATUS.md</a> for upgrade effects on nodes and miners.</p>
+          </article>
+          <article class="feature-card">
+            <span class="material-icons-round feature-icon" aria-hidden="true">notifications</span>
+            <h3 data-i18n="features.items.tray.title">System tray &amp; notifications</h3>
+            <p data-i18n="features.items.tray.body">Optional tray icon: open dashboard, check/download/install updates with SHA256 verify, and native OS notifications when a new GitHub release is detected.</p>
+          </article>
+        </div>
+      </div>
+    </section>
+
+    <section class="section section-alt" id="fullnode" aria-labelledby="fullnode-title">
+      <div class="container">
+        <header class="section-header">
+          <h2 id="fullnode-title" data-i18n="fullnode.title">Full Dogecoin node - what DogeGo runs today</h2>
+          <p data-i18n="fullnode.lead">Headers-first IBD with parallel body download, auto dbcache, IBD optimize (default on), Go-native storage, Core-compatible JSON-RPC, and operator tooling in one binary. Mainnet consensus follows Dogecoin Core (no protocol forks).</p>
+        </header>
+        <h3 class="subsection-title" data-i18n="fullnode.liveHeading">Live in the app &amp; wizard</h3>
+        <div class="feature-grid feature-grid-lg fullnode-grid">
+          <article class="feature-card feature-ok">
+            <span class="material-icons-round feature-icon" aria-hidden="true">sync</span>
+            <h3 data-i18n="fullnode.live.sync.title">Chain sync &amp; IBD</h3>
+            <p data-i18n-html="fullnode.live.sync.body">Headers-first sync with parallel body download, auto <code>dbcache</code>, IBD optimize (default on), journal recovery, and a sync dock with recent download rate and assist pool metrics.</p>
+          </article>
+          <article class="feature-card feature-ok">
+            <span class="material-icons-round feature-icon" aria-hidden="true">gavel</span>
+            <h3 data-i18n="fullnode.live.consensus.title">Validation &amp; mempool</h3>
+            <p data-i18n-html="fullnode.live.consensus.body">Block/header checks, AuxPoW CAuxPow parity, in-memory UTXO cache with snapshot replay, 58-template mempool admission corpus, BIP125 RBF, feefilter, savemempool/loadmempool.</p>
+          </article>
+          <article class="feature-card feature-ok">
+            <span class="material-icons-round feature-icon" aria-hidden="true">hub</span>
+            <h3 data-i18n="fullnode.live.p2p.title">P2P networking</h3>
+            <p data-i18n-html="fullnode.live.p2p.body"><code>classic</code> / <code>cgnat</code> / <code>both</code>, UPnP/NAT-PMP, learned addr store, addnode, setban, multi-peer relay, DGR QUIC tunnel, BIP152 v1 compact blocks.</p>
+          </article>
+          <article class="feature-card feature-ok">
+            <span class="material-icons-round feature-icon" aria-hidden="true">api</span>
+            <h3 data-i18n="fullnode.live.rpc.title">JSON-RPC &amp; ZMQ</h3>
+            <p data-i18n-html="fullnode.live.rpc.body">180+ methods, cookie auth, getblocktemplate BIP22, mining/aux RPC, estimatesmartfee, ZMQ hash/raw block+tx notifications, OpenRPC and RPC cookbooks in Settings → Tools.</p>
+          </article>
+          <article class="feature-card feature-ok">
+            <span class="material-icons-round feature-icon" aria-hidden="true">account_balance_wallet</span>
+            <h3 data-i18n="fullnode.live.wallet.title">Wallet &amp; migration</h3>
+            <p data-i18n-html="fullnode.live.wallet.body">BIP44 HD per network, wizard backup + optional <code>encryptwallet</code>, fill-to-target <code>keypoolrefill</code>, PSBT/HWI, Core <code>wallet.dat</code> import + pool replay, coin control, Tx Flight, and <code>wallet.db</code> scan index for fast history (auto-rescan when the index lags).</p>
+          </article>
+          <article class="feature-card feature-ok">
+            <span class="material-icons-round feature-icon" aria-hidden="true">settings</span>
+            <h3 data-i18n="fullnode.live.ops.title">Operator UX</h3>
+            <p data-i18n-html="fullnode.live.ops.body">Five-step wizard with five profiles, preflight (firewall, ports, CGNAT, founder), OS autostart, GitHub auto-update, 17 live cert web probes (mining GBT/aux), embedded Docs, analytics Pebble sidecar, <code>dogego cert offline</code> gates.</p>
+          </article>
+          <article class="feature-card feature-ok">
+            <span class="material-icons-round feature-icon" aria-hidden="true">extension</span>
+            <h3 data-i18n="fullnode.live.extensions.title">Extensions, ZK L2, Doginals &amp; BBPoW</h3>
+            <p data-i18n-html="fullnode.live.extensions.body">Catalog install from GitHub, zip upload, wasm/subprocess hosts, runtime permission checks, built-in <code>dogego.zkl2</code> (<code>zkproof-v1</code>), beta <code>dogego.doginals</code> (<code>doginals-v1</code> L2 for inscriptions/NFTs), and <code>dogego.bbpow</code> (Bitcoin-backed mining research, testnet). Dynamic RPC <code>dogego_ext_&lt;id&gt;_&lt;method&gt;</code>.</p>
+          </article>
+        </div>
+      </div>
+    </section>
+
+    <section class="section section-alt" id="operator-ux" aria-labelledby="operator-ux-title">
+      <div class="container">
+        <header class="section-header">
+          <h2 id="operator-ux-title" data-i18n="care.title">Operator experience built in</h2>
+          <p data-i18n="care.lead">DogeGo is more than sync and RPC - the loopback dashboard includes everyday tooling Core never shipped in one place.</p>
+        </header>
+        <div class="care-grid">
+          <article class="care-card">
+            <span class="material-icons-round care-icon" aria-hidden="true">system_update_alt</span>
+            <h3 data-i18n="care.items.releases.title">Release notifications</h3>
+            <p data-i18n-html="care.items.releases.body">Daily update check against the canonical <code>github.com/qlpqlp/dogego</code> repo. CLI prints hints too; dismiss per release from the web UI or <code>POST /api/update/dismiss</code>.</p>
+          </article>
+          <article class="care-card">
+            <span class="material-icons-round care-icon" aria-hidden="true">notifications_active</span>
+            <h3 data-i18n="care.items.backup.title">Backup nudges every 30 days</h3>
+            <p data-i18n-html="care.items.backup.body">Receive tab shows a wallet backup banner until you download a copy or snooze for 30 days. Setup wizard blocks <strong>Save &amp; start</strong> until backup is acknowledged when the wallet is enabled.</p>
+          </article>
+          <article class="care-card">
+            <span class="material-icons-round care-icon" aria-hidden="true">sync_lock</span>
+            <h3 data-i18n="care.items.rotation.title">HD key rotation</h3>
+            <p data-i18n="care.items.rotation.body">One-click prepare → sweep → verify → finalize flow moves your balance to a fresh BIP44 wallet and archives the old keys - with backup required first.</p>
+          </article>
+          <article class="care-card">
+            <span class="material-icons-round care-icon" aria-hidden="true">login</span>
+            <h3 data-i18n="care.items.autostart.title">OS login autostart</h3>
+            <p data-i18n-html="care.items.autostart.body">Register at sign-in on Windows (Task Scheduler), Linux (systemd user), or macOS (LaunchAgent). Wizard and Features tab run the same probes as <code>dogego cert autostart</code>.</p>
+          </article>
+          <article class="care-card">
+            <span class="material-icons-round care-icon" aria-hidden="true">flight_takeoff</span>
+            <h3 data-i18n="care.items.txflight.title">Tx Flight send bar</h3>
+            <p data-i18n="care.items.txflight.body">Animated progress when you send: signing, broadcast, mempool wait, and confirmation - with one-click jump to History or the block explorer.</p>
+          </article>
+          <article class="care-card">
+            <span class="material-icons-round care-icon" aria-hidden="true">translate</span>
+            <h3 data-i18n="care.items.i18n.title">Six dashboard languages</h3>
+            <p data-i18n="care.items.i18n.body">English, Deutsch, Français, Português, 日本語, and 中文 - wizard and dashboard share the same locale picker in the top bar.</p>
+          </article>
+          <article class="care-card">
+            <span class="material-icons-round care-icon" aria-hidden="true">pin</span>
+            <h3 data-i18n="care.items.pin.title">PIN &amp; WebAuthn lock</h3>
+            <p data-i18n="care.items.pin.body">Optional 6-digit dashboard PIN on setup or in Settings. Pair with device biometrics (WebAuthn) to unlock Send and wallet views without retyping every time.</p>
+          </article>
+          <article class="care-card">
+            <span class="material-icons-round care-icon" aria-hidden="true">menu_book</span>
+            <h3 data-i18n="care.items.docs.title">Embedded Docs tab</h3>
+            <p data-i18n-html="care.items.docs.body">Operator runbooks, integration guides, and repo markdown rendered in-browser via <code>GET /api/docs</code> - no GitHub tab required while you tune the node.</p>
+          </article>
+          <article class="care-card">
+            <span class="material-icons-round care-icon" aria-hidden="true">verified</span>
+            <h3 data-i18n="care.items.cert.title">Live cert matrix</h3>
+            <p data-i18n-html="care.items.cert.body">Features tab exposes Core parity counts, OpenRPC at <code>/api/openrpc.json</code>, and seventeen live operator web gates (compare, mempool, mining GBT/aux, autostart, founder, BIP152, IBD convergence, runner readiness, end-to-end, and more).</p>
+          </article>
+          <article class="care-card">
+            <span class="material-icons-round care-icon" aria-hidden="true">sync</span>
+            <h3 data-i18n="care.items.syncdock.title">Fixed sync dock</h3>
+            <p data-i18n="care.items.syncdock.body">Core-style footer during IBD: connected vs stored bodies, assist pool, recent download rate, connect lag, ETA, and expandable live logs - always visible while you browse tabs.</p>
+          </article>
+          <article class="care-card">
+            <span class="material-icons-round care-icon" aria-hidden="true">shield</span>
+            <h3 data-i18n="care.items.firewall.title">Firewall &amp; preflight</h3>
+            <p data-i18n="care.items.firewall.body">Setup wizard runs automatic checks for ports, CGNAT hints, and optional OS firewall rules. Copy-paste elevated commands appear on Overview when action is needed.</p>
+          </article>
+          <article class="care-card">
+            <span class="material-icons-round care-icon" aria-hidden="true">receipt_long</span>
+            <h3 data-i18n="care.items.history.title">History that scales</h3>
+            <p data-i18n="care.items.history.body">Infinite-scroll transaction feed with server-side search and type filters, CSV export, UTXO-cache fast path for solo miners, and soft refresh that preserves scroll position.</p>
+          </article>
+          <article class="care-card">
+            <span class="material-icons-round care-icon" aria-hidden="true">extension</span>
+            <h3 data-i18n="care.items.extensions.title">Extensions catalog</h3>
+            <p data-i18n-html="care.items.extensions.body">Settings -> Extensions lists catalog packages. Install from GitHub or zip, enable <code>dogego.zkl2</code> for ZK L2, <code>dogego.doginals</code> for Doginals/DRC-20 L2, or beta <code>dogego.bbpow</code> (testnet) for Bitcoin-backed mining research. Wallet only via authenticated allowlisted RPC when enabled in the extension Settings.</p>
           </article>
         </div>
       </div>
@@ -395,8 +718,8 @@
     <section class="section section-alt" id="blockstep" aria-labelledby="blockstep-title">
       <div class="container">
         <header class="section-header">
-          <h2 id="blockstep-title">BlockStep: explore Dogecoin the fun way</h2>
-          <p>Because Dogecoin is a public ledger, every block and transaction should be easy to find. DogeGo indexes the chain and BlockStep turns it into an interactive timeline.</p>
+          <h2 id="blockstep-title" data-i18n="blockstep.title">BlockStep: explore Dogecoin the fun way</h2>
+          <p data-i18n="blockstep.lead">Because Dogecoin is a public ledger, every block and transaction should be easy to find. DogeGo indexes the chain and BlockStep turns it into an interactive timeline.</p>
         </header>
         <div class="blockstep-showcase">
           <div class="blockstep-visual">
@@ -408,14 +731,14 @@
               <div class="blockstep-dot blockstep-dot-tip" style="left: 96%"></div>
             </div>
             <div class="blockstep-labels">
-              <span>Genesis 2013</span><span>Halving era</span><span>Today</span><span>Tip</span>
+              <span data-i18n="blockstep.labelGenesis">Genesis 2013</span><span data-i18n="blockstep.labelHalving">Joke era</span><span data-i18n="blockstep.labelToday">Today</span><span data-i18n="blockstep.labelTip">Tip</span>
             </div>
           </div>
           <ul class="blockstep-list">
-            <li><span class="material-icons-round">search</span> Search by height, hash, txid, or address from Overview or Explorer</li>
-            <li><span class="material-icons-round">pets</span> BlockStep timeline: scrub from genesis to tip, drill into any block</li>
-            <li><span class="material-icons-round">storage</span> Flat <code>indexes/tx/</code> index, not Core's chainstate layout</li>
-            <li><span class="material-icons-round">verified</span> PQ explorer panel: inspect post-quantum commitment scripts</li>
+            <li><span class="material-icons-round">search</span> <span data-i18n="blockstep.listSearch">Search by height, hash, txid, or address from Overview or Explorer</span></li>
+            <li><span class="material-icons-round">pets</span> <span data-i18n="blockstep.listTimeline">BlockStep timeline: scrub from genesis to tip, drill into any block</span></li>
+            <li><span class="material-icons-round">storage</span> <span data-i18n-html="blockstep.listIndex">Flat <code>indexes/tx/</code> index, not Core's chainstate layout</span></li>
+            <li><span class="material-icons-round">verified</span> <span data-i18n="blockstep.listPq">PQ explorer panel: inspect post-quantum commitment scripts</span></li>
           </ul>
         </div>
       </div>
@@ -424,177 +747,289 @@
     <section class="section" id="wizard" aria-labelledby="wizard-title">
       <div class="container">
         <header class="section-header">
-          <h2 id="wizard-title">Five-step setup wizard</h2>
-          <p>First run opens a guided wizard. Pick a profile and DogeGo configures network, P2P, sync, and wallet for you.</p>
+          <h2 id="wizard-title" data-i18n="wizard.title">Five-step setup wizard</h2>
+          <p data-i18n-html="wizard.lead">First run opens a guided wizard at <code>/setup</code>. Pick a profile, run automatic preflight checks, configure bundled+zstd storage, then save with optional PIN, OS autostart, and wallet backup.</p>
         </header>
 
-        <div class="wiz-demo wiz-demo-app" aria-label="Animated setup wizard preview">
+        <div class="wiz-demo wiz-demo-app" data-i18n-aria="wizard.aria">
           <div class="wiz-demo-topbar">
             <img src="assets/dogecoin.svg" alt="" width="22" height="22">
             <span>DogeGo</span>
-            <span class="wiz-demo-badge">setup</span>
+            <span class="wiz-demo-badge" data-i18n="wizard.setupBadge">setup</span>
             <span class="wiz-demo-topbar-spacer"></span>
-            <span class="wiz-demo-first-run">First run</span>
+            <button type="button" class="demo-lang-btn demo-lang-btn-wiz" tabindex="-1" aria-hidden="true">
+              <span class="material-icons-round">language</span>
+              <span class="demo-lang-label">English</span>
+            </button>
+            <span class="wiz-demo-first-run" data-i18n="wizard.firstRun">First run</span>
           </div>
           <div class="wiz-demo-body">
-            <p class="wiz-demo-kicker" id="wiz-demo-kicker">Step 1 of 5</p>
-            <nav class="wiz-demo-stepper" aria-label="Setup progress">
+            <p class="wiz-demo-kicker" id="wiz-demo-kicker">Step 1 of 5 · Profile</p>
+            <nav class="wiz-demo-stepper" data-i18n-aria="wizard.progressAria">
               <ol class="wiz-setup-steps">
                 <li class="active" data-step="0">
                   <span class="wiz-step-indicator" aria-hidden="true">
                     <span class="material-icons-round wiz-step-icon">touch_app</span>
                     <span class="material-icons-round wiz-step-check">check</span>
                   </span>
-                  <span class="wiz-step-label">Profile</span>
+                  <span class="wiz-step-label" data-i18n="wizard.steps.profile">Profile</span>
                 </li>
                 <li data-step="1">
                   <span class="wiz-step-indicator" aria-hidden="true">
                     <span class="material-icons-round wiz-step-icon">folder</span>
                     <span class="material-icons-round wiz-step-check">check</span>
                   </span>
-                  <span class="wiz-step-label">Data</span>
+                  <span class="wiz-step-label" data-i18n="wizard.steps.data">Data</span>
                 </li>
                 <li data-step="2">
                   <span class="wiz-step-indicator" aria-hidden="true">
                     <span class="material-icons-round wiz-step-icon">hub</span>
                     <span class="material-icons-round wiz-step-check">check</span>
                   </span>
-                  <span class="wiz-step-label">Network</span>
+                  <span class="wiz-step-label" data-i18n="wizard.steps.network">Network</span>
                 </li>
                 <li data-step="3">
                   <span class="wiz-step-indicator" aria-hidden="true">
                     <span class="material-icons-round wiz-step-icon">sync</span>
                     <span class="material-icons-round wiz-step-check">check</span>
                   </span>
-                  <span class="wiz-step-label">Sync</span>
+                  <span class="wiz-step-label" data-i18n="wizard.steps.sync">Sync</span>
                 </li>
                 <li data-step="4">
                   <span class="wiz-step-indicator" aria-hidden="true">
                     <span class="material-icons-round wiz-step-icon">rocket_launch</span>
                     <span class="material-icons-round wiz-step-check">check</span>
                   </span>
-                  <span class="wiz-step-label">Finish</span>
+                  <span class="wiz-step-label" data-i18n="wizard.steps.finish">Finish</span>
                 </li>
               </ol>
             </nav>
             <div class="wiz-demo-panels">
-              <div class="wiz-demo-panel wiz-panel-active">
-                <h3 class="wiz-panel-title">Choose your setup</h3>
-                <p class="wiz-panel-hint">Tap a card below. Each option sets network, node mode, wallet, and P2P defaults.</p>
+              <div class="wiz-demo-panel wiz-panel-active" data-wiz-step="0">
+                <h3 class="wiz-panel-title" data-i18n="wizard.panels.profileTitle">Choose your setup</h3>
+                <p class="wiz-panel-hint" data-i18n="wizard.panels.profileHint">Tap a card - each profile sets network, node mode, wallet, and P2P defaults.</p>
                 <div class="wiz-profile-grid">
                   <div class="wiz-profile-card selected">
                     <span class="wiz-profile-icon material-icons-round">science</span>
-                    <span class="wiz-profile-title">Try testnet</span>
-                    <span class="wiz-profile-sub">Full node · wallet on · best for first run</span>
-                    <span class="wiz-profile-tags"><span>testnet</span><span>full</span></span>
+                    <span class="wiz-profile-title" data-i18n="wizard.panels.profileTryTestnet">Try testnet</span>
+                    <span class="wiz-profile-sub" data-i18n="wizard.panels.profileTryTestnetSub">Full node · wallet on · best for first run</span>
+                    <span class="wiz-profile-tags"><span>testnet</span><span>full</span><span>auto peers</span></span>
                   </div>
                   <div class="wiz-profile-card">
                     <span class="wiz-profile-icon material-icons-round">public</span>
-                    <span class="wiz-profile-title">Mainnet full node</span>
-                    <span class="wiz-profile-sub">Production Dogecoin · longer sync</span>
-                    <span class="wiz-profile-tags"><span>mainnet</span><span>full</span></span>
+                    <span class="wiz-profile-title" data-i18n="wizard.panels.profileMainnetFull">Mainnet full node</span>
+                    <span class="wiz-profile-sub" data-i18n="wizard.panels.profileMainnetFullSub">Production Dogecoin · longer sync, full validation</span>
+                    <span class="wiz-profile-tags"><span>mainnet</span><span>full</span><span>relay</span></span>
                   </div>
                   <div class="wiz-profile-card">
                     <span class="wiz-profile-icon material-icons-round">account_balance_wallet</span>
-                    <span class="wiz-profile-title">Mainnet + wallet</span>
-                    <span class="wiz-profile-sub">Full node with Send/Receive</span>
-                    <span class="wiz-profile-tags"><span>mainnet</span><span>wallet</span></span>
+                    <span class="wiz-profile-title" data-i18n="wizard.panels.profileMainnetWallet">Mainnet + wallet</span>
+                    <span class="wiz-profile-sub" data-i18n="wizard.panels.profileMainnetWalletSub">Send/Receive · optional 6-digit dashboard PIN on finish</span>
+                    <span class="wiz-profile-tags"><span>mainnet</span><span>wallet</span><span>full</span></span>
+                  </div>
+                  <div class="wiz-profile-card">
+                    <span class="wiz-profile-icon material-icons-round">layers</span>
+                    <span class="wiz-profile-title" data-i18n="wizard.panels.profileDual">Mainnet + testnet</span>
+                    <span class="wiz-profile-sub" data-i18n="wizard.panels.profileDualSub">Two nodes · wallet on both · mine on testnet</span>
+                    <span class="wiz-profile-tags"><span>mainnet</span><span>testnet</span><span>dual</span></span>
                   </div>
                   <div class="wiz-profile-card">
                     <span class="wiz-profile-icon material-icons-round">speed</span>
-                    <span class="wiz-profile-title">Light SPV + wallet</span>
-                    <span class="wiz-profile-sub">Headers only · low disk · CGNAT-friendly</span>
-                    <span class="wiz-profile-tags"><span>testnet</span><span>spv</span></span>
+                    <span class="wiz-profile-title" data-i18n="wizard.panels.profileLightSpv">Light SPV + wallet</span>
+                    <span class="wiz-profile-sub" data-i18n="wizard.panels.profileLightSpvSub">Headers only · low disk · CGNAT-friendly</span>
+                    <span class="wiz-profile-tags"><span>testnet</span><span>spv</span><span>cgnat</span></span>
                   </div>
                 </div>
+                <label class="wiz-advanced-toggle"><span data-i18n="wizard.panels.advancedToggle">Show advanced options on later steps</span><span class="wiz-toggle-fake"></span></label>
               </div>
-              <div class="wiz-demo-panel">
-                <h3 class="wiz-panel-title">Data directory</h3>
-                <p class="wiz-panel-hint"><code>~/.dogego/testnet</code> · network subfolder created automatically.</p>
+              <div class="wiz-demo-panel" data-wiz-step="1">
+                <h3 class="wiz-panel-title" data-i18n="wizard.panels.dataTitle">Data directory &amp; network</h3>
+                <p class="wiz-panel-hint" data-i18n-html="wizard.panels.dataHint">Go-native layout - <code>headers.bin</code>, <code>rawblocks/</code>, <code>indexes/</code> - not Core <code>chainstate/</code>.</p>
+                <div class="wiz-field-demo">
+                  <span class="wiz-field-label" data-i18n="wizard.panels.dataDirLabel">Data directory</span>
+                  <span class="wiz-field-value" data-i18n="wizard.panels.dataDirValue">./dogedata</span>
+                </div>
+                <div class="wiz-option-cards">
+                  <span class="wiz-option-card"><span data-i18n="wizard.panels.dataTestnet">Testnet</span> <small data-i18n="wizard.panels.dataTestnetSub">Safe sandbox</small></span>
+                  <span class="wiz-option-card wiz-option-muted" data-i18n="wizard.panels.dataMainnet">Mainnet</span>
+                </div>
+                <div class="wiz-option-cards">
+                  <span class="wiz-option-card"><span data-i18n="wizard.panels.dataFullNode">Full node</span> <small data-i18n="wizard.panels.dataFullNodeSub">Headers + bodies</small></span>
+                  <span class="wiz-option-card wiz-option-muted" data-i18n="wizard.panels.dataSpv">SPV (light)</span>
+                </div>
+                <p class="wiz-panel-foot" data-i18n="wizard.panels.dataFoot">Peer left empty → automatic DNS + addrman discovery.</p>
               </div>
-              <div class="wiz-demo-panel">
-                <h3 class="wiz-panel-title">Network &amp; P2P</h3>
-                <p class="wiz-panel-hint">CGNAT mode selected · outbound relay for Starlink, no port forward needed.</p>
+              <div class="wiz-demo-panel" data-wiz-step="2">
+                <h3 class="wiz-panel-title" data-i18n="wizard.panels.networkTitle">Network &amp; P2P</h3>
+                <p class="wiz-panel-hint" data-i18n="wizard.panels.networkHint">Connectivity, firewall, UPnP, and automatic preflight before you sync.</p>
+                <div class="wiz-option-cards">
+                  <span class="wiz-option-card"><span data-i18n="wizard.panels.networkBoth">Both</span> <small data-i18n="wizard.panels.networkBothSub">Inbound + outbound · DGR relay</small></span>
+                  <span class="wiz-option-card wiz-option-muted" data-i18n="wizard.panels.networkCgnat">CGNAT</span>
+                  <span class="wiz-option-card wiz-option-muted" data-i18n="wizard.panels.networkClassic">Classic</span>
+                </div>
+                <div class="wiz-preflight-list">
+                  <div class="wiz-preflight-item wiz-preflight-ok"><span class="material-icons-round">check_circle</span> <span data-i18n="wizard.panels.preflightP2p">P2P port reachable</span></div>
+                  <div class="wiz-preflight-item wiz-preflight-ok"><span class="material-icons-round">check_circle</span> <span data-i18n-html="wizard.panels.preflightWebui">Web UI loopback <code>127.0.0.1:2013</code></span></div>
+                  <div class="wiz-preflight-item wiz-preflight-warn"><span class="material-icons-round">warning</span> <span data-i18n="wizard.panels.preflightUpnp">UPnP auto when listening</span></div>
+                </div>
               </div>
-              <div class="wiz-demo-panel">
-                <h3 class="wiz-panel-title">Sync options</h3>
-                <p class="wiz-panel-hint">Full node · zstd compression on · tx index on · recommended disk layout.</p>
+              <div class="wiz-demo-panel" data-wiz-step="3">
+                <h3 class="wiz-panel-title" data-i18n="wizard.panels.syncTitle">Sync &amp; storage</h3>
+                <p class="wiz-panel-hint" data-i18n-html="wizard.panels.syncHint">Recommended defaults: bundled <code>blk*.dat</code>, zstd compression, compact tx index.</p>
+                <div class="wiz-switch-row"><span data-i18n="wizard.panels.syncBundled">Bundled block storage</span><span class="wiz-switch-on" data-i18n="wizard.panels.syncOn">on</span></div>
+                <div class="wiz-switch-row"><span data-i18n="wizard.panels.syncZstd">Compress stored blocks (zstd)</span><span class="wiz-switch-on" data-i18n="wizard.panels.syncOn">on</span></div>
+                <div class="wiz-switch-row"><span data-i18n="wizard.panels.syncTxIndex">Transaction index</span><span class="wiz-switch-on" data-i18n="wizard.panels.syncOn">on</span></div>
+                <div class="wiz-switch-row"><span data-i18n="wizard.panels.syncEmbedTx">Embed full tx bytes in index</span><span class="wiz-switch-off" data-i18n="wizard.panels.syncOff">off</span></div>
+                <div class="wiz-switch-row"><span data-i18n="wizard.panels.syncAnalytics">Analytics sidecar (Pebble)</span><span class="wiz-switch-on" data-i18n="wizard.panels.syncOn">on</span></div>
+                <div class="wiz-switch-row"><span data-i18n="wizard.panels.syncIbdOptimize">Optimize initial block download</span><span class="wiz-switch-on" data-i18n="wizard.panels.syncOn">on</span></div>
+                <div class="wiz-switch-row"><span data-i18n="wizard.panels.syncDbcache">DB cache / UTXO (auto RAM)</span><span class="wiz-switch-on" data-i18n="wizard.panels.syncOn">on</span></div>
+                <p class="wiz-panel-foot" data-i18n="wizard.panels.syncFoot">Block sync workers: automatic (2-6 peers during IBD). Auto dbcache uses free RAM.</p>
               </div>
-              <div class="wiz-demo-panel">
-                <h3 class="wiz-panel-title">Ready to launch</h3>
-                <p class="wiz-panel-hint">Save &amp; start · dashboard opens at <code>127.0.0.1:2013</code>.</p>
+              <div class="wiz-demo-panel" data-wiz-step="4">
+                <h3 class="wiz-panel-title" data-i18n="wizard.panels.finishTitle">Finish &amp; launch</h3>
+                <p class="wiz-panel-hint" data-i18n="wizard.panels.finishHint">Dashboard security, OS autostart, wallet backup, and config summary.</p>
+                <div class="wiz-finish-banner">
+                  <span class="material-icons-round">download</span>
+                  <span data-i18n-html="wizard.panels.finishBackupBanner"><strong>Wallet backup required</strong> - download <code>wallet.json</code> before Save &amp; start</span>
+                </div>
+                <div class="wiz-switch-row"><span data-i18n="wizard.panels.finishPin">6-digit dashboard PIN (optional)</span><span class="wiz-switch-off" data-i18n="wizard.panels.syncOff">off</span></div>
+                <div class="wiz-switch-row"><span data-i18n="wizard.panels.finishAutostart">Start at OS sign-in</span><span class="wiz-switch-on" data-i18n="wizard.panels.syncOn">on</span></div>
+                <div class="wiz-review-snippet">
+                  <span data-i18n="wizard.panels.finishReview">testnet · full · P2P both · bundled+zstd · wallet on</span>
+                </div>
+                <button type="button" class="wiz-start-btn" tabindex="-1">
+                  <span class="material-icons-round">play_arrow</span> <span data-i18n="wizard.panels.finishStartBtn">Save &amp; start node</span>
+                </button>
               </div>
             </div>
           </div>
         </div>
+
+        <ul class="wizard-feature-list">
+          <li><span class="material-icons-round">translate</span> <span data-i18n="wizard.list.i18n">Six UI languages (English, Deutsch, Français, 日本語, 中文, Português)</span></li>
+          <li><span class="material-icons-round">fact_check</span> <span data-i18n="wizard.list.preflight">Automatic preflight - firewall, ports, CGNAT hints, founder checks on reboot testnet</span></li>
+          <li><span class="material-icons-round">backup</span> <span data-i18n="wizard.list.backup">Wallet backup gate on finish; optional encryptwallet; Receive tab reminds every 30 days</span></li>
+          <li><span class="material-icons-round">login</span> <span data-i18n-html="wizard.list.autostart">OS login autostart with <code>dogego cert autostart</code> parity probes</span></li>
+          <li><span class="material-icons-round">layers</span> <span data-i18n="wizard.list.dual">Dual mainnet+testnet profile with shared datadir and separate RPC/dashboard ports</span></li>
+          <li><span class="material-icons-round">speed</span> <span data-i18n="wizard.list.ibd">IBD optimize on by default; auto dbcache sizes UTXO RAM from free memory</span></li>
+          <li><span class="material-icons-round">pending_actions</span> <span data-i18n="wizard.list.mempool">Advanced mempool relay policy on finish (maxmempool, min relay, package limits, Full RBF)</span></li>
+          <li><span class="material-icons-round">lock</span> <span data-i18n="wizard.list.encrypt">Optional wallet encryption on finish (Core encryptwallet) after backup download</span></li>
+          <li><span class="material-icons-round">hub</span> <span data-i18n="wizard.list.dgr">DGR relay auto-configured when P2P mode is both or cgnat</span></li>
+          <li><span class="material-icons-round">notifications</span> <span data-i18n="wizard.list.tray">System tray, <code>dogecoin://</code> link handler, and optional no-browser / no-webui flags</span></li>
+        </ul>
       </div>
     </section>
 
     <section class="section section-alt" id="advantages" aria-labelledby="advantages-title">
       <div class="container">
         <header class="section-header">
-          <h2 id="advantages-title">Why operators choose DogeGo</h2>
-          <p>DogeGo is experimental. It is not a Core replacement for exchanges, but it adds capabilities Core does not ship today.</p>
+          <h2 id="advantages-title" data-i18n="compare.title">Why operators choose DogeGo</h2>
+          <p data-i18n="compare.lead">DogeGo is beta. Run it, break things, report what needs tuning. It ships capabilities Core does not (web dashboard, CGNAT relay, analytics, extensions).</p>
         </header>
         <div class="compare-table-wrap">
           <table class="compare-table">
             <thead>
               <tr>
-                <th scope="col">Capability</th>
-                <th scope="col">DogeGo</th>
-                <th scope="col">Dogecoin Core</th>
+                <th scope="col" data-i18n="compare.headers.cap">Capability</th>
+                <th scope="col" data-i18n="compare.headers.doge">DogeGo</th>
+                <th scope="col" data-i18n="compare.headers.core">Dogecoin Core</th>
               </tr>
             </thead>
             <tbody>
               <tr>
-                <td>Browser dashboard</td>
-                <td><span class="material-icons-round compare-yes">check_circle</span> Built-in at :2013</td>
-                <td>Qt desktop only</td>
+                <td data-i18n="compare.rows.browserDashboard.cap">Browser dashboard</td>
+                <td><span class="material-icons-round compare-yes">check_circle</span> <span data-i18n="compare.rows.browserDashboard.doge">Built-in at :2013</span></td>
+                <td data-i18n="compare.rows.browserDashboard.core">Qt desktop only</td>
               </tr>
               <tr>
-                <td>Setup wizard</td>
-                <td><span class="material-icons-round compare-yes">check_circle</span> 5-step first-run</td>
-                <td>Manual config</td>
+                <td data-i18n="compare.rows.setupWizard.cap">Setup wizard</td>
+                <td><span class="material-icons-round compare-yes">check_circle</span> <span data-i18n="compare.rows.setupWizard.doge">5-step · profiles · preflight · wallet backup</span></td>
+                <td data-i18n="compare.rows.setupWizard.core">Manual config</td>
               </tr>
               <tr>
-                <td>BlockStep explorer</td>
-                <td><span class="material-icons-round compare-yes">check_circle</span> Interactive timeline</td>
-                <td>No bundled explorer</td>
+                <td data-i18n="compare.rows.blockstepExplorer.cap">BlockStep explorer</td>
+                <td><span class="material-icons-round compare-yes">check_circle</span> <span data-i18n="compare.rows.blockstepExplorer.doge">Interactive timeline</span></td>
+                <td data-i18n="compare.rows.blockstepExplorer.core">No bundled explorer</td>
               </tr>
               <tr>
-                <td>Post-quantum sends</td>
-                <td><span class="material-icons-round compare-yes">check_circle</span> FLC1/DIL2/RCG4 commitments</td>
+                <td data-i18n="compare.rows.postQuantum.cap">Post-quantum sends</td>
+                <td><span class="material-icons-round compare-yes">check_circle</span> <span data-i18n="compare.rows.postQuantum.doge">FLC1/DIL2/RCG4 commitments</span></td>
+                <td data-i18n="compare.rows.postQuantum.core">Not available</td>
+              </tr>
+              <tr>
+                <td data-i18n="compare.rows.zstdCompression.cap">zstd block compression</td>
+                <td><span class="material-icons-round compare-yes">check_circle</span> <span data-i18n="compare.rows.zstdCompression.doge">Optional, with ratio metrics</span></td>
+                <td data-i18n="compare.rows.zstdCompression.core">Uncompressed blocks/</td>
+              </tr>
+              <tr>
+                <td data-i18n="compare.rows.cgnatRelay.cap">CGNAT / Starlink relay</td>
+                <td><span class="material-icons-round compare-yes">check_circle</span> <span data-i18n="compare.rows.cgnatRelay.doge">Outbound multi-peer modes</span></td>
+                <td data-i18n="compare.rows.cgnatRelay.core">Needs inbound ports</td>
+              </tr>
+              <tr>
+                <td data-i18n="compare.rows.spvMode.cap">SPV mode</td>
+                <td><span class="material-icons-round compare-yes">check_circle</span> <span data-i18n="compare.rows.spvMode.doge">Headers-only profile</span></td>
+                <td data-i18n="compare.rows.spvMode.core">Separate tools</td>
+              </tr>
+              <tr>
+                <td data-i18n="compare.rows.analyticsSidecar.cap">Analytics sidecar</td>
+                <td><span class="material-icons-round compare-yes">check_circle</span> <span data-i18n="compare.rows.analyticsSidecar.doge">Pebble charts in UI</span></td>
+                <td data-i18n="compare.rows.analyticsSidecar.core">External tooling</td>
+              </tr>
+              <tr>
+                <td data-i18n="compare.rows.testnetAddresses.cap">Testnet T-addresses</td>
+                <td><span class="material-icons-round compare-yes">check_circle</span> <span data-i18n="compare.rows.testnetAddresses.doge">Reboot testnet · Digishield min-diff</span></td>
+                <td data-i18n="compare.rows.testnetAddresses.core">Legacy testnet</td>
+              </tr>
+              <tr>
+                <td data-i18n="compare.rows.autoUpdate.cap">Auto-update</td>
+                <td><span class="material-icons-round compare-yes">check_circle</span> <span data-i18n="compare.rows.autoUpdate.doge">GitHub Releases · web banner · CLI notice</span></td>
+                <td data-i18n="compare.rows.autoUpdate.core">Manual download</td>
+              </tr>
+              <tr>
+                <td data-i18n="compare.rows.walletBackupCare.cap">Wallet backup care</td>
+                <td><span class="material-icons-round compare-yes">check_circle</span> <span data-i18n="compare.rows.walletBackupCare.doge">Setup gate · 30-day reminders · key rotation</span></td>
+                <td data-i18n="compare.rows.walletBackupCare.core">Operator responsibility</td>
+              </tr>
+              <tr>
+                <td data-i18n="compare.rows.osAutostart.cap">OS autostart</td>
+                <td><span class="material-icons-round compare-yes">check_circle</span> <span data-i18n="compare.rows.osAutostart.doge">Login autostart + cert probes</span></td>
+                <td data-i18n="compare.rows.osAutostart.core">Manual service setup</td>
+              </tr>
+              <tr>
+                <td data-i18n="compare.rows.dashboardI18n.cap">Dashboard i18n</td>
+                <td><span class="material-icons-round compare-yes">check_circle</span> <span data-i18n="compare.rows.dashboardI18n.doge">6 languages in wizard + UI</span></td>
+                <td data-i18n="compare.rows.dashboardI18n.core">English Qt only</td>
+              </tr>
+              <tr>
+                <td data-i18n="compare.rows.coreSideBySide.cap">Core side-by-side probes</td>
+                <td><span class="material-icons-round compare-yes">check_circle</span> <span data-i18n="compare.rows.coreSideBySide.doge">Live compare · cert matrix · Console presets</span></td>
+                <td data-i18n="compare.rows.coreSideBySide.core">External scripts</td>
+              </tr>
+              <tr>
+                <td>DGR QUIC relay</td>
+                <td><span class="material-icons-round compare-yes">check_circle</span> Client / operator roles · TLS pin · metrics</td>
                 <td>Not available</td>
               </tr>
               <tr>
-                <td>zstd block compression</td>
-                <td><span class="material-icons-round compare-yes">check_circle</span> Optional, with ratio metrics</td>
-                <td>Uncompressed blocks/</td>
+                <td>Dual network instance</td>
+                <td><span class="material-icons-round compare-yes">check_circle</span> Mainnet + reboot testnet from one wizard</td>
+                <td>Separate datadirs manually</td>
               </tr>
               <tr>
-                <td>CGNAT / Starlink relay</td>
-                <td><span class="material-icons-round compare-yes">check_circle</span> Outbound multi-peer modes</td>
-                <td>Needs inbound ports</td>
+                <td>System tray + auto-update install</td>
+                <td><span class="material-icons-round compare-yes">check_circle</span> SHA256 verify · native notifications</td>
+                <td>Manual download</td>
               </tr>
               <tr>
-                <td>SPV mode</td>
-                <td><span class="material-icons-round compare-yes">check_circle</span> Headers-only profile</td>
-                <td>Separate tools</td>
+                <td data-i18n="compare.rows.coreWalletMigration.cap">Core wallet.dat migration</td>
+                <td><span class="material-icons-round compare-yes">check_circle</span> <span data-i18n="compare.rows.coreWalletMigration.doge">Native BDB probe · import · encrypted passphrase · Core RPC fallback</span></td>
+                <td data-i18n="compare.rows.coreWalletMigration.core">Native wallet.dat format</td>
               </tr>
               <tr>
-                <td>Analytics sidecar</td>
-                <td><span class="material-icons-round compare-yes">check_circle</span> SQLite charts in UI</td>
-                <td>External tooling</td>
-              </tr>
-              <tr>
-                <td>Testnet T-addresses</td>
-                <td><span class="material-icons-round compare-yes">check_circle</span> Reboot testnet · RelaxedPoW</td>
-                <td>Legacy testnet</td>
-              </tr>
-              <tr>
-                <td>Production certification</td>
-                <td>In progress (beta)</td>
-                <td><span class="material-icons-round compare-yes">check_circle</span> Established</td>
+                <td data-i18n="compare.rows.productionCertification.cap">Production certification</td>
+                <td data-i18n="compare.rows.productionCertification.doge">In progress (beta)</td>
+                <td><span class="material-icons-round compare-yes">check_circle</span> <span data-i18n="compare.rows.productionCertification.core">Established</span></td>
               </tr>
             </tbody>
           </table>
@@ -605,40 +1040,40 @@
     <section class="section" id="networks" aria-labelledby="networks-title">
       <div class="container">
         <header class="section-header">
-          <h2 id="networks-title">Networks &amp; ports</h2>
+          <h2 id="networks-title" data-i18n="networks.title">Networks &amp; ports</h2>
         </header>
         <div class="network-table-wrap">
           <table class="network-table">
             <thead>
               <tr>
-                <th scope="col">Service</th>
-                <th scope="col">Mainnet</th>
-                <th scope="col">Reboot testnet</th>
+                <th scope="col" data-i18n="networks.headers.service">Service</th>
+                <th scope="col" data-i18n="networks.headers.mainnet">Mainnet</th>
+                <th scope="col" data-i18n="networks.headers.rebootTestnet">Reboot testnet</th>
               </tr>
             </thead>
             <tbody>
               <tr>
-                <td>Web dashboard</td>
+                <td data-i18n="networks.rows.webDashboard.service">Web dashboard</td>
                 <td><code>127.0.0.1:2013</code></td>
                 <td><code>127.0.0.1:2013</code></td>
               </tr>
               <tr>
-                <td>JSON-RPC</td>
+                <td data-i18n="networks.rows.jsonRpc.service">JSON-RPC</td>
                 <td><code>127.0.0.1:22557</code></td>
                 <td><code>127.0.0.1:18556</code></td>
               </tr>
               <tr>
-                <td>P2P</td>
+                <td data-i18n="networks.rows.p2p.service">P2P</td>
                 <td><code>:22556</code></td>
                 <td><code>:44556</code></td>
               </tr>
               <tr>
-                <td>Config file</td>
-                <td colspan="2"><code>dogecoinconf.json</code> in your data directory</td>
+                <td data-i18n="networks.rows.configFile.service">Config file</td>
+                <td colspan="2" data-i18n="networks.rows.configFile.value">dogecoinconf.json in your data directory</td>
               </tr>
               <tr>
-                <td>Testnet addresses</td>
-                <td colspan="2">Reboot testnet: all P2PKH addresses start with <code>T</code> (prefix 0x41)</td>
+                <td data-i18n="networks.rows.testnetAddresses.service">Testnet addresses</td>
+                <td colspan="2" data-i18n-html="networks.rows.testnetAddresses.value">Reboot testnet: all P2PKH addresses start with <code>T</code> (prefix 0x41)</td>
               </tr>
             </tbody>
           </table>
@@ -649,57 +1084,82 @@
     <section class="section section-alt" id="download" aria-labelledby="download-title">
       <div class="container">
         <header class="section-header">
-          <h2 id="download-title">Download DogeGo</h2>
-          <p>Pre-built binaries for every platform Go supports.</p>
+          <h2 id="download-title" data-i18n="download.title">Download DogeGo</h2>
+          <p data-i18n="download.lead">Pre-built binaries are published on GitHub Releases when tagged. This page checks the same repos as the running node.</p>
         </header>
 
-        <div class="soon-banner">
-          <span class="material-icons-round soon-banner-icon" aria-hidden="true">rocket_launch</span>
-          <div>
-            <strong>v0.1.0-beta releases in a few days</strong>
-            <p>Source code and binaries for Windows, macOS, Linux, and BSD will publish together on GitHub.</p>
+        <div class="soon-banner" id="release-banner" data-state="loading">
+          <span class="material-icons-round soon-banner-icon" id="release-banner-icon" aria-hidden="true">hourglass_top</span>
+          <div class="release-banner-text">
+            <strong id="release-banner-title" data-i18n="download.checkingTitle">Checking GitHub Releases…</strong>
+            <p id="release-banner-body" data-i18n="download.checkingBody">Querying qlpqlp/dogego, dogeorg/dogego, and dogecoinfoundation/dogego for the latest semver tag.</p>
           </div>
-          <button type="button" class="btn btn-primary" data-soon="download">Learn more</button>
+          <a href="https://github.com/qlpqlp/dogego/releases" class="btn btn-primary" id="release-banner-action" rel="noopener noreferrer" target="_blank" hidden data-i18n="download.getReleases">View release notes</a>
         </div>
 
-        <div class="platform-grid">
-          <article class="platform-card platform-soon">
+        <div class="release-assets card" id="release-assets" hidden>
+          <h3 class="release-assets-title"><span class="material-icons-round" aria-hidden="true">download</span> <span data-i18n="download.assetsHeading">Download by platform</span></h3>
+          <ul class="release-assets-list" id="release-assets-list"></ul>
+        </div>
+
+        <div class="platform-grid" id="platform-grid">
+          <article class="platform-card platform-soon" data-platform="windows">
             <span class="material-icons-round platform-icon" aria-hidden="true">desktop_windows</span>
-            <h3>Windows</h3>
-            <p class="platform-arch">amd64 · arm64 · 386</p>
-            <button type="button" class="platform-link" data-soon="download">Coming soon</button>
+            <h3 data-i18n="download.platforms.windows.name">Windows</h3>
+            <p class="platform-arch" data-i18n="download.platforms.windows.arch">amd64 · arm64 · 386</p>
+            <a href="#download" class="platform-link" data-i18n="download.soonLink">Available soon</a>
           </article>
-          <article class="platform-card platform-soon">
+          <article class="platform-card platform-soon" data-platform="macos">
             <span class="material-icons-round platform-icon" aria-hidden="true">laptop_mac</span>
-            <h3>macOS</h3>
-            <p class="platform-arch">amd64 · arm64 (Apple Silicon)</p>
-            <button type="button" class="platform-link" data-soon="download">Coming soon</button>
+            <h3 data-i18n="download.platforms.macos.name">macOS</h3>
+            <p class="platform-arch" data-i18n="download.platforms.macos.arch">amd64 · arm64 (Apple Silicon)</p>
+            <a href="#download" class="platform-link" data-i18n="download.soonLink">Available soon</a>
           </article>
-          <article class="platform-card platform-soon">
+          <article class="platform-card platform-soon" data-platform="linux">
             <span class="material-icons-round platform-icon" aria-hidden="true">computer</span>
-            <h3>Linux</h3>
-            <p class="platform-arch">amd64 · arm64 · arm · 386 · ppc64le · riscv64</p>
-            <button type="button" class="platform-link" data-soon="download">Coming soon</button>
+            <h3 data-i18n="download.platforms.linux.name">Linux</h3>
+            <p class="platform-arch" data-i18n="download.platforms.linux.arch">amd64 · arm64 · arm · 386 · ppc64le · riscv64</p>
+            <a href="#download" class="platform-link" data-i18n="download.soonLink">Available soon</a>
           </article>
-          <article class="platform-card platform-soon">
+          <article class="platform-card platform-soon" data-platform="bsd">
             <span class="material-icons-round platform-icon" aria-hidden="true">dns</span>
-            <h3>BSD &amp; Unix</h3>
-            <p class="platform-arch">FreeBSD · OpenBSD · NetBSD · Solaris · AIX</p>
-            <button type="button" class="platform-link" data-soon="download">Coming soon</button>
+            <h3 data-i18n="download.platforms.bsd.name">BSD &amp; Unix</h3>
+            <p class="platform-arch" data-i18n="download.platforms.bsd.arch">FreeBSD · OpenBSD · NetBSD · Solaris · AIX</p>
+            <a href="#download" class="platform-link" data-i18n="download.soonLink">Available soon</a>
           </article>
         </div>
 
-        <div class="build-box build-soon">
-          <h3><span class="material-icons-round" aria-hidden="true">build</span> Build from source</h3>
-          <pre class="code-block"><code>git clone https://github.com/qlpqlp/dogego.git
-cd dogego
+        <div class="build-box">
+          <h3><span class="material-icons-round" aria-hidden="true">build</span> <span data-i18n="download.buildTitle">Build from source</span></h3>
+          <div class="code-editor" data-code-editor>
+            <div class="code-editor-chrome">
+              <div class="code-editor-dots" aria-hidden="true">
+                <span class="dot-red"></span>
+                <span class="dot-yellow"></span>
+                <span class="dot-green"></span>
+              </div>
+              <span class="code-editor-title" data-i18n="download.buildEditorTitle">bash · dogego</span>
+              <button type="button" class="code-copy-btn" data-copy-target="build-source-code" data-i18n-aria="download.copyCodeAria" aria-label="Copy build commands">
+                <span class="material-icons-round" aria-hidden="true">content_copy</span>
+                <span class="code-copy-label" data-i18n="download.copyCode">Copy</span>
+              </button>
+            </div>
+            <div class="code-editor-body">
+              <pre class="code-line-numbers" id="build-source-lines" aria-hidden="true">1
+2
+3
+4</pre>
+<pre class="code-block code-editor-pre"><code id="build-source-code" data-i18n="download.buildCode" style="color: #eef0f3; background: transparent;">git clone https://github.com/qlpqlp/dogego.git
+cd dogego/DogeGo
 go build -o dogego ./cmd/dogego
 ./dogego</code></pre>
-          <p class="build-note">Requires <a href="https://go.dev/dl/" rel="noopener noreferrer" target="_blank">Go 1.21+</a>. Repository opens with the beta release.</p>
-          <button type="button" class="btn btn-secondary btn-sm" data-soon="build">
-            <span class="material-icons-round" aria-hidden="true">lock</span>
-            Repository not public yet
-          </button>
+            </div>
+          </div>
+          <p class="build-note" data-i18n-html="download.buildNote">Requires <a href="https://go.dev/dl/" rel="noopener noreferrer" target="_blank">Go 1.22+</a>. App source lives in the <code>DogeGo/</code> directory; the website is in <code>docs/</code> at the repo root. On Windows use <code>dogego.exe</code>.</p>
+          <a href="https://github.com/qlpqlp/dogego" class="btn btn-secondary btn-sm" rel="noopener noreferrer" target="_blank">
+            <span class="material-icons-round" aria-hidden="true">code</span>
+            <span data-i18n="download.viewRepo">View repository</span>
+          </a>
         </div>
       </div>
     </section>
@@ -707,40 +1167,72 @@ go build -o dogego ./cmd/dogego
     <section class="section" id="developers" aria-labelledby="developers-title">
       <div class="container">
         <header class="section-header">
-          <h2 id="developers-title">Built for developers</h2>
-          <p>Integrate with the same JSON-RPC shapes you already use with Dogecoin Core.</p>
+          <h2 id="developers-title" data-i18n="developers.title">Built for developers</h2>
+          <p data-i18n="developers.lead">Integrate with the same JSON-RPC shapes you already use with Dogecoin Core.</p>
         </header>
         <div class="dev-grid">
           <article class="dev-card">
             <span class="material-icons-round" aria-hidden="true">integration_instructions</span>
-            <h3>OpenRPC &amp; cookbooks</h3>
-            <p>Live capability manifest at <code>/api/capabilities</code>, OpenRPC at <code>/api/openrpc.json</code>.</p>
+            <h3 data-i18n="developers.openrpc.title">OpenRPC &amp; cookbooks</h3>
+            <p data-i18n-html="developers.openrpc.body">Live capability manifest at <code>/api/capabilities</code>, OpenRPC at <code>/api/openrpc.json</code>.</p>
           </article>
           <article class="dev-card">
             <span class="material-icons-round" aria-hidden="true">notifications_active</span>
-            <h3>ZMQ notifications</h3>
-            <p>Subscribe to hash blocks, hash transactions, raw blocks, and raw transactions.</p>
+            <h3 data-i18n="developers.zmq.title">ZMQ notifications</h3>
+            <p data-i18n="developers.zmq.body">Subscribe to hash blocks, hash transactions, raw blocks, and raw transactions.</p>
           </article>
           <article class="dev-card">
             <span class="material-icons-round" aria-hidden="true">security</span>
-            <h3>Auth &amp; rate limits</h3>
-            <p>Cookie authentication, HTTP basic auth, IP allowlists, and configurable rate limiting.</p>
+            <h3 data-i18n="developers.auth.title">Auth &amp; rate limits</h3>
+            <p data-i18n="developers.auth.body">Cookie authentication, HTTP basic auth, IP allowlists, and configurable rate limiting.</p>
+          </article>
+          <article class="dev-card">
+            <span class="material-icons-round" aria-hidden="true">extension</span>
+            <h3 data-i18n="developers.extensions.title">Extension RPC</h3>
+            <p data-i18n-html="developers.extensions.body">Third-party packages register <code>dogego_ext_&lt;id&gt;_&lt;method&gt;</code> handlers. See <code>DogeGo/docs/EXTENSIONS.md</code>, <code>dogego.zkl2</code> (submitproof, verifyproof, P2P zkinv), <code>dogego.doginals</code> (indexrange, putasset, P2P dinv), and beta <code>dogego.bbpow</code> (compare, verifyproof, buildcommitment).</p>
           </article>
         </div>
       </div>
     </section>
 
-    <section class="section disclaimer-section" aria-labelledby="disclaimer-title">
+    <section class="section section-alt" id="roadmap" aria-labelledby="roadmap-title">
+      <div class="container">
+        <header class="section-header">
+          <h2 id="roadmap-title" data-i18n="roadmap.title">Roadmap</h2>
+          <p data-i18n-html="roadmap.lead">Dogecoin Core-compatible Go full node. <strong>Mainnet consensus follows Core</strong> (no protocol forks). Sync, wallet migration, mining, RPC, and operator tooling ship today. Full checklist: <code>DogeGo/ROADMAP.md</code>.</p>
+        </header>
+        <div class="roadmap-columns">
+          <div class="roadmap-col roadmap-col-full">
+            <h3 class="subsection-title" data-i18n="roadmap.doneTitle">Major milestones</h3>
+            <ul class="roadmap-checklist">
+              <li><span class="material-icons-round">check_circle</span> <span data-i18n="roadmap.done.p2p">CGNAT / classic / both, DGR relay phases 1-4, UPnP, multi-peer IBD, BIP152 v1 HB + offline soak cert, addrman buckets + slot indices + eclipse-pressure eviction</span></li>
+              <li><span class="material-icons-round">check_circle</span> <span data-i18n="roadmap.done.ibd">Headers-first body IBD, IBD optimize + auto dbcache, UTXO snapshot replay/quarantine, connect catch-up, stall recovery</span></li>
+              <li><span class="material-icons-round">check_circle</span> <span data-i18n="roadmap.done.consensus">Scrypt PoW, AuxPoW CAuxPow check, Milestone A differentials, 1059/1059 legacy script corpus, mainnet field evidence</span></li>
+              <li><span class="material-icons-round">check_circle</span> <span data-i18n="roadmap.done.store">Header segments, bundled+zstd raw blocks, UTXO cache crash quarantine/tmp purge, crash/corruption recovery suite</span></li>
+              <li><span class="material-icons-round">check_circle</span> <span data-i18n="roadmap.done.mempool">58-template offline corpus, BIP125 RBF (PaysForRBF descendant conflict fees), submitpackage CPFP package feerate, package DAG property tests, live testmempoolaccept, 24/24 stateful reboottestnet map (offline)</span></li>
+              <li><span class="material-icons-round">check_circle</span> <span data-i18n-html="roadmap.done.rpc">180+ JSON-RPC, OpenRPC, ZMQ, 17 live Features cert gates (mining GBT/aux + PQ), <code>dogego cert</code> offline / operator / pq / wallet-import / bip152-soak</span></li>
+              <li><span class="material-icons-round">check_circle</span> <span data-i18n="roadmap.done.wallet">BIP44 HD wallet, fill-to-target keypoolrefill, Core wallet.dat pool replay, encrypt/unlock, coin control, HWI signer_cmd + mocksigner e2e, OS autostart</span></li>
+              <li><span class="material-icons-round">check_circle</span> <span data-i18n="roadmap.done.mining">generatetoaddress, createauxblock/submitauxblock, getblocktemplate NextBlockBits + BIP22 longpoll, reboot-testnet solo miner with mempool txs</span></li>
+              <li><span class="material-icons-round">check_circle</span> <span data-i18n="roadmap.done.ui">Wizard, BlockStep, Features matrix, GitHub auto-update, tray, local HTTPS, sync dock</span></li>
+              <li><span class="material-icons-round">check_circle</span> <span data-i18n="roadmap.done.pq">PQ OP_RETURN + carrier (RPC/web send; needs more soak testing)</span></li>
+              <li><span class="material-icons-round">check_circle</span> <span data-i18n="roadmap.done.extensions">Extensions catalog (wasm/subprocess), dogego.zkl2 ZK L2, dogego.doginals L2, beta dogego.bbpow (Bitcoin-backed DOGE mining research)</span></li>
+              <li><span class="material-icons-round">check_circle</span> <span data-i18n="roadmap.done.segwit">SegWit ready: BIP141 machinery Core-aligned (CLTV active)</span></li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="section disclaimer-section" id="disclaimer" aria-labelledby="disclaimer-title">
       <div class="container">
         <div class="disclaimer-card">
           <span class="material-icons-round disclaimer-icon" aria-hidden="true">warning_amber</span>
           <div>
-            <h2 id="disclaimer-title">Honest scope</h2>
-            <p>
-              DogeGo is <strong>experimental</strong> and under active development toward Dogecoin Core parity.
-              It is not certified for exchanges, mining pools, or production wallets.
-              For established operator SLOs, full script corpus parity, or <code>wallet.dat</code> compatibility,
-              use <a href="https://dogecoin.com" rel="noopener noreferrer" target="_blank">Dogecoin Core</a>.
+            <h2 id="disclaimer-title" data-i18n="disclaimer.title">Beta: try it</h2>
+            <p data-i18n-html="disclaimer.body">
+              DogeGo is a pure-Go Dogecoin full node with Core-compatible consensus, RPC, wallet migration, and mining.
+              It is <strong>beta</strong>: please run it on testnet or mainnet, try the workflows you care about, and tell us what needs tuning.
+              Storage uses DogeGo’s native layout (not Core LevelDB); optional long-haul self-cert is in the dashboard Features tab (<code>dogego cert live-soak</code>).
             </p>
           </div>
         </div>
@@ -755,38 +1247,42 @@ go build -o dogego ./cmd/dogego
           <img src="assets/dogecoin.svg" alt="" width="36" height="36">
           <div>
             <span class="footer-brand-name">DogeGo</span>
-            <span class="badge badge-beta badge-sm">Beta</span>
+            <span class="badge badge-beta badge-sm" data-i18n="beta">Beta</span>
           </div>
         </a>
-        <p class="footer-tagline">Much faster full Dogecoin node, written in Go and operated from your browser.</p>
+        <p class="footer-tagline" data-i18n="footer.tagline">Much faster full Dogecoin node, written in Go and operated from your browser.</p>
         <div class="footer-ua">
           <span class="material-icons-round" aria-hidden="true">hub</span>
           <div>
-            <span class="footer-ua-label">P2P user-agent</span>
+            <span class="footer-ua-label" data-i18n="footer.uaLabel">P2P user-agent</span>
             <code>/DogeGo:0.1.0-beta/</code>
           </div>
         </div>
-        <p class="footer-ua-note">Announces as DogeGo on the wire. Not Shibetoshi, not Core. Optional comment: <code>/DogeGo:0.1.0-beta(your-note)/</code></p>
+        <p class="footer-ua-note" data-i18n-html="footer.uaNote">Announces as DogeGo on the wire. Not Shibetoshi, not Core. Optional comment: <code>/DogeGo:0.1.0-beta(your-note)/</code></p>
       </div>
 
       <div class="footer-col">
-        <h3 class="footer-heading">Product</h3>
+        <h3 class="footer-heading" data-i18n="footer.productHeading">Product</h3>
         <nav class="footer-links">
-          <a href="#features">Features</a>
-          <a href="#blockstep">BlockStep</a>
-          <a href="#wizard">Setup wizard</a>
-          <a href="#advantages">vs Core</a>
-          <a href="#download">Download</a>
+          <a href="#fullnode" data-i18n="footer.productFullnode">Full node</a>
+          <a href="#roadmap" data-i18n="footer.productRoadmap">Roadmap</a>
+          <a href="#features" data-i18n="footer.productFeatures">Features</a>
+          <a href="#operator-ux" data-i18n="footer.productCare">Operator care</a>
+          <a href="#blockstep" data-i18n="footer.productBlockstep">BlockStep</a>
+          <a href="#wizard" data-i18n="footer.productWizard">Setup wizard</a>
+          <a href="#advantages" data-i18n="footer.productVsCore">vs Core</a>
+          <a href="#download" data-i18n="footer.productDownload">Download</a>
         </nav>
       </div>
 
       <div class="footer-col">
-        <h3 class="footer-heading">Developers</h3>
+        <h3 class="footer-heading" data-i18n="footer.devHeading">Developers</h3>
         <nav class="footer-links">
-          <a href="#developers">JSON-RPC</a>
-          <button type="button" data-soon="github">GitHub</button>
-          <button type="button" data-soon="download">Releases</button>
-          <a href="#networks">Ports &amp; networks</a>
+          <a href="#developers" data-i18n="footer.devRpc">JSON-RPC</a>
+          <a href="guide/" data-i18n="footer.devDocs">Documentation</a>
+          <a href="https://github.com/qlpqlp/dogego" rel="noopener noreferrer" target="_blank" data-i18n="footer.devGithub">GitHub</a>
+          <a href="https://github.com/qlpqlp/dogego/releases" rel="noopener noreferrer" target="_blank" data-i18n="footer.devReleases">Releases</a>
+          <a href="#networks" data-i18n="footer.devNetworks">Ports &amp; networks</a>
         </nav>
       </div>
 
@@ -798,31 +1294,15 @@ go build -o dogego ./cmd/dogego
     </div>
 
     <div class="container footer-bottom">
-      <p>DogeGo v0.1.0-beta · Dogecoin Node · <a href="https://dogego.org">dogego.org</a></p>
-      <p class="footer-disclaimer">Not yet a drop-in replacement for Dogecoin Core.</p>
+      <p data-i18n="footer.copyright">DogeGo v0.1.0-beta · Dogecoin Node · <a href="https://dogego.org">dogego.org</a></p>
+      <p class="footer-disclaimer" data-i18n="footer.disclaimer">Mainnet consensus follows Core (no protocol forks). Native Go storage; optional self-cert via Features / dogego cert live-soak.</p>
     </div>
   </footer>
-
-  <!-- Coming soon modal -->
-  <div class="soon-modal" id="soon-modal" hidden role="dialog" aria-modal="true" aria-labelledby="soon-modal-title">
-    <div class="soon-backdrop"></div>
-    <div class="soon-card">
-      <button type="button" class="soon-close" aria-label="Close">
-        <span class="material-icons-round">close</span>
-      </button>
-      <div class="soon-icon-wrap">
-        <span class="material-icons-round soon-icon">hourglass_top</span>
-      </div>
-      <h2 id="soon-modal-title">Coming soon</h2>
-      <p id="soon-modal-desc">The beta release lands on GitHub in a few days.</p>
-      <div class="soon-meta">
-        <span class="soon-chip"><span class="material-icons-round">tag</span> v0.1.0-beta</span>
-        <span class="soon-chip"><span class="material-icons-round">link</span> github.com/qlpqlp/dogego</span>
-      </div>
-      <p class="soon-foot">Check back at <strong>dogego.org</strong>. Binaries for all major platforms ship with the repo.</p>
     </div>
   </div>
 
+  <script src="js/i18n.js"></script>
+  <script src="js/releases.js" defer></script>
   <script src="js/demo.js" defer></script>
   <script src="js/main.js" defer></script>
 </body>

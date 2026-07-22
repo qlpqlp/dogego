@@ -1,0 +1,1892 @@
+<!--
+  Copyright (c) 2026 Paulo Vidal (https://x.com/inevitable360, https://github.com/qlpqlp)
+  Copyright (c) 2026 Dogecoin Foundation
+  SPDX-License-Identifier: MIT
+-->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>DogeGo ... setup</title>
+  <link rel="icon" href="/dogecoin.svg" type="image/svg+xml" id="brand-favicon" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/icon?family=Material+Icons+Round" rel="stylesheet" />
+  <link rel="stylesheet" href="/app.css" />
+  <script src="/doge-wait.js"></script>
+</head>
+<body class="setup-wizard mode-full">
+  <header class="topbar">
+    <img src="/dogecoin.svg" alt="" id="topbar-logo" data-brand-logo />
+    <span class="topbar-brand">DogeGo</span>
+    <span class="badge mode-full">setup</span>
+    <span class="topbar-spacer"></span>
+    <div class="lang-picker" id="lang-picker">
+      <button type="button" class="lang-picker-btn" id="lang-picker-btn" aria-haspopup="listbox" data-i18n-aria="lang.aria" aria-expanded="false" aria-controls="lang-picker-menu">
+        <span class="material-icons-round" aria-hidden="true">language</span>
+        <span id="lang-picker-label">English</span>
+      </button>
+      <div class="lang-picker-menu" id="lang-picker-menu" role="listbox" hidden></div>
+    </div>
+    <a href="https://foundation.dogecoin.com" class="topbar-foundation" target="_blank" rel="noopener noreferrer" title="Dogecoin Foundation">
+      <img src="/dogecoin-foundation.svg" alt="Dogecoin Foundation" width="120" height="28" />
+    </a>
+    <span class="topbar-ver">First run</span>
+  </header>
+
+  <main class="setup-main">
+    <div id="setup-tls-hint" class="alert ok setup-tls-hint" hidden role="note">
+      <p><strong data-i18n="wizard.tlsCertTitle">Local HTTPS</strong></p>
+      <p data-i18n="wizard.tlsCertHint">If your browser shows a certificate warning, that is normal for DogeGo local HTTPS. The dashboard uses an auto-generated certificate so traffic stays encrypted on this machine. Trust the DogeGo local CA (enabled by default) to remove the warning, or disable HTTPS later in Settings → Interface.</p>
+    </div>
+    <div class="page-head setup-page-head">
+      <p class="setup-step-kicker label" id="setup-step-kicker" data-i18n="wizard.stepKicker">Step 1 of 5</p>
+      <h1 id="setup-step-title" data-i18n="wizard.stepMeta.0.title">Choose your setup</h1>
+      <p id="setup-step-desc" data-i18n="wizard.stepMeta.0.desc">Pick one profile - you can fine-tune details on the next screens.</p>
+    </div>
+
+    <nav class="setup-stepper card" aria-label="Setup progress">
+      <ol class="setup-steps-nav" id="setup-steps-nav">
+        <li class="active" data-step="0">
+          <span class="setup-step-indicator" aria-hidden="true">
+            <span class="material-icons-round setup-step-icon">touch_app</span>
+            <span class="material-icons-round setup-step-check">check</span>
+          </span>
+          <span class="setup-step-label" data-i18n="wizard.steps.profile">Profile</span>
+        </li>
+        <li data-step="1">
+          <span class="setup-step-indicator" aria-hidden="true">
+            <span class="material-icons-round setup-step-icon">folder</span>
+            <span class="material-icons-round setup-step-check">check</span>
+          </span>
+          <span class="setup-step-label" data-i18n="wizard.steps.data">Data</span>
+        </li>
+        <li data-step="2">
+          <span class="setup-step-indicator" aria-hidden="true">
+            <span class="material-icons-round setup-step-icon">hub</span>
+            <span class="material-icons-round setup-step-check">check</span>
+          </span>
+          <span class="setup-step-label" data-i18n="wizard.steps.network">Network</span>
+        </li>
+        <li data-step="3">
+          <span class="setup-step-indicator" aria-hidden="true">
+            <span class="material-icons-round setup-step-icon">sync</span>
+            <span class="material-icons-round setup-step-check">check</span>
+          </span>
+          <span class="setup-step-label" data-i18n="wizard.steps.sync">Sync</span>
+        </li>
+        <li data-step="4">
+          <span class="setup-step-indicator" aria-hidden="true">
+            <span class="material-icons-round setup-step-icon">rocket_launch</span>
+            <span class="material-icons-round setup-step-check">check</span>
+          </span>
+          <span class="setup-step-label" data-i18n="wizard.steps.finish">Finish</span>
+        </li>
+      </ol>
+    </nav>
+
+    <form id="f" class="setup-form">
+      <section class="setup-step card settings-card active" data-step="0" aria-labelledby="setup-step-title">
+        <p class="setup-step-essential" data-i18n="wizard.profileEssential">Tap a card below. Each option sets network, node mode, wallet, and P2P defaults for you.</p>
+        <div class="wizard-profile-grid" id="wizard-profile-grid" role="listbox" aria-label="Setup profile">
+          <button type="button" class="wizard-profile-card" data-profile="first-run" role="option">
+            <span class="wizard-profile-icon material-icons-round" aria-hidden="true">science</span>
+            <span class="wizard-profile-title">Try testnet</span>
+            <span class="wizard-profile-sub">Full node · wallet on · best for first run</span>
+            <span class="wizard-profile-tags"><span>testnet</span><span>full</span><span>auto peers</span></span>
+          </button>
+          <button type="button" class="wizard-profile-card" data-profile="mainnet">
+            <span class="wizard-profile-icon material-icons-round" aria-hidden="true">public</span>
+            <span class="wizard-profile-title">Mainnet full node</span>
+            <span class="wizard-profile-sub">Production Dogecoin ... longer sync, full validation</span>
+            <span class="wizard-profile-tags"><span>mainnet</span><span>full</span><span>relay</span></span>
+          </button>
+          <button type="button" class="wizard-profile-card" data-profile="mainnet-wallet">
+            <span class="wizard-profile-icon material-icons-round" aria-hidden="true">account_balance_wallet</span>
+            <span class="wizard-profile-title">Mainnet + wallet</span>
+            <span class="wizard-profile-sub">Full node with Send/Receive ... set a dashboard PIN on finish</span>
+            <span class="wizard-profile-tags"><span>mainnet</span><span>wallet</span><span>full</span></span>
+          </button>
+          <button type="button" class="wizard-profile-card" data-profile="dual-mainnet-testnet" role="option">
+            <span class="wizard-profile-icon material-icons-round" aria-hidden="true">layers</span>
+            <span class="wizard-profile-title">Mainnet + testnet</span>
+            <span class="wizard-profile-sub">Two nodes · wallet on both · mine on testnet only</span>
+            <span class="wizard-profile-tags"><span>mainnet</span><span>testnet</span><span>dual</span></span>
+          </button>
+          <button type="button" class="wizard-profile-card" data-profile="spv-wallet">
+            <span class="wizard-profile-icon material-icons-round" aria-hidden="true">speed</span>
+            <span class="wizard-profile-title">Light SPV + wallet</span>
+            <span class="wizard-profile-sub">Headers only · low disk · CGNAT-friendly</span>
+            <span class="wizard-profile-tags"><span>testnet</span><span>spv</span><span>cgnat</span></span>
+          </button>
+        </div>
+        <label class="setup-advanced-toggle" style="margin-top:16px">
+          <span data-i18n="wizard.showAdvanced">Show advanced options on later steps</span>
+          <input type="checkbox" id="setup-show-advanced" role="switch" />
+        </label>
+      </section>
+
+      <section class="setup-step card settings-card" data-step="1" hidden>
+        <p class="setup-step-essential" id="setup-data-essential" data-i18n="wizard.dataEssential">Pick a data folder and network. Leave peer discovery automatic unless you have a known seed.</p>
+        <aside class="edu-callout setup-tip" id="setup-dual-data-note" hidden>
+          <p><strong>Dual instance:</strong> Mainnet and testnet run together and share this data folder. Chain data is stored under separate <code>mainnet/</code> and <code>testnet/</code> subfolders - you do not pick one network here.</p>
+        </aside>
+        <div class="card setup-plain-language">
+          <h2>What this setup does</h2>
+          <ul>
+            <li><strong>Full node</strong>: stores headers and block bodies, validates chain data, and powers Explorer/RPC features.</li>
+            <li><strong>SPV mode</strong>: stores headers only, starts faster, and uses less disk.</li>
+            <li><strong>Data folder</strong>: DogeGo creates and manages this folder for this node.</li>
+          </ul>
+        </div>
+        <aside class="edu-callout setup-tip setup-advanced-block">
+          <p><strong>New here?</strong> Pick a folder for chain data, choose <strong>testnet</strong> to experiment, and leave <strong>Peer</strong> empty so DogeGo finds peers automatically.</p>
+        </aside>
+        <div class="setup-field-grid">
+          <div class="form-field" data-i18n-field="datadir">
+            <label for="datadir">Data directory
+              <button type="button" class="help-btn" tabindex="0">?</button>
+            </label>
+            <input id="datadir" name="datadir" required autocomplete="off" data-i18n-placeholder="field.datadir.placeholder" placeholder="e.g. C:\Dogedata or ./dogedata" />
+            <p class="field-hint setup-advanced-block">Created if missing. DogeGo uses its own layout (<code>headers.bin</code>, <code>rawblocks/</code>, <code>indexes/</code>) ... not Dogecoin Core’s <code>blocks/</code> or <code>chainstate/</code>.</p>
+          </div>
+          <div class="form-field" id="setup-network-field" data-i18n-field="network">
+            <label>Network
+              <button type="button" class="help-btn" tabindex="0">?</button>
+            </label>
+            <input type="hidden" id="network" name="network" value="testnet" />
+            <div class="setup-option-cards" id="network-cards" role="listbox" aria-label="Network">
+              <button type="button" class="setup-option-card" data-target="network" data-value="mainnet" data-i18n-card="choices.networkWizard.mainnet" role="option">
+                <strong>Mainnet</strong>
+                <span>Real Dogecoin chain</span>
+              </button>
+              <button type="button" class="setup-option-card selected" data-target="network" data-value="testnet" data-i18n-card="choices.networkWizard.testnet" role="option">
+                <strong>Testnet</strong>
+                <span>Safe sandbox - recommended first</span>
+              </button>
+            </div>
+          </div>
+          <div class="form-field" id="setup-node-mode-field" data-i18n-field="nodeMode">
+            <label>Node mode
+              <button type="button" class="help-btn" tabindex="0">?</button>
+            </label>
+            <input type="hidden" id="node_mode" name="node_mode" value="full" />
+            <div class="setup-option-cards" id="node-mode-cards" role="listbox" aria-label="Node mode">
+              <button type="button" class="setup-option-card selected" data-target="node_mode" data-value="full" data-i18n-card="choices.modeWizard.full" role="option">
+                <strong>Full node</strong>
+                <span>Headers + block bodies + explorer</span>
+              </button>
+              <button type="button" class="setup-option-card" data-target="node_mode" data-value="spv" data-i18n-card="choices.modeWizard.spv" role="option">
+                <strong>SPV (light)</strong>
+                <span>Headers only - small disk</span>
+              </button>
+            </div>
+          </div>
+          <div class="form-field setup-advanced-block" data-i18n-field="peer">
+            <label for="peer">Peer (optional)
+              <button type="button" class="help-btn" tabindex="0">?</button>
+            </label>
+            <input id="peer" name="peer" autocomplete="off" data-i18n-placeholder="field.peer.placeholder" placeholder="Empty = automatic discovery" />
+          </div>
+        </div>
+      </section>
+
+      <section class="setup-step card settings-card" data-step="2" hidden>
+        <p class="setup-step-essential" data-i18n="wizard.networkEssential">Connectivity and automatic checks before you start. Use cgnat on Starlink or when you cannot port-forward.</p>
+        <div class="setup-field-grid">
+          <div class="form-field" data-i18n-field="p2p">
+            <label>P2P connectivity
+              <button type="button" class="help-btn" tabindex="0">?</button>
+            </label>
+            <input type="hidden" id="p2p_connectivity" name="p2p_connectivity" value="both" />
+            <div class="setup-option-cards" id="p2p-cards" role="listbox" aria-label="P2P connectivity">
+              <button type="button" class="setup-option-card selected" data-target="p2p_connectivity" data-value="both" data-i18n-card="choices.p2pWizard.both" role="option">
+                <strong>Both</strong>
+                <span>Inbound + outbound · DGR relay auto-configured</span>
+              </button>
+              <button type="button" class="setup-option-card" data-target="p2p_connectivity" data-value="cgnat" data-i18n-card="choices.p2pWizard.cgnat" role="option">
+                <strong>CGNAT</strong>
+                <span>Outbound only (Starlink / no port forward)</span>
+              </button>
+              <button type="button" class="setup-option-card" data-target="p2p_connectivity" data-value="classic" data-i18n-card="choices.p2pWizard.classic" role="option">
+                <strong>Classic</strong>
+                <span>Inbound listen + outbound</span>
+              </button>
+            </div>
+          </div>
+          <div class="settings-row2">
+            <div class="form-field" data-i18n-field="firewall">
+              <label><span data-i18n="field.firewall.label">OS firewall</span>
+                <button type="button" class="help-btn" tabindex="0" data-i18n-help="field.firewall.help">?</button>
+              </label>
+              <select id="firewall" name="firewall" class="select-sr-only" aria-hidden="true" tabindex="-1">
+                <option value="auto">auto</option>
+                <option value="always">always</option>
+                <option value="never">never</option>
+              </select>
+              <div class="choice-cards choice-cards-inline" data-target="firewall" role="listbox" aria-label="OS firewall">
+                <button type="button" class="choice-card" data-value="auto" data-i18n-card="choices.firewallWizard.auto" role="option"><strong>Auto</strong><span>Add rules when needed</span></button>
+                <button type="button" class="choice-card" data-value="always" data-i18n-card="choices.firewallWizard.always" role="option"><strong>Always</strong><span>Always manage</span></button>
+                <button type="button" class="choice-card" data-value="never" data-i18n-card="choices.firewallWizard.never" role="option"><strong>Never</strong><span>Skip</span></button>
+              </div>
+            </div>
+            <div class="form-field" data-i18n-field="upnp">
+              <label><span data-i18n="field.upnp.label">UPnP / NAT-PMP</span>
+                <button type="button" class="help-btn" tabindex="0" data-i18n-help="field.upnp.help">?</button>
+              </label>
+              <select id="upnp" name="upnp" class="select-sr-only" aria-hidden="true" tabindex="-1">
+                <option value="auto">auto</option>
+                <option value="enable">enable</option>
+                <option value="disable">disable</option>
+              </select>
+              <div class="choice-cards choice-cards-inline" data-target="upnp" role="listbox" aria-label="UPnP">
+                <button type="button" class="choice-card" data-value="auto" data-i18n-card="choices.upnpWizard.auto" role="option"><strong>Auto</strong><span>When listening</span></button>
+                <button type="button" class="choice-card" data-value="enable" data-i18n-card="choices.upnpWizard.enable" role="option"><strong>Enable</strong><span>Always try</span></button>
+                <button type="button" class="choice-card" data-value="disable" data-i18n-card="choices.upnpWizard.disable" role="option"><strong>Disable</strong><span>Off</span></button>
+              </div>
+            </div>
+          </div>
+          <div class="settings-row2 setup-advanced-block">
+            <div class="form-field" data-i18n-field="maxOutbound">
+              <label for="maxoutbound"><span data-i18n="field.maxOutbound.label">Max outbound</span>
+                <button type="button" class="help-btn" tabindex="0" data-i18n-help="field.maxOutbound.help">?</button>
+              </label>
+              <input id="maxoutbound" type="number" min="0" max="32" data-i18n-placeholder="field.maxOutbound.placeholder" placeholder="8" />
+            </div>
+            <div class="form-field" data-i18n-field="maxInbound">
+              <label for="maxinbound"><span data-i18n="field.maxInbound.label">Max inbound</span>
+                <button type="button" class="help-btn" tabindex="0" data-i18n-help="field.maxInbound.help">?</button>
+              </label>
+              <input id="maxinbound" type="number" min="0" max="64" data-i18n-placeholder="field.maxInbound.placeholder" placeholder="12" />
+            </div>
+          </div>
+        </div>
+        <p class="setup-section-title">P2P identity</p>
+        <p class="field-hint" id="setup-uacomment-hint">Optional comment and tip address are visible to every peer in the P2P user-agent during handshake.</p>
+        <p class="field-hint" id="setup-dual-uacomment-note" hidden>Dual instance: the same comment is published on <strong>both</strong> nodes. Each network derives its own tip address from its wallet when enabled below.</p>
+        <div class="form-field">
+          <label for="uacomment">User-agent comment
+            <button type="button" class="help-btn" tabindex="0" data-help="Like Dogecoin Core -uacomment. Shown inside /DogeGo:version(...)/ to other nodes.">?</button>
+          </label>
+          <input id="uacomment" name="uacomment" autocomplete="off" placeholder="e.g. much node, very wow" />
+        </div>
+        <p class="field-hint wallet-addr-mono" id="uacomment-subversion-preview" aria-live="polite"></p>
+        <div class="switch">
+          <span>Publish node-tip address from HD wallet in user-agent
+            <button type="button" class="help-btn" tabindex="0" data-help="Any peer that connects can read this address - useful for node tips. DogeGo derives a dedicated HD path (separate from Receive). Only enable if you want tips visible on the network.">?</button>
+          </span>
+          <input type="checkbox" id="uacomment_publish_tip" />
+        </div>
+        <div id="uacomment-tip-options" class="setup-field-grid" hidden>
+          <p class="field-hint wallet-addr-mono" id="uacomment-tip-wallet-hint" hidden>Uses a dedicated HD derivation on this node (separate from Receive).</p>
+          <p class="field-hint wallet-addr-mono" id="uacomment-node-tip-preview" hidden></p>
+          <div id="setup-dual-tip-previews" class="setup-dual-tip-previews" hidden>
+            <p class="field-hint wallet-addr-mono" id="uacomment-node-tip-preview-mainnet" hidden></p>
+            <p class="field-hint wallet-addr-mono" id="uacomment-node-tip-preview-testnet" hidden></p>
+          </div>
+          <div class="form-field" id="uacomment-manual-wrap" hidden>
+            <label for="uacomment_tip_manual">Tip address (when wallet disabled)
+              <button type="button" class="help-btn" tabindex="0" data-help="Must match the network you selected. Use only addresses you control.">?</button>
+            </label>
+            <input id="uacomment_tip_manual" class="wallet-addr-mono wallet-input-full" autocomplete="off" spellcheck="false" placeholder="D… or T… address" />
+          </div>
+        </div>
+        <input type="checkbox" id="uacomment_use_node_tip" hidden aria-hidden="true" tabindex="-1" checked />
+        <div class="card setup-preflight" id="setup-preflight" aria-live="polite">
+          <div class="setup-preflight-head">
+            <h2 data-i18n="wizard.preflightTitle">Automatic checks</h2>
+            <button type="button" class="btn btn-ghost btn-sm" id="setup-preflight-refresh">
+              <span class="material-icons-round" aria-hidden="true">refresh</span> <span data-i18n="wizard.preflightRerun">Re-run</span>
+            </button>
+          </div>
+          <p class="field-hint" id="setup-preflight-hint" data-i18n="wizard.preflightHint">Runs when you open this step - firewall, ports, and CGNAT hints.</p>
+          <div id="setup-preflight-list" class="setup-preflight-list"></div>
+        </div>
+      </section>
+
+      <section class="setup-step card settings-card" data-step="3" hidden>
+        <p class="setup-step-essential" id="setup-sync-essential">Full node downloads the chain. <strong>Recommended disk layout</strong> is on by default: bundled <code>blk*.dat</code> files, zstd compression, and a compact tx index (full explorer search still works).</p>
+        <aside class="edu-callout setup-tip setup-advanced-block" id="setup-sync-tip">
+          <p><strong>Full node</strong> downloads header chain first, then block bodies toward genesis (IBD). The <strong>tx index</strong> maps txids to blocks for explorer lookups. <strong>Compact index</strong> stores only block pointers (not duplicate tx bytes). <strong>Analytics sidecar</strong> is optional Pebble ... safe to disable on small disks.</p>
+        </aside>
+        <p class="label setup-spv-skip" id="setup-spv-skip" hidden>SPV mode ... full-node sync options are not used. Continue to P2P.</p>
+        <div id="setup-sync-fields" class="setup-field-grid setup-advanced-block">
+          <div class="switch"><span><span data-i18n="field.noTxIndex.label">Disable transaction index</span>
+            <button type="button" class="help-btn" tabindex="0" data-i18n-help="field.noTxIndex.help">?</button></span>
+            <input type="checkbox" id="no_tx_index" /></div>
+          <p class="field-hint">Leave off for full explorer search. Turn on only if you need minimum disk and accept limited tx lookup.</p>
+          <div class="form-field">
+            <label>Block storage layout
+              <button type="button" class="help-btn" tabindex="0" data-help="bundled (recommended): Core-style blk*.dat files, less filesystem overhead. perfile: one .bin file per block (legacy).">?</button>
+            </label>
+            <select id="block_storage_layout" class="select-sr-only" aria-hidden="true" tabindex="-1">
+              <option value="bundled" selected>bundled</option>
+              <option value="perfile">perfile</option>
+            </select>
+            <div class="choice-cards choice-cards-inline" data-target="block_storage_layout" role="listbox" aria-label="Block storage layout">
+              <button type="button" class="choice-card" data-value="bundled" role="option"><strong>Bundled</strong><span>blk*.dat recommended</span></button>
+              <button type="button" class="choice-card" data-value="perfile" role="option"><strong>Per file</strong><span>One .bin per block</span></button>
+            </div>
+          </div>
+          <div class="switch"><span><span data-i18n="field.blockZstd.label">Compress stored blocks (zstd)</span>
+            <button type="button" class="help-btn" tabindex="0" data-i18n-help="field.blockZstd.help">?</button></span>
+            <input type="checkbox" id="block_zstd" checked /></div>
+          <div class="switch"><span><span data-i18n="field.txEmbed.label">Embed full tx bytes in tx index</span>
+            <button type="button" class="help-btn" tabindex="0" data-i18n-help="field.txEmbed.help">?</button></span>
+            <input type="checkbox" id="tx_index_embed_tx" /></div>
+          <p class="field-hint">Recommended: compression on, embed off (smaller index; txs load from block files).</p>
+          <div class="switch"><span><span data-i18n="field.ibdOptimize.label">Optimize initial block download</span>
+            <button type="button" class="help-btn" tabindex="0" data-i18n-help="field.ibdOptimize.help">?</button></span>
+            <input type="checkbox" id="ibd_optimize" checked /></div>
+          <p class="field-hint" data-i18n="field.ibdOptimize.hint">Prioritizes headers/bodies, assumevalid script skip, and pauses analytics indexing until the tip is caught up (Bitcoin Core-style IBD focus).</p>
+          <div class="switch"><span><span data-i18n="field.analytics.label">Embedded analytics sidecar</span>
+            <button type="button" class="help-btn" tabindex="0" data-i18n-help="field.analytics.help">?</button></span>
+            <input type="checkbox" id="analytics_sidecar" checked /></div>
+          <p class="field-hint">Optional Pebble catalog for the Analytics tab. Safe to disable on small disks.</p>
+          <div class="form-field">
+            <label for="block_sync_workers">Block sync workers
+              <button type="button" class="help-btn" tabindex="0" data-help="Extra peers that download block bodies in parallel during initial sync. 0 = automatic (usually 2-6).">?</button>
+            </label>
+            <input id="block_sync_workers" type="number" min="0" max="16" placeholder="0 = automatic" />
+          </div>
+        </div>
+      </section>
+
+      <section class="setup-step card settings-card" data-step="4" hidden>
+        <p class="setup-step-essential" id="setup-finish-essential" data-i18n="wizard.finishEssential">Dashboard listens on <code>127.0.0.1</code> by default. Set an optional PIN to lock the web UI (Send and wallet view).</p>
+        <aside class="edu-callout setup-tip setup-advanced-block">
+          <p>The <strong>web dashboard</strong> (this UI) and <strong>JSON-RPC</strong> should stay on <code>127.0.0.1</code> unless you terminate TLS at a reverse proxy. Mempool relay fields below match Dogecoin Core flag names in <code>dogecoinconf.json</code>.</p>
+        </aside>
+        <p class="setup-section-title">Dashboard &amp; API</p>
+        <div id="setup-dual-listen-panel" class="card setup-dual-endpoints" hidden>
+          <p class="field-hint" style="margin-top:0">Each network runs as its own process with fixed local ports. Switch dashboards from the network badge after start.</p>
+          <dl class="setup-review-dl setup-dual-endpoints-dl">
+            <dt>Mainnet dashboard</dt><dd><code>localhost:2013</code></dd>
+            <dt>Mainnet JSON-RPC</dt><dd><code>127.0.0.1:22557</code></dd>
+            <dt>Testnet dashboard</dt><dd><code>localhost:2014</code></dd>
+            <dt>Testnet JSON-RPC</dt><dd><code>127.0.0.1:44555</code></dd>
+          </dl>
+        </div>
+        <div class="setup-field-grid" id="setup-listen-fields">
+          <div class="form-field" id="setup-webui-field">
+            <label for="webui">Web dashboard listen
+              <button type="button" class="help-btn" tabindex="0" data-help="Where this UI is served. Keep 127.0.0.1 unless you know how to secure remote access.">?</button>
+            </label>
+            <input id="webui" name="webui" autocomplete="off" value="localhost:2013" />
+          </div>
+          <div class="form-field setup-advanced-block" id="setup-rpc-field">
+            <label for="rpc">JSON-RPC listen (optional)
+              <button type="button" class="help-btn" tabindex="0" data-help="Lets other apps call dogego RPC. Empty = disabled. Use 127.0.0.1 only on trusted machines.">?</button>
+            </label>
+            <input id="rpc" name="rpc" autocomplete="off" placeholder="127.0.0.1:22555 ... empty disables" />
+          </div>
+        </div>
+        <p class="setup-section-title">Dashboard security (recommended)
+          <button type="button" class="help-btn" tabindex="0" data-help="Optional 6-digit PIN locks wallet view and Send in this browser. Hashed in web_security.json; 3 wrong tries lock for 1 hour. Does not encrypt wallet.json on disk. Use encryptwallet in Console after start for file encryption. Change later in Settings → Interface.">?</button>
+        </p>
+        <div class="switch"><span>Set a 6-digit PIN now (optional)</span><input type="checkbox" id="setup_pin_now" /></div>
+        <p class="field-hint" data-i18n="wizard.pinNotWalletEncrypt">Optional: leave unchecked to start without a dashboard PIN. When enabled, both fields must be exactly 6 digits and match. Dashboard PIN is hashed in web_security.json and only gates this browser session; it does not encrypt wallet.json. Dual mainnet + testnet: the same PIN is written for both dashboards (localhost:2013 and :2014). Use encryptwallet after start for on-disk key encryption.</p>
+        <div id="setup-pin-fields" class="setup-field-grid" hidden>
+          <div class="form-field"><label for="setup_pin_new">6-digit PIN</label><input id="setup_pin_new" type="password" inputmode="numeric" pattern="[0-9]*" maxlength="6" autocomplete="new-password" /></div>
+          <div class="form-field"><label for="setup_pin_confirm">Confirm PIN</label><input id="setup_pin_confirm" type="password" inputmode="numeric" pattern="[0-9]*" maxlength="6" autocomplete="new-password" /></div>
+        </div>
+        <div class="switch" id="setup-webauthn-row" hidden><span>Allow device biometrics (WebAuthn) with PIN - use default localhost Web UI (not 127.0.0.1)</span><input type="checkbox" id="setup_webauthn" /></div>
+        <div class="switch"><span>Start DogeGo automatically when I sign in (resume after reboot)
+          <button type="button" class="help-btn" tabindex="0" data-help="Registers OS login autostart so the node starts again after restart. Windows: Task Scheduler · Linux: systemd user service · macOS: LaunchAgent. Your chain data stays in the data directory you chose. Not available on iOS or mobile.">?</button>
+        </span><input type="checkbox" id="autostart_login" checked /></div>
+        <p class="field-hint setup-finish-hint">When enabled, DogeGo runs in the background at sign-in with <code>-nobrowser</code> (open the dashboard manually or bookmark it).</p>
+        <details class="ui-disclosure setup-advanced-block">
+          <summary>Optional flags</summary>
+          <div class="ui-disclosure-body">
+        <div class="switch"><span>Disable web UI after start</span><input type="checkbox" id="nowebui" /></div>
+        <div class="switch"><span>Do not open browser automatically</span><input type="checkbox" id="nobrowser" /></div>
+        <div class="switch"><span>System tray icon (<code>tray</code>)</span><input type="checkbox" id="tray" /></div>
+        <p class="field-hint setup-finish-hint">Tray: minimize or close the console to keep the node in the system tray. <code>dogecoin://</code> links open the dashboard or Send tab (registered automatically on desktop).</p>
+        <p class="field-hint setup-finish-hint">After start, the dashboard opens in this browser tab (same window). Read embedded operator docs under <strong>Docs</strong> (INTEGRATION.md, OPERATOR.md) and use <strong>Console</strong> JSON-RPC ... no GitHub required. Reboot testnet founders: run <code>dogego cert founder</code> after save (see OPERATOR.md founder checklist).</p>
+        <div class="switch"><span>Disable built-in wallet</span><input type="checkbox" id="nowallet" /></div>
+        <div class="switch" id="setup-mine-row"><span>Solo mining on reboot testnet (<code>mine</code>)</span><input type="checkbox" id="mine" /></div>
+          </div>
+        </details>
+        <details class="setup-relay-details setup-advanced-block card" style="margin-top:12px;padding:14px">
+          <summary class="label" style="cursor:pointer;font-weight:600">Advanced ... mempool relay policy (optional)
+            <button type="button" class="help-btn" tabindex="0" data-help="Optional Core-style relay policy saved to dogecoinconf.json. Leave numbers empty to use Dogecoin defaults. Click ? on each field below for details.">?</button>
+          </summary>
+          <p class="field-hint">Saved to <code>dogecoinconf.json</code>. Defaults match Dogecoin Core when left empty. Tap <strong>?</strong> on any label for help.</p>
+          <div class="settings-row2">
+            <div class="form-field">
+              <label for="maxmempool">Max mempool (MB)
+                <button type="button" class="help-btn" tabindex="0" data-help="Maximum RAM for the in-memory transaction pool (-maxmempool). When full, lower-feerate txs are evicted first. Default 300 MB if left empty.">?</button>
+              </label>
+              <input id="maxmempool" type="number" min="0" placeholder="300" />
+            </div>
+            <div class="form-field">
+              <label for="dbcache">DB cache / UTXO (MB)
+                <button type="button" class="help-btn" tabindex="0" data-help="Core-style -dbcache: UTXO working-set budget. 0 = auto (~80% of free RAM after 2 GB OS reserve). Larger speeds IBD. Requires restart.">?</button>
+              </label>
+              <input id="dbcache" type="number" min="0" max="16384" placeholder="0 = auto" />
+            </div>
+          </div>
+          <div class="settings-row2">
+            <div class="form-field">
+              <label for="mempoolexpiry">Expiry (hours)
+                <button type="button" class="help-btn" tabindex="0" data-help="How long an unconfirmed tx may stay in the pool before it expires (-mempoolexpiry). Default 24 hours if left empty.">?</button>
+              </label>
+              <input id="mempoolexpiry" type="number" min="0" placeholder="24" />
+            </div>
+          </div>
+          <div class="settings-row2">
+            <div class="form-field">
+              <label for="minrelaytxfee">Min relay (koinu/kB)
+                <button type="button" class="help-btn" tabindex="0" data-help="Configured minimum feerate to accept and relay txs (-minrelaytxfee). 100000 koinu/kB ≈ 0.001 DOGE/kB. Peers may raise the effective floor via feefilter.">?</button>
+              </label>
+              <input id="minrelaytxfee" type="number" min="0" placeholder="100000" />
+            </div>
+            <div class="form-field">
+              <label for="incrementalrelayfee">Incremental relay (koinu/kB)
+                <button type="button" class="help-btn" tabindex="0" data-help="Added to the rolling minimum feerate after mempool eviction (-incrementalrelayfee). Stops the pool refilling with spam right after space frees up. Default 100000 if empty.">?</button>
+              </label>
+              <input id="incrementalrelayfee" type="number" min="0" placeholder="100000" />
+            </div>
+          </div>
+          <div class="switch">
+            <span>Full RBF (<code>mempoolfullrbf</code>)
+              <button type="button" class="help-btn" tabindex="0" data-help="When on, any mempool tx may be replaced by a higher-fee version, not only BIP125 opt-in RBF txs. Off by default (Core -mempoolfullrbf).">?</button>
+            </span>
+            <input type="checkbox" id="mempoolfullrbf" />
+          </div>
+          <p class="label" style="margin-top:8px;font-weight:600">Package limits (optional)</p>
+          <p class="field-hint">Caps for chains of unconfirmed parent/child txs accepted together (-limit*).</p>
+          <div class="settings-row2">
+            <div class="form-field">
+              <label for="limitancestorcount">Ancestor count
+                <button type="button" class="help-btn" tabindex="0" data-help="Max number of unconfirmed ancestor txs in a package (-limitancestorcount). Default 25 if empty.">?</button>
+              </label>
+              <input id="limitancestorcount" type="number" min="0" placeholder="25" />
+            </div>
+            <div class="form-field">
+              <label for="limitdescendantcount">Descendant count
+                <button type="button" class="help-btn" tabindex="0" data-help="Max descendant txs chained from one in-mempool parent (-limitdescendantcount). Default 25 if empty.">?</button>
+              </label>
+              <input id="limitdescendantcount" type="number" min="0" placeholder="25" />
+            </div>
+          </div>
+          <div class="settings-row2">
+            <div class="form-field">
+              <label for="limitancestorsize">Ancestor size (kB)
+                <button type="button" class="help-btn" tabindex="0" data-help="Max combined virtual size of a tx plus all its unconfirmed ancestors (-limitancestorsize). Default 101 kB if empty.">?</button>
+              </label>
+              <input id="limitancestorsize" type="number" min="0" placeholder="101" />
+            </div>
+            <div class="form-field">
+              <label for="limitdescendantsize">Descendant size (kB)
+                <button type="button" class="help-btn" tabindex="0" data-help="Max combined virtual size of a tx plus all unconfirmed descendants (-limitdescendantsize). Default 101 kB if empty.">?</button>
+              </label>
+              <input id="limitdescendantsize" type="number" min="0" placeholder="101" />
+            </div>
+          </div>
+          <div class="switch">
+            <span>OP_RETURN (<code>acceptdatacarrier</code>)
+              <button type="button" class="help-btn" tabindex="0" data-help="When on, relay standard OP_RETURN data outputs (inscriptions, tags). Turn off to reject OP_RETURN txs (-acceptdatacarrier). On by default.">?</button>
+            </span>
+            <input type="checkbox" id="acceptdatacarrier" checked />
+          </div>
+          <div class="switch">
+            <span>Bare multisig (<code>permitbaremultisig</code>)
+              <button type="button" class="help-btn" tabindex="0" data-help="When on, relay bare multisig outputs (older style). Turn off for stricter standardness (-permitbaremultisig). On by default.">?</button>
+            </span>
+            <input type="checkbox" id="permitbaremultisig" checked />
+          </div>
+        </details>
+        <div id="setup-wallet-backup" class="alert warn wallet-backup-banner" hidden role="alert">
+          <div class="wallet-backup-banner-inner">
+            <div class="wallet-backup-banner-text">
+              <strong data-i18n="wizard.backupTitle">Backup your wallet (required)</strong>
+              <p data-i18n="wizard.backupBody">Download a copy of wallet.json and store it offline in a safe place. Without a backup you cannot recover funds if this device fails.</p>
+              <p class="field-hint wallet-backup-security-warn" data-i18n="wizard.backupEncryptWarning">This file contains your HD seed and all private keys (including imports) in plain text unless you encrypt the wallet. Set a dashboard PIN on the previous step (locks this UI only), then after start run Console → encryptwallet with a strong passphrase to encrypt wallet.json on disk. Treat backups like cash. Store offline and encrypted when possible.</p>
+              <p class="field-hint" id="setup-wallet-backup-status" data-i18n="wizard.backupPending">Download your wallet backup, then confirm you have stored it safely.</p>
+            </div>
+            <div class="wallet-backup-banner-actions">
+              <button type="button" class="btn btn-primary btn-sm" id="setup-wallet-backup-download">
+                <span class="material-icons-round" aria-hidden="true">download</span>
+                <span data-i18n="wizard.downloadBackup">Download backup</span>
+              </button>
+            </div>
+          </div>
+          <label class="setup-wallet-backup-ack">
+            <span data-i18n="wizard.backupAck">I have saved my wallet backup in a safe place</span>
+            <input type="checkbox" id="setup-wallet-backup-ack" role="switch" />
+          </label>
+        </div>
+        <div id="setup-wallet-encrypt-block" class="setup-wallet-encrypt-block" hidden>
+          <p class="setup-section-title" data-i18n="wizard.walletEncryptTitle">Encrypt wallet on start</p>
+          <div class="switch"><span data-i18n="wizard.walletEncryptEnable">Encrypt wallet.json now (Core encryptwallet)</span><input type="checkbox" id="setup_wallet_encrypt" checked /></div>
+          <p class="field-hint" data-i18n="wizard.walletEncryptHint">Required on first setup unless you turn encryption off below. Download the backup first (plaintext until encrypted). After encryption you unlock with this passphrase to send (dashboard or dogego-cli walletpassphrase).</p>
+          <div id="setup-wallet-pass-fields" class="setup-field-grid" hidden>
+            <div class="form-field"><label for="setup_wallet_pass" data-i18n="wizard.walletPass">Wallet passphrase</label><input id="setup_wallet_pass" type="password" autocomplete="new-password" /></div>
+            <div class="form-field"><label for="setup_wallet_pass_confirm" data-i18n="wizard.walletPassConfirm">Confirm passphrase</label><input id="setup_wallet_pass_confirm" type="password" autocomplete="new-password" /></div>
+          </div>
+        </div>
+        <div class="card setup-preflight" id="setup-autostart-preflight" aria-live="polite">
+          <div class="setup-preflight-head">
+            <h2>OS login autostart</h2>
+            <button type="button" class="btn btn-ghost btn-sm" id="setup-autostart-refresh">
+              <span class="material-icons-round" aria-hidden="true">refresh</span> Re-run
+            </button>
+          </div>
+          <p class="field-hint" id="setup-autostart-hint">Checks platform support when sign-in autostart is enabled - same family as <code>dogego cert autostart</code>.</p>
+          <div id="setup-autostart-list" class="setup-preflight-list"></div>
+        </div>
+        <div class="card setup-preflight" id="setup-founder-preflight" hidden aria-live="polite">
+          <div class="setup-preflight-head">
+            <h2>Reboot testnet founder checks</h2>
+            <button type="button" class="btn btn-ghost btn-sm" id="setup-founder-refresh">
+              <span class="material-icons-round" aria-hidden="true">refresh</span> Re-run
+            </button>
+          </div>
+          <p class="field-hint" id="setup-founder-hint">Runs on this step when network is testnet - same logic as <code>dogego cert founder</code>.</p>
+          <div id="setup-founder-list" class="setup-preflight-list"></div>
+        </div>
+        <div class="card setup-review" id="setup-review" aria-live="polite"></div>
+      </section>
+
+      <p id="msg" class="alert" role="status"></p>
+
+      <div class="setup-nav card" id="setup-nav">
+        <button type="button" class="btn" id="setup-back" disabled>
+          <span class="material-icons-round" aria-hidden="true">arrow_back</span> <span data-i18n="common.back">Back</span>
+        </button>
+        <div class="setup-nav-mid" id="setup-nav-mid">
+          <button type="button" class="btn btn-primary" id="setup-next">
+            <span data-i18n="common.next">Next</span> <span class="material-icons-round" aria-hidden="true">arrow_forward</span>
+          </button>
+        </div>
+        <div class="setup-nav-finish" id="setup-nav-finish" hidden>
+          <button type="button" class="btn btn-success btn-wide" id="setup-start-btn">
+            <span class="material-icons-round" aria-hidden="true">play_arrow</span> <span id="setup-start-btn-label" data-i18n="common.saveStart">Save &amp; start node</span>
+          </button>
+          <p class="field-hint setup-start-founder-hint" id="setup-start-founder-hint" hidden></p>
+        </div>
+      </div>
+    </form>
+
+    <footer class="foot setup-foot">
+      <p class="foot-love">Coded with love to all Dogecoin community.</p>
+      <p>Saved to <code>dogecoinconf.json</code> ... change anytime in dashboard Settings.</p>
+    </footer>
+  </main>
+
+  <div id="setup-loading-overlay" class="boot-overlay" role="status" aria-live="polite" aria-busy="true" hidden>
+    <div class="boot-overlay-card">
+      <div class="boot-overlay-wait" data-doge-wait data-doge-wait-msg="Much setup. Very start."></div>
+      <p class="boot-overlay-brand">DogeGo</p>
+      <h2 class="boot-overlay-title" data-i18n="wizard.loadingTitle">Starting DogeGo</h2>
+      <p id="setup-loading-text" class="boot-overlay-msg" data-i18n="wizard.loadingSave">Saving configuration and starting your node…</p>
+      <p class="boot-overlay-hint" data-i18n="wizard.loadingHint">Such patience. Wow.</p>
+    </div>
+  </div>
+
+  <script src="/i18n.js"></script>
+  <script src="/ui-prefs.js"></script>
+  <script src="/ui-controls.js"></script>
+  <script>
+    (function () {
+      function t(key, params) {
+        return (window.DogeGoI18n && window.DogeGoI18n.t(key, params)) || key;
+      }
+
+      function stepMeta(i) {
+        return {
+          title: t("wizard.stepMeta." + i + ".title"),
+          desc: t("wizard.stepMeta." + i + ".desc"),
+        };
+      }
+
+      const TOTAL = 5;
+      let step = 0;
+      let selectedProfile = "";
+      let dualInstanceMode = false;
+      let lastLikelyCGNAT = false;
+      let walletBackupDownloaded = false;
+      let wizardWebUITLSLocal = true;
+      let wizardLocalTLSTrustCA = true;
+
+      function $(id) { return document.getElementById(id); }
+
+      function dgrReviewLine() {
+        const p2p = ($("p2p_connectivity") && $("p2p_connectivity").value) || "both";
+        if (p2p !== "both" && p2p !== "classic" && p2p !== "cgnat") return "off";
+        if (p2p === "cgnat" || lastLikelyCGNAT) {
+          return "auto: outbound QUIC relay (CGNAT detected)";
+        }
+        return "auto: inbound rdogego relay (public IP)";
+      }
+
+      function selectOptionCard(targetId, value) {
+        const input = $(targetId);
+        if (input) input.value = value;
+        document.querySelectorAll('.setup-option-card[data-target="' + targetId + '"]').forEach((el) => {
+          const on = el.getAttribute("data-value") === value;
+          el.classList.toggle("selected", on);
+          el.setAttribute("aria-selected", on ? "true" : "false");
+        });
+        if (targetId === "node_mode") updateSyncStepUI();
+      }
+
+      function initOptionCards() {
+        document.querySelectorAll(".setup-option-card").forEach((card) => {
+          card.addEventListener("click", () => {
+            const target = card.getAttribute("data-target");
+            const value = card.getAttribute("data-value");
+            if (target && value) selectOptionCard(target, value);
+          });
+        });
+      }
+
+      function isSPV() {
+        return $("node_mode") && $("node_mode").value === "spv";
+      }
+
+      function walletEnabled() {
+        return !$("nowallet") || !$("nowallet").checked;
+      }
+
+      function uaCommentPublishEnabled() {
+        return $("uacomment_publish_tip") && $("uacomment_publish_tip").checked;
+      }
+
+      let nodeTipPreviewReq = 0;
+      let subversionPreviewReq = 0;
+
+      function buildSetupUACommentPreviewBody() {
+        const body = {
+          uacomment: $("uacomment") ? $("uacomment").value.trim() : "",
+          publish_tip: uaCommentPublishEnabled(),
+          datadir: $("datadir").value.trim(),
+          network: $("network").value,
+          nowallet: $("nowallet").checked,
+        };
+        if (body.publish_tip) {
+          if (walletEnabled()) {
+            body.uacomment_use_node_tip = true;
+          } else if ($("uacomment_tip_manual")) {
+            body.uacomment_tip_address = $("uacomment_tip_manual").value.trim();
+          }
+        }
+        return body;
+      }
+
+      async function refreshSubversionPreview() {
+        const prev = $("uacomment-subversion-preview");
+        if (!prev) return;
+        const req = ++subversionPreviewReq;
+        const networks = isDualInstanceMode() ? ["mainnet", "testnet"] : [$("network").value];
+        try {
+          const lines = [];
+          for (const net of networks) {
+            const body = buildSetupUACommentPreviewBody();
+            body.network = net;
+            const r = await fetch("/api/config/uacomment-preview", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify(body),
+            });
+            if (req !== subversionPreviewReq) return;
+            if (!r.ok) throw new Error(await r.text());
+            const data = await r.json();
+            const sub = data.subversion || "";
+            const label = isDualInstanceMode() ? net + ": " : "";
+            lines.push(label + (sub ? sub : "(default)"));
+          }
+          prev.textContent = isDualInstanceMode()
+            ? "Wire user-agent - " + lines.join(" · ")
+            : (lines[0] ? "Wire user-agent: " + lines[0] : "Wire user-agent: (default)");
+          prev.title = lines.join("\n");
+        } catch (err) {
+          prev.textContent = "";
+        }
+      }
+
+      async function fetchNodeTipPreviewForNetwork(datadir, network) {
+        const r = await fetch("/api/setup/node-tip-preview", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            datadir: datadir,
+            network: network,
+            nowallet: $("nowallet").checked,
+          }),
+        });
+        if (!r.ok) throw new Error(await r.text());
+        return r.json();
+      }
+
+      async function refreshNodeTipPreview() {
+        const dual = isDualInstanceMode();
+        const singlePrev = $("uacomment-node-tip-preview");
+        const dualWrap = $("setup-dual-tip-previews");
+        const prevMain = $("uacomment-node-tip-preview-mainnet");
+        const prevTest = $("uacomment-node-tip-preview-testnet");
+        if (!walletEnabled() || !uaCommentPublishEnabled()) {
+          if (singlePrev) singlePrev.hidden = true;
+          if (dualWrap) dualWrap.hidden = true;
+          if (prevMain) prevMain.hidden = true;
+          if (prevTest) prevTest.hidden = true;
+          return;
+        }
+        const datadir = $("datadir").value.trim();
+        if (!datadir) {
+          const msg = "Set a data directory first to preview the generated tip address.";
+          if (dual) {
+            if (dualWrap) dualWrap.hidden = false;
+            if (singlePrev) singlePrev.hidden = true;
+            if (prevMain) { prevMain.textContent = msg; prevMain.hidden = false; }
+            if (prevTest) { prevTest.textContent = msg; prevTest.hidden = false; }
+          } else if (singlePrev) {
+            singlePrev.textContent = msg;
+            singlePrev.hidden = false;
+          }
+          return;
+        }
+        const req = ++nodeTipPreviewReq;
+        if (dual) {
+          if (dualWrap) dualWrap.hidden = false;
+          if (singlePrev) singlePrev.hidden = true;
+          if (prevMain) { prevMain.textContent = "Mainnet tip address: Generating preview…"; prevMain.hidden = false; }
+          if (prevTest) { prevTest.textContent = "Testnet tip address: Generating preview…"; prevTest.hidden = false; }
+          try {
+            const mainData = await fetchNodeTipPreviewForNetwork(datadir, "mainnet");
+            if (req !== nodeTipPreviewReq) return;
+            const testData = await fetchNodeTipPreviewForNetwork(datadir, "testnet");
+            if (req !== nodeTipPreviewReq) return;
+            if (prevMain) prevMain.textContent = "Mainnet tip address (visible to peers): " + (mainData.address || "...");
+            if (prevTest) prevTest.textContent = "Testnet tip address (visible to peers): " + (testData.address || "...");
+          } catch (err) {
+            const errMsg = "Could not preview tip address: " + String(err);
+            if (prevMain) prevMain.textContent = "Mainnet - " + errMsg;
+            if (prevTest) prevTest.textContent = "Testnet - " + errMsg;
+          }
+          return;
+        }
+        if (dualWrap) dualWrap.hidden = true;
+        if (prevMain) prevMain.hidden = true;
+        if (prevTest) prevTest.hidden = true;
+        if (!singlePrev) return;
+        singlePrev.textContent = "Generating preview…";
+        singlePrev.hidden = false;
+        try {
+          const data = await fetchNodeTipPreviewForNetwork(datadir, $("network").value);
+          if (req !== nodeTipPreviewReq) return;
+          singlePrev.textContent = "Dedicated tip address (visible to peers): " + (data.address || "...");
+        } catch (err) {
+          singlePrev.textContent = "Could not preview tip address: " + String(err);
+        }
+      }
+
+      function updateUACommentTipUI() {
+        const opts = $("uacomment-tip-options");
+        const publish = uaCommentPublishEnabled();
+        if (opts) opts.hidden = !publish;
+        const walletOn = walletEnabled();
+        if ($("uacomment_use_node_tip")) $("uacomment_use_node_tip").checked = walletOn;
+        const walletHint = $("uacomment-tip-wallet-hint");
+        if (walletHint) {
+          walletHint.hidden = !publish || !walletOn;
+          if (!walletHint.hidden) {
+            walletHint.textContent = isDualInstanceMode()
+              ? "Each network derives a dedicated tip address from its wallet (separate from Receive)."
+              : "Uses a dedicated HD derivation on this node (separate from Receive).";
+          }
+        }
+        const manualWrap = $("uacomment-manual-wrap");
+        if (manualWrap) manualWrap.hidden = !publish || walletOn || isDualInstanceMode();
+        const dualWrap = $("setup-dual-tip-previews");
+        const singlePrev = $("uacomment-node-tip-preview");
+        if (dualWrap) dualWrap.hidden = !publish || !walletOn || !isDualInstanceMode();
+        if (singlePrev && isDualInstanceMode()) singlePrev.hidden = true;
+        if (publish && walletOn) void refreshNodeTipPreview();
+        else if (singlePrev) singlePrev.hidden = true;
+        void refreshSubversionPreview();
+      }
+
+      function resetWalletBackupState() {
+        walletBackupDownloaded = false;
+        const ack = $("setup-wallet-backup-ack");
+        if (ack) ack.checked = false;
+        updateWalletBackupUI();
+      }
+
+      function updateWalletBackupUI() {
+        const section = $("setup-wallet-backup");
+        const enabled = walletEnabled();
+        if (section) section.hidden = !enabled;
+        const encBlock = $("setup-wallet-encrypt-block");
+        if (encBlock) encBlock.hidden = !enabled;
+        updateWalletEncryptUI();
+        const startBtn = $("setup-start-btn");
+        const ack = $("setup-wallet-backup-ack");
+        const ready = !enabled || (walletBackupDownloaded && ack && ack.checked);
+        if (startBtn) startBtn.disabled = enabled && !ready;
+        const status = $("setup-wallet-backup-status");
+        if (status && enabled) {
+          if (walletBackupDownloaded && ack && ack.checked) {
+            status.textContent = t("wizard.backupReady");
+          } else if (walletBackupDownloaded) {
+            status.textContent = isDualInstanceMode()
+              ? "Confirm you saved both mainnet and testnet wallet backups."
+              : t("wizard.backupConfirm");
+          } else {
+            status.textContent = t("wizard.backupPending");
+          }
+        }
+      }
+
+      function walletEncryptEnabled() {
+        return walletEnabled() && $("setup_wallet_encrypt") && $("setup_wallet_encrypt").checked;
+      }
+
+      function updateWalletEncryptUI() {
+        const on = walletEncryptEnabled();
+        const fields = $("setup-wallet-pass-fields");
+        if (fields) fields.hidden = !on;
+      }
+
+      async function downloadSetupWalletBackup() {
+        if (!walletEnabled()) return;
+        const datadir = $("datadir").value.trim();
+        if (!datadir) {
+          showMsg("Data directory is required before downloading a wallet backup.", "err");
+          return;
+        }
+        const btn = $("setup-wallet-backup-download");
+        if (btn) btn.disabled = true;
+        clearMsg();
+        try {
+          const networks = isDualInstanceMode() ? ["mainnet", "testnet"] : [$("network").value];
+          for (const net of networks) {
+            const r = await fetch("/api/setup/wallet-backup", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({
+                datadir: datadir,
+                network: net,
+                nowallet: $("nowallet").checked,
+              }),
+            });
+            if (!r.ok) {
+              const text = await r.text();
+              throw new Error(text || r.statusText);
+            }
+            const blob = await r.blob();
+            const disp = r.headers.get("Content-Disposition") || "";
+            const m = /filename="([^"]+)"/.exec(disp);
+            const filename = (m && m[1]) || ("dogego-wallet-backup-" + net + ".json");
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement("a");
+            a.href = url;
+            a.download = filename;
+            document.body.appendChild(a);
+            a.click();
+            a.remove();
+            URL.revokeObjectURL(url);
+          }
+          walletBackupDownloaded = true;
+          updateWalletBackupUI();
+        } catch (err) {
+          showMsg(String(err), "err");
+        } finally {
+          if (btn) btn.disabled = false;
+        }
+      }
+
+      function networkDisplayLabel() {
+        const v = $("network").value;
+        if (v === "mainnet") return "mainnet";
+        if (v === "testnet") return "testnet";
+        return v;
+      }
+
+      function applyRecommendedStorage() {
+        if ($("block_storage_layout")) $("block_storage_layout").value = "bundled";
+        if ($("block_zstd")) $("block_zstd").checked = true;
+        if ($("tx_index_embed_tx")) $("tx_index_embed_tx").checked = false;
+      }
+
+      function applyRecommendedNetwork() {
+        if ($("p2p_connectivity")) $("p2p_connectivity").value = "both";
+        if ($("firewall")) $("firewall").value = "auto";
+        if ($("upnp")) $("upnp").value = "auto";
+      }
+
+      function applySetupBranding() {
+        const net = ($("network") && $("network").value) || "mainnet";
+        const logo = (net === "testnet" || net === "reboottestnet") ? "/dogecoin_testnet.svg" : "/dogecoin.svg";
+        document.querySelectorAll("[data-brand-logo]").forEach((el) => {
+          if (el.getAttribute("src") !== logo) el.setAttribute("src", logo);
+        });
+        const fav = $("brand-favicon");
+        if (fav && fav.getAttribute("href") !== logo) fav.setAttribute("href", logo);
+      }
+
+      function isDualInstanceMode() {
+        return dualInstanceMode || selectedProfile === "dual-mainnet-testnet";
+      }
+
+      const DUAL_INSTANCE_ENDPOINTS = {
+        mainnet: { webui: "localhost:2013", rpc: "127.0.0.1:22557" },
+        testnet: { webui: "localhost:2014", rpc: "127.0.0.1:44555" },
+      };
+
+      function updateDualInstanceUI() {
+        const dual = isDualInstanceMode();
+        const dataEss = $("setup-data-essential");
+        const dualDataNote = $("setup-dual-data-note");
+        const networkField = $("setup-network-field");
+        const nodeModeField = $("setup-node-mode-field");
+        const dataTip = document.querySelector('.setup-step[data-step="1"] .setup-tip.setup-advanced-block');
+        if (dataEss) {
+          dataEss.textContent = dual
+            ? "Pick a shared data folder for both nodes. Peer discovery stays automatic unless you set a seed."
+            : (dataEss.getAttribute("data-i18n-default") || dataEss.textContent);
+        }
+        if (!dataEss || !dataEss.getAttribute("data-i18n-default")) {
+          if (dataEss) dataEss.setAttribute("data-i18n-default", dataEss.textContent);
+        }
+        if (dualDataNote) dualDataNote.hidden = !dual;
+        if (networkField) networkField.hidden = dual;
+        if (nodeModeField) nodeModeField.hidden = dual;
+        if (dataTip) dataTip.hidden = dual;
+
+        const dualUaNote = $("setup-dual-uacomment-note");
+        const uaHint = $("setup-uacomment-hint");
+        if (dualUaNote) dualUaNote.hidden = !dual;
+        if (uaHint) uaHint.hidden = dual;
+
+        const finishEss = $("setup-finish-essential");
+        const dualListen = $("setup-dual-listen-panel");
+        const listenFields = $("setup-listen-fields");
+        const webuiField = $("setup-webui-field");
+        const rpcField = $("setup-rpc-field");
+        if (finishEss) {
+          finishEss.innerHTML = dual
+            ? "Dual instance: dashboards on <code>localhost:2013</code> (mainnet) and <code>localhost:2014</code> (testnet). Set an optional PIN to lock each web UI."
+            : (finishEss.getAttribute("data-i18n-default") || finishEss.textContent);
+        }
+        if (!finishEss || !finishEss.getAttribute("data-i18n-default")) {
+          if (finishEss) finishEss.setAttribute("data-i18n-default", finishEss.innerHTML);
+        }
+        if (dualListen) dualListen.hidden = !dual;
+        if (listenFields) listenFields.hidden = dual;
+        if (webuiField) webuiField.hidden = dual;
+        if (rpcField) rpcField.hidden = dual;
+        if (dual) {
+          if ($("webui")) $("webui").value = DUAL_INSTANCE_ENDPOINTS.mainnet.webui;
+          if ($("rpc")) $("rpc").value = "";
+        }
+
+        const mineRow = $("setup-mine-row");
+        if (mineRow) mineRow.hidden = dual;
+        if (dual && $("mine")) $("mine").checked = false;
+
+        const founderHint = $("setup-founder-hint");
+        if (founderHint && dual) {
+          founderHint.textContent = "Runs for the testnet instance in this dual setup - same logic as dogego cert founder.";
+        } else if (founderHint) {
+          founderHint.textContent = "Runs on this step when network is testnet - same logic as dogego cert founder.";
+        }
+
+        updateFounderPreflightVisibility();
+        if (step === 2) updateUACommentTipUI();
+      }
+
+      function selectProfileCard(profile) {
+        selectedProfile = profile;
+        document.querySelectorAll(".wizard-profile-card").forEach((el) => {
+          el.classList.toggle("selected", el.getAttribute("data-profile") === profile);
+          el.setAttribute("aria-selected", el.getAttribute("data-profile") === profile ? "true" : "false");
+        });
+        applyQuickProfile(profile);
+      }
+
+      function applyQuickProfile(profile) {
+        dualInstanceMode = profile === "dual-mainnet-testnet";
+        $("nowallet").checked = false;
+        $("setup_pin_now").checked = false;
+        if (profile === "first-run") {
+          selectOptionCard("network", "testnet");
+          selectOptionCard("node_mode", "full");
+          selectOptionCard("p2p_connectivity", "both");
+          $("peer").value = "";
+          $("ibd_optimize").checked = true;
+          $("analytics_sidecar").checked = true;
+          $("no_tx_index").checked = false;
+          applyRecommendedStorage();
+          applyRecommendedNetwork();
+          $("maxoutbound").value = "";
+          $("maxinbound").value = "";
+        } else if (profile === "mainnet" || profile === "mainnet-wallet") {
+          selectOptionCard("network", "mainnet");
+          selectOptionCard("node_mode", "full");
+          selectOptionCard("p2p_connectivity", "both");
+          $("peer").value = "";
+          $("ibd_optimize").checked = true;
+          $("analytics_sidecar").checked = true;
+          $("no_tx_index").checked = false;
+          applyRecommendedStorage();
+          applyRecommendedNetwork();
+          if (profile === "mainnet-wallet") {
+            $("setup_pin_now").checked = true;
+            const pinBox = $("setup-pin-fields");
+            const bio = $("setup-webauthn-row");
+            if (pinBox) pinBox.hidden = false;
+            if (bio) bio.hidden = false;
+          }
+        } else if (profile === "dual-mainnet-testnet") {
+          selectOptionCard("network", "mainnet");
+          selectOptionCard("node_mode", "full");
+          selectOptionCard("p2p_connectivity", "both");
+          $("peer").value = "";
+          $("ibd_optimize").checked = true;
+          $("analytics_sidecar").checked = true;
+          $("no_tx_index").checked = false;
+          $("mine").checked = false;
+          if ($("webui")) $("webui").value = "localhost:2013";
+          if ($("rpc")) $("rpc").value = "";
+          applyRecommendedStorage();
+          applyRecommendedNetwork();
+          $("maxoutbound").value = "";
+          $("maxinbound").value = "";
+        } else if (profile === "spv-wallet") {
+          selectOptionCard("network", "testnet");
+          selectOptionCard("node_mode", "spv");
+          selectOptionCard("p2p_connectivity", "cgnat");
+          $("peer").value = "";
+          $("ibd_optimize").checked = true;
+          $("analytics_sidecar").checked = false;
+          $("no_tx_index").checked = true;
+          $("maxoutbound").value = "6";
+          $("maxinbound").value = "0";
+          if ($("firewall")) $("firewall").value = "auto";
+          if ($("upnp")) $("upnp").value = "disable";
+        }
+        updateSyncStepUI();
+        applySetupBranding();
+        updateDualInstanceUI();
+        if (step === TOTAL - 1) renderReview();
+        resetWalletBackupState();
+      }
+
+      async function runPreflight() {
+        const list = $("setup-preflight-list");
+        const hint = $("setup-preflight-hint");
+        if (!list) return;
+        list.innerHTML = "";
+        if (window.DogeGoWait) window.DogeGoWait.set(list, "Running setup checks…", { compact: true });
+        else list.innerHTML = "<p class=\"field-hint\">Running checks…</p>";
+        if (hint) {
+          if (window.DogeGoWait) window.DogeGoWait.set(hint, isDualInstanceMode() ? "Checking ports for mainnet and testnet instances…" : "Checking ports, firewall, and network mode…", { inline: true });
+          else hint.textContent = isDualInstanceMode() ? "Checking ports for mainnet and testnet instances…" : "Checking ports, firewall, and network mode…";
+        }
+        try {
+          const instances = isDualInstanceMode()
+            ? [
+                { network: "mainnet", webui: DUAL_INSTANCE_ENDPOINTS.mainnet.webui },
+                { network: "testnet", webui: DUAL_INSTANCE_ENDPOINTS.testnet.webui },
+              ]
+            : [{ network: $("network").value, webui: $("webui").value.trim() || "localhost:2013" }];
+          const allChecks = [];
+          let anyCGNAT = false;
+          let allOk = true;
+          for (const inst of instances) {
+            const r = await fetch("/api/setup/preflight", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({
+                network: inst.network,
+                node_mode: $("node_mode").value,
+                p2p_connectivity: $("p2p_connectivity").value,
+                firewall: $("firewall") ? $("firewall").value : "auto",
+                upnp: $("upnp") ? $("upnp").value : "auto",
+                webui: inst.webui,
+                rpc: $("rpc").value.trim(),
+                setup_origin: window.location.origin,
+              }),
+            });
+            const data = await r.json();
+            if (!r.ok) throw new Error(data.error || r.statusText);
+            anyCGNAT = anyCGNAT || !!data.likely_cgnat;
+            if (!data.ok) allOk = false;
+            (data.checks || []).forEach((c) => {
+              allChecks.push(Object.assign({}, c, {
+                title: isDualInstanceMode() ? (inst.network + " - " + c.title) : c.title,
+              }));
+            });
+          }
+          lastLikelyCGNAT = anyCGNAT;
+          list.innerHTML = allChecks.map((c) => {
+            const icon = c.status === "ok" ? "check_circle" : c.status === "err" ? "error" : "warning";
+            let html = "<div class=\"setup-preflight-item setup-preflight-" + escapeHtml(c.status) + "\">" +
+              "<span class=\"material-icons-round\" aria-hidden=\"true\">" + icon + "</span>" +
+              "<div><strong>" + escapeHtml(c.title) + "</strong><p>" + escapeHtml(c.message) + "</p>";
+            if (c.fix) html += "<p class=\"setup-preflight-fix\">" + escapeHtml(c.fix) + "</p>";
+            if (c.commands && c.commands.length) {
+              html += "<pre class=\"pre-out firewall-cmds\">" + escapeHtml(c.commands.join("\n")) + "</pre>";
+            }
+            html += "</div></div>";
+            return html;
+          }).join("");
+          if (hint) {
+            hint.textContent = allOk
+              ? "All critical checks passed. Warnings are informational ... you can still start."
+              : "Fix errors above before starting, or adjust settings and re-run.";
+          }
+        } catch (err) {
+          list.innerHTML = "<p class=\"alert err show\">" + escapeHtml(String(err)) + "</p>";
+        }
+      }
+
+      function isRebootTestnetWizard() {
+        if (isDualInstanceMode()) return true;
+        const v = ($("network") && $("network").value) || "testnet";
+        return v === "testnet" || v === "reboottestnet";
+      }
+
+      function updateAutostartPreflightVisibility() {
+        const panel = $("setup-autostart-preflight");
+        const enabled = $("autostart_login") && $("autostart_login").checked;
+        if (panel) panel.hidden = !enabled;
+      }
+
+      async function runAutostartPreflight() {
+        updateAutostartPreflightVisibility();
+        const panel = $("setup-autostart-preflight");
+        const list = $("setup-autostart-list");
+        const hint = $("setup-autostart-hint");
+        if (!panel || panel.hidden || !list) return;
+        list.innerHTML = "";
+        if (window.DogeGoWait) window.DogeGoWait.set(list, "Checking autostart…", { compact: true });
+        else list.innerHTML = "<p class=\"field-hint\">Checking autostart…</p>";
+        try {
+          const r = await fetch("/api/setup/autostart-preflight", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              autostart: ($("autostart_login") && $("autostart_login").checked) ? "login" : "disable",
+            }),
+          });
+          const data = await r.json();
+          if (!r.ok) throw new Error(data.error || r.statusText);
+          list.innerHTML = (data.checks || []).map((c) => {
+            const icon = c.status === "ok" ? "check_circle" : c.status === "err" ? "error" : "warning";
+            let html = "<div class=\"setup-preflight-item setup-preflight-" + escapeHtml(c.status) + "\">" +
+              "<span class=\"material-icons-round\" aria-hidden=\"true\">" + icon + "</span>" +
+              "<div><strong>" + escapeHtml(c.title) + "</strong><p>" + escapeHtml(c.message) + "</p>";
+            if (c.fix) html += "<p class=\"setup-preflight-fix\">" + escapeHtml(c.fix) + "</p>";
+            html += "</div></div>";
+            return html;
+          }).join("");
+          if (hint) {
+            hint.textContent = data.ok
+              ? "Autostart checks passed - OS registration is applied when you Save & start."
+              : "Review autostart warnings above.";
+          }
+        } catch (err) {
+          list.innerHTML = "<p class=\"alert err show\">" + escapeHtml(String(err)) + "</p>";
+        }
+      }
+
+      function updateFounderPreflightVisibility() {
+        const panel = $("setup-founder-preflight");
+        if (!panel) return;
+        const show = isRebootTestnetWizard() && !isSPV();
+        panel.hidden = !show;
+      }
+
+      let lastFounderPreflightOK = true;
+      let lastFounderPreflightWarnings = 0;
+
+      function updateStartButtonFounderHint() {
+        const label = $("setup-start-btn-label");
+        const hint = $("setup-start-founder-hint");
+        const base = t("common.saveStart");
+        if (!isRebootTestnetWizard() || isSPV()) {
+          if (label) label.textContent = base;
+          if (hint) {
+            hint.textContent = "";
+            hint.hidden = true;
+          }
+          return;
+        }
+        if (!lastFounderPreflightOK) {
+          if (label) label.textContent = base + " - founder errors";
+          if (hint) {
+            hint.textContent = "Fix founder errors on this step before starting.";
+            hint.hidden = false;
+          }
+          return;
+        }
+        if (lastFounderPreflightWarnings > 0) {
+          const n = lastFounderPreflightWarnings;
+          const warnWord = n === 1 ? "warning" : "warnings";
+          if (label) label.textContent = base + " (" + n + " founder " + warnWord + ")";
+          if (hint) {
+            hint.textContent = "Founder checks passed with " + n + " " + warnWord + " - review before advertising addnode.";
+            hint.hidden = false;
+          }
+          return;
+        }
+        if (label) label.textContent = base;
+        if (hint) {
+          hint.textContent = "";
+          hint.hidden = true;
+        }
+      }
+
+      async function fetchFounderPreflight() {
+        const r = await fetch("/api/setup/founder-preflight", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            network: isDualInstanceMode() ? "testnet" : $("network").value,
+            node_mode: $("node_mode").value,
+            datadir: $("datadir").value.trim(),
+            p2p_connectivity: $("p2p_connectivity").value,
+            mine: isDualInstanceMode() ? true : ($("mine") ? $("mine").checked : true),
+            nowallet: $("nowallet").checked,
+          }),
+        });
+        const data = await r.json();
+        if (!r.ok) throw new Error(data.error || r.statusText);
+        return data;
+      }
+
+      async function runFounderPreflight() {
+        updateFounderPreflightVisibility();
+        const panel = $("setup-founder-preflight");
+        const list = $("setup-founder-list");
+        const hint = $("setup-founder-hint");
+        if (!panel || panel.hidden || !list) return;
+        list.innerHTML = "";
+        if (window.DogeGoWait) window.DogeGoWait.set(list, "Running founder checks…", { compact: true });
+        else list.innerHTML = "<p class=\"field-hint\">Running founder checks…</p>";
+        if (hint) hint.textContent = "Checking reboot testnet founder readiness…";
+        try {
+          const data = await fetchFounderPreflight();
+          lastFounderPreflightOK = !!data.ok;
+          lastFounderPreflightWarnings = (data.checks || []).filter((c) => c.status === "warn").length;
+          list.innerHTML = (data.checks || []).map((c) => {
+            const icon = c.status === "ok" ? "check_circle" : c.status === "err" ? "error" : "warning";
+            let html = "<div class=\"setup-preflight-item setup-preflight-" + escapeHtml(c.status) + "\">" +
+              "<span class=\"material-icons-round\" aria-hidden=\"true\">" + icon + "</span>" +
+              "<div><strong>" + escapeHtml(c.title) + "</strong><p>" + escapeHtml(c.message) + "</p>";
+            if (c.fix) html += "<p class=\"setup-preflight-fix\">" + escapeHtml(c.fix) + "</p>";
+            html += "</div></div>";
+            return html;
+          }).join("");
+          if (hint) {
+            hint.textContent = data.ok
+              ? "Founder checks passed. Warnings are OK for solo labs; fix before sharing addnode on the public internet."
+              : "Fix errors above or adjust P2P/mining settings, then re-run.";
+          }
+          updateStartButtonFounderHint();
+        } catch (err) {
+          lastFounderPreflightOK = false;
+          lastFounderPreflightWarnings = 0;
+          list.innerHTML = "<p class=\"alert err show\">" + escapeHtml(String(err)) + "</p>";
+          updateStartButtonFounderHint();
+        }
+      }
+
+      function updateSyncStepUI() {
+        const spv = isSPV();
+        const skip = $("setup-spv-skip");
+        const fields = $("setup-sync-fields");
+        if (skip) skip.hidden = !spv;
+        if (fields) {
+          fields.hidden = spv;
+          fields.querySelectorAll("input, select").forEach((el) => { el.disabled = spv; });
+        }
+        const syncTip = $("setup-sync-tip");
+        if (syncTip) syncTip.hidden = spv;
+        const syncEss = $("setup-sync-essential");
+        if (syncEss) syncEss.hidden = spv;
+        const navLi = document.querySelector('.setup-steps-nav li[data-step="3"]');
+        if (navLi) navLi.classList.toggle("skipped", spv);
+      }
+
+      function renderReview() {
+        const el = $("setup-review");
+        if (!el) return;
+        const lines = [
+          ["Data dir", $("datadir").value.trim() || "..."],
+          ["Network", isDualInstanceMode() ? "mainnet + testnet (dual)" : networkDisplayLabel()],
+          ["Mode", isDualInstanceMode() ? "full (both)" : $("node_mode").value],
+          ["Peer", $("peer").value.trim() || "(auto)"],
+          ["P2P", $("p2p_connectivity").value],
+          ["DGR relay", dgrReviewLine()],
+          ["Firewall", $("firewall") ? $("firewall").value : "auto"],
+          ["UPnP", $("upnp") ? $("upnp").value : "auto"],
+          ["Web UI", $("nowebui").checked ? "disabled" : (isDualInstanceMode() ? "localhost:2013 + :2014" : ($("webui").value.trim() || "localhost:2013"))],
+          ["RPC", isDualInstanceMode() ? "127.0.0.1:22557 + :44555" : ($("rpc").value.trim() || "disabled")],
+          ["User-agent", ($("uacomment").value.trim() || "(none)") + (uaCommentPublishEnabled() ? (isDualInstanceMode() ? " + tip per network" : " + tip address") : "")],
+          ["Analytics", isSPV() ? "n/a (SPV)" : ($("analytics_sidecar").checked ? "on" : "off")],
+          ["IBD optimize", isSPV() ? "n/a (SPV)" : ($("ibd_optimize") && $("ibd_optimize").checked ? "on" : "off")],
+          ["Block storage", isSPV() ? "n/a (SPV)" : ($("block_storage_layout") ? $("block_storage_layout").value : "bundled")],
+          ["Block zstd", isSPV() ? "n/a" : ($("block_zstd") && $("block_zstd").checked ? "on" : "off")],
+          ["Tx index embed", isSPV() ? "n/a" : ($("tx_index_embed_tx") && $("tx_index_embed_tx").checked ? "on" : "compact")],
+          ["Max mempool", $("maxmempool").value.trim() || "300 MB default"],
+          ["DB cache", $("dbcache") && $("dbcache").value.trim() ? ($("dbcache").value.trim() + " MB") : "auto"],
+          ["Mempool expiry", $("mempoolexpiry").value.trim() || "24 h default"],
+          ["Min relay", $("minrelaytxfee").value.trim() || "default"],
+          ["Full RBF", $("mempoolfullrbf").checked ? "on" : "off"],
+          ["Package limits", ($("limitancestorcount").value.trim() || "default")],
+          ["OP_RETURN", $("acceptdatacarrier").checked ? "allowed" : "off"],
+          ["Dashboard PIN", ($("setup_pin_now") && $("setup_pin_now").checked) ? "set at start (6 digits)" : "off"],
+          ["Wallet", $("nowallet").checked ? "disabled" : "enabled (backup required)"],
+        ];
+        el.innerHTML = "<h2>Summary</h2><dl class=\"setup-review-dl\">" +
+          lines.map(([k, v]) => "<dt>" + k + "</dt><dd>" + escapeHtml(String(v)) + "</dd>").join("") +
+          "</dl>";
+      }
+
+      function escapeHtml(s) {
+        return s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+      }
+
+      function showStep(i) {
+        step = Math.max(0, Math.min(TOTAL - 1, i));
+        document.querySelectorAll(".setup-step").forEach((panel) => {
+          const n = parseInt(panel.getAttribute("data-step"), 10);
+          const on = n === step;
+          panel.classList.toggle("active", on);
+          panel.hidden = !on;
+        });
+        document.querySelectorAll(".setup-steps-nav li").forEach((li) => {
+          const n = parseInt(li.getAttribute("data-step"), 10);
+          li.classList.toggle("active", n === step);
+          li.classList.toggle("done", n < step);
+        });
+        const meta = stepMeta(step);
+        if ($("setup-step-kicker")) $("setup-step-kicker").textContent = t("wizard.stepKicker", { n: step + 1, total: TOTAL });
+        if ($("setup-step-title")) {
+          $("setup-step-title").textContent = meta.title;
+          $("setup-step-title").setAttribute("data-i18n", "wizard.stepMeta." + step + ".title");
+        }
+        if ($("setup-step-desc")) {
+          $("setup-step-desc").textContent = meta.desc;
+          $("setup-step-desc").setAttribute("data-i18n", "wizard.stepMeta." + step + ".desc");
+        }
+        if ($("setup-back")) $("setup-back").disabled = step === 0;
+        const isLast = step === TOTAL - 1;
+        const navMid = $("setup-nav-mid");
+        const navFinish = $("setup-nav-finish");
+        if (navMid) {
+          navMid.hidden = isLast;
+          navMid.style.display = isLast ? "none" : "";
+        }
+        if (navFinish) {
+          navFinish.hidden = !isLast;
+          navFinish.style.display = isLast ? "" : "none";
+        }
+        if ($("setup-nav")) $("setup-nav").classList.toggle("setup-nav--finish", isLast);
+        if (isLast) {
+          renderReview();
+          updateWalletBackupUI();
+          updateAutostartPreflightVisibility();
+          runAutostartPreflight();
+          updateFounderPreflightVisibility();
+          runFounderPreflight();
+        }
+        updateSyncStepUI();
+        updateDualInstanceUI();
+        if (step === 2 && window.DogeGoControls) window.DogeGoControls.bindChoiceCards();
+        if (step === 2) updateUACommentTipUI();
+        if (step === 2) runPreflight();
+      }
+
+      function validateStep(i) {
+        if (i === 0) {
+          if (!selectedProfile) {
+            showMsg("Choose a profile card to continue.", "err");
+            return false;
+          }
+        }
+        if (i === 1) {
+          const d = $("datadir").value.trim();
+          if (!d) {
+            showMsg("Data directory is required.", "err");
+            $("datadir").focus();
+            return false;
+          }
+        }
+        if (i === TOTAL - 1 && walletEnabled()) {
+          const ack = $("setup-wallet-backup-ack");
+          if (!walletBackupDownloaded) {
+            showMsg(t("wizard.backupPending"), "err");
+            return false;
+          }
+          if (!ack || !ack.checked) {
+            showMsg(t("wizard.backupAckRequired"), "err");
+            return false;
+          }
+          if (walletEncryptEnabled()) {
+            const pass = ($("setup_wallet_pass") && $("setup_wallet_pass").value) || "";
+            const confirm = ($("setup_wallet_pass_confirm") && $("setup_wallet_pass_confirm").value) || "";
+            if (!pass.trim()) {
+              showMsg(t("wizard.walletPassRequired"), "err");
+              return false;
+            }
+            if (pass !== confirm) {
+              showMsg(t("wizard.walletPassMismatch"), "err");
+              return false;
+            }
+          }
+        }
+        clearMsg();
+        return true;
+      }
+
+      function nextStep() {
+        if (!validateStep(step)) return;
+        let n = step + 1;
+        if (n === 3 && isSPV()) n = 4;
+        showStep(n);
+      }
+
+      function prevStep() {
+        let n = step - 1;
+        if (n === 3 && isSPV()) n = 2;
+        showStep(n);
+      }
+
+      function showMsg(text, kind) {
+        const msg = $("msg");
+        if (!msg) return;
+        msg.textContent = text;
+        msg.className = "alert " + (kind === "ok" ? "ok" : "err") + " show";
+      }
+
+      function clearMsg() {
+        const msg = $("msg");
+        if (!msg) return;
+        msg.className = "alert";
+        msg.textContent = "";
+      }
+
+      function updateTlsHintUI() {
+        const el = $("setup-tls-hint");
+        if (!el) return;
+        const httpsNow = location.protocol === "https:";
+        el.hidden = !(httpsNow || wizardWebUITLSLocal);
+      }
+
+      async function loadDefaults() {
+        const r = await fetch("/api/setup/defaults", { cache: "no-store" });
+        if (!r.ok) return;
+        const d = await r.json();
+        if (d.datadir) $("datadir").value = d.datadir;
+        wizardWebUITLSLocal = d.webui_tls_local !== false;
+        wizardLocalTLSTrustCA = d.local_tls_trust_ca !== false;
+        if ($("setup_wallet_encrypt") && d.nowallet !== true) {
+          $("setup_wallet_encrypt").checked = true;
+        }
+        updateWalletEncryptUI();
+        updateTlsHintUI();
+        if (d.peer) $("peer").value = d.peer;
+        if (d.network) {
+          const n = (d.network || "testnet").toLowerCase();
+          let net = "testnet";
+          if (n === "mainnet") net = "mainnet";
+          else if (n === "reboottestnet" || n === "testnet") net = "testnet";
+          selectOptionCard("network", net);
+        }
+        const nm = (d.node_mode || "full").toString().toLowerCase().trim();
+        selectOptionCard("node_mode", nm === "spv" ? "spv" : "full");
+        const p2p = (d.p2p_connectivity || "both").toString().toLowerCase().trim();
+        if (p2p === "classic" || p2p === "cgnat" || p2p === "both") selectOptionCard("p2p_connectivity", p2p);
+        if (d.rpc != null) $("rpc").value = d.rpc;
+        if (d.webui) $("webui").value = d.webui;
+        if (d.uacomment) $("uacomment").value = d.uacomment;
+        if (d.uacomment_tip_address || d.uacomment_use_node_tip) {
+          if ($("uacomment_publish_tip")) $("uacomment_publish_tip").checked = true;
+          if ($("uacomment_tip_manual") && d.uacomment_tip_address) $("uacomment_tip_manual").value = d.uacomment_tip_address;
+          if ($("uacomment_use_node_tip")) $("uacomment_use_node_tip").checked = d.uacomment_use_node_tip !== false;
+        }
+        updateUACommentTipUI();
+        $("nowebui").checked = !!d.nowebui;
+        $("nobrowser").checked = !!d.nobrowser;
+        if ($("tray")) $("tray").checked = d.tray !== false;
+        $("nowallet").checked = !!d.nowallet;
+        $("mine").checked = !!d.mine;
+        if (d.maxoutbound) $("maxoutbound").value = d.maxoutbound;
+        if (d.maxinbound) $("maxinbound").value = d.maxinbound;
+        $("no_tx_index").checked = !!d.no_tx_index;
+        if ($("ibd_optimize")) $("ibd_optimize").checked = d.ibd_optimize !== false;
+        $("analytics_sidecar").checked = d.analytics_sidecar !== false;
+        if (d.block_sync_workers) $("block_sync_workers").value = d.block_sync_workers;
+        if ($("block_storage_layout")) {
+          const lay = (d.block_storage_layout || "bundled").toLowerCase();
+          $("block_storage_layout").value = lay === "perfile" ? "perfile" : "bundled";
+        }
+        if ($("block_zstd")) $("block_zstd").checked = d.block_zstd !== false;
+        if ($("tx_index_embed_tx")) $("tx_index_embed_tx").checked = d.tx_index_embed_tx === true;
+        if (d.firewall && $("firewall")) $("firewall").value = String(d.firewall).toLowerCase();
+        if (d.upnp && $("upnp")) $("upnp").value = String(d.upnp).toLowerCase();
+        if (window.DogeGoControls) {
+          ["firewall", "upnp", "block_storage_layout", "network", "node_mode", "p2p_connectivity"].forEach((id) => {
+            window.DogeGoControls.syncChoiceCard(id);
+          });
+        }
+        if (!isSPV() && !d.no_tx_index && d.block_storage_layout == null && d.block_zstd === undefined && d.tx_index_embed_tx == null) {
+          applyRecommendedStorage();
+        }
+        updateSyncStepUI();
+      }
+
+      document.querySelectorAll(".setup-steps-nav li").forEach((li) => {
+        li.addEventListener("click", () => {
+          const target = parseInt(li.getAttribute("data-step"), 10);
+          if (target > step) {
+            for (let s = step; s < target; s++) {
+              if (!validateStep(s)) return;
+            }
+          }
+          showStep(target);
+        });
+      });
+
+      $("node_mode") && $("node_mode").addEventListener("change", updateSyncStepUI);
+      $("setup-next") && $("setup-next").addEventListener("click", nextStep);
+      $("setup-back") && $("setup-back").addEventListener("click", prevStep);
+      document.querySelectorAll(".wizard-profile-card").forEach((card) => {
+        card.addEventListener("click", () => selectProfileCard(card.getAttribute("data-profile")));
+      });
+      $("setup-preflight-refresh") && $("setup-preflight-refresh").addEventListener("click", runPreflight);
+      $("setup-founder-refresh") && $("setup-founder-refresh").addEventListener("click", runFounderPreflight);
+      $("setup-autostart-refresh") && $("setup-autostart-refresh").addEventListener("click", runAutostartPreflight);
+      $("autostart_login") && $("autostart_login").addEventListener("change", runAutostartPreflight);
+      ["p2p_connectivity", "firewall", "upnp", "network"].forEach((id) => {
+        const el = $(id);
+        if (el) el.addEventListener("change", () => { if (step === 2) runPreflight(); });
+      });
+
+      function dashboardURL() {
+        const webui = ($("webui") && $("webui").value.trim()) || "localhost:2013";
+        const scheme = wizardWebUITLSLocal ? "https" : "http";
+        if (/^https?:\/\//i.test(webui)) {
+          return webui.endsWith("/") ? webui : webui + "/";
+        }
+        return scheme + "://" + webui + "/";
+      }
+
+      function setSetupLoadingText(text) {
+        const el = $("setup-loading-text");
+        if (el && text) el.textContent = text;
+      }
+
+      function showSetupLoading(text) {
+        const overlay = $("setup-loading-overlay");
+        if (overlay) {
+          overlay.hidden = false;
+          overlay.classList.add("show");
+          document.body.classList.add("boot-loading");
+        }
+        const defaultText = (wizardWebUITLSLocal || location.protocol === "https:")
+          ? (t("wizard.loadingHttpsHint") || t("wizard.loadingSave"))
+          : t("wizard.loadingSave");
+        setSetupLoadingText(text || defaultText);
+        const startBtn = $("setup-start-btn");
+        if (startBtn) startBtn.disabled = true;
+      }
+
+      function hideSetupLoading() {
+        const overlay = $("setup-loading-overlay");
+        if (overlay) {
+          overlay.hidden = true;
+          overlay.classList.remove("show");
+          document.body.classList.remove("boot-loading");
+        }
+        const startBtn = $("setup-start-btn");
+        if (startBtn) startBtn.disabled = false;
+      }
+
+      /** Wait until the full node's dashboard API answers (setup server has shut down). */
+      async function waitForDashboardAPI(baseUrl, maxMs) {
+        const root = baseUrl.replace(/\/?$/, "/");
+        const url = root + "api/summary";
+        const deadline = Date.now() + (maxMs || 90000);
+        while (Date.now() < deadline) {
+          try {
+            const ctrl = new AbortController();
+            const timer = setTimeout(() => {
+              try {
+                ctrl.abort(new DOMException("Request timed out", "TimeoutError"));
+              } catch (_) {
+                ctrl.abort();
+              }
+            }, 5000);
+            const r = await fetch(url, { cache: "no-store", signal: ctrl.signal });
+            clearTimeout(timer);
+            if (r.ok) return true;
+          } catch (_) { /* setup listener gone or node still starting */ }
+          await new Promise((resolve) => setTimeout(resolve, 500));
+        }
+        return false;
+      }
+
+      async function submitSetup() {
+        if (!selectedProfile || !validateStep(1)) {
+          showStep(selectedProfile ? 1 : 0);
+          return;
+        }
+        showSetupLoading(t("wizard.loadingSave"));
+        if (!validateStep(TOTAL - 1)) {
+          hideSetupLoading();
+          showStep(TOTAL - 1);
+          return;
+        }
+        if (isRebootTestnetWizard() && !isSPV()) {
+          setSetupLoadingText(t("wizard.loadingFounder"));
+          try {
+            const founderData = await fetchFounderPreflight();
+            lastFounderPreflightOK = !!founderData.ok;
+            await runFounderPreflight();
+            if (!lastFounderPreflightOK) {
+              hideSetupLoading();
+              showMsg("Founder preflight failed - fix the errors on this step before starting.", "err");
+              showStep(TOTAL - 1);
+              return;
+            }
+          } catch (err) {
+            hideSetupLoading();
+            showMsg("Founder preflight could not run: " + String(err), "err");
+            showStep(TOTAL - 1);
+            return;
+          }
+        }
+        clearMsg();
+        setSetupLoadingText(t("wizard.loadingSave"));
+        const body = {
+          start_node: true,
+          wallet_backup_confirmed: walletEnabled() && walletBackupDownloaded && $("setup-wallet-backup-ack") && $("setup-wallet-backup-ack").checked,
+          datadir: $("datadir").value.trim(),
+          peer: $("peer").value.trim(),
+          network: $("network").value,
+          node_mode: $("node_mode").value,
+          p2p_connectivity: $("p2p_connectivity").value,
+          firewall: $("firewall") ? $("firewall").value : "auto",
+          upnp: $("upnp") ? $("upnp").value : "auto",
+          rpc: $("rpc").value.trim(),
+          webui: $("webui").value.trim() || "localhost:2013",
+          nowebui: $("nowebui").checked,
+          nobrowser: $("nobrowser") && $("nobrowser").checked,
+          tray: $("tray") && $("tray").checked,
+          nowallet: $("nowallet").checked,
+          mine: $("mine").checked,
+          uacomment: $("uacomment").value.trim(),
+        };
+        if ($("uacomment_publish_tip") && $("uacomment_publish_tip").checked) {
+          if (walletEnabled()) {
+            body.uacomment_use_node_tip = true;
+          } else if ($("uacomment_tip_manual")) {
+            body.uacomment_tip_address = $("uacomment_tip_manual").value.trim();
+          }
+        }
+        Object.assign(body, {
+          maxoutbound: parseInt($("maxoutbound").value, 10) || 0,
+          maxinbound: parseInt($("maxinbound").value, 10) || 0,
+          no_tx_index: $("no_tx_index").checked,
+          ibd_optimize: !($("ibd_optimize") && $("ibd_optimize").checked === false),
+          analytics_sidecar: $("analytics_sidecar").checked,
+          block_sync_workers: parseInt($("block_sync_workers").value, 10) || 0,
+          autostart: ($("autostart_login") && $("autostart_login").checked) ? "login" : "disable",
+        });
+        if (!isSPV()) {
+          body.block_storage_layout = $("block_storage_layout") ? $("block_storage_layout").value : "bundled";
+          body.block_zstd = $("block_zstd") && $("block_zstd").checked;
+          body.tx_index_embed_tx = $("tx_index_embed_tx") && $("tx_index_embed_tx").checked;
+        }
+        if (isDualInstanceMode()) body.dual_instance = true;
+        const maxMem = parseInt($("maxmempool").value, 10);
+        const dbCache = parseInt($("dbcache") && $("dbcache").value, 10);
+        const memExp = parseInt($("mempoolexpiry").value, 10);
+        const minRelay = parseInt($("minrelaytxfee").value, 10);
+        const incrRelay = parseInt($("incrementalrelayfee").value, 10);
+        if (!isNaN(maxMem) && maxMem > 0) body.maxmempool = maxMem;
+        if (!isNaN(dbCache) && dbCache > 0) body.dbcache = dbCache;
+        if (!isNaN(memExp) && memExp > 0) body.mempoolexpiry = memExp;
+        if (!isNaN(minRelay) && minRelay > 0) body.minrelaytxfee = minRelay;
+        if (!isNaN(incrRelay) && incrRelay > 0) body.incrementalrelayfee = incrRelay;
+        if ($("mempoolfullrbf").checked) body.mempoolfullrbf = true;
+        const limAnc = parseInt($("limitancestorcount").value, 10);
+        const limDesc = parseInt($("limitdescendantcount").value, 10);
+        const limAncKb = parseInt($("limitancestorsize").value, 10);
+        const limDescKb = parseInt($("limitdescendantsize").value, 10);
+        if (!isNaN(limAnc) && limAnc > 0) body.limitancestorcount = limAnc;
+        if (!isNaN(limDesc) && limDesc > 0) body.limitdescendantcount = limDesc;
+        if (!isNaN(limAncKb) && limAncKb > 0) body.limitancestorsize = limAncKb;
+        if (!isNaN(limDescKb) && limDescKb > 0) body.limitdescendantsize = limDescKb;
+        body.acceptdatacarrier = $("acceptdatacarrier").checked;
+        body.permitbaremultisig = $("permitbaremultisig").checked;
+        if (walletEncryptEnabled()) {
+          body.wallet_encrypt = true;
+          body.wallet_passphrase = ($("setup_wallet_pass") && $("setup_wallet_pass").value) || "";
+        }
+        body.webui_tls_local = wizardWebUITLSLocal;
+        body.local_tls_trust_ca = wizardLocalTLSTrustCA;
+
+        let pendingPin = "";
+        if ($("setup_pin_now") && $("setup_pin_now").checked) {
+          const a = (($("setup_pin_new") && $("setup_pin_new").value) || "").replace(/\D/g, "");
+          const b = (($("setup_pin_confirm") && $("setup_pin_confirm").value) || "").replace(/\D/g, "");
+          if (!/^\d{6}$/.test(a)) {
+            hideSetupLoading();
+            showMsg("PIN must be exactly 6 numbers before starting.", "err");
+            return;
+          }
+          if (a !== b) {
+            hideSetupLoading();
+            showMsg("PIN and confirmation must match.", "err");
+            return;
+          }
+          pendingPin = a;
+          body.dashboard_pin = a;
+        } else {
+          localStorage.removeItem("dogego_pending_pin");
+          localStorage.removeItem("dogego_apply_pending_pin");
+          localStorage.removeItem("dogego_webauthn_pref");
+        }
+
+        const startBtn = $("setup-start-btn");
+        if (startBtn) startBtn.disabled = true;
+        try {
+          const r = await fetch("/api/setup", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(body),
+          });
+          let data = {};
+          const text = await r.text();
+          try { data = JSON.parse(text); } catch (_) {}
+          if (!r.ok) {
+            hideSetupLoading();
+            showMsg((data && data.error) || text || r.statusText, "err");
+            return;
+          }
+          if (data.autostart_warning) {
+            showMsg("Saved. Autostart note: " + data.autostart_warning, "ok");
+          }
+          try {
+            localStorage.setItem("dogego_ui_simple", "0");
+          } catch (_) {}
+          const dash = (data.dashboard_url || dashboardURL()).replace(/\/?$/, "/");
+          if ($("nowebui").checked) {
+            hideSetupLoading();
+            showMsg("Saved. Node is starting ... watch the terminal (web UI disabled).", "ok");
+            return;
+          }
+          if (pendingPin && !data.dashboard_pin_applied) {
+            localStorage.setItem("dogego_pending_pin", pendingPin);
+            localStorage.setItem("dogego_apply_pending_pin", "1");
+            if ($("setup_webauthn") && $("setup_webauthn").checked) {
+              localStorage.setItem("dogego_webauthn_pref", "1");
+            } else {
+              localStorage.removeItem("dogego_webauthn_pref");
+            }
+          } else if (data.dashboard_pin_applied) {
+            localStorage.removeItem("dogego_pending_pin");
+            localStorage.removeItem("dogego_apply_pending_pin");
+            if ($("setup_webauthn") && $("setup_webauthn").checked) {
+              localStorage.setItem("dogego_webauthn_pref", "1");
+            } else {
+              localStorage.removeItem("dogego_webauthn_pref");
+            }
+          }
+          setSetupLoadingText(t("wizard.loadingDashboard"));
+          await waitForDashboardAPI(dash, 90000);
+          window.location.replace(dash);
+        } catch (err) {
+          hideSetupLoading();
+          showMsg(String(err), "err");
+        } finally {
+          updateWalletBackupUI();
+        }
+      }
+
+      function pinDigitsOnly(el) {
+        if (!el) return;
+        el.addEventListener("input", () => {
+          const d = el.value.replace(/\D/g, "").slice(0, 6);
+          if (el.value !== d) el.value = d;
+        });
+      }
+      pinDigitsOnly($("setup_pin_new"));
+      pinDigitsOnly($("setup_pin_confirm"));
+
+      $("setup_pin_now") && $("setup_pin_now").addEventListener("change", (e) => {
+        const on = e.target.checked;
+        const box = $("setup-pin-fields");
+        const bio = $("setup-webauthn-row");
+        if (box) box.hidden = !on;
+        if (bio) bio.hidden = !on;
+        if (!on) {
+          if ($("setup_pin_new")) $("setup_pin_new").value = "";
+          if ($("setup_pin_confirm")) $("setup_pin_confirm").value = "";
+          if ($("setup_webauthn")) $("setup_webauthn").checked = false;
+        }
+      });
+      $("f").addEventListener("submit", (e) => e.preventDefault());
+      $("setup-start-btn") && $("setup-start-btn").addEventListener("click", submitSetup);
+      $("setup-wallet-backup-download") && $("setup-wallet-backup-download").addEventListener("click", downloadSetupWalletBackup);
+      $("setup-wallet-backup-ack") && $("setup-wallet-backup-ack").addEventListener("change", updateWalletBackupUI);
+      $("setup_wallet_encrypt") && $("setup_wallet_encrypt").addEventListener("change", updateWalletEncryptUI);
+      $("nowallet") && $("nowallet").addEventListener("change", () => { resetWalletBackupState(); updateUACommentTipUI(); });
+      $("datadir") && $("datadir").addEventListener("change", resetWalletBackupState);
+      $("datadir") && $("datadir").addEventListener("input", () => { if (uaCommentPublishEnabled()) void refreshNodeTipPreview(); updateUACommentTipUI(); });
+      $("network") && $("network").addEventListener("change", () => { applySetupBranding(); resetWalletBackupState(); updateFounderPreflightVisibility(); if (uaCommentPublishEnabled()) void refreshNodeTipPreview(); updateUACommentTipUI(); });
+      $("uacomment") && $("uacomment").addEventListener("input", updateUACommentTipUI);
+      $("uacomment_tip_manual") && $("uacomment_tip_manual").addEventListener("input", updateUACommentTipUI);
+      ["uacomment_publish_tip", "nowallet"].forEach((id) => {
+        const el = $(id);
+        if (el) el.addEventListener("change", updateUACommentTipUI);
+      });
+      $("node_mode") && $("node_mode").addEventListener("change", updateFounderPreflightVisibility);
+
+      const advToggle = $("setup-show-advanced");
+      if (advToggle) {
+        advToggle.addEventListener("change", () => {
+          document.body.classList.toggle("setup-show-advanced", advToggle.checked);
+        });
+      }
+
+      (function decorateSetupButtons() {
+        document.querySelectorAll("button.btn").forEach((btn) => {
+          if (btn.querySelector(".material-icons-round")) return;
+          btn.innerHTML = '<span class="material-icons-round" aria-hidden="true">arrow_forward</span> ' + btn.innerHTML;
+        });
+      })();
+
+      loadDefaults();
+      initOptionCards();
+      function bootSetup() {
+        updateTlsHintUI();
+        if (window.DogeGoI18n) window.DogeGoI18n.applyDOM(document);
+        if (window.DogeGoPrefs) window.DogeGoPrefs.init();
+        selectProfileCard("first-run");
+        showStep(0);
+      }
+      if (window.DogeGoI18n) {
+        window.DogeGoI18n.ready().then(bootSetup);
+        document.addEventListener("dogego:locale", function () {
+          if (window.DogeGoI18n) window.DogeGoI18n.applyDOM(document);
+          if (window.DogeGoPrefs) window.DogeGoPrefs.init();
+          showStep(step);
+        });
+      } else {
+        bootSetup();
+      }
+    })();
+  </script>
+</body>
+</html>

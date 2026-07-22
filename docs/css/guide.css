@@ -1,0 +1,486 @@
+/* Public documentation guide (dogego.org/guide/) */
+
+.guide-layout {
+  --guide-rail-w: minmax(240px, 300px);
+  position: relative;
+  display: grid;
+  grid-template-columns: var(--guide-rail-w) minmax(0, 1fr);
+  gap: 0;
+  min-height: calc(100dvh - var(--topbar-h));
+  background:
+    radial-gradient(ellipse 80% 50% at 10% 0%, rgba(194, 166, 51, 0.12), transparent 55%),
+    radial-gradient(ellipse 60% 40% at 100% 20%, rgba(27, 31, 36, 0.06), transparent 50%),
+    var(--bg);
+}
+
+.guide-toc-fab,
+.guide-toc-backdrop {
+  display: none;
+}
+
+.guide-rail {
+  position: sticky;
+  top: var(--topbar-h);
+  align-self: start;
+  max-height: calc(100dvh - var(--topbar-h));
+  overflow: auto;
+  padding: 18px 14px 32px;
+  border-right: 1px solid var(--border);
+  background: rgba(255, 255, 255, 0.78);
+  backdrop-filter: blur(12px);
+  -webkit-overflow-scrolling: touch;
+}
+
+.guide-rail-head {
+  display: none;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin: 0 0 14px;
+  padding: 0 2px 12px;
+  border-bottom: 1px solid var(--border);
+}
+
+.guide-rail-head-title {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0;
+  font-size: 0.95rem;
+  font-weight: 650;
+  letter-spacing: -0.01em;
+  color: var(--text);
+}
+
+.guide-rail-head-title .material-icons-round {
+  font-size: 20px;
+  color: var(--accent-dim);
+}
+
+.guide-rail-close {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: var(--surface);
+  color: var(--text);
+  cursor: pointer;
+}
+
+.guide-rail-close:hover {
+  border-color: var(--accent);
+  color: var(--accent-dim);
+}
+
+.guide-rail-search {
+  width: 100%;
+  margin: 0 0 14px;
+  padding: 10px 12px 10px 38px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background:
+    var(--surface)
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='18' height='18' viewBox='0 0 24 24' fill='none'%3E%3Cpath d='M15.5 14h-.79l-.28-.27A6.47 6.47 0 0 0 16 9.5 6.5 6.5 0 1 0 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z' fill='%238a9199'/%3E%3C/svg%3E")
+    12px 50% / 18px no-repeat;
+  color: var(--text);
+  font: inherit;
+}
+
+.guide-rail-search:focus {
+  outline: 2px solid rgba(194, 166, 51, 0.45);
+  outline-offset: 1px;
+  border-color: var(--accent);
+}
+
+.guide-rail-section {
+  margin: 0 0 12px;
+  border: 1px solid rgba(27, 31, 36, 0.08);
+  border-radius: 14px;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.92), rgba(248, 249, 250, 0.88));
+  box-shadow: 0 1px 0 rgba(255, 255, 255, 0.8) inset;
+  overflow: hidden;
+}
+
+.guide-rail-section-head {
+  display: grid;
+  grid-template-columns: 36px 1fr;
+  gap: 10px;
+  align-items: start;
+  padding: 12px 12px 10px;
+  background:
+    linear-gradient(135deg, rgba(194, 166, 51, 0.1), transparent 55%),
+    rgba(255, 255, 255, 0.35);
+  border-bottom: 1px solid rgba(27, 31, 36, 0.06);
+}
+
+.guide-rail-section-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border-radius: 11px;
+  background: rgba(194, 166, 51, 0.16);
+  color: var(--accent-dim);
+}
+
+.guide-rail-section-icon .material-icons-round {
+  font-size: 20px;
+}
+
+.guide-rail-section-copy h2 {
+  margin: 0 0 4px;
+  font-size: 0.78rem;
+  font-weight: 750;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--text);
+  line-height: 1.25;
+}
+
+.guide-rail-section-copy p {
+  margin: 0;
+  font-size: 0.78rem;
+  color: var(--text-muted);
+  line-height: 1.4;
+}
+
+.guide-rail-links {
+  list-style: none;
+  margin: 0;
+  padding: 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.guide-rail-links a {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 9px 10px;
+  border-radius: 10px;
+  color: var(--text);
+  text-decoration: none;
+  font-size: 0.88rem;
+  line-height: 1.35;
+  transition: background 0.15s ease, color 0.15s ease, transform 0.15s ease;
+}
+
+.guide-rail-links a .guide-link-icon {
+  flex: 0 0 auto;
+  font-size: 17px;
+  color: var(--text-muted);
+}
+
+.guide-rail-links a .guide-link-label {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.guide-rail-links a .guide-link-chevron {
+  flex: 0 0 auto;
+  font-size: 16px;
+  opacity: 0;
+  transform: translateX(-2px);
+  color: var(--accent-dim);
+  transition: opacity 0.15s ease, transform 0.15s ease;
+}
+
+.guide-rail-links a:hover {
+  background: var(--surface-2);
+  color: var(--accent-dim);
+}
+
+.guide-rail-links a:hover .guide-link-icon,
+.guide-rail-links a:hover .guide-link-chevron {
+  color: var(--accent-dim);
+  opacity: 1;
+  transform: translateX(0);
+}
+
+.guide-rail-links a.is-active {
+  background: rgba(194, 166, 51, 0.18);
+  color: var(--accent-dim);
+  font-weight: 650;
+}
+
+.guide-rail-links a.is-active .guide-link-icon,
+.guide-rail-links a.is-active .guide-link-chevron {
+  color: var(--accent-dim);
+  opacity: 1;
+  transform: translateX(0);
+}
+
+.guide-stage {
+  min-width: 0;
+  padding: 28px 28px 64px;
+}
+
+.guide-hero {
+  margin: 0 0 24px;
+  max-width: 52rem;
+}
+
+.guide-hero h1 {
+  margin: 0 0 8px;
+  font-size: clamp(1.6rem, 2.4vw, 2.1rem);
+  letter-spacing: -0.02em;
+  line-height: 1.2;
+}
+
+.guide-hero p {
+  margin: 0;
+  color: var(--text-muted);
+  font-size: 1.02rem;
+  max-width: 42rem;
+}
+
+.guide-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px 14px;
+  margin: 0 0 18px;
+  padding: 10px 12px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--surface);
+}
+
+.guide-crumb {
+  font-family: var(--mono);
+  font-size: 0.78rem;
+  color: var(--text-muted);
+  word-break: break-all;
+}
+
+.guide-toolbar-actions {
+  margin-left: auto;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.guide-doc {
+  padding: 28px 32px;
+  border: 1px solid var(--border);
+  border-radius: calc(var(--radius) + 2px);
+  background: var(--surface);
+  box-shadow: var(--shadow);
+}
+
+.guide-doc.markdown-body > :first-child {
+  margin-top: 0;
+}
+
+.guide-doc.markdown-body h1,
+.guide-doc.markdown-body h2,
+.guide-doc.markdown-body h3 {
+  scroll-margin-top: calc(var(--topbar-h) + 16px);
+  line-height: 1.25;
+}
+
+.guide-doc.markdown-body h1 {
+  font-size: 1.75rem;
+  margin: 0 0 0.75rem;
+}
+
+.guide-doc.markdown-body h2 {
+  font-size: 1.28rem;
+  margin: 1.6rem 0 0.65rem;
+  padding-top: 0.35rem;
+  border-top: 1px solid var(--border);
+}
+
+.guide-doc.markdown-body h3 {
+  font-size: 1.05rem;
+  margin: 1.25rem 0 0.45rem;
+}
+
+.guide-doc.markdown-body p,
+.guide-doc.markdown-body li {
+  color: var(--text);
+}
+
+.guide-doc.markdown-body a {
+  color: var(--accent-dim);
+}
+
+.guide-doc.markdown-body pre {
+  overflow: auto;
+  padding: 14px 16px;
+  border-radius: var(--radius-sm);
+  background: #1b1f24;
+  color: #e8eaed;
+  font-size: 0.85rem;
+}
+
+.guide-doc.markdown-body pre code {
+  background: transparent;
+  color: inherit;
+  padding: 0;
+}
+
+.guide-doc.markdown-body table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.9rem;
+  margin: 1rem 0;
+}
+
+.guide-doc.markdown-body th,
+.guide-doc.markdown-body td {
+  border: 1px solid var(--border);
+  padding: 8px 10px;
+  text-align: left;
+  vertical-align: top;
+}
+
+.guide-doc.markdown-body th {
+  background: var(--surface-2);
+}
+
+.guide-doc.markdown-body .katex-display {
+  margin: 1.1rem 0;
+  overflow-x: auto;
+  overflow-y: hidden;
+  padding: 0.35rem 0;
+}
+
+.guide-doc.markdown-body .katex {
+  font-size: 1.05em;
+}
+
+
+.guide-empty,
+.guide-error {
+  padding: 24px;
+  border-radius: var(--radius);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  color: var(--text-muted);
+}
+
+.guide-error {
+  border-color: #f1c0c0;
+  color: var(--danger);
+}
+
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+@media (max-width: 960px) {
+  .guide-layout {
+    grid-template-columns: 1fr;
+  }
+
+  .guide-toc-fab {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    position: fixed;
+    right: max(16px, env(safe-area-inset-right));
+    bottom: max(18px, env(safe-area-inset-bottom));
+    z-index: 85;
+    min-height: 48px;
+    padding: 0 16px 0 14px;
+    border: 1px solid rgba(27, 31, 36, 0.12);
+    border-radius: 999px;
+    background: #1b1f24;
+    color: #fff;
+    box-shadow: 0 10px 28px rgba(27, 31, 36, 0.28);
+    cursor: pointer;
+    font: inherit;
+    font-size: 0.9rem;
+    font-weight: 600;
+  }
+
+  .guide-toc-fab .material-icons-round {
+    font-size: 20px;
+    color: var(--accent);
+  }
+
+  .guide-toc-fab:hover {
+    transform: translateY(-1px);
+  }
+
+  .guide-toc-backdrop {
+    display: none;
+    position: fixed;
+    inset: 0;
+    z-index: 86;
+    border: 0;
+    margin: 0;
+    padding: 0;
+    background: rgba(15, 18, 22, 0.48);
+    backdrop-filter: blur(2px);
+    cursor: pointer;
+  }
+
+  .guide-layout.guide-toc-open .guide-toc-backdrop {
+    display: block;
+  }
+
+  .guide-rail {
+    position: fixed;
+    top: var(--topbar-h);
+    right: 0;
+    left: auto;
+    width: min(86vw, 340px);
+    height: calc(100dvh - var(--topbar-h));
+    max-height: none;
+    z-index: 87;
+    border-right: 0;
+    border-left: 1px solid var(--border);
+    box-shadow: -16px 0 40px rgba(15, 18, 22, 0.18);
+    transform: translateX(104%);
+    transition: transform 0.28s cubic-bezier(0.22, 1, 0.36, 1);
+    background: rgba(255, 255, 255, 0.96);
+  }
+
+  .guide-layout.guide-toc-open .guide-rail {
+    transform: translateX(0);
+  }
+
+  .guide-rail-head {
+    display: flex;
+  }
+
+  .guide-stage {
+    padding: 20px 16px 88px;
+  }
+
+  .guide-doc {
+    padding: 20px 16px;
+  }
+
+  .guide-toolbar-actions {
+    margin-left: 0;
+  }
+
+  body.guide-toc-lock {
+    overflow: hidden;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .guide-rail,
+  .guide-rail-links a,
+  .guide-toc-fab {
+    transition: none;
+  }
+}

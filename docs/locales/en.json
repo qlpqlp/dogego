@@ -1,0 +1,731 @@
+{
+  "meta": {
+    "title": "DogeGo | Much Faster Full Dogecoin Node",
+    "description": "DogeGo is an open-source Dogecoin full node in Go with a built-in web dashboard, auto-updates from GitHub, wallet backup reminders, BlockStep explorer, JSON-RPC, and binaries for every major platform."
+  },
+  "lang": {
+    "aria": "Choose language",
+    "label": "Language"
+  },
+  "skip": "Skip to content",
+  "beta": "Beta",
+  "nav": {
+    "home": "DogeGo home",
+    "openMenu": "Open menu",
+    "closeMenu": "Close menu",
+    "features": "Features",
+    "fullnode": "Full node",
+    "roadmap": "Roadmap",
+    "care": "Care",
+    "blockstep": "BlockStep",
+    "setup": "Setup",
+    "why": "Why DogeGo",
+    "download": "Download",
+    "developers": "Developers",
+    "foundation": "Dogecoin Foundation",
+    "github": "GitHub",
+    "menu": "Menu",
+    "siteBadge": "website",
+    "groupExplore": "Explore",
+    "groupGetStarted": "Get started",
+    "pinSidebar": "Pin sidebar open",
+    "collapseSidebar": "Collapse to icons",
+    "docs": "Docs"
+  },
+  "hero": {
+    "eyebrow": "Open source on GitHub",
+    "title": "Much Faster Full Dogecoin Node",
+    "lead": "The first Dogecoin full node with post-quantum commitments, zstd compression, CGNAT-friendly relay, faster multi-peer IBD with auto dbcache, and a browser dashboard that checks for updates, nags you to back up your wallet, and ships operator docs inside the app.",
+    "download": "Download",
+    "viewGithub": "View on GitHub",
+    "note": "Beta: ready to try. Help us test and tune.",
+    "releaseNote": ""
+  },
+  "stats": {
+    "aria": "Key highlights",
+    "quantum": {
+      "value": "Quantum ready",
+      "label": "Post-Quantum commitments"
+    },
+    "testnet": {
+      "value": "T-addresses",
+      "label": "New reboot testnet"
+    },
+    "rpc": {
+      "value": "180+",
+      "label": "JSON-RPC methods"
+    },
+    "autoupdate": {
+      "value": "Auto-update",
+      "label": "GitHub Releases check"
+    },
+    "walletcare": {
+      "value": "Wallet care",
+      "label": "Backup reminders · key rotation"
+    }
+  },
+  "demo": {
+    "aria": "Interactive DogeGo dashboard preview",
+    "updateBanner": "Update available - DogeGo <strong>0.2.0</strong> on GitHub Releases",
+    "full": "full",
+    "mainnet": "mainnet",
+    "english": "English",
+    "peersOutIn": "{out} out · {in} in",
+    "mempoolTx": "{n} tx",
+    "blockHeight": "Block #{n}",
+    "txProcessedM": "{n}M",
+    "blockstepMonths": [
+      "Jan",
+      "Mar",
+      "Jun",
+      "Sep",
+      "Dec"
+    ],
+    "navWallet": "Wallet",
+    "navSend": "Send",
+    "navReceive": "Receive",
+    "navHistory": "History",
+    "navNode": "Node",
+    "navOverview": "Overview",
+    "navBlockStep": "BlockStep",
+    "navSearch": "Search",
+    "navMempool": "Mempool",
+    "navDocs": "Docs",
+    "navExtensions": "Extensions",
+    "navSettings": "Settings",
+    "navAnalytics": "Analytics",
+    "navFeatures": "Features",
+    "navConsole": "Console",
+    "overviewTitle": "Dashboard",
+    "overviewSub": "Live node metrics from this machine.",
+    "searchPlaceholder": "Height, hash, txid, or address…",
+    "searchBtn": "Search",
+    "kpiNodeHealth": "Node health",
+    "kpiHeaderTip": "Header tip",
+    "kpiSync": "Sync",
+    "kpiMempool": "Mempool",
+    "kpiPeers": "Peers",
+    "kpiTxProcessed": "Tx processed",
+    "kpiChainDisk": "Chain disk",
+    "chipBundled": "bundled",
+    "chipZstd": "zstd",
+    "chipTxIndex": "tx index",
+    "chipIbdOptimize": "IBD optimize",
+    "chipP2pBoth": "P2P both",
+    "blockstepTitle": "BlockStep",
+    "blockstepSub": "Walk the Dogecoin chain from 2013 to today.",
+    "blockstepYear2013": "2013",
+    "blockstepSynced": "Synced",
+    "blockstepRange": "Dec 2013 to synced tip",
+    "blockstepYearTip": "Tip",
+    "blockstepOpenBlock": "Open this block",
+    "mempoolTitle": "Mempool",
+    "mempoolSub": "Admission policy, feefilter, package limits, RBF.",
+    "mempoolMeta": "124 txs · 0.42 MB · min relay 0.001 DOGE/kB · Full RBF off",
+    "featuresTitle": "Features & parity",
+    "featuresSub": "Live RPC capability manifest and operator cert probes.",
+    "featuresPillAuxpow": "AuxPoW Core parity",
+    "featuresPillRpc": "180+ JSON-RPC methods",
+    "featuresPillMempool": "Mempool corpus (58/58)",
+    "featuresPillPsbt": "PSBT · BIP32 · HWI",
+    "featuresPillExtensions": "Extensions · zkproof-v1",
+    "featuresNote": "Settings -> Test Core connection · cached cert matrix · OpenRPC at <code>/api/openrpc.json</code>",
+    "syncDockMain": "Body IBD · mainnet · {pct}%",
+    "syncDockMeta": "Connected <strong>{connected}</strong> · Stored <strong>{stored}</strong> · Behind <strong>{behind}</strong> · <strong>{rate}</strong> blk/min",
+    "explainerHead": "Live dashboard highlights",
+    "caption": "Loopback dashboard at <code>localhost:2013</code> - i18n, update banner, sync dock, embedded Docs, and operator Features tab match the running node.",
+    "explainer": {
+      "overview": {
+        "title": "Overview: operator metrics + search",
+        "body": "Node health KPIs with Chart.js sparklines, chain disk breakdown, and a top search bar for height, hash, txid, or address. GitHub auto-update banner when a release is newer than your build. The fixed sync dock shows connected vs stored bodies, assist pool, and IBD ETA.",
+        "tags": [
+          "Auto-update",
+          "Sparkline KPIs",
+          "Sync dock",
+          "Explorer search"
+        ]
+      },
+      "blockstep": {
+        "title": "BlockStep: timeline from genesis to tip",
+        "body": "Scrub Dogecoin history from December 2013 to the synced tip. Open any block in the explorer, inspect coinbase and PQ OP_RETURN outputs, and jump eras with one click. BlockStep shares the same tx index that powers dashboard search.",
+        "tags": [
+          "Tx index",
+          "Timeline scrub",
+          "PQ explorer"
+        ]
+      },
+      "mempool": {
+        "title": "Mempool policy you can inspect",
+        "body": "See waiting transactions with feerate, standardness, and BIP125 RBF status. Package limits, min relay fee, and Full RBF match Core flag names in dogecoinconf.json. Live parity probes compare testmempoolaccept rows against Dogecoin Core when configured.",
+        "tags": [
+          "BIP125 RBF",
+          "Package limits",
+          "Core parity probe"
+        ]
+      },
+      "features": {
+        "title": "Features tab: capabilities & cert matrix",
+        "body": "Live RPC capability manifest, OpenRPC at /api/openrpc.json, and operator cert probes (AuxPoW parity, mempool corpus, restart-resume, founder checks). Settings can test a side-by-side Core connection and cache results for 90 seconds.",
+        "tags": [
+          "OpenRPC",
+          "Core compare",
+          "Operator certs"
+        ]
+      }
+    }
+  },
+  "console": {
+    "title": "Run from the terminal",
+    "lead": "DogeGo is a single Go binary. Download from GitHub Releases or build from source, then start the node. The dashboard and JSON-RPC come up automatically.",
+    "step1Title": "Download or build",
+    "step1Body": "<code>cd DogeGo && go build -o dogego ./cmd/dogego</code>",
+    "step2Title": "Start the node",
+    "step2Body": "<code>./dogego</code> or <code>./dogego node -network mainnet</code>",
+    "step3Title": "Open the dashboard",
+    "step3Body": "Browser at <code>localhost:2013</code>. First run opens the setup wizard.",
+    "note": "P2P user-agent announces <code>/DogeGo:0.1.0-beta/</code> on the network. Not Shibetoshi, not Core.",
+    "windowTitle": "dogego node",
+    "running": "Running",
+    "logAria": "Node startup log",
+    "lines": [
+      "DogeGo 0.1.0-beta (1.14.9) · Much Faster Full Dogecoin Node",
+      "$ cd DogeGo && ./dogego",
+      "Web UI  http://localhost:2013/  ·  setup wizard on first run",
+      "JSON-RPC  http://127.0.0.1:22557/  (cookie auth when enabled)",
+      "P2P both · max 12 outbound · DGR relay auto-configured",
+      "Storage: bundled blk*.dat + zstd · compact tx index",
+      "Update check: github.com/qlpqlp/dogego/releases (daily)",
+      "Wallet enabled · BIP44 HD · dashboard PIN optional",
+      "IBD 68.4% · headers 5,412,884 · bodies catching up …",
+      "Sync dock: connected 3,701,204 · stored 3,842,880 · assist pool 4",
+      "Embedded Docs tab · Features cert matrix · Console JSON-RPC presets"
+    ]
+  },
+  "features": {
+    "title": "Built beyond Dogecoin Core",
+    "lead": "DogeGo ships operator tooling, indexing, and modern network modes that Core never bundled, in one Go binary with a browser dashboard.",
+    "items": {
+      "pq": {
+        "title": "Post-Quantum commitments",
+        "body": "First Dogecoin full node with Phase-1 PQ OP_RETURN carriers (FLC1, DIL2, RCG4). Send with automatic wallet commitments, verify via <code>dogego_verifypqcommitment</code>, and inspect in the explorer."
+      },
+      "zstd": {
+        "title": "zstd block compression",
+        "body": "Optional zstd on stored block bodies plus a bundled <code>blk*.dat</code> layout. Core keeps raw blocks uncompressed. DogeGo reports compression ratio and disk savings in the dashboard."
+      },
+      "spv": {
+        "title": "Full node or SPV",
+        "body": "Run headers-first IBD with full validation, or switch to lightweight SPV (headers only) for minimal disk. Same binary, same wizard. Pick your profile on first run."
+      },
+      "cgnat": {
+        "title": "CGNAT & Starlink relay",
+        "body": "P2P modes: <code>classic</code>, <code>cgnat</code> (outbound-only), or <code>both</code>. Up to 12 outbound peers relay blocks without inbound port forwarding, built for carrier NAT and Starlink."
+      },
+      "testnet": {
+        "title": "Reboot testnet",
+        "body": "Fresh testnet with addresses starting with <strong>T</strong> (for test). Real scrypt PoW like Core (RelaxedPoW off). Digishield min-difficulty helps solo mining when hashrate is low. Port <code>44556</code>."
+      },
+      "search": {
+        "title": "Search everything",
+        "body": "Full tx index by default. Search height, block hash, txid, or address from the dashboard. Dogecoin is a public ledger, and DogeGo makes every entry easy to find."
+      },
+      "dashboard": {
+        "title": "Web dashboard",
+        "body": "Loopback UI at <code>:2013</code>: KPI cards, auto-update banner, sync dock, mempool, analytics, embedded Docs, Features cert matrix, and the five-step setup wizard. No Qt install required."
+      },
+      "rpc": {
+        "title": "180+ JSON-RPC methods",
+        "body": "Core-compatible HTTP JSON-RPC with cookie auth, ZMQ notifications, OpenRPC at <code>/api/openrpc.json</code>, and live capability flags in the Features tab."
+      },
+      "wallet": {
+        "title": "Built-in HD wallet",
+        "body": "Send, receive, and history with BIP44 HD wallet, PIN unlock, optional WebAuthn biometrics, coin control, fee hints, PSBT with BIP32 deriv paths, optional HWI external signer, and Core wallet.dat migration (probe + native BDB import, encrypted via passphrase)."
+      },
+      "autoupdate": {
+        "title": "Built-in auto-update",
+        "body": "The node checks GitHub Releases on <code>qlpqlp/dogego</code>, <code>dogeorg/dogego</code>, and <code>dogecoinfoundation/dogego</code> (newest semver wins) daily. Overview, Settings, and system tray offer SHA256-verified download and install restart."
+      },
+      "backup": {
+        "title": "Wallet backup reminders",
+        "body": "First-run setup requires downloading <code>wallet.json</code> before start. On Receive, a recurring banner reminds you to back up offline - dismiss for 30 days, or rotate HD keys with an guided sweep to a fresh wallet."
+      },
+      "dgr": {
+        "title": "DogeGo relay CGNAT (DGR)",
+        "body": "QUIC tunnel for peers behind carrier NAT. Wizard and Settings configure <code>dogego_relay_cgnat</code> roles (Off / Client / Operator), TLS cert pinning, relay DNS seeds, and live metrics on <code>GET /api/dgr</code>."
+      },
+      "dual": {
+        "title": "Dual mainnet + testnet",
+        "body": "Run both networks from one data folder with the <strong>Mainnet + testnet</strong> wizard profile. Separate <code>mainnet/</code> and <code>testnet/</code> chain dirs, dual dashboards (<code>:2013</code> / <code>:2014</code>), solo mining on testnet only."
+      },
+      "bip152": {
+        "title": "BIP152 compact blocks",
+        "body": "sendcmpct HB negotiation with up to three peers, cmpctblock announce/reconstruct, and getblocktxn fallback. Live probe at <code>GET /api/core-bip152-probe</code>."
+      },
+      "mining": {
+        "title": "Miner ready (Core parity)",
+        "body": "<code>getblocktemplate</code> with Digishield <code>NextBlockBits</code> + BIP22 longpoll, <code>createauxblock</code>/<code>submitauxblock</code> for merge-mining, and reboot-testnet solo mining with mempool txs. Certified live via <code>GET /api/core-mining-probe</code> and <code>dogego cert mining</code>."
+      },
+      "bbpow": {
+        "title": "BBPoW research (Bitcoin + DOGE)",
+        "body": "Beta extension <code>dogego.bbpow</code>: research toward Bitcoin miners securing Dogecoin the way Litecoin already does via AuxPoW. Same SHA-256 ASICs keep mining Bitcoin; Litecoin Scrypt merge-mining stays. Testnet catalog package with proof verify RPC. Research only. Not mainnet consensus."
+      },
+      "doginals": {
+        "title": "Doginals / DRC-20 L2",
+        "body": "Beta extension <code>dogego.doginals</code>: index L1 Doginals/DRC-20 data carriers, create NFT/token/image metadata off-chain, and sync L2 assets among DogeGo peers (<code>doginals-v1</code>). Friendly dashboard UI. Mainnet + testnet. No consensus change."
+      },
+      "mempoolPolicy": {
+        "title": "Mempool relay policy",
+        "body": "Wizard and Settings expose Core-shaped flags: <code>maxmempool</code>, <code>minrelaytxfee</code>, <code>incrementalrelayfee</code>, package limits, Full RBF, datacarrier, and bare multisig - plus a 58-template offline admission corpus, PaysForRBF descendant fees, and submitpackage CPFP."
+      },
+      "ibd": {
+        "title": "Parallel block download",
+        "body": "Faster, more stable multi-peer IBD: block-assist workers, height striping, auto UTXO dbcache, and Core-style IBD focus so download stays productive through long syncs."
+      },
+      "tray": {
+        "title": "System tray & notifications",
+        "body": "Optional tray icon: open dashboard, check/download/install updates with SHA256 verify, and native OS notifications when a new GitHub release is detected."
+      },
+      "extensions": {
+        "title": "Installable extensions",
+        "body": "Install zip packages with <code>dogego.extension.json</code>, enable/disable from Settings or RPC, and ship subprocess or wasm plugins. Built-in <code>dogego.zkl2</code> (ZK L2), beta <code>dogego.doginals</code> (Doginals/DRC-20 L2), and <code>dogego.bbpow</code> (Bitcoin-backed mining research). Extensions may use allowlisted wallet RPC when granted <code>wallet_rpc</code> (authenticated dashboard/RPC; no key export)."
+      },
+      "segwit": {
+        "title": "SegWit ready",
+        "body": "BIP141 interpreter, witness serialization, and weight/vsize helpers ship today, Core-aligned with Dogecoin Core. CLTV is already active. Softfork follows Core's schedule; see <a href=\"https://github.com/qlpqlp/dogego/blob/main/DogeGo/docs/SEGWIT_STATUS.md\">SEGWIT_STATUS.md</a> for upgrade effects on nodes and miners."
+      }
+    }
+  },
+  "fullnode": {
+    "title": "Full Dogecoin node - what DogeGo runs today",
+    "lead": "Headers-first IBD with parallel body download, auto dbcache, IBD optimize (default on), Go-native storage, Core-compatible JSON-RPC, and operator tooling in one binary. Mainnet consensus follows Dogecoin Core (no protocol forks).",
+    "liveHeading": "Live in the app & wizard",
+    "live": {
+      "sync": {
+        "title": "Chain sync & IBD",
+        "body": "Headers-first sync with parallel body download, auto <code>dbcache</code>, IBD optimize (default on), journal recovery, and a sync dock with recent download rate and assist pool metrics."
+      },
+      "consensus": {
+        "title": "Validation & mempool",
+        "body": "Block/header checks, AuxPoW CAuxPow parity, in-memory UTXO cache with snapshot replay, 58-template mempool admission corpus, BIP125 RBF (PaysForRBF), submitpackage CPFP, feefilter, savemempool/loadmempool."
+      },
+      "p2p": {
+        "title": "P2P networking",
+        "body": "<code>classic</code> / <code>cgnat</code> / <code>both</code>, UPnP/NAT-PMP, learned addr store, addnode, setban, multi-peer relay, DGR QUIC tunnel, BIP152 v1 compact blocks."
+      },
+      "rpc": {
+        "title": "JSON-RPC & ZMQ",
+        "body": "180+ methods, cookie auth, getblocktemplate BIP22 + Digishield bits, mining/aux RPC (Core-parity cert), estimatesmartfee, ZMQ hash/raw block+tx notifications, OpenRPC and RPC cookbooks in Settings -> Tools."
+      },
+      "wallet": {
+        "title": "Wallet & migration",
+        "body": "BIP44 HD per network, wizard backup + optional <code>encryptwallet</code>, fill-to-target <code>keypoolrefill</code>, PSBT/HWI, Core <code>wallet.dat</code> import + pool replay, coin control, Tx Flight, and <code>wallet.db</code> scan index for fast history (auto-rescan when the index lags)."
+      },
+      "ops": {
+        "title": "Operator UX",
+        "body": "Five-step wizard with five profiles, preflight (firewall, ports, CGNAT, founder), OS autostart, GitHub auto-update, 17 live cert web probes (mining GBT/aux + PQ), embedded Docs, analytics Pebble sidecar, <code>dogego cert offline</code> / bip152-soak / operator gates."
+      },
+      "extensions": {
+        "title": "Extensions, ZK L2, Doginals & BBPoW",
+        "body": "Catalog install from GitHub, zip upload, wasm/subprocess hosts, runtime permission checks, built-in <code>dogego.zkl2</code> (<code>zkproof-v1</code>), beta <code>dogego.doginals</code> (<code>doginals-v1</code> L2 for inscriptions/NFTs), and <code>dogego.bbpow</code> (Bitcoin-backed mining research, testnet). Dynamic RPC <code>dogego_ext_&lt;id&gt;_&lt;method&gt;</code>."
+      }
+    }
+  },
+  "roadmap": {
+    "title": "Roadmap",
+    "lead": "Dogecoin Core-compatible Go full node. <strong>Mainnet consensus follows Core</strong> (no protocol forks). Sync, wallet migration, mining, RPC, and operator tooling ship today. Full checklist: <code>DogeGo/ROADMAP.md</code>.",
+    "doneTitle": "Major milestones",
+    "done": {
+      "p2p": "CGNAT / classic / both, DGR relay phases 1-4, UPnP, multi-peer IBD, BIP152 v1 HB + offline soak cert, addrman buckets + slot indices + eclipse-pressure eviction",
+      "ibd": "Headers-first body IBD, IBD optimize + auto dbcache, UTXO snapshot replay/quarantine, connect catch-up, stall recovery",
+      "consensus": "Scrypt PoW, AuxPoW CAuxPow check, Milestone A differentials, 1059/1059 legacy script corpus, mainnet field evidence",
+      "store": "Header segments, bundled+zstd raw blocks, UTXO cache crash quarantine/tmp purge, crash/corruption recovery suite",
+      "mempool": "58-template offline corpus, BIP125 RBF (PaysForRBF descendant conflict fees), submitpackage CPFP package feerate, package DAG property tests, live testmempoolaccept, 24/24 stateful reboottestnet map (offline)",
+      "rpc": "180+ JSON-RPC, OpenRPC, ZMQ, 17 live Features cert gates (mining GBT/aux + PQ), <code>dogego cert</code> offline / operator / pq / wallet-import / bip152-soak",
+      "wallet": "BIP44 HD wallet, fill-to-target keypoolrefill, Core wallet.dat pool replay, encrypt/unlock, coin control, HWI signer_cmd + mocksigner e2e, OS autostart",
+      "mining": "generatetoaddress, createauxblock/submitauxblock, getblocktemplate NextBlockBits + BIP22 longpoll, reboot-testnet solo miner with mempool txs; <code>GET /api/core-mining-probe</code> + <code>dogego cert mining</code>",
+      "ui": "Wizard, BlockStep, Features matrix, GitHub auto-update, tray, local HTTPS, sync dock",
+      "pq": "PQ OP_RETURN + carrier (RPC/web send; needs more soak testing)",
+      "extensions": "Extensions catalog (wasm/subprocess), dogego.zkl2 ZK L2, dogego.doginals L2, beta dogego.bbpow (Bitcoin-backed DOGE mining research)",
+      "segwit": "SegWit ready: BIP141 machinery Core-aligned (CLTV active)"
+    }
+  },
+  "care": {
+    "title": "Operator experience built in",
+    "lead": "DogeGo is more than sync and RPC - the loopback dashboard includes everyday tooling Core never shipped in one place.",
+    "items": {
+      "releases": {
+        "title": "Release notifications",
+        "body": "Daily update check against GitHub Releases on <code>qlpqlp/dogego</code>, <code>dogeorg/dogego</code>, and <code>dogecoinfoundation/dogego</code> (newest semver wins). CLI, tray, and web UI offer SHA256-verified download and install restart."
+      },
+      "backup": {
+        "title": "Backup nudges every 30 days",
+        "body": "Receive tab shows a wallet backup banner until you download a copy or snooze for 30 days. Setup wizard blocks <strong>Save &amp; start</strong> until backup is acknowledged when the wallet is enabled."
+      },
+      "rotation": {
+        "title": "HD key rotation",
+        "body": "One-click prepare -> sweep -> verify -> finalize flow moves your balance to a fresh BIP44 wallet and archives the old keys - with backup required first."
+      },
+      "autostart": {
+        "title": "OS login autostart",
+        "body": "Register at sign-in on Windows (Task Scheduler), Linux (systemd user), or macOS (LaunchAgent). Wizard and Features tab run the same probes as <code>dogego cert autostart</code>."
+      },
+      "txflight": {
+        "title": "Tx Flight send bar",
+        "body": "Animated progress when you send: signing, broadcast, mempool wait, and confirmation - with one-click jump to History or the block explorer."
+      },
+      "i18n": {
+        "title": "Six dashboard languages",
+        "body": "English, Deutsch, Français, Português, 日本語, and 中文 - wizard and dashboard share the same locale picker in the top bar."
+      },
+      "pin": {
+        "title": "PIN & WebAuthn lock",
+        "body": "Optional 6-digit dashboard PIN on setup or in Settings. Pair with device biometrics (WebAuthn) to unlock Send and wallet views without retyping every time."
+      },
+      "docs": {
+        "title": "Embedded Docs tab",
+        "body": "Operator runbooks, integration guides, and repo markdown rendered in-browser via <code>GET /api/docs</code> - no GitHub tab required while you tune the node."
+      },
+      "cert": {
+        "title": "Live cert matrix",
+        "body": "Features tab exposes Core parity counts, OpenRPC at <code>/api/openrpc.json</code>, and seventeen live operator web gates (compare, mempool, mining GBT/aux, autostart, founder, BIP152, IBD convergence snapshot, runner readiness, end-to-end, and more)."
+      },
+      "syncdock": {
+        "title": "Fixed sync dock",
+        "body": "Core-style footer during IBD: connected vs stored bodies, assist pool, recent download rate, connect lag, ETA, and expandable live logs - always visible while you browse tabs."
+      },
+      "firewall": {
+        "title": "Firewall & preflight",
+        "body": "Setup wizard runs automatic checks for ports, CGNAT hints, and optional OS firewall rules. Copy-paste elevated commands appear on Overview when action is needed."
+      },
+      "history": {
+        "title": "History that scales",
+        "body": "Infinite-scroll transaction feed with server-side search and type filters, CSV export, UTXO-cache fast path for solo miners, and soft refresh that preserves scroll position."
+      },
+      "extensions": {
+        "title": "Extensions catalog",
+        "body": "Settings -> Extensions lists catalog packages. Install from GitHub or zip, enable <code>dogego.zkl2</code> for ZK L2, <code>dogego.doginals</code> for Doginals/DRC-20 L2, or beta <code>dogego.bbpow</code> (testnet) for Bitcoin-backed mining research. Wallet only via authenticated allowlisted RPC when enabled in the extension Settings."
+      }
+    }
+  },
+  "blockstep": {
+    "title": "BlockStep: explore Dogecoin the fun way",
+    "lead": "Because Dogecoin is a public ledger, every block and transaction should be easy to find. DogeGo indexes the chain and BlockStep turns it into an interactive timeline.",
+    "labelGenesis": "Genesis 2013",
+    "labelHalving": "Joke era",
+    "labelToday": "Today",
+    "labelTip": "Tip",
+    "listSearch": "Search by height, hash, txid, or address from Overview or Explorer",
+    "listTimeline": "BlockStep timeline: scrub from genesis to tip, drill into any block",
+    "listIndex": "Flat <code>indexes/tx/</code> index, not Core's chainstate layout",
+    "listPq": "PQ explorer panel: inspect post-quantum commitment scripts"
+  },
+  "wizard": {
+    "title": "Five-step setup wizard",
+    "lead": "First run opens a guided wizard at <code>/setup</code>. Pick a profile, run automatic preflight checks, configure bundled+zstd storage, then save with optional PIN, OS autostart, and wallet backup.",
+    "aria": "Animated setup wizard preview",
+    "setupBadge": "setup",
+    "firstRun": "First run",
+    "stepKicker": "Step {n} of 5 · {label}",
+    "steps": {
+      "profile": "Profile",
+      "data": "Data",
+      "network": "Network",
+      "sync": "Sync",
+      "finish": "Finish"
+    },
+    "progressAria": "Setup progress",
+    "panels": {
+      "profileTitle": "Choose your setup",
+      "profileHint": "Tap a card - each profile sets network, node mode, wallet, and P2P defaults.",
+      "profileTryTestnet": "Try testnet",
+      "profileTryTestnetSub": "Full node · wallet on · best for first run",
+      "profileMainnetFull": "Mainnet full node",
+      "profileMainnetFullSub": "Production Dogecoin · longer sync, full validation",
+      "profileMainnetWallet": "Mainnet + wallet",
+      "profileMainnetWalletSub": "Send/Receive · optional 6-digit dashboard PIN on finish",
+      "profileLightSpv": "Light SPV + wallet",
+      "profileLightSpvSub": "Headers only · low disk · CGNAT-friendly",
+      "profileDual": "Mainnet + testnet",
+      "profileDualSub": "Two nodes · wallet on both · mine on testnet",
+      "advancedToggle": "Show advanced options on later steps",
+      "dataTitle": "Data directory & network",
+      "dataHint": "Go-native layout - <code>headers.bin</code>, <code>rawblocks/</code>, <code>indexes/</code> - not Core <code>chainstate/</code>.",
+      "dataDirLabel": "Data directory",
+      "dataDirValue": "./dogedata",
+      "dataTestnet": "Testnet",
+      "dataTestnetSub": "Safe sandbox",
+      "dataMainnet": "Mainnet",
+      "dataFullNode": "Full node",
+      "dataFullNodeSub": "Headers + bodies",
+      "dataSpv": "SPV (light)",
+      "dataFoot": "Peer left empty -> automatic DNS + addrman discovery.",
+      "networkTitle": "Network & P2P",
+      "networkHint": "Connectivity, firewall, UPnP, and automatic preflight before you sync.",
+      "networkBoth": "Both",
+      "networkBothSub": "Inbound + outbound · DGR relay",
+      "networkCgnat": "CGNAT",
+      "networkClassic": "Classic",
+      "preflightP2p": "P2P port reachable",
+      "preflightWebui": "Web UI loopback <code>localhost:2013</code>",
+      "preflightUpnp": "UPnP auto when listening",
+      "syncTitle": "Sync & storage",
+      "syncHint": "Recommended defaults: bundled <code>blk*.dat</code>, zstd compression, compact tx index.",
+      "syncBundled": "Bundled block storage",
+      "syncZstd": "Compress stored blocks (zstd)",
+      "syncTxIndex": "Transaction index",
+      "syncEmbedTx": "Embed full tx bytes in index",
+      "syncAnalytics": "Analytics sidecar (Pebble)",
+      "syncIbdOptimize": "Optimize initial block download",
+      "syncDbcache": "DB cache / UTXO (auto RAM)",
+      "syncOn": "on",
+      "syncOff": "off",
+      "syncFoot": "Block sync workers: automatic (2-6 peers during IBD). Auto dbcache uses free RAM.",
+      "finishTitle": "Finish & launch",
+      "finishHint": "Dashboard security, OS autostart, wallet backup, and config summary.",
+      "finishBackupBanner": "<strong>Wallet backup required</strong> - download <code>wallet.json</code> before Save &amp; start",
+      "finishPin": "6-digit dashboard PIN (optional)",
+      "finishAutostart": "Start at OS sign-in",
+      "finishReview": "testnet · full · P2P both · bundled+zstd · wallet on",
+      "finishStartBtn": "Save & start node"
+    },
+    "list": {
+      "i18n": "Six UI languages (English, Deutsch, Français, 日本語, 中文, Português)",
+      "preflight": "Automatic preflight - firewall, ports, CGNAT hints, founder checks on reboot testnet",
+      "backup": "Wallet backup gate on finish; Receive tab reminds every 30 days until you download or dismiss",
+      "autostart": "OS login autostart with <code>dogego cert autostart</code> parity probes",
+      "dual": "Dual mainnet+testnet profile with shared datadir and separate RPC/dashboard ports",
+      "ibd": "IBD optimize on by default; auto dbcache sizes UTXO RAM from free memory",
+      "mempool": "Advanced mempool relay policy on finish (maxmempool, min relay, package limits, Full RBF)",
+      "encrypt": "Optional wallet encryption on finish (Core encryptwallet) after backup download",
+      "dgr": "DGR relay auto-configured when P2P mode is both or cgnat",
+      "tray": "System tray, <code>dogecoin://</code> link handler, and optional no-browser / no-webui flags"
+    }
+  },
+  "compare": {
+    "title": "Why operators choose DogeGo",
+    "lead": "DogeGo is beta. Run it, break things, report what needs tuning. It ships capabilities Core does not (web dashboard, CGNAT relay, analytics, extensions).",
+    "headers": {
+      "cap": "Capability",
+      "doge": "DogeGo",
+      "core": "Dogecoin Core"
+    },
+    "rows": {
+      "browserDashboard": {
+        "cap": "Browser dashboard",
+        "doge": "Built-in at :2013",
+        "core": "Qt desktop only"
+      },
+      "setupWizard": {
+        "cap": "Setup wizard",
+        "doge": "5-step · profiles · preflight · wallet backup",
+        "core": "Manual config"
+      },
+      "blockstepExplorer": {
+        "cap": "BlockStep explorer",
+        "doge": "Interactive timeline",
+        "core": "No bundled explorer"
+      },
+      "postQuantum": {
+        "cap": "Post-quantum sends",
+        "doge": "FLC1/DIL2/RCG4 commitments",
+        "core": "Not available"
+      },
+      "zstdCompression": {
+        "cap": "zstd block compression",
+        "doge": "Optional, with ratio metrics",
+        "core": "Uncompressed blocks/"
+      },
+      "cgnatRelay": {
+        "cap": "CGNAT / Starlink relay",
+        "doge": "Outbound multi-peer modes",
+        "core": "Needs inbound ports"
+      },
+      "spvMode": {
+        "cap": "SPV mode",
+        "doge": "Headers-only profile",
+        "core": "Separate tools"
+      },
+      "analyticsSidecar": {
+        "cap": "Analytics sidecar",
+        "doge": "Pebble charts in UI",
+        "core": "External tooling"
+      },
+      "testnetAddresses": {
+        "cap": "Testnet T-addresses",
+        "doge": "Reboot testnet · Digishield min-diff",
+        "core": "Legacy testnet"
+      },
+      "autoUpdate": {
+        "cap": "Auto-update",
+        "doge": "GitHub Releases · web banner · CLI notice",
+        "core": "Manual download"
+      },
+      "walletBackupCare": {
+        "cap": "Wallet backup care",
+        "doge": "Setup gate · 30-day reminders · key rotation",
+        "core": "Operator responsibility"
+      },
+      "osAutostart": {
+        "cap": "OS autostart",
+        "doge": "Login autostart + cert probes",
+        "core": "Manual service setup"
+      },
+      "dashboardI18n": {
+        "cap": "Dashboard i18n",
+        "doge": "6 languages in wizard + UI",
+        "core": "English Qt only"
+      },
+      "coreSideBySide": {
+        "cap": "Core side-by-side probes",
+        "doge": "Live compare · cert matrix · Console presets",
+        "core": "External scripts"
+      },
+      "coreWalletMigration": {
+        "cap": "Core wallet.dat migration",
+        "doge": "Native BDB probe · import · encrypted passphrase · Core RPC fallback",
+        "core": "Native wallet.dat format"
+      },
+      "productionCertification": {
+        "cap": "Production certification",
+        "doge": "In progress (beta)",
+        "core": "Established"
+      }
+    }
+  },
+  "networks": {
+    "title": "Networks & ports",
+    "headers": {
+      "service": "Service",
+      "mainnet": "Mainnet",
+      "rebootTestnet": "Reboot testnet"
+    },
+    "rows": {
+      "webDashboard": {
+        "service": "Web dashboard",
+        "mainnet": "localhost:2013",
+        "rebootTestnet": "localhost:2013"
+      },
+      "jsonRpc": {
+        "service": "JSON-RPC",
+        "mainnet": "127.0.0.1:22557",
+        "rebootTestnet": "127.0.0.1:18556"
+      },
+      "p2p": {
+        "service": "P2P",
+        "mainnet": ":22556",
+        "rebootTestnet": ":44556"
+      },
+      "configFile": {
+        "service": "Config file",
+        "value": "dogecoinconf.json in your data directory"
+      },
+      "testnetAddresses": {
+        "service": "Testnet addresses",
+        "value": "Reboot testnet: all P2PKH addresses start with T (prefix 0x41)"
+      }
+    }
+  },
+  "download": {
+    "title": "Download DogeGo",
+    "lead": "Pre-built binaries are published on GitHub Releases when tagged. This page checks the same repos as the running node.",
+    "checkingTitle": "Checking GitHub Releases…",
+    "checkingBody": "Querying qlpqlp/dogego, dogeorg/dogego, and dogecoinfoundation/dogego for the latest semver tag.",
+    "soonTitle": "Pre-built binaries - available soon",
+    "soonBody": "No GitHub Release has been published yet on the configured repos. Build from source below, or watch <a href=\"https://github.com/qlpqlp/dogego\" rel=\"noopener noreferrer\" target=\"_blank\">github.com/qlpqlp/dogego</a> for the first tagged release.",
+    "soonCta": "Build from source",
+    "soonLink": "Available soon",
+    "soonHeroNote": "No release published yet - build from source or check back soon.",
+    "readyTitle": "Latest release {version}",
+    "readyBody": "Newest semver from GitHub Releases (<strong>{source}</strong>). CI publishes <code>dogego-windows-amd64.exe</code>, <code>dogego-linux-amd64</code>, <code>dogego-darwin-amd64</code>, and <code>dogego-darwin-arm64</code> with matching <code>.sha256</code> sidecars when tagged.",
+    "readyHeroNote": "Latest on {source}",
+    "heroCta": "Download {version}",
+    "viewSource": "View source on GitHub",
+    "assetsHeading": "Download by platform",
+    "getReleases": "View release notes",
+    "platforms": {
+      "windows": {
+        "name": "Windows",
+        "arch": "amd64 · arm64 · 386"
+      },
+      "macos": {
+        "name": "macOS",
+        "arch": "amd64 · arm64 (Apple Silicon)"
+      },
+      "linux": {
+        "name": "Linux",
+        "arch": "amd64 · arm64 · arm · 386 · ppc64le · riscv64"
+      },
+      "bsd": {
+        "name": "BSD & Unix",
+        "arch": "FreeBSD · OpenBSD · NetBSD · Solaris · AIX"
+      }
+    },
+    "downloadLink": "Download",
+    "buildTitle": "Build from source",
+    "buildEditorTitle": "bash · dogego",
+    "buildCode": "git clone https://github.com/qlpqlp/dogego.git\ncd dogego/DogeGo\ngo build -o dogego ./cmd/dogego\n./dogego",
+    "buildNote": "Requires <a href=\"https://go.dev/dl/\" rel=\"noopener noreferrer\" target=\"_blank\">Go 1.22+</a>. App source lives in the <code>DogeGo/</code> directory; the website is in <code>docs/</code> at the repo root. On Windows use <code>dogego.exe</code>.",
+    "copyCode": "Copy",
+    "copiedCode": "Copied",
+    "copyCodeAria": "Copy build commands",
+    "viewRepo": "View repository"
+  },
+  "developers": {
+    "title": "Built for developers",
+    "lead": "Integrate with the same JSON-RPC shapes you already use with Dogecoin Core.",
+    "openrpc": {
+      "title": "OpenRPC & cookbooks",
+      "body": "Live capability manifest at <code>/api/capabilities</code>, OpenRPC at <code>/api/openrpc.json</code>."
+    },
+    "zmq": {
+      "title": "ZMQ notifications",
+      "body": "Subscribe to hash blocks, hash transactions, raw blocks, and raw transactions."
+    },
+    "auth": {
+      "title": "Auth & rate limits",
+      "body": "Cookie authentication, HTTP basic auth, IP allowlists, and configurable rate limiting."
+    },
+    "extensions": {
+      "title": "Extension RPC",
+      "body": "Third-party packages register <code>dogego_ext_&lt;id&gt;_&lt;method&gt;</code> handlers. See <code>DogeGo/docs/EXTENSIONS.md</code>, <code>dogego.zkl2</code> (submitproof, verifyproof, P2P zkinv), <code>dogego.doginals</code> (indexrange, putasset, P2P dinv), and beta <code>dogego.bbpow</code> (compare, verifyproof, buildcommitment)."
+    }
+  },
+  "disclaimer": {
+    "title": "Beta: try it",
+    "body": "DogeGo is a pure-Go Dogecoin full node with Core-compatible consensus, RPC, wallet migration, and mining. It is <strong>beta</strong>: please run it on testnet or mainnet, try the workflows you care about, and tell us what needs tuning. Storage uses DogeGo’s native layout (not Core LevelDB); optional long-haul self-cert is in the dashboard Features tab (<code>dogego cert live-soak</code>)."
+  },
+  "footer": {
+    "tagline": "Much faster full Dogecoin node, written in Go and operated from your browser.",
+    "uaLabel": "P2P user-agent",
+    "uaNote": "Announces as DogeGo on the wire. Not Shibetoshi, not Core. Optional comment: <code>/DogeGo:0.1.0-beta(your-note)/</code>",
+    "productHeading": "Product",
+    "productFullnode": "Full node",
+    "productRoadmap": "Roadmap",
+    "productFeatures": "Features",
+    "productCare": "Operator care",
+    "productBlockstep": "BlockStep",
+    "productWizard": "Setup wizard",
+    "productVsCore": "vs Core",
+    "productDownload": "Download",
+    "devHeading": "Developers",
+    "devRpc": "JSON-RPC",
+    "devGithub": "GitHub",
+    "devReleases": "Releases",
+    "devNetworks": "Ports & networks",
+    "copyright": "DogeGo v0.1.0-beta · Dogecoin Node · dogego.org",
+    "disclaimer": "Mainnet consensus follows Core (no protocol forks). Native Go storage; optional self-cert via Features / dogego cert live-soak.",
+    "devDocs": "Documentation"
+  },
+  "guide": {
+    "title": "DogeGo documentation",
+    "lead": "Read how DogeGo works without installing. Same guides as the in-app Docs tab, plus Satoshi Nakamoto Bitcoin white paper.",
+    "search": "Search docs...",
+    "back": "Back",
+    "index": "Index",
+    "download": "Download DogeGo",
+    "loading": "Loading documentation...",
+    "toc": "Docs menu",
+    "tocOpen": "Open documentation menu",
+    "tocClose": "Close documentation menu"
+  }
+}

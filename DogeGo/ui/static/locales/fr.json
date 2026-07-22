@@ -1,0 +1,1416 @@
+{
+  "meta": {
+    "code": "fr",
+    "name": "French",
+    "native": "Français"
+  },
+  "lang": {
+    "label": "Langue",
+    "choose": "Choisir la langue",
+    "aria": "Sélectionner la langue de l'interface"
+  },
+  "common": {
+    "back": "Retour",
+    "next": "Suivant",
+    "save": "Enregistrer la config",
+    "saveStart": "Enregistrer et démarrer le nœud",
+    "beta": "Bêta",
+    "preRelease": "Logiciel en préversion",
+    "lockWallet": "Verrouiller le portefeuille",
+    "toggleSidebar": "Afficher/masquer la barre latérale",
+    "pinSidebar": "Épingler la barre latérale ouverte",
+    "collapseSidebar": "Réduire aux icônes",
+    "refresh": "Actualiser",
+    "run": "Exécuter",
+    "show": "Afficher {name}",
+    "helpAlways": "Épingler le texte d'aide au clic (reste ouvert jusqu'à fermeture)",
+    "on": "activé",
+    "off": "désactivé",
+    "yes": "oui",
+    "no": "non",
+    "close": "Fermer",
+    "cancel": "Annuler",
+    "unlock": "Déverrouiller"
+  },
+  "dgr": {
+    "adminTitle": "Relais QUIC DogeGo (CGNAT)",
+    "adminHint": "Tunnel UDP/QUIC pour Starlink et NAT opérateur. Activé automatiquement lorsque le mode P2P est CGNAT, both ou classic.",
+    "liveTitle": "État en direct (cette exécution)",
+    "liveHint": "Redémarrez le nœud après modification des paramètres DGR. Affiche le relais QUIC en cours via GET /api/dgr.",
+    "role": "Rôle",
+    "roleOff": "désactivé",
+    "roleOn": "activé",
+    "roleInbound": "Entrant rdogego (serveur QUIC)",
+    "roleOutbound": "Client sortant (CGNAT)",
+    "uptime": "Durée de fonctionnement",
+    "listenCfg": "Écoute (config)",
+    "listenBound": "UDP lié",
+    "advertise": "Annonce publique",
+    "relayPort": "Port relais",
+    "serviceBit": "Bit de service",
+    "usingRelay": "Utilise un relais",
+    "activeRelay": "Relais actif",
+    "clients": "Clients",
+    "discovery": "Cibles de découverte",
+    "dialOk": "Connexion OK / échec",
+    "starting": "Démarrage du sous-système DGR…",
+    "warnNoRelay": "Relais sortant non enregistré - ajoutez des seeds de relais ou attendez des pairs P2P avec NODE_DOGEGO_RELAY_CGNAT.",
+    "serverCert": "Cert. serveur SHA-256",
+    "activeRelayCert": "Cert. relais actif",
+    "tlsPin": "Pin TLS OK / échec",
+    "rateLimited": "Limité en débit",
+    "copyPin": "Copier",
+    "useServerCertPin": "Utiliser le pin du cert. serveur en direct"
+  },
+  "nav": {
+    "wallet": "Portefeuille",
+    "node": "Nœud",
+    "send": "Envoyer",
+    "receive": "Recevoir",
+    "transactions": "Historique",
+    "overview": "Vue d'ensemble",
+    "blockstep": "BlockStep",
+    "explorer": "Recherche",
+    "mempool": "Mempool",
+    "guide": "Guide",
+    "settings": "Paramètres",
+    "analytics": "Analytique",
+    "docs": "Docs",
+    "features": "Fonctionnalités",
+    "console": "Console",
+    "extensions": "Extensions",
+    "extensionsGroup": "Extensions",
+    "home": "Accueil"
+  },
+  "wizard": {
+    "title": "DogeGo - configuration",
+    "firstRun": "Premier lancement",
+    "stepKicker": "Étape {n} sur {total}",
+    "steps": {
+      "profile": "Profil",
+      "data": "Données",
+      "network": "Réseau",
+      "sync": "Sync",
+      "finish": "Terminer"
+    },
+    "stepMeta": [
+      {
+        "title": "Choisir votre configuration",
+        "desc": "Choisissez un profil - vous pourrez affiner les détails aux écrans suivants."
+      },
+      {
+        "title": "Dossier de données",
+        "desc": "Où sont stockés les fichiers de la chaîne. Le réseau et le mode viennent de votre profil."
+      },
+      {
+        "title": "Réseau et vérifications",
+        "desc": "Connectivité P2P, pare-feu et vérifications automatiques de port/CGNAT."
+      },
+      {
+        "title": "Sync et indexeur",
+        "desc": "Options de téléchargement du nœud complet (ignorées en mode SPV)."
+      },
+      {
+        "title": "Tableau de bord et fin",
+        "desc": "Interface web, PIN optionnel, puis démarrage du nœud."
+      }
+    ],
+    "profileEssential": "Appuyez sur une carte ci-dessous. Chaque option définit le réseau, le mode du nœud, le portefeuille et les valeurs P2P par défaut.",
+    "profiles": {
+      "firstRun": {
+        "title": "Essayer le testnet",
+        "sub": "Nœud complet · portefeuille activé · idéal pour un premier lancement",
+        "tags": [
+          "testnet",
+          "complet",
+          "pairs auto"
+        ]
+      },
+      "mainnet": {
+        "title": "Nœud complet mainnet",
+        "sub": "Dogecoin en production - sync plus longue, validation complète",
+        "tags": [
+          "mainnet",
+          "complet",
+          "relais"
+        ]
+      },
+      "mainnetWallet": {
+        "title": "Mainnet + portefeuille",
+        "sub": "Nœud complet avec Envoyer/Recevoir - définissez un PIN au tableau de bord à la fin",
+        "tags": [
+          "mainnet",
+          "portefeuille",
+          "complet"
+        ]
+      },
+      "spvWallet": {
+        "title": "SPV léger + portefeuille",
+        "sub": "En-têtes uniquement · peu d'espace disque · compatible CGNAT",
+        "tags": [
+          "testnet",
+          "spv",
+          "cgnat"
+        ]
+      }
+    },
+    "showAdvanced": "Afficher les options avancées aux étapes suivantes",
+    "dataEssential": "Choisissez un dossier de données et un réseau. Laissez la découverte de pairs en automatique sauf si vous avez une graine connue.",
+    "whatSetupDoes": "Ce que fait cette configuration",
+    "networkEssential": "Connectivité et vérifications automatiques avant le démarrage. Utilisez cgnat sur Starlink ou lorsque le port forwarding est impossible.",
+    "syncEssential": "Le nœud complet télécharge la chaîne. La disposition disque recommandée est activée par défaut : fichiers blk*.dat groupés, compression zstd et index de transactions compact (la recherche complète dans l'explorateur fonctionne toujours).",
+    "spvSkip": "Mode SPV - les options de sync du nœud complet ne sont pas utilisées. Passez au P2P.",
+    "finishEssential": "Le tableau de bord écoute sur 127.0.0.1 par défaut. Définissez un PIN optionnel pour protéger Envoyer et la vue portefeuille.",
+    "backupTitle": "Sauvegarde du portefeuille (obligatoire)",
+    "backupBody": "Téléchargez une copie de wallet.json et conservez-la hors ligne en lieu sûr. Sans sauvegarde, vous ne pourrez pas récupérer vos fonds en cas de panne.",
+    "backupPending": "Téléchargez la sauvegarde du portefeuille, puis confirmez que vous l'avez stockée en sécurité.",
+    "backupConfirm": "Sauvegarde téléchargée - cochez la case après l'avoir stockée en sécurité.",
+    "backupReady": "Sauvegarde confirmée. Vous pouvez démarrer le nœud.",
+    "backupAck": "J'ai enregistré ma sauvegarde de portefeuille en lieu sûr",
+    "backupAckRequired": "Confirmez que vous avez sauvegardé le portefeuille avant de démarrer.",
+    "downloadBackup": "Télécharger la sauvegarde",
+    "dashboardApi": "Tableau de bord et API",
+    "dashboardSecurity": "Sécurité du tableau de bord (recommandé)",
+    "optionalFlags": "Options facultatives",
+    "advancedRelay": "Avancé - politique de relais mempool (optionnel)",
+    "reviewTitle": "Récapitulatif",
+    "preflightTitle": "Vérifications automatiques",
+    "preflightRerun": "Relancer",
+    "preflightHint": "S'exécute à l'ouverture de cette étape - pare-feu, ports et indications CGNAT.",
+    "footLove": "Codé avec amour pour toute la communauté Dogecoin.",
+    "footSaved": "Enregistré dans dogecoinconf.json - modifiable à tout moment dans Paramètres du tableau de bord.",
+    "backupEncryptWarning": "Ce fichier contient votre seed HD et toutes les clés privées (y compris les importations) en clair, sauf si vous chiffrez le portefeuille. Définissez un PIN tableau de bord à l'étape précédente (verrouille uniquement cette UI), puis après le démarrage exécutez Console → encryptwallet avec une passphrase forte pour chiffrer wallet.json sur disque. Traitez les sauvegardes comme de l'argent liquide. Stockez hors ligne et chiffré si possible.",
+    "pinNotWalletEncrypt": "Optionnel : laissez décoché pour démarrer sans PIN tableau de bord. Si activé, les deux champs doivent comporter exactement 6 chiffres et correspondre. Le PIN tableau de bord est haché dans web_security.json et ne protège que cette session navigateur ; il ne chiffre pas wallet.json. Utilisez encryptwallet après le démarrage pour le chiffrement des clés sur disque.",
+    "walletEncryptTitle": "Chiffrer le portefeuille au démarrage",
+    "walletEncryptEnable": "Chiffrer wallet.json maintenant (Core encryptwallet)",
+    "walletEncryptHint": "Recommandé après avoir téléchargé la sauvegarde ci-dessus. Le fichier de sauvegarde est en clair. Stockez-le hors ligne. Après chiffrement le nœud démarre verrouillé ; déverrouillez avec cette passphrase pour envoyer (tableau de bord ou dogego-cli walletpassphrase).",
+    "walletPass": "Passphrase du portefeuille",
+    "walletPassConfirm": "Confirmer la passphrase",
+    "walletPassRequired": "Saisissez une passphrase du portefeuille lorsque le chiffrement est activé.",
+    "walletPassMismatch": "La passphrase du portefeuille et la confirmation doivent correspondre."
+  },
+  "settings": {
+    "title": "Paramètres",
+    "essentialDesc": "Modifiez ici le réseau, le dossier de données et le PIN du tableau de bord. Redémarrez le nœud après un changement de chemins ou P2P.",
+    "advancedDesc": "Enregistré dans dogecoinconf.json. La plupart des options s'appliquent après redémarrage de dogego node. Survolez ? sur chaque champ pour une aide courte.",
+    "servicesTitle": "Services (cette session)",
+    "servicesHint": "Démarrez ou arrêtez les sous-systèmes immédiatement. Tout ce qui est dans les onglets ci-dessous prend effet au prochain démarrage du nœud sauf indication contraire.",
+    "tabs": {
+      "general": "Général",
+      "wallet": "Portefeuille",
+      "sync": "Sync et index",
+      "p2p": "P2P",
+      "interface": "Interface",
+      "updates": "Mises à jour",
+      "extensions": "Extensions",
+      "advanced": "Avancé",
+      "tools": "Outils"
+    },
+    "extensionsTitle": "Extensions",
+    "extensionsHint": "Extensions DogeGo optionnelles. Parcourir les sources du catalogue, installer des zip, activer ou désactiver. Les extensions n'accèdent jamais aux clés du portefeuille.",
+    "extensionsDetails": "Détails",
+    "extensionsCatalogSources": "Sources du catalogue",
+    "extensionsCatalogSourcesHint": "Dossier GitHub ou URL catalog.json brute. La source officielle DogeGo est incluse par défaut.",
+    "extensionsCatalogSourcesPlaceholder": "https://github.com/owner/repo/tree/main/path/to/extensions/",
+    "extensionsCatalogSourcesAdd": "Ajouter une source",
+    "extensionsRefresh": "Actualiser le catalogue",
+    "extensionsInstallZip": "Installer un zip",
+    "walletTitle": "Portefeuille et post-quantique",
+    "walletHint": "Réglages du portefeuille HD intégré. Les engagements OP_RETURN post-quantiques s'appliquent au prochain envoi si activés ci-dessous.",
+    "walletBuiltInTitle": "Portefeuille intégré",
+    "walletEnable": "Activer le portefeuille intégré",
+    "walletEnableHint": "Désactiver définit nowallet dans la config. Enregistrez et redémarrez le nœud.",
+    "walletPqTitle": "Envois post-quantiques",
+    "walletPqHint": "Si activé, chaque envoi inclut un engagement OP_RETURN phase 1 (FLC1 par défaut). Enregistré immédiatement dans wallet.json.",
+    "walletHistoryTitle": "Historique du portefeuille",
+    "walletDisabledConfig": "Portefeuille désactivé dans la config (nowallet). Enregistrez et redémarrez le nœud.",
+    "walletUnavailable": "Portefeuille non chargé sur cette exécution.",
+    "walletPqOn": "Envois post-quantiques activés - {tag} OP_RETURN sur chaque envoi.",
+    "walletPqOff": "Envois post-quantiques désactivés. Activez ci-dessous pour les engagements FLC1.",
+    "generalTitle": "Chemins et réseau",
+    "seedPeerSummary": "Pair graine fixe (optionnel)",
+    "syncTitle": "Nœud complet et sync",
+    "syncHint": "Contrôle le téléchargement historique des blocs et les index locaux. Ignoré lorsque le mode du nœud est SPV.",
+    "txIndexMaint": "Maintenance de l'index des transactions",
+    "filterMaint": "Maintenance de l'index des filtres de blocs",
+    "analyticsTitle": "Analytique",
+    "miningTitle": "Minage",
+    "p2pTitle": "Connectivité P2P",
+    "p2pHint": "Nombre de pairs à maintenir et acceptation des connexions entrantes. Redémarrage requis.",
+    "dgrTitle": "Relais DogeGo (CGNAT)",
+    "dgrHint": "Contournez le NAT de niveau opérateur en vous enregistrant auprès de relais DogeGo publics via QUIC. Les métriques apparaissent dans Vue d'ensemble → Réseau et GET /api/dgr.",
+    "interfaceTitle": "Affichage et navigation",
+    "simpleMode": "Tableau de bord simple (masquer Docs, Fonctionnalités, Console)",
+    "simpleHint": "Le menu complet est affiché par défaut. Le mode simple masque les onglets réservés aux opérateurs.",
+    "navTogglesHint": "Choisissez les sections visibles dans la barre latérale et la barre inférieure :",
+    "navReset": "Réinitialiser le menu pour tout afficher",
+    "securityTitle": "Sécurité (PIN à 6 chiffres)",
+    "rpcBindsSummary": "Liaisons RPC et tableau de bord",
+    "walletFlagsSummary": "Options portefeuille (en direct)",
+    "walletRescanBtn": "Rescanner l'historique du portefeuille",
+    "walletRescanFullBtn": "Rescan complet (genèse)",
+    "walletRescanStarted": "Rescan du portefeuille démarré en arrière-plan.",
+    "walletRescanBusy": "Un rescan du portefeuille est déjà en cours.",
+    "walletRescanFailed": "Impossible de démarrer le rescan du portefeuille.",
+    "walletRescanNeeds": "Index portefeuille jusqu'au bloc {indexed} ; chaîne au bloc {tip}. Le rescan complète les métadonnées de frais et hex des transactions.",
+    "walletRescanNeedsFastPath": "Portefeuille indexé jusqu'au bloc {indexed} ; chaîne au bloc {tip}. Historique rapide ; le rescan complète les métadonnées de frais et hex.",
+    "walletRescanScanning": "Rescan du portefeuille en cours…",
+    "walletRescanOk": "L'index portefeuille est à jour jusqu'au bloc {tip}.",
+    "walletHistoryFastPath": "Historique portefeuille indexé (listtransactions rapide pour les réceptions).",
+    "walletListtransactionsUtxoWalk": "listtransactions parcourt {n} UTXO pour l'historique des réceptions ; lancez un rescan pour indexer wallet.db.",
+    "advancedTitle": "Mempool, relais et auth RPC",
+    "advancedHint": "Clés de politique style Core dans dogecoinconf.json (koinu par ko sauf indication contraire).",
+    "packageLimits": "Limites de paquets mempool (Core -limit*)",
+    "standardness": "Standardness (politique de relais Core)",
+    "zmqTitle": "Notifications ZMQ (compatible Core)",
+    "zmqHint": "Points de terminaison PUB pour bots/exchanges (tcp://127.0.0.1:28332 ou 127.0.0.1:28332). Redémarrage requis.",
+    "coreParityTitle": "Comparaison de référence Core (optionnelle)",
+    "coreParityHint": "Uniquement si Dogecoin Core tourne à côté de DogeGo pour vérifier la parité de protocole. Laisser vide pour un nœud DogeGo entièrement autonome. S'applique après Enregistrer - pas de redémarrage.",
+    "signerCmdHint": "JSON stdin/stdout compatible HWI (enumeratesigners, signerdisplayaddress, PSBT). Redémarrage requis après Enregistrer.",
+    "coreTestBtn": "Tester la connexion Core (optionnel)",
+    "coreCertStatus": "Certification opérateur live",
+    "coreTestBusy": "Test JSON-RPC Core…",
+    "coreTestOk": "Core joignable",
+    "coreTestFail": "Core injoignable",
+    "saveConfig": "Enregistrer la config",
+    "footDisclaimer": "",
+    "walletEncryptTitle": "Chiffrement du fichier portefeuille",
+    "walletEncryptHint": "Chiffre wallet.json sur disque (Core encryptwallet). Distinct du PIN tableau de bord dans Paramètres → Interface.",
+    "walletEncryptOff": "Le fichier portefeuille n'est pas chiffré. Définissez une passphrase ci-dessous pour chiffrer wallet.json sur disque.",
+    "walletEncryptLocked": "Clés de dépense verrouillées. Déverrouillez pour envoyer ou signer (Core walletpassphrase).",
+    "walletEncryptUnlocked": "Clés de dépense déverrouillées jusqu'à {time}.",
+    "walletEncryptUnlockedOpen": "Clés de dépense déverrouillées (pas de verrouillage automatique).",
+    "walletUnlockKeys": "Déverrouiller les clés",
+    "walletLockKeys": "Verrouiller les clés",
+    "syncOptionsGroup": "Sync des blocs et stockage",
+    "filterIndexMaint": "Maintenance de l'index de filtres de blocs",
+    "syncAnalyticsGroup": "Sidecar analytique",
+    "miningGroup": "Minage (testnet)",
+    "toolsTitle": "Outils nœud et actions RPC",
+    "toolsHint": "Exécutez des commandes RPC courantes avec des formulaires guidés. Organisées par catégorie ; l'onglet Console n'est pas requis.",
+    "dgrSetupLead": "Deux rôles : choisissez-en un. Distinct du port P2P Dogecoin 22556 (TCP).",
+    "dgrPathClientTitle": "Utiliser un relais (client CGNAT)",
+    "dgrPathClientBody": "Pour Starlink, mobile ou réseaux domestiques sans entrée. Vous vous connectez à un relais DogeGo public via QUIC UDP, sans redirection de port sur votre routeur.",
+    "dgrPathClientPorts": "Votre nœud : UDP sortant vers relais:24433 · P2P Dogecoin reste TCP sortant uniquement.",
+    "dgrPathOperatorTitle": "Exploiter un relais (opérateur public)",
+    "dgrPathOperatorBody": "Pour un VPS ou serveur domestique avec IP publique. Vous hébergez le relais QUIC pour que les clients CGNAT tunnelisent via vous.",
+    "dgrPathOperatorPorts": "Transférez UDP 24433 sur votre routeur/pare-feu vers cette machine (TCP 22556 est le P2P normal, pas le relais).",
+    "dgrRoleOff": "Désactivé",
+    "dgrRoleOffSub": "Pas de relais QUIC",
+    "dgrRoleClient": "Utiliser un relais (client)",
+    "dgrRoleClientSub": "Pas de port forward · connexion aux relais publics",
+    "dgrRoleOperator": "Exploiter un relais (opérateur)",
+    "dgrRoleOperatorSub": "IP publique · ouvrir UDP 24433",
+    "dgrShowAdvanced": "Afficher les champs DGR avancés",
+    "dgrSuggestCgnat": "Astuce : choisissez Utiliser un relais (client) ci-dessus, ajoutez host:24433 de l'opérateur sous Adresses de relais publics, puis Enregistrez et redémarrez.",
+    "dgrSuggestBoth": "Astuce : si vous ne pouvez pas accepter le P2P entrant, choisissez Utiliser un relais (client). Si vous avez une IP publique et voulez aider les autres, choisissez Exploiter un relais (opérateur) et ouvrez UDP 24433.",
+    "interfaceIntro": "Personnalisez la disposition du tableau de bord, la sécurité PIN et la façon dont l'UI web est servie.",
+    "interfaceDisplayGroup": "Affichage et menu",
+    "dashboardBindsGroup": "Liaisons du tableau de bord",
+    "developerGroup": "Options développeur",
+    "updatesTitle": "Mises à jour logicielles",
+    "updatesHint": "Vérifie GitHub Releases quotidiennement. Désactivez avec DOGEGO_NO_UPDATE_CHECK=1.",
+    "mempoolGroup": "Mempool et frais de relais",
+    "rpcAuthGroup": "Écoute et auth JSON-RPC",
+    "signerTestBtn": "Tester le signataire externe",
+    "signerTestBusy": "Test du signataire HWI…",
+    "signerTestOk": "Signataire prêt",
+    "signerTestWarn": "Signataire a répondu, aucun appareil",
+    "signerTestFail": "Échec du test du signataire"
+  },
+  "field": {
+    "datadir": {
+      "label": "Répertoire de données",
+      "help": "Tous les fichiers de chaîne et dogecoinconf.json sont ici. Sous-dossiers séparés par réseau. Non compatible avec le répertoire de données de Dogecoin Core.",
+      "hint": "Créé s'il manque. DogeGo utilise sa propre structure (headers.bin, rawblocks/, indexes/) - pas blocks/ ou chainstate/ de Dogecoin Core.",
+      "placeholder": "ex. C:\\Dogedata ou ./dogedata"
+    },
+    "network": {
+      "label": "Réseau",
+      "help": "mainnet = Dogecoin réel. testnet = testnet reboot pour le développement (recommandé pour un premier essai)."
+    },
+    "nodeMode": {
+      "label": "Mode du nœud",
+      "help": "full = télécharge les corps de blocs (nécessaire pour l'explorateur et la plupart des RPC). spv = en-têtes uniquement, bien moins d'espace disque."
+    },
+    "peer": {
+      "label": "Pair (optionnel)",
+      "help": "Un host:port auquel se connecter en premier. Laissez vide sauf si vous connaissez un pair graine fiable.",
+      "placeholder": "Vide = découverte automatique"
+    },
+    "p2p": {
+      "label": "Connectivité P2P",
+      "help": "cgnat = sortant uniquement (Starlink/CGNAT). classic = écoute entrante. both = mélange par défaut avec relais sortants supplémentaires."
+    },
+    "firewall": {
+      "label": "Pare-feu OS",
+      "help": "auto = ajoute des règles Windows/Linux/macOS pour le P2P si manquantes. always = gère toujours les règles. never = ignore le pare-feu OS."
+    },
+    "upnp": {
+      "label": "UPnP / NAT-PMP",
+      "help": "auto = mappe le port P2P sur votre routeur en écoute (classic/both). enable = tente toujours. disable = désactivé (Core -upnp=0)."
+    },
+    "maxOutbound": {
+      "label": "Max sortant",
+      "help": "Sessions P2P sortantes totales, y compris le pair de sync principal. Plus de pairs peuvent accélérer le téléchargement des blocs.",
+      "placeholder": "8"
+    },
+    "maxInbound": {
+      "label": "Max entrant",
+      "help": "Connexions entrantes lorsque l'écoute est activée (modes classic/both).",
+      "placeholder": "12"
+    },
+    "noTxIndex": {
+      "label": "Désactiver l'index des transactions",
+      "help": "Si activé, ne construit pas indexes/tx. Économise de l'espace disque mais limite la recherche tx/adresse dans l'explorateur. Laissez désactivé pour un explorateur complet."
+    },
+    "blockLayout": {
+      "label": "Disposition du stockage des blocs",
+      "help": "bundled (recommandé) : fichiers blk*.dat style Core, moins de surcharge système de fichiers. perfile : un fichier .bin par bloc (ancien)."
+    },
+    "blockZstd": {
+      "label": "Compresser les blocs stockés (zstd)",
+      "help": "Compression transparente sur disque. Le P2P envoie toujours des blocs wire normaux. Économise de l'espace disque sur les nœuds complets."
+    },
+    "txEmbed": {
+      "label": "Intégrer les octets tx complets dans l'index tx",
+      "help": "Si désactivé (recommandé), l'index ne stocke que des pointeurs de blocs ; les tx sont chargées depuis les fichiers de blocs. Si activé, duplique les octets tx dans l'index."
+    },
+    "analytics": {
+      "label": "Sidecar analytique intégré",
+      "help": "Catalogue Pebble optionnel pour l'onglet Analytique. Peut être désactivé sur petits disques ; vous pouvez lancer dogego indexer depuis la CLI à la place."
+    },
+    "blockWorkers": {
+      "label": "Workers de sync des blocs",
+      "help": "Pairs supplémentaires qui téléchargent les corps de blocs en parallèle pendant la sync initiale. 0 = automatique (généralement 2-6).",
+      "placeholder": "0 = automatique"
+    },
+    "rawBackfill": {
+      "label": "Remplissage des blocs bruts à la pointe",
+      "help": "Nombre de blocs à la pointe des en-têtes à récupérer juste après la sync. -1 = genèse uniquement ; vide = valeur par défaut automatique."
+    },
+    "reindexClear": {
+      "label": "Effacer l'index d'abord",
+      "help": "Lors de la reconstruction de l'index tx, efface indexes/tx avant de scanner rawblocks/. À utiliser si l'index est corrompu."
+    },
+    "webui": {
+      "label": "Écoute du tableau de bord web",
+      "help": "Où cette interface est servie. Gardez 127.0.0.1 sauf si vous savez sécuriser l'accès distant."
+    },
+    "rpc": {
+      "label": "Écoute JSON-RPC (optionnel)",
+      "help": "Permet à d'autres apps d'appeler le RPC dogego. Vide = désactivé. Utilisez 127.0.0.1 uniquement sur des machines de confiance."
+    },
+    "uacomment": {
+      "label": "Commentaire user-agent",
+      "help": "Chaîne optionnelle ajoutée au message de version P2P pour que les pairs identifient votre nœud.",
+      "placeholder": "Visible par les pairs lors du handshake P2P"
+    },
+    "pinSection": {
+      "help": "Un PIN optionnel à 6 chiffres protège la vue portefeuille et Envoyer. Laissez désactivé pour démarrer sans demande de PIN. Si activé, les deux champs doivent contenir exactement 6 chiffres. Haché sur disque ; 3 essais incorrects verrouillent pendant 1 heure. Modifiable plus tard dans Paramètres → Interface."
+    },
+    "pinNow": {
+      "label": "Définir un PIN à 6 chiffres maintenant (optionnel)",
+      "help": "Protège Envoyer et le solde du portefeuille dans ce tableau de bord. Laissez décoché pour démarrer sans demande de PIN."
+    },
+    "pinNew": {
+      "label": "PIN à 6 chiffres",
+      "help": "Exactement six chiffres. Stocké haché sur disque - différent de la passphrase encryptwallet du portefeuille."
+    },
+    "pinConfirm": {
+      "label": "Confirmer le PIN",
+      "help": "Doit correspondre au PIN ci-dessus avant le démarrage du nœud."
+    },
+    "webauthn": {
+      "label": "Autoriser la biométrie de l'appareil (WebAuthn) avec le PIN",
+      "help": "Après déverrouillage par PIN, utilisez optionnellement empreinte/visage sur cet appareil. Nécessite HTTPS ou localhost."
+    },
+    "nowebui": {
+      "label": "Désactiver l'interface web après le démarrage",
+      "help": "Arrête de servir ce tableau de bord après le démarrage du nœud (nowebui). RPC et P2P continuent de tourner."
+    },
+    "nobrowser": {
+      "label": "Ne pas ouvrir le navigateur automatiquement",
+      "help": "Si désactivé, DogeGo ouvre le tableau de bord dans votre navigateur par défaut après le démarrage."
+    },
+    "nowallet": {
+      "label": "Désactiver le portefeuille intégré",
+      "help": "Exécute un nœud relais uniquement ou en lecture seule sans Envoyer/Recevoir dans cette interface."
+    },
+    "mine": {
+      "label": "Minage solo sur testnet reboot (mine)",
+      "help": "Blocs testnet à faible difficulté lorsque mine=true. Pas pour le minage mainnet en production."
+    },
+    "showAdvanced": {
+      "help": "Affiche pair, RPC, relais mempool et autres champs opérateur aux étapes suivantes de l'assistant."
+    },
+    "profile": {
+      "help": "Chaque profil définit le réseau, le mode du nœud, le portefeuille et les valeurs P2P par défaut. Vous pouvez tout modifier aux étapes suivantes."
+    },
+    "dgrEnabled": {
+      "label": "dogego_relay_cgnat.enabled",
+      "help": "Interrupteur principal du relais CGNAT QUIC intégré (bit de service NODE_DOGEGO_RELAY_CGNAT)."
+    },
+    "dgrInbound": {
+      "label": "Relais entrant (opérateur rdogego)",
+      "help": "Exécute un relais QUIC public qui enregistre les clients CGNAT. À utiliser sur des serveurs avec IP publique."
+    },
+    "dgrOutbound": {
+      "label": "Relais sortant (client CGNAT)",
+      "help": "Se connecte aux relais publics lorsque le TCP entrant est bloqué (Starlink, NAT opérateur)."
+    },
+    "dgrListen": {
+      "label": "Écoute QUIC",
+      "help": "Adresse UDP pour les clients relais entrants, ex. :24433 sur toutes les interfaces."
+    },
+    "dgrPort": {
+      "label": "Port relais (découverte)",
+      "help": "Port annoncé dans les enregistrements de service P2P pour la découverte de relais."
+    },
+    "dgrSeeds": {
+      "label": "Graines relais statiques (host:port, une par ligne)",
+      "help": "Relais publics connus à composer lorsque le relais sortant est activé."
+    },
+    "dgrDns": {
+      "label": "Graine DNS relais (enregistrements TXT)",
+      "help": "Nom DNS avec enregistrements TXT listant les entrées relais host:port."
+    },
+    "dgrMaxClients": {
+      "label": "Max clients entrants",
+      "help": "Nombre maximum de clients CGNAT enregistrés sur ce relais entrant."
+    },
+    "dgrMaxConns": {
+      "label": "Max sessions relais sortantes",
+      "help": "Tunnels QUIC parallèles vers les relais publics depuis ce nœud CGNAT."
+    },
+    "dgrToken": {
+      "label": "Jeton d'auth (secret partagé optionnel)",
+      "help": "Secret partagé entre l'opérateur du relais et les clients. Laissez vide pour des relais ouverts."
+    },
+    "dgrSection": {
+      "help": "Relais de portée QUIC intégré utilisant le bit de service NODE_DOGEGO_RELAY_CGNAT (1<<29). Les nœuds rdogego publics exécutent inbound_relay ; les clients CGNAT exécutent outbound_relay pour tunneliser le P2P lorsque le TCP entrant est bloqué."
+    },
+    "simpleMode": {
+      "help": "Le mode simple masque Explorateur, Console, Docs et autres onglets opérateur. Vous pouvez réactiver chaque onglet ci-dessous."
+    },
+    "helpAlways": {
+      "help": "Sur mobile et fenêtres étroites, l'aide s'ouvre dans une infobulle au clic. Si épinglée, elle reste jusqu'à fermeture."
+    },
+    "pinSecurity": {
+      "help": "Protège le solde du portefeuille, l'historique et Envoyer dans ce tableau de bord. Le PIN est haché sur disque (bcrypt). Trois tentatives incorrectes verrouillent le déverrouillage pendant 1 heure. La biométrie optionnelle de l'appareil nécessite la saisie du PIN - rien n'est stocké dans le navigateur."
+    },
+    "pinCurrent": {
+      "label": "PIN actuel (si modification)",
+      "help": "Requis lors de la modification ou suppression d'un PIN tableau de bord existant."
+    },
+    "pinDisable": {
+      "label": "Désactiver le PIN (saisir l'actuel)",
+      "help": "Saisissez votre PIN actuel et cliquez sur Supprimer la protection PIN pour ouvrir la vue portefeuille sans déverrouillage."
+    },
+    "secBiometric": {
+      "label": "Utiliser la biométrie de l'appareil après le PIN (WebAuthn)",
+      "help": "Déverrouillage plus rapide optionnel sur cet appareil après la première saisie du PIN dans une session."
+    },
+    "miningAddr": {
+      "label": "Adresse de minage (optionnel)",
+      "help": "Adresse P2PKH pour generatetoaddress / paiements minage solo testnet."
+    },
+    "mineConfig": {
+      "label": "mine dans la config (solo testnet)",
+      "help": "Si true sur testnet reboot, mine des blocs à faible difficulté vers le portefeuille de ce nœud ou l'adresse de minage."
+    },
+    "pqCommitments": {
+      "label": "Envois prêts pour le quantique (pq_commitments)",
+      "help": "Ajoute des champs d'engagement optionnels prêts pour le quantique lors des envois lorsque pris en charge."
+    },
+    "avoidReuse": {
+      "label": "Éviter la réutilisation d'adresse (avoid_reuse)",
+      "help": "Préfère de nouvelles adresses de réception lors de la construction des transactions."
+    },
+    "showSummary": {
+      "label": "Afficher le JSON de debug sur Vue d'ensemble → Sync",
+      "help": "Affiche le JSON brut du résumé de sync pour les opérateurs qui déboguent l'IBD."
+    },
+    "persistMempool": {
+      "label": "Persister la mempool sur disque (persistmempool)",
+      "help": "Enregistre les tx non confirmées entre les redémarrages. Utilise de l'espace disque supplémentaire dans le dossier de chaîne."
+    },
+    "maxMempool": {
+      "label": "Mempool max (Mo)",
+      "help": "RAM maximale pour le pool de transactions en mémoire (-maxmempool). Lorsqu'il est plein, les tx à frais plus bas sont évincées en premier. 300 Mo par défaut si laissé vide."
+    },
+    "mempoolExpiry": {
+      "label": "Expiration mempool (heures)",
+      "help": "Durée pendant laquelle une tx non confirmée peut rester dans le pool avant expiration (-mempoolexpiry). 24 heures par défaut si laissé vide."
+    },
+    "maxOrphanTx": {
+      "label": "Max tx orphelines",
+      "help": "Nombre maximum de transactions orphelines conservées en attente des parents (-maxorphantx)."
+    },
+    "blockMaxWeight": {
+      "label": "Poids max du bloc",
+      "help": "Poids maximal de bloc que ce nœud acceptera et relayera (-blockmaxweight)."
+    },
+    "minRelay": {
+      "label": "Frais min de relais (koinu/ko)",
+      "help": "Taux de frais minimum configuré pour accepter et relayer les tx (-minrelaytxfee). 100000 koinu/ko ≈ 0,001 DOGE/ko."
+    },
+    "incrementalRelay": {
+      "label": "Relais incrémental (koinu/ko)",
+      "help": "Ajouté au taux de frais minimum glissant après éviction de la mempool (-incrementalrelayfee)."
+    },
+    "hardDust": {
+      "label": "Limite dust stricte (koinu)",
+      "help": "Les sorties en dessous de cette valeur sont traitées comme dust pour le relais (-harddustlimit)."
+    },
+    "limitAnc": {
+      "label": "Nombre d'ancêtres",
+      "help": "Nombre max de tx ancêtres non confirmées dans un paquet (-limitancestorcount). 25 par défaut si vide."
+    },
+    "limitDesc": {
+      "label": "Nombre de descendants",
+      "help": "Nombre max de tx descendantes en chaîne depuis un parent en mempool (-limitdescendantcount). 25 par défaut si vide."
+    },
+    "limitAncKb": {
+      "label": "Taille ancêtres (ko)",
+      "help": "Taille virtuelle combinée max d'une tx plus tous ses ancêtres non confirmés (-limitancestorsize)."
+    },
+    "limitDescKb": {
+      "label": "Taille descendants (ko)",
+      "help": "Taille virtuelle combinée max d'une tx plus tous ses descendants non confirmés (-limitdescendantsize)."
+    },
+    "acceptDatacarrier": {
+      "label": "Porteur de données OP_RETURN (acceptdatacarrier)",
+      "help": "Si activé, relaie les sorties de données OP_RETURN standard. Désactivez pour rejeter les tx OP_RETURN."
+    },
+    "permitBareMs": {
+      "label": "Multisig nu (permitbaremultisig)",
+      "help": "Si activé, relaie les sorties multisig nues (ancien style). Désactivez pour une standardness plus stricte."
+    },
+    "datacarrierSize": {
+      "label": "Taille max OP_RETURN (octets)",
+      "help": "Taille maximale de charge utile OP_RETURN à relayer (-datacarriersize)."
+    },
+    "unverifiedMempool": {
+      "label": "Autoriser mempool non vérifiée (tests uniquement)",
+      "help": "Accepte les tx sans validation complète - dangereux ; pour le développement uniquement."
+    },
+    "fullRbf": {
+      "label": "RBF complet (mempoolfullrbf)",
+      "help": "Si activé, toute tx en mempool peut être remplacée par une version à frais plus élevés, pas seulement les tx RBF opt-in BIP125."
+    },
+    "maxTxFee": {
+      "label": "Frais tx max (koinu)",
+      "help": "Rejette les tx dont les frais dépassent cette valeur (-maxtxfee)."
+    },
+    "rpcCookie": {
+      "label": "Fichier cookie RPC (rpc_cookie)",
+      "help": "Utilise un fichier cookie pour l'auth RPC au lieu de user/password."
+    },
+    "rpcUser": {
+      "label": "Utilisateur RPC",
+      "help": "Nom d'utilisateur HTTP RPC lorsque l'auth par cookie est désactivée."
+    },
+    "rpcPass": {
+      "label": "Mot de passe RPC",
+      "help": "Mot de passe HTTP RPC - gardez sur loopback uniquement."
+    },
+    "coreRpcAddr": {
+      "label": "Adresse JSON-RPC Core (optionnelle)",
+      "help": "Optionnel host:port pour Dogecoin Core en loopback. Uniquement pour comparaison de parité de protocole - pas requis pour sync, portefeuille ou P2P."
+    },
+    "coreRpcUser": {
+      "label": "Utilisateur RPC Core",
+      "help": "Nom d'utilisateur JSON-RPC Core. Vide = rpc_user DogeGo ou env DOGEGO_CORE_RPC_USER."
+    },
+    "coreRpcPass": {
+      "label": "Mot de passe RPC Core",
+      "help": "Mot de passe JSON-RPC Core associé à l'utilisateur Core."
+    },
+    "signerCmd": {
+      "label": "Commande signeur externe",
+      "help": "Processus compatible HWI (JSON stdin/stdout), ex. python hwi.py --chain dogecoin --stdin."
+    },
+    "zmqHashblock": {
+      "label": "zmqpubhashblock",
+      "help": "Point de terminaison ZMQ PUB pour les hash de nouveaux blocs. Vide = désactivé."
+    },
+    "zmqHashtx": {
+      "label": "zmqpubhashtx",
+      "help": "Point de terminaison ZMQ PUB pour les hash de nouvelles tx. Vide = désactivé."
+    },
+    "zmqRawblock": {
+      "label": "zmqpubrawblock",
+      "help": "Point de terminaison ZMQ PUB pour les données de blocs bruts. Vide = désactivé."
+    },
+    "zmqRawtx": {
+      "label": "zmqpubrawtx",
+      "help": "Point de terminaison ZMQ PUB pour les données tx brutes. Vide = désactivé."
+    },
+    "relayPolicy": {
+      "help": "Politique de relais style Core optionnelle enregistrée dans dogecoinconf.json. Laissez les nombres vides pour les valeurs par défaut Dogecoin. Cliquez sur ? sur chaque champ ci-dessous pour les détails."
+    },
+    "settingsIntro": {
+      "help": "Les services peuvent être basculés en direct ; chemins, réseau et limites P2P nécessitent un redémarrage."
+    },
+    "interfaceDisplay": {
+      "help": "Le mode simple masque Explorateur, Console, Docs et autres onglets opérateur. Vous pouvez réactiver chaque onglet ci-dessous."
+    },
+    "dgrTlsPins": {
+      "label": "Pins cert. TLS relais (SHA-256 hex, un par ligne)",
+      "help": "Pins de confiance optionnels pour les connexions sortantes au relais. Copiez server_cert_sha256 depuis GET /api/dgr de votre relais opérateur. Laissez vide pour accepter tout cert. auto-signé."
+    },
+    "dgrMaxFrames": {
+      "label": "Max frames par session / sec",
+      "help": "Limite de débit opérateur entrant pour les frames DGR par client enregistré (défaut 60)."
+    },
+    "dgrMaxP2PProxy": {
+      "label": "Max proxy P2P / sec",
+      "help": "Limite de débit opérateur entrant pour les requêtes proxy P2P_FRAME par client (défaut 20)."
+    },
+    "dgrMaxRegister": {
+      "label": "Max REGISTER / min par IP",
+      "help": "Plafond opérateur entrant pour les tentatives REGISTER par IP client par minute (défaut 10)."
+    },
+    "walletEnable": {
+      "label": "Activer le portefeuille intégré",
+      "help": "Si désactivé, définit nowallet dans dogecoinconf.json. Enregistrez la config et redémarrez le nœud."
+    }
+  },
+  "choices": {
+    "network": {
+      "mainnet": {
+        "title": "Mainnet",
+        "sub": "Chaîne Dogecoin de production"
+      },
+      "testnet": {
+        "title": "Testnet",
+        "sub": "Testnet reboot dans ce dépôt"
+      }
+    },
+    "networkWizard": {
+      "mainnet": {
+        "title": "Mainnet",
+        "sub": "Chaîne Dogecoin réelle"
+      },
+      "testnet": {
+        "title": "Testnet",
+        "sub": "Bac à sable sûr - recommandé pour commencer"
+      }
+    },
+    "mode": {
+      "full": {
+        "title": "Nœud complet",
+        "sub": "En-têtes + corps de blocs"
+      },
+      "spv": {
+        "title": "SPV",
+        "sub": "En-têtes uniquement, moins de disque"
+      }
+    },
+    "modeWizard": {
+      "full": {
+        "title": "Nœud complet",
+        "sub": "En-têtes + corps de blocs + explorateur"
+      },
+      "spv": {
+        "title": "SPV (léger)",
+        "sub": "En-têtes uniquement - petit disque"
+      }
+    },
+    "p2p": {
+      "both": {
+        "title": "Les deux",
+        "sub": "Entrant + relais sortant"
+      },
+      "cgnat": {
+        "title": "CGNAT",
+        "sub": "Sortant uniquement (Starlink / NAT)"
+      },
+      "classic": {
+        "title": "Classique",
+        "sub": "Écoute entrante + sortant"
+      }
+    },
+    "p2pWizard": {
+      "both": {
+        "title": "Les deux",
+        "sub": "Entrant + sortant · relais DGR auto-configuré"
+      },
+      "cgnat": {
+        "title": "CGNAT",
+        "sub": "Sortant uniquement (Starlink / pas de port forward)"
+      },
+      "classic": {
+        "title": "Classique",
+        "sub": "Écoute entrante + sortant"
+      }
+    },
+    "firewall": {
+      "auto": {
+        "title": "Auto",
+        "sub": "Ajoute des règles si nécessaire"
+      },
+      "always": {
+        "title": "Toujours",
+        "sub": "Gère toujours les règles"
+      },
+      "never": {
+        "title": "Jamais",
+        "sub": "Ignore le pare-feu OS"
+      }
+    },
+    "firewallWizard": {
+      "auto": {
+        "title": "Auto",
+        "sub": "Ajoute des règles si nécessaire"
+      },
+      "always": {
+        "title": "Toujours",
+        "sub": "Gère toujours"
+      },
+      "never": {
+        "title": "Jamais",
+        "sub": "Ignorer"
+      }
+    },
+    "upnp": {
+      "auto": {
+        "title": "Auto",
+        "sub": "Tente en écoute"
+      },
+      "enable": {
+        "title": "Activer",
+        "sub": "Tente toujours le mapping"
+      },
+      "disable": {
+        "title": "Désactiver",
+        "sub": "Désactivé"
+      }
+    },
+    "upnpWizard": {
+      "auto": {
+        "title": "Auto",
+        "sub": "En écoute"
+      },
+      "enable": {
+        "title": "Activer",
+        "sub": "Tente toujours"
+      },
+      "disable": {
+        "title": "Désactiver",
+        "sub": "Désactivé"
+      }
+    },
+    "blockLayout": {
+      "perfile": {
+        "title": "Par fichier",
+        "sub": "Un .bin par bloc"
+      },
+      "bundled": {
+        "title": "Groupé",
+        "sub": "Disposition blk*.dat"
+      }
+    },
+    "blockLayoutWizard": {
+      "bundled": {
+        "title": "Groupé",
+        "sub": "blk*.dat recommandé"
+      },
+      "perfile": {
+        "title": "Par fichier",
+        "sub": "Un .bin par bloc"
+      }
+    }
+  },
+  "msg": {
+    "preflightOk": "Toutes les vérifications critiques ont réussi. Les avertissements sont informatifs - vous pouvez quand même démarrer.",
+    "preflightWarn": "Certaines vérifications ont signalé des avertissements. Consultez ci-dessous avant de démarrer.",
+    "saveOk": "Configuration enregistrée.",
+    "saveErr": "Impossible d'enregistrer la configuration.",
+    "pinMismatch": "Les champs PIN doivent correspondre et contenir exactement 6 chiffres.",
+    "starting": "Démarrage du nœud…"
+  },
+  "pages": {
+    "overview": {
+      "title": "Tableau de bord",
+      "subtitle": "Métriques du nœud en direct sur cette machine.",
+      "chainWarn": "Avertissement de chaîne",
+      "storage": "Stockage",
+      "firewallWarn": "Pare-feu - action requise",
+      "firewallCopy": "Copier dans une invite de commandes ou PowerShell élevée (Administrateur) :",
+      "searchPlaceholder": "Hauteur, hash, txid ou adresse…",
+      "search": "Rechercher",
+      "clear": "Effacer",
+      "kpiTitle": "Santé du nœud",
+      "activityTitle": "Activité",
+      "syncChart": "Progression de la sync",
+      "syncCaption": "En-têtes · connecté · corps stockés",
+      "peersChart": "Pairs",
+      "peersCaption": "Sortants et entrants (en direct)",
+      "mempoolChart": "Mempool",
+      "mempoolCaption": "Nombre et taille des transactions",
+      "mempoolDist": "Tailles des tx mempool",
+      "mempoolDistCaption": "Taille virtuelle des transactions en attente",
+      "syncLearn": "Que suis-je en train de synchroniser ?",
+      "syncDoing": "Que fait le nœud ?",
+      "blockchainSync": "Sync blockchain",
+      "chainSyncRow": "Sync chaîne (connecté vs en-têtes)",
+      "debugJson": "JSON de débogage",
+      "p2pTitle": "Connectivité P2P",
+      "p2pHint": "Comment ce nœud communique avec le réseau Dogecoin. Modifiez le mode et les limites dans Paramètres → P2P (redémarrage requis).",
+      "openP2pSettings": "Ouvrir les paramètres P2P",
+      "openFeatures": "Ouvrir l'onglet Fonctionnalités",
+      "ibdPhaseTitle": "Téléchargement initial des blocs",
+      "ibdAuxPowOk": "Parité AuxPoW Core",
+      "ibdPhaseConnect": "Phase 2/2 : validation des blocs stockés dans chainActive (UTXO). Téléchargement en parallèle.",
+      "ibdPhaseDownload": "Phase 1/2 : téléchargement des corps de blocs. En-têtes déjà à {tip}.",
+      "ibdPhaseDefault": "Téléchargement initial - laissez cette fenêtre ouverte ; la progression est sauvegardée.",
+      "ibdConnected": "Connecté",
+      "ibdStored": "Corps stockés",
+      "ibdHeaders": "En-têtes",
+      "ibdDownloadRate": "Débit téléchargement",
+      "ibdConnectRate": "Débit connexion",
+      "ibdConnectLag": "Retard connexion",
+      "ibdCheckpoint": "Checkpoint sync",
+      "ibdUtxoReplay": "Replay corps UTXO",
+      "ibdPhaseUtxoReplay": "Rejeu des corps stockés pour aligner l'UTXO sur les blocs bruts contigus - la progression checkpointée survit au redémarrage.",
+      "ibdResumeWarn": "Reprise après redémarrage",
+      "syncCheckpoint": "Checkpoint",
+      "syncAssistPool": "Pool assist",
+      "syncBodyLag": "Retard corps",
+      "ovResumeTitle": "Reprise redémarrage (live)",
+      "operatorCertTitle": "Certification opérateur (live)",
+      "operatorCertGates": "portes web live",
+      "operatorCertSolo": "solo",
+      "operatorCertMempoolCorpus": "Corpus mempool (hors ligne)",
+      "operatorCertMempoolParity": "Parité mempool (live)",
+      "runCoreProbes": "Lancer toutes les sondes",
+      "coreStatusCached": "Cache sonde {sec}s",
+      "coreStatusCoreRpc": "RPC Core",
+      "coreComparePending": "Sonde live en attente - actualisation pendant l'IBD ou Fonctionnalités → Toutes les sondes",
+      "jsonRpc": "JSON-RPC",
+      "jsonRpcHint": "Pour scripts et portefeuilles - activez l'adresse d'écoute dans Paramètres.",
+      "dataDir": "Dossier de données",
+      "dataDirHint": "Les données de chaîne du réseau actif se trouvent dans ce dossier.",
+      "hashrate": "Hashrate (estimation)",
+      "hashrateHint": "Dérivé de la difficulté de la pointe - pas de données de pool en direct.",
+      "blockInterval": "Intervalle de blocs",
+      "blockIntervalHint": "Secondes moyennes entre les en-têtes récents.",
+      "bestHash": "Hash du meilleur bloc",
+      "openMempool": "Ouvrir l'onglet Mempool",
+      "miningPayouts": "Paiements miniers (24 h, analyse locale)",
+      "viewCertMatrix": "Voir la matrice de cert.",
+      "ibdConnectBoost": "Boost de connexion",
+      "ovConnectLag": "Décalage de connexion",
+      "ovConnectBoost": "Boost de connexion"
+    },
+    "send": {
+      "title": "Envoyer DOGE",
+      "subtitle": "Payer depuis le portefeuille intégré lorsque votre nœud complet et le cache UTXO sont prêts.",
+      "spvHint": "Mode SPV - la diffusion n'est pas disponible sur cette exécution.",
+      "newPayment": "Nouveau paiement",
+      "payTo": "Adresse de paiement",
+      "amount": "Montant (DOGE)",
+      "sendBtn": "Envoyer DOGE",
+      "payToPlaceholder": "Portefeuille en sync…",
+      "amountPlaceholder": "0,00",
+      "pqBannerTitle": "Portefeuille prêt pour le quantique.",
+      "pqBannerDetail": "Des engagements OP_RETURN post-quantiques sont joints automatiquement à chaque envoi (porteur FLC1).",
+      "advancedPq": "Override PQ avancé",
+      "advancedPqHint": "Override manuel optionnel de l'engagement. Par défaut, DogeGo génère des preuves OP_RETURN prêtes pour le quantique à chaque envoi.",
+      "tag": "Tag",
+      "commitment": "Engagement (hex)",
+      "commitPlaceholder": "64 caractères hex",
+      "helpTab": "Aide : onglet Envoyer",
+      "tabPayment": "Paiement",
+      "tabAdvanced": "Avancé",
+      "pqDisabledHint": "Les engagements post-quantiques sont désactivés. Activez-les dans Paramètres → Portefeuille pour joindre des preuves FLC1 à chaque envoi.",
+      "available": "Solde disponible",
+      "max": "Max",
+      "networkFee": "Frais réseau (est.)",
+      "feeHint": "Utilise le taux de frais du portefeuille. Personnalisez dans Avancé → Frais.",
+      "feeTitle": "Frais de transaction",
+      "feeRate": "Taux de frais (DOGE/kB)",
+      "feeRateHint": "Défaut du portefeuille (settxfee). Appliqué à cet envoi uniquement.",
+      "subtractFee": "Soustraire les frais du montant (le destinataire reçoit moins)",
+      "coinControl": "Choisir les inputs (optionnel)",
+      "coinControlHint": "Laissez vide pour sélectionner automatiquement les UTXO. Choisissez des pièces spécifiques pour un contrôle explicite."
+    },
+    "receive": {
+      "title": "Recevoir DOGE",
+      "subtitle": "Partagez votre adresse pour accepter des paiements sur ce réseau.",
+      "yourAddress": "Votre adresse",
+      "copy": "Copier",
+      "copied": "Copié dans le presse-papiers",
+      "backupTitle": "Sauvegarder votre portefeuille",
+      "backupBody": "Téléchargez une copie de wallet.json et stockez-la hors ligne dans un endroit sûr. Sans sauvegarde, vous ne pouvez pas récupérer vos fonds si cet appareil tombe en panne.",
+      "backupRotateHint": "Si vous n'avez pas fait tourner les clés depuis longtemps, envisagez de déplacer les fonds vers un nouveau portefeuille HD.",
+      "downloadBackup": "Télécharger la sauvegarde",
+      "rotateKeys": "Faire tourner les clés",
+      "dismiss30": "Ignorer 30 jours",
+      "importWif": "Importer WIF",
+      "importWifHint": "Importer une clé privée mainnet ou testnet (WIF) dans ce portefeuille.",
+      "privateKey": "Clé privée (WIF)",
+      "privateKeyPlaceholder": "Commence par Q ou 6…",
+      "labelOptional": "Étiquette (optionnel)",
+      "import": "Importer",
+      "mnemonicTitle": "Mnémonique / BIP38",
+      "mnemonicHint": "Restaurer un portefeuille HD depuis une phrase BIP39 ou importer un portefeuille papier BIP38.",
+      "seedPhrase": "Phrase seed",
+      "seedPlaceholder": "12 ou 24 mots…",
+      "passphraseOptional": "Passphrase (optionnel)",
+      "importMnemonic": "Importer la phrase",
+      "comingSoon": "Bientôt disponible",
+      "bip38Key": "Clé BIP38",
+      "bip38Passphrase": "Passphrase BIP38",
+      "importBip38": "Déchiffrer et importer",
+      "walletDatTitle": "Core wallet.dat",
+      "walletDatHint": "Migrer les clés depuis wallet.dat Dogecoin Core sur cette machine. Les fichiers non chiffrés s'importent nativement ; les fichiers chiffrés se déchiffrent nativement avec la passphrase du portefeuille, ou utilisez le repli RPC Core (Paramètres → Avancé).",
+      "walletDatPath": "Chemin absolu vers wallet.dat",
+      "walletDatPassphrase": "Passphrase du portefeuille (wallet.dat chiffré)",
+      "walletDatPassphrasePlaceholder": "Laisser vide si non chiffré",
+      "walletDatViaCore": "Utiliser Core dumpwallet (via_core_rpc)",
+      "walletDatProbe": "Sonder",
+      "walletDatImport": "Importer wallet.dat",
+      "walletDatProbing": "Analyse de wallet.dat…",
+      "walletDatImporting": "Importation de wallet.dat…",
+      "walletDatProbeNeedsPassphrase": "Portefeuille chiffré - saisissez la passphrase ci-dessous, puis Importer (déchiffrement CCrypter natif).",
+      "addressBook": "Carnet d'adresses",
+      "addressBookHint": "Toutes les adresses HD, importées, watch-only et cosignataires suivies dans wallet.json sur ce nœud.",
+      "abTypeKeypool": "Keypool",
+      "signMessage": "Signer un message",
+      "signHint": "Signature compacte compatible Core pour votre adresse de portefeuille.",
+      "message": "Message",
+      "messagePlaceholder": "Message à signer…",
+      "sign": "Signer",
+      "signature": "Signature (base64)",
+      "sigCopied": "Signature copiée dans le presse-papiers",
+      "verifyMessage": "Vérifier un message",
+      "address": "Adresse",
+      "addressPlaceholder": "Adresse D…",
+      "verify": "Vérifier",
+      "tabAddress": "Adresse",
+      "tabImport": "Importer des clés",
+      "tabMessages": "Signer et vérifier",
+      "tabBook": "Carnet d'adresses",
+      "recvKeypoolSize": "keypool {n}",
+      "recvCorePoolIndices": "Indices Core pool {n}",
+      "keypoolRefill": "Recharger le keypool",
+      "keypoolRefilling": "Rechargement du keypool HD…",
+      "keypoolRefillOk": "Keypool rechargé",
+      "backupEncryptWarning": "wallet.json en clair contient votre seed HD et vos clés privées. Le PIN tableau de bord verrouille uniquement l'UI web. Exécutez Console → encryptwallet pour chiffrer le fichier portefeuille sur disque.",
+      "walletDatKeypoolHint": "Lorsque la sonde affiche des lignes pool uniquement (pool_keys_unmatched), l'import réussit quand même - DogeGo complète de nouvelles clés HD de réception. Les pubkeys de réception correspondantes sont rejouées dans wallet.json avec les tags d'index Core pool.",
+      "abFilterPlaceholder": "Filtrer adresse, chemin ou libellé…",
+      "abTypeLabel": "Type d'adresse",
+      "abTypeAll": "Tous les types",
+      "abTypeReceive": "Réception",
+      "abTypeChange": "Monnaie",
+      "abTypeWatch": "Observation seule",
+      "abTypeCosigner": "Cosignataire",
+      "abGenerate": "Générer une adresse",
+      "abCopy": "Copier",
+      "abCopied": "Copié",
+      "abEditLabel": "Modifier le libellé",
+      "abSaveLabel": "Enregistrer",
+      "abCancelLabel": "Annuler",
+      "abNoMatch": "Aucune adresse ne correspond à votre filtre.",
+      "abGenerateFailed": "Impossible de générer l'adresse.",
+      "abNewTitle": "Nouvelle adresse de réception",
+      "abNewHint": "Copiez cette adresse pour la partager. Ajoutez un libellé optionnel pour la retrouver plus tard dans votre carnet.",
+      "abNewGenerating": "Génération de l'adresse…",
+      "abNewDone": "Terminé",
+      "abLabelPlaceholder": "ex. Boutique, pourboires, exchange…",
+      "rotateTitle": "Rotation automatique des clés",
+      "rotateHint": "La rotation automatique des clés génère un nouveau portefeuille HD, transfère tout votre solde, vérifie que l'ancien portefeuille est vide, puis bascule DogeGo vers les nouvelles clés. Téléchargez d'abord une sauvegarde.",
+      "rotateStep1": "Télécharger la sauvegarde du portefeuille (obligatoire)",
+      "rotateStep2": "Préparer → transférer toutes les pièces → attendre la confirmation",
+      "rotateStep3": "Vérifier solde vide → finaliser → supprimer éventuellement l'archive ancienne",
+      "rotatePrepare": "1. Préparer le nouveau portefeuille",
+      "rotateSweep": "2. Transférer le solde",
+      "rotateVerify": "3. Vérifier",
+      "rotateFinalize": "4. Finaliser",
+      "rotateCancel": "Annuler",
+      "rotateDeleteArchive": "Supprimer l'archive de l'ancien portefeuille",
+      "sectionsAria": "Sections Réception",
+      "qrAria": "Code QR de l'adresse",
+      "abColAddress": "Adresse",
+      "abColPath": "Chemin / type",
+      "abColLabel": "Libellé",
+      "abEmpty": "Aucune adresse suivie pour l'instant.",
+      "walletDisabled": "Portefeuille désactivé dans la config (nowallet). Enregistrez la config et redémarrez le nœud pour réactiver.",
+      "verifyRunning": "Vérification de la signature…",
+      "verifyValid": "Signature valide.",
+      "verifyInvalid": "Signature invalide.",
+      "importWifOk": "Importé. Un rescan peut prendre un moment.",
+      "importAddrOk": "Importé. Adresse : {address} - rescan possible.",
+      "importAddrOkShort": "Importé. Adresse : {address}"
+    },
+    "history": {
+      "title": "Historique",
+      "subtitle": "Transactions du portefeuille indexées sur ce nœud.",
+      "filterPlaceholder": "Rechercher adresse, libellé ou txid…",
+      "transactionsLabel": "transactions",
+      "exportCsv": "Exporter CSV",
+      "exportCsvTitle": "Exporter l'historique du portefeuille en CSV",
+      "typeFiltersAria": "Filtrer par type de transaction",
+      "typeAll": "Toutes",
+      "typeReceived": "Reçues",
+      "typeSent": "Envoyées",
+      "typeMining": "Minage",
+      "typeQuantum": "Quantique",
+      "loadingMsg": "Chargement de l'historique du portefeuille…",
+      "loadAllRemaining": "Charger tout le reste",
+      "clearSearch": "Effacer la recherche",
+      "pausedIbd": "Historique portefeuille en pause pendant le téléchargement initial des blocs.",
+      "pausedConnectLag": "Historique en pause pendant la connexion des blocs ({lag} de retard).",
+      "pausedScanBuilding": "Le rescan construit l'index d'historique - rouvrez Historique après progression ou consultez Paramètres → Portefeuille."
+    },
+    "mempool": {
+      "title": "Mempool",
+      "subtitle": "Transactions non confirmées conservées sur ce nœud uniquement, pas sur tout le réseau.",
+      "summary": "Résumé",
+      "transactions": "Transactions",
+      "policy": "Politique",
+      "broadcast": "Diffuser",
+      "parityTitle": "Sonde de parité politique Core",
+      "parityHint": "Jalon D : lignes testmempoolaccept sans état sur ce nœud. Corpus complet : go test ./consensus -run TestCoreMempool.",
+      "parityRun": "Lancer la sonde de parité",
+      "parityOk": "Toutes les lignes ont réussi",
+      "parityOkCore": "DogeGo + Core alignés",
+      "parityCoreDrift": "DogeGo OK - Core diffère",
+      "parityFail": "Certaines lignes ont échoué",
+      "paritySkipped": "Ignoré",
+      "statefulTitle": "Mempool stateful (Jalon D)",
+      "statefulHint": "Corpus stateful offline en processus ; scénarios live 24/24 sur reboot testnet via scripts.",
+      "statefulOfflineOk": "Corpus offline OK",
+      "statefulOfflineFail": "Corpus offline échoué",
+      "statefulLivePending": "Gate live en attente",
+      "statefulLiveReady": "Prêt pour sonde live 24/24",
+      "statefulNotReboot": "Offline seulement sur ce réseau"
+    },
+    "guide": {
+      "title": "Guide",
+      "subtitle": "Guide opérateur pour cette version de DogeGo."
+    },
+    "docs": {
+      "title": "Docs",
+      "subtitle": "Documentation opérateur intégrée livrée avec ce binaire."
+    },
+    "features": {
+      "title": "Fonctionnalités et parité Core",
+      "subtitle": "Ce que cette version de DogeGo peut faire aujourd'hui vs Dogecoin Core.",
+      "parityTitle": "Parité Core en un coup d'œil",
+      "parityStandalone": "Certification autonome",
+      "parityStandalonePartial": "En cours",
+      "parityStandaloneReady": "Porte de sortie atteinte",
+      "parityFeaturesLive": "Capacités live",
+      "parityFeaturesPartial": "Capacités partielles",
+      "parityGapsOpen": "Écarts ouverts",
+      "parityGapsPartial": "Écarts partiels",
+      "parityGapsDeclined": "Refusés volontairement",
+      "parityRoadmap": "Feuille de route faite",
+      "parityRpcLive": "RPC live",
+      "parityRpcPartial": "RPC partiel",
+      "parityRpcStub": "RPC stub",
+      "parityProtocolLock": "Verrou protocole (ce nœud)",
+      "parityProtocolLockOk": "OK",
+      "parityProtocolLockFail": "Écart",
+      "parityOfflineCorpus": "Corpus mempool (hors ligne)",
+      "guidanceTitle": "Quand utiliser Dogecoin Core vs DogeGo",
+      "guidanceCore": "Préférer Dogecoin Core quand",
+      "guidanceDogeGo": "DogeGo convient quand",
+      "guidanceIntentional": "Différences intentionnelles (pas des bugs)",
+      "legendTitle": "Légende des statuts",
+      "legendLive": "Fonctionne pour les workflows opérateur typiques.",
+      "legendPartial": "MVP existant ; cas limites ou écarts Core restants.",
+      "legendPlanned": "Backlog - pas commencé ou gros effort.",
+      "legendDeclined": "Hors périmètre par conception.",
+      "liveTitle": "Ce nœud maintenant",
+      "roadmapTitle": "Points forts de la feuille de route",
+      "gapsTitle": "Self-certification (native storage)",
+      "gapsHint": "Core-compatible consensus, RPC, wallet migration, and mining ship in this build. DogeGo uses its own Go storage layout (headers/, rawblocks/, utxo.cache, Pebble wallet.db) instead of Core LevelDB. Optional long-haul soak (dogego cert live-soak, weekly-live, workflow 10) is self-certification of that layout's resilience, not a missing Core feature. Probes above remain available when you want to run them.",
+      "rpcTitle": "Commandes JSON-RPC",
+      "rpcHint": "Enregistrées dans cette version - classe selon le texte d'aide (live / partial / stub).",
+      "rpcFilter": "Filtrer les méthodes…",
+      "rpcColMethod": "Méthode",
+      "rpcColClass": "Classe",
+      "rpcColHelp": "Aide",
+      "openTab": "Ouvrir",
+      "corePrefix": "Core :",
+      "docsLink": "Docs associés",
+      "certTitle": "Jalons de certification (A/B/D/E)",
+      "certCorpusMempool": "Vecteurs mempool",
+      "certCorpusScript": "Tests script legacy",
+      "certCorpusHeaders": "Harness en-têtes",
+      "certCorpusBlocks": "Connexion blocs",
+      "certCorpusProbe": "Lignes sonde parité live",
+      "certHarnessHint": "Harness hors ligne : go test ./consensus/... -run TestCore et scripts PowerShell sous scripts/.",
+      "certLiveTitle": "Certification opérateur live",
+      "certLivePass": "Sonde web OK",
+      "certLiveFail": "Sonde web échouée",
+      "certLiveAllOk": "Toutes les sondes web OK",
+      "certLiveSomeFail": "Certaines sondes web ont échoué",
+      "certScriptOnly": "Script / hors ligne seulement",
+      "certOffline": "Tests hors ligne",
+      "certScripts": "Scripts opérateur",
+      "coreCompareTitle": "Optionnel : comparer à Dogecoin Core",
+      "coreCompareHint": "Vérification de référence optionnelle contre le protocole original de Dogecoin Core. DogeGo est entièrement autonome sans Core. Définir core_rpc_addr seulement pour la parité côte à côte.",
+      "coreCompareRefresh": "Actualiser la comparaison optionnelle",
+      "coreCompareUnavailable": "Core inaccessible (optionnel)",
+      "coreCompareOptional": "Non configuré - nœud solo OK",
+      "coreCompareSoloLockOk": "Verrou protocole OK (solo)",
+      "coreCompareProtocolLockFail": "Écart verrou protocole",
+      "coreCompareOk": "Champs chaîne dans la tolérance",
+      "coreCompareVerifyWarn": "verifychain incohérent - voir l'onglet Fonctionnalités",
+      "coreCompareMismatch": "Incohérence chaîne - voir champs ci-dessous",
+      "coreMaintTitle": "Sonde maintenance Core",
+      "coreMaintHint": "Jalon E : verifychain, getindexinfo, getchaintxstats, getblockfilter - comme scripts/core_maintenance_workflow.ps1.",
+      "coreMaintRefresh": "Lancer la sonde maintenance",
+      "coreMaintOk": "Contrôles maintenance OK",
+      "coreMaintWarn": "Avertissements maintenance",
+      "coreMaintFail": "Problèmes maintenance",
+      "coreMaintSyncing": "Synchronisation (contrôles OK)",
+      "coreResumeTitle": "Sonde reprise après redémarrage",
+      "coreResumeHint": "Jalon E : checkpoint rawblocks_sync vs corps contigus et pool assist IBD - comme scripts/core_restart_resume_check.ps1.",
+      "coreResumeRefresh": "Lancer la sonde reprise",
+      "coreResumeOk": "Contrôles reprise OK",
+      "coreResumeWarn": "Avertissements reprise",
+      "coreResumeFail": "Problèmes reprise",
+      "coreRunnerTitle": "Préparation du runner CI (dogego-live)",
+      "coreRunnerHint": "Checklist de provisionnement + préflight RPC reboottestnet pour les runners dogego-live - équivaut à dogego cert weekly ; bundle complet : dogego cert weekly-live ; soak Milestone B : dogego cert live-soak.",
+      "coreRunnerRefresh": "Lancer les sondes runner",
+      "coreRunnerOk": "Runner prêt",
+      "coreRunnerWarn": "Runner partiel",
+      "coreRunnerFail": "Problèmes runner",
+      "coreProbesTitle": "Sondes opérateur en direct",
+      "coreProbesHint": "Vérifications loopback en un clic sur ce nœud DogeGo. La comparaison côte à côte avec Dogecoin Core est optionnelle - laisser core_rpc_addr vide pour un nœud autonome.",
+      "coreProbesRefresh": "Lancer toutes les sondes",
+      "coreProbeCompare": "Comparaison",
+      "coreProbeMaint": "Maintenance",
+      "coreProbeResume": "Reprise",
+      "coreProbeMempool": "Mempool",
+      "coreProbeWallet": "Portefeuille",
+      "coreWalletOk": "Portefeuille OK",
+      "coreWalletWarn": "Avertissements portefeuille",
+      "coreWalletFail": "Problèmes portefeuille",
+      "coreWalletSkipped": "Portefeuille désactivé",
+      "coreWalletTitle": "Sonde portefeuille Core",
+      "coreWalletHint": "Jalon E : getwalletinfo, getbalance, getnewaddress, validateaddress - comme scripts/core_wallet_workflow.ps1.",
+      "coreWalletRefresh": "Lancer sonde portefeuille",
+      "coreWalletHardwarePsbt": "signature PSBT matérielle",
+      "coreProbeApisTitle": "Catalogue des sondes API",
+      "coreProbeApisHint": "Points de terminaison JSON loopback pour scripts et bundle Features.",
+      "coreProbeBundled": "inclus dans /api/core-probes",
+      "coreProbeReindex": "Réindex",
+      "coreProbeEndToEnd": "Bout en bout",
+      "coreEndToEndOk": "ok",
+      "coreEndToEndFail": "échec",
+      "coreE2eTitle": "Sonde workflow bout en bout",
+      "coreE2eHint": "Jalon E : santé nœud, reprise redémarrage, maintenance, réindex, BIP152 HB, portefeuille - comme scripts/core_end_to_end_workflow.ps1.",
+      "coreE2eRefresh": "Lancer sonde bout en bout",
+      "coreE2eOk": "Workflow OK",
+      "coreE2eFail": "Workflow échoué",
+      "coreE2eSkipped": "ignoré",
+      "coreReindexTitle": "Sonde réindex / index",
+      "coreReindexHint": "Jalon E : méthodes RPC requises + sync getindexinfo - comme scripts/core_reindex_prune_workflow.ps1 (vérif seule).",
+      "coreReindexRefresh": "Lancer sonde réindex",
+      "coreReindexOk": "Réindex OK",
+      "coreReindexWarn": "Avertissements réindex",
+      "coreReindexFail": "Problèmes réindex",
+      "coreProbeBip152": "BIP152",
+      "coreBip152Title": "Sonde blocs compacts BIP152",
+      "coreBip152Hint": "Jalon E : getpeerinfo bip152_hb_to/from et négociation HB une fois synchronisé - comme scripts/core_bip152_probe.ps1.",
+      "coreBip152Refresh": "Lancer sonde BIP152",
+      "coreBip152Ok": "Contrôles BIP152 OK",
+      "coreBip152Warn": "Avertissements BIP152",
+      "coreBip152Fail": "Problèmes BIP152",
+      "coreBip152Skipped": "RPC indisponible",
+      "live": {
+        "mode": "Mode",
+        "network": "Réseau",
+        "p2p": "P2P",
+        "p2pHealth": "Santé P2P",
+        "peers": "Pairs",
+        "listen": "Écoute",
+        "wallet": "Portefeuille",
+        "txIndex": "Index tx",
+        "rawBlocks": "Blocs bruts",
+        "analytics": "Sidecar analytique",
+        "relayMin": "Min relais",
+        "pkgAnc": "Anc. paquet",
+        "coreRpc": "RPC Core",
+        "coreRpcDefault": "défaut",
+        "operatorCert": "Cert opérateur",
+        "mempoolCorpus": "Corpus mempool",
+        "utxoReplay": "Replay UTXO"
+      },
+      "certLiveHint": "Treize vérifications loopback sur ce nœud DogeGo. La comparaison avec Dogecoin Core est optionnelle (Paramètres → Avancé → core_rpc_addr). Solo N/13 compte les portes Core optionnelles comme réussies lorsque Core n'est pas configuré.",
+      "certLiveSoloOk": "Portes solo OK (cert. Core optionnelle)",
+      "certLiveSoloPass": "Optionnel pour nœud solo",
+      "certLivePending": "Exécutez les sondes pour l'état en direct",
+      "certCached": "en cache il y a {{sec}}s",
+      "certScriptTitle": "Portes script / soak (PowerShell)",
+      "certScriptHint": "Exécutez depuis la racine du repo avec les flags DOGEGO_* env. Les portes disruptives sont testnet/dev uniquement.",
+      "coreAutostartTitle": "Sonde de démarrage automatique OS",
+      "coreAutostartHint": "Vérifiez que le démarrage à la connexion OS correspond à autostart=login dans dogecoinconf.json - reflète dogego cert autostart.",
+      "coreAutostartRefresh": "Exécuter la sonde autostart",
+      "coreAutostartOk": "Autostart OK",
+      "coreAutostartWarn": "Avertissements autostart",
+      "coreAutostartFail": "Autostart manquant",
+      "coreAutostartOff": "Autostart désactivé",
+      "coreAutostartOffHint": "autostart=disable - activez le démarrage à la connexion dans Paramètres → Interface ou l'assistant de configuration.",
+      "coreProbeJumpHint": "Aller à la carte sonde",
+      "coreProbeConnect": "Décalage de connexion",
+      "coreProbeConnectOk": "Décalage de connexion dans le seuil",
+      "coreProbeConnectFail": "Décalage de connexion au-dessus du seuil",
+      "coreProbeConnectIbd": "Décalage élevé attendu pendant l'IBD",
+      "certViewProbe": "Voir la sonde",
+      "coreFieldEvidenceTitle": "Preuve terrain (Milestone A)",
+      "coreFieldEvidenceHint": "Corpus offline de blocs/en-têtes mainnet engagés plus préparation live dogedata/mainnet pour TestCoreMainnetFieldHeaderPoW et field_disk_connect_cert.ps1.",
+      "coreFieldEvidenceRefresh": "Exécuter la sonde preuve terrain",
+      "coreFieldEvidenceOk": "Terrain live prêt",
+      "coreFieldEvidenceOffline": "Corpus offline uniquement",
+      "coreFieldEvidenceWarn": "Live partiel",
+      "coreFieldEvidenceMainnetOnly": "sondes live mainnet uniquement"
+    },
+    "blockstep": {
+      "title": "BlockStep",
+      "subtitle": "Parcourir les blocs un par un."
+    },
+    "explorer": {
+      "title": "Explorateur",
+      "subtitle": "Rechercher blocs, transactions et adresses sur ce nœud."
+    },
+    "analytics": {
+      "title": "Analytique",
+      "subtitle": "Analytique locale de la chaîne depuis le sidecar intégré.",
+      "peersTitle": "Pairs connectés",
+      "peersHint": "Sessions P2P en direct (getpeerinfo). Affiche les liens entrants et sortants, le rôle de sync et si le pair annonce le relais QUIC DogeGo (NODE_DOGEGO_RELAY_CGNAT).",
+      "peersEmpty": "Aucun pair connecté pour l'instant. Vérifiez Paramètres → Mode P2P et règles pare-feu.",
+      "peersLoadFailed": "Impossible de charger la liste des pairs.",
+      "peersDgrUsing": "Ce nœud tunnelise le P2P via le relais DGR",
+      "peersDgrActive": "Relais actif",
+      "peersDgrMode": "Mode P2P",
+      "colDirection": "Direction",
+      "colAddress": "Adresse",
+      "colRole": "Rôle",
+      "colType": "Type",
+      "colHeight": "Hauteur initiale",
+      "colSynced": "Blocs synchronisés",
+      "colPing": "Ping",
+      "colTraffic": "Trafic",
+      "colUserAgent": "User agent",
+      "colFlags": "Flags",
+      "reorgTitle": "Chain reorgs",
+      "reorgHint": "Recorded when this node elects a heavier fork and truncates the header tip. Includes displaced miners, AuxPoW, and UTC hour for correlation."
+    },
+    "extensions": {
+      "title": "Extensions",
+      "subtitle": "Install optional packages, enable or disable. Extensions never access wallet keys.",
+      "backCatalog": "Back to catalog",
+      "devManual": "Developer manual",
+      "devManualHint": "How to build and package extensions for DogeGo.",
+      "showMore": "Show more",
+      "showLess": "Show less"
+    },
+    "console": {
+      "title": "Console",
+      "subtitle": "JSON-RPC vers ce nœud (loopback uniquement) et journal d'activité en mémoire.",
+      "rpc": "RPC",
+      "method": "Méthode",
+      "params": "Paramètres (tableau JSON)",
+      "activityLog": "Journal d'activité",
+      "autoScroll": "Défilement automatique",
+      "coreProbesTitle": "Sondes opérateur (ce nœud)",
+      "coreProbesHint": "Sondes GET loopback sur ce nœud DogeGo. Comparaison optionnelle Dogecoin Core uniquement lorsque core_rpc_addr est défini dans Paramètres → Avancé.",
+      "tutorialTitle": "Tutoriel RPC",
+      "tutorialHint": "Utilisez le formulaire RPC pour les appels in-process (sans auth HTTP). Le cookbook liste chaque méthode avec des exemples curl et CLI.",
+      "tutorialOpenDoc": "Ouvrir le tutoriel",
+      "tutorialReference": "Référence HTML",
+      "cookbookTitle": "Cookbook des méthodes",
+      "cookbookHint": "Toutes les méthodes JSON-RPC prises en charge par cette build. Cliquez Utiliser dans Console pour remplir le formulaire ; copiez curl ou CLI pour les scripts.",
+      "cookbookSearch": "Rechercher des méthodes"
+    }
+  },
+  "syncDock": {
+    "connected": "Connecté",
+    "storedBodies": "Corps stockés",
+    "behindHeaders": "Retard en-têtes",
+    "bodyLag": "Retard corps",
+    "checkpoint": "Checkpoint",
+    "assistPool": "Pool assist",
+    "downloadRate": "Débit téléchargement",
+    "eta": "ETA",
+    "peersOutIn": "Pairs sort./entr.",
+    "mempool": "Mempool",
+    "operatorCert": "Cert opérateur",
+    "operatorCertOk": "ok",
+    "operatorCertFail": "vérif",
+    "mempoolCorpusShort": "corpus",
+    "utxoReplay": "Replay UTXO",
+    "warn": {
+      "checkpoint_ahead_of_contiguous": "checkpoint en avance sur les corps contigus",
+      "assist_peer_pool_empty_during_ibd": "pool assist vide pendant l'IBD",
+      "connect_lag_above_threshold": "retard de connexion au-dessus du seuil"
+    },
+    "connectBoost": "Boost de connexion",
+    "txProcessed": "Tx traitées",
+    "recoverHeaders": "Récupérer les en-têtes",
+    "collapse": "Réduire",
+    "loadingLocal": "Loading local data",
+    "updating": "Updating…",
+    "staleSub": "Showing last known data · refreshing"
+  },
+  "overview": {
+    "headerTip": {
+      "label": "Pointe d'en-tête",
+      "help": "Meilleure hauteur de bloc sur la chaîne d'en-têtes validée par votre nœud. Peut être en avance sur les corps de blocs téléchargés pendant la sync.",
+      "foot": "Meilleure hauteur de chaîne"
+    },
+    "sync": {
+      "label": "Sync",
+      "help": "Progression de la sync pendant l'IBD. La hauteur connectée est chainActive ; les corps stockés peuvent être en avance pendant la validation des blocs.",
+      "foot": "Connecté vs en-têtes"
+    },
+    "mempool": {
+      "label": "Mempool",
+      "help": "Transactions en attente dans le pool mémoire de votre nœud avant inclusion dans un bloc.",
+      "foot": "Nombre de tx en mémoire"
+    },
+    "peers": {
+      "label": "Pairs",
+      "help": "Connexions sortantes ouvertes par votre nœud, et connexions entrantes d'autres nœuds (en écoute).",
+      "foot": "Sort. / entr."
+    },
+    "network": {
+      "label": "Réseau",
+      "help": "mainnet est le Dogecoin de production. testnet est la chaîne de test reboot de ce dépôt."
+    },
+    "chainDisk": {
+      "label": "Disque chaîne",
+      "help": "Taille totale sous le datadir de votre réseau (headers, rawblocks, indexes)."
+    },
+    "blockTip": {
+      "label": "Pointe de chaîne",
+      "help": "Meilleure hauteur de bloc connectée sur un nœud complet. En mode SPV, affiche la pointe d'en-têtes.",
+      "foot": "Meilleure hauteur de bloc connectée"
+    },
+    "txProcessed": {
+      "label": "Tx traitées",
+      "help": "Transactions cumulées indexées sur la chaîne connectée (depuis l'index tx si activé).",
+      "foot": "Indexées sur la chaîne connectée"
+    }
+  },
+  "modals": {
+    "transaction": "Transaction",
+    "unlockWallet": "Déverrouiller le portefeuille",
+    "unlockLead": "Votre fichier portefeuille est chiffré. Saisissez la passphrase pour charger les clés de dépense (Core walletpassphrase).",
+    "walletPassphrase": "Passphrase du portefeuille",
+    "unlockTimeout": "Déverrouiller pour (secondes, 0 = jusqu'au verrouillage)",
+    "unlockHint": "Distinct du PIN tableau de bord. CLI : dogego-cli walletpassphrase \"…\" 600",
+    "unlockBtn": "Déverrouiller",
+    "confirmSend": "Confirmer l'envoi",
+    "close": "Fermer"
+  }
+}

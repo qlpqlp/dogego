@@ -1,0 +1,41 @@
+package main
+import (
+  "bufio"
+  "encoding/json"
+  "fmt"
+  "os"
+  "os/exec"
+  "strings"
+  "time"
+)
+func main() {
+  exe := os.Args[1]
+  data := os.Args[2]
+  cmd := exec.Command(exe)
+  stdin, _ := cmd.StdinPipe()
+  stdout, _ := cmd.StdoutPipe()
+  cmd.Stderr = os.Stderr
+  cmd.Start()
+  go func() {
+    sc := bufio.NewScanner(stdout)
+    for sc.Scan() {
+      line := sc.Text()
+      var msg map[string]interface{}
+      if json.Unmarshal([]byte(line), &msg) == nil {
+        if hc, ok := msg["host_call"].(float64); ok && hc > 0 {
+          resp, _ := json.Marshal(map[string]interface{}{"host_resp": uint64(hc), "result": nil})
+          stdin.Write(append(resp, '\n'))
+          continue
+        }
+        if id, ok := msg["id"].(float64); ok && id > 0 {
+          fmt.Println("ENABLE_DONE", time.Now().Format(time.RFC3339Nano))
+          os.Exit(0)
+        }
+      }
+    }
+  }()
+  req := fmt.Sprintf(`{"id":1,"method":"dogego_on_enable","params":[{"protocol":1,"network":"testnet","data_dir":%q}]}`, data)
+  stdin.Write([]byte(req + "\n"))
+  time.Sleep(60 * time.Second)
+  fmt.Println("TIMEOUT")
+}

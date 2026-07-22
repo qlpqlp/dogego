@@ -1,0 +1,35 @@
+{
+  "manifest_version": 1,
+  "id": "example.go",
+  "name": "Hello World Extension (Go)",
+  "version": "0.2.0",
+  "author": "DogeGo",
+  "description": "Hello-world subprocess demo: ping forwarded to the binary; chain_tip handled by the host via chain_read (no wallet access).",
+  "homepage": "https://github.com/qlpqlp/dogego",
+  "repository": "https://github.com/qlpqlp/dogego/tree/main/DogeGo/extensions/catalog/example-go",
+  "dogego_min_version": "0.1.0",
+  "permissions": ["chain_read", "datadir_write", "rpc_register", "ui_panel"],
+  "networks": ["mainnet", "testnet"],
+  "icon": "icon.png",
+  "ui": { "status_method": "info" },
+  "entry": {
+    "type": "subprocess",
+    "module": "example.go",
+    "binary": "hello-ext"
+  },
+  "capabilities": ["rpc", "ui_panel"],
+  "rpc": [
+    {
+      "name": "info",
+      "help": "Extension status + Settings → Extensions panel title/summary (extension-owned strings)."
+    },
+    {
+      "name": "ping",
+      "help": "Health check; returns pong. Try: dogego_ext_example_go_ping"
+    },
+    {
+      "name": "chain_tip",
+      "help": "Dogecoin tip height via host chain_read (no wallet access)."
+    }
+  ]
+}

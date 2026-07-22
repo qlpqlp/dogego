@@ -1,0 +1,672 @@
+[
+  {
+    "name": "p2pkh_roundtrip",
+    "template": "p2pkh_roundtrip",
+    "want_accept": true
+  },
+  {
+    "name": "p2pk_roundtrip",
+    "template": "p2pk_roundtrip",
+    "want_accept": true
+  },
+  {
+    "name": "p2sh_nested_p2pkh",
+    "template": "p2sh_nested_p2pkh",
+    "want_accept": true
+  },
+  {
+    "name": "p2sh_multisig",
+    "template": "p2sh_multisig",
+    "want_accept": true
+  },
+  {
+    "name": "bare_multisig",
+    "template": "bare_multisig",
+    "want_accept": true
+  },
+  {
+    "name": "p2sh_cltv_p2pk",
+    "template": "p2sh_cltv_p2pk",
+    "want_accept": true
+  },
+  {
+    "name": "p2sh_csv_p2pk",
+    "template": "p2sh_csv_p2pk",
+    "want_accept": true
+  },
+  {
+    "name": "op_if_else_true",
+    "template": "op_if_else_true",
+    "want_accept": true
+  },
+  {
+    "name": "op_if_else_false",
+    "template": "op_if_else_false",
+    "want_accept": false
+  },
+  {
+    "name": "op_notif_true_branch",
+    "template": "op_notif_true_branch",
+    "want_accept": true
+  },
+  {
+    "name": "op_notif_false_branch",
+    "template": "op_notif_false_branch",
+    "want_accept": false
+  },
+  {
+    "name": "op_verify_true",
+    "template": "op_verify_true",
+    "want_accept": true
+  },
+  {
+    "name": "op_verify_false",
+    "template": "op_verify_false",
+    "want_accept": false
+  },
+  {
+    "name": "op_toaltstack_roundtrip",
+    "template": "op_toaltstack_roundtrip",
+    "want_accept": true
+  },
+  {
+    "name": "op_fromaltstack_empty",
+    "template": "op_fromaltstack_empty",
+    "want_accept": false
+  },
+  {
+    "name": "op_pick",
+    "template": "op_pick",
+    "want_accept": true
+  },
+  {
+    "name": "op_depth",
+    "template": "op_depth",
+    "want_accept": true
+  },
+  {
+    "name": "op_drop_empty",
+    "template": "op_drop_empty",
+    "want_accept": false
+  },
+  {
+    "name": "op_roll",
+    "template": "op_roll",
+    "want_accept": true
+  },
+  {
+    "name": "op_rot",
+    "template": "op_rot",
+    "want_accept": true
+  },
+  {
+    "name": "op_nested_if",
+    "template": "op_nested_if",
+    "want_accept": true
+  },
+  {
+    "name": "op_nested_if_false",
+    "template": "op_nested_if_false",
+    "want_accept": false
+  },
+  {
+    "name": "op_disabled_cat",
+    "template": "op_disabled_cat",
+    "want_accept": false
+  },
+  {
+    "name": "op_over",
+    "template": "op_over",
+    "want_accept": true
+  },
+  {
+    "name": "op_2dup",
+    "template": "op_2dup",
+    "want_accept": true
+  },
+  {
+    "name": "op_ifdup",
+    "template": "op_ifdup",
+    "want_accept": true
+  },
+  {
+    "name": "op_unbalanced_if",
+    "template": "op_unbalanced_if",
+    "want_accept": false
+  },
+  {
+    "name": "op_swap",
+    "template": "op_swap",
+    "want_accept": true
+  },
+  {
+    "name": "op_tuck",
+    "template": "op_tuck",
+    "want_accept": true
+  },
+  {
+    "name": "op_nip",
+    "template": "op_nip",
+    "want_accept": true
+  },
+  {
+    "name": "op_3dup",
+    "template": "op_3dup",
+    "want_accept": true
+  },
+  {
+    "name": "op_equal",
+    "template": "op_equal",
+    "want_accept": true
+  },
+  {
+    "name": "op_equal_false",
+    "template": "op_equal_false",
+    "want_accept": false
+  },
+  {
+    "name": "op_size",
+    "template": "op_size",
+    "want_accept": true
+  },
+  {
+    "name": "op_2over",
+    "template": "op_2over",
+    "want_accept": true
+  },
+  {
+    "name": "op_booland",
+    "template": "op_booland",
+    "want_accept": true
+  },
+  {
+    "name": "op_boolor",
+    "template": "op_boolor",
+    "want_accept": true
+  },
+  {
+    "name": "op_numequal",
+    "template": "op_numequal",
+    "want_accept": true
+  },
+  {
+    "name": "op_equalverify",
+    "template": "op_equalverify",
+    "want_accept": true
+  },
+  {
+    "name": "op_2swap",
+    "template": "op_2swap",
+    "want_accept": true
+  },
+  {
+    "name": "op_not",
+    "template": "op_not",
+    "want_accept": true
+  },
+  {
+    "name": "op_1add",
+    "template": "op_1add",
+    "want_accept": true
+  },
+  {
+    "name": "op_2rot",
+    "template": "op_2rot",
+    "want_accept": true
+  },
+  {
+    "name": "op_numequal_false",
+    "template": "op_numequal_false",
+    "want_accept": false
+  },
+  {
+    "name": "op_numnotequal",
+    "template": "op_numnotequal",
+    "want_accept": true
+  },
+  {
+    "name": "op_add",
+    "template": "op_add",
+    "want_accept": true
+  },
+  {
+    "name": "op_negate",
+    "template": "op_negate",
+    "want_accept": true
+  },
+  {
+    "name": "op_booland_false",
+    "template": "op_booland_false",
+    "want_accept": false
+  },
+  {
+    "name": "op_return",
+    "template": "op_return",
+    "want_accept": false
+  },
+  {
+    "name": "op_sub",
+    "template": "op_sub",
+    "want_accept": true
+  },
+  {
+    "name": "op_1sub",
+    "template": "op_1sub",
+    "want_accept": true
+  },
+  {
+    "name": "op_lessthan",
+    "template": "op_lessthan",
+    "want_accept": true
+  },
+  {
+    "name": "op_greaterthan_false",
+    "template": "op_greaterthan_false",
+    "want_accept": false
+  },
+  {
+    "name": "op_lessthanorequal",
+    "template": "op_lessthanorequal",
+    "want_accept": true
+  },
+  {
+    "name": "op_greaterthanorequal",
+    "template": "op_greaterthanorequal",
+    "want_accept": true
+  },
+  {
+    "name": "op_greaterthanorequal_false",
+    "template": "op_greaterthanorequal_false",
+    "want_accept": false
+  },
+  {
+    "name": "op_within",
+    "template": "op_within",
+    "want_accept": true
+  },
+  {
+    "name": "op_disabled_mul",
+    "template": "op_disabled_mul",
+    "want_accept": false
+  },
+  {
+    "name": "op_min",
+    "template": "op_min",
+    "want_accept": true
+  },
+  {
+    "name": "op_max",
+    "template": "op_max",
+    "want_accept": true
+  },
+  {
+    "name": "op_disabled_div",
+    "template": "op_disabled_div",
+    "want_accept": false
+  },
+  {
+    "name": "op_within_false",
+    "template": "op_within_false",
+    "want_accept": false
+  },
+  {
+    "name": "op_lessthanorequal_false",
+    "template": "op_lessthanorequal_false",
+    "want_accept": false
+  },
+  {
+    "name": "op_greaterthan",
+    "template": "op_greaterthan",
+    "want_accept": true
+  },
+  {
+    "name": "op_numnotequal_false",
+    "template": "op_numnotequal_false",
+    "want_accept": false
+  },
+  {
+    "name": "op_disabled_mod",
+    "template": "op_disabled_mod",
+    "want_accept": false
+  },
+  {
+    "name": "op_codeseparator",
+    "template": "op_codeseparator",
+    "want_accept": true
+  },
+  {
+    "name": "op_numequalverify",
+    "template": "op_numequalverify",
+    "want_accept": true
+  },
+  {
+    "name": "op_equalverify_false",
+    "template": "op_equalverify_false",
+    "want_accept": false
+  },
+  {
+    "name": "op_disabled_lshift",
+    "template": "op_disabled_lshift",
+    "want_accept": false
+  },
+  {
+    "name": "op_disabled_rshift",
+    "template": "op_disabled_rshift",
+    "want_accept": false
+  },
+  {
+    "name": "op_numequalverify_false",
+    "template": "op_numequalverify_false",
+    "want_accept": false
+  },
+  {
+    "name": "op_disabled_2mul",
+    "template": "op_disabled_2mul",
+    "want_accept": false
+  },
+  {
+    "name": "op_disabled_and",
+    "template": "op_disabled_and",
+    "want_accept": false
+  },
+  {
+    "name": "op_boolor_false",
+    "template": "op_boolor_false",
+    "want_accept": false
+  },
+  {
+    "name": "op_disabled_or",
+    "template": "op_disabled_or",
+    "want_accept": false
+  },
+  {
+    "name": "op_disabled_xor",
+    "template": "op_disabled_xor",
+    "want_accept": false
+  },
+  {
+    "name": "op_disabled_2div",
+    "template": "op_disabled_2div",
+    "want_accept": false
+  },
+  {
+    "name": "op_drop",
+    "template": "op_drop",
+    "want_accept": true
+  },
+  {
+    "name": "op_dup",
+    "template": "op_dup",
+    "want_accept": true
+  },
+  {
+    "name": "op_disabled_left",
+    "template": "op_disabled_left",
+    "want_accept": false
+  },
+  {
+    "name": "op_disabled_right",
+    "template": "op_disabled_right",
+    "want_accept": false
+  },
+  {
+    "name": "op_disabled_invert",
+    "template": "op_disabled_invert",
+    "want_accept": false
+  },
+  {
+    "name": "op_disabled_substr",
+    "template": "op_disabled_substr",
+    "want_accept": false
+  },
+  {
+    "name": "op_2drop",
+    "template": "op_2drop",
+    "want_accept": true
+  },
+  {
+    "name": "op_abs",
+    "template": "op_abs",
+    "want_accept": true
+  },
+  {
+    "name": "op_0notequal",
+    "template": "op_0notequal",
+    "want_accept": true
+  },
+  {
+    "name": "op_0notequal_false",
+    "template": "op_0notequal_false",
+    "want_accept": false
+  },
+  {
+    "name": "op_reserved",
+    "template": "op_reserved",
+    "want_accept": false
+  },
+  {
+    "name": "op_nop",
+    "template": "op_nop",
+    "want_accept": true
+  },
+  {
+    "name": "op_1negate",
+    "template": "op_1negate",
+    "want_accept": true
+  },
+  {
+    "name": "op_ver",
+    "template": "op_ver",
+    "want_accept": false
+  },
+  {
+    "name": "op_reserved1",
+    "template": "op_reserved1",
+    "want_accept": false
+  },
+  {
+    "name": "op_reserved2",
+    "template": "op_reserved2",
+    "want_accept": false
+  },
+  {
+    "name": "op_else_unbalanced",
+    "template": "op_else_unbalanced",
+    "want_accept": false
+  },
+  {
+    "name": "op_endif_unbalanced",
+    "template": "op_endif_unbalanced",
+    "want_accept": false
+  },
+  {
+    "name": "op_16",
+    "template": "op_16",
+    "want_accept": true
+  },
+  {
+    "name": "op_2",
+    "template": "op_2",
+    "want_accept": true
+  },
+  {
+    "name": "op_15",
+    "template": "op_15",
+    "want_accept": true
+  },
+  {
+    "name": "op_if_empty_stack",
+    "template": "op_if_empty_stack",
+    "want_accept": false
+  },
+  {
+    "name": "op_verify_empty_stack",
+    "template": "op_verify_empty_stack",
+    "want_accept": false
+  },
+  {
+    "name": "op_pick_underflow",
+    "template": "op_pick_underflow",
+    "want_accept": false
+  },
+  {
+    "name": "op_3",
+    "template": "op_3",
+    "want_accept": true
+  },
+  {
+    "name": "op_10",
+    "template": "op_10",
+    "want_accept": true
+  },
+  {
+    "name": "op_notif_empty_stack",
+    "template": "op_notif_empty_stack",
+    "want_accept": false
+  },
+  {
+    "name": "op_roll_underflow",
+    "template": "op_roll_underflow",
+    "want_accept": false
+  },
+  {
+    "name": "op_depth_empty",
+    "template": "op_depth_empty",
+    "want_accept": false
+  },
+  {
+    "name": "op_4",
+    "template": "op_4",
+    "want_accept": true
+  },
+  {
+    "name": "op_5",
+    "template": "op_5",
+    "want_accept": true
+  },
+  {
+    "name": "op_6",
+    "template": "op_6",
+    "want_accept": true
+  },
+  {
+    "name": "op_7",
+    "template": "op_7",
+    "want_accept": true
+  },
+  {
+    "name": "op_8",
+    "template": "op_8",
+    "want_accept": true
+  },
+  {
+    "name": "op_equalverify_empty",
+    "template": "op_equalverify_empty",
+    "want_accept": false
+  },
+  {
+    "name": "op_numequalverify_empty",
+    "template": "op_numequalverify_empty",
+    "want_accept": false
+  },
+  {
+    "name": "op_9",
+    "template": "op_9",
+    "want_accept": true
+  },
+  {
+    "name": "op_11",
+    "template": "op_11",
+    "want_accept": true
+  },
+  {
+    "name": "op_12",
+    "template": "op_12",
+    "want_accept": true
+  },
+  {
+    "name": "op_13",
+    "template": "op_13",
+    "want_accept": true
+  },
+  {
+    "name": "op_14",
+    "template": "op_14",
+    "want_accept": true
+  },
+  {
+    "name": "op_over_underflow",
+    "template": "op_over_underflow",
+    "want_accept": false
+  },
+  {
+    "name": "op_tuck_underflow",
+    "template": "op_tuck_underflow",
+    "want_accept": false
+  },
+  {
+    "name": "op_rot_underflow",
+    "template": "op_rot_underflow",
+    "want_accept": false
+  },
+  {
+    "name": "op_2drop_underflow",
+    "template": "op_2drop_underflow",
+    "want_accept": false
+  },
+  {
+    "name": "op_2swap_underflow",
+    "template": "op_2swap_underflow",
+    "want_accept": false
+  },
+  {
+    "name": "op_dup_empty",
+    "template": "op_dup_empty",
+    "want_accept": false
+  },
+  {
+    "name": "op_swap_underflow",
+    "template": "op_swap_underflow",
+    "want_accept": false
+  },
+  {
+    "name": "op_nip_underflow",
+    "template": "op_nip_underflow",
+    "want_accept": false
+  },
+  {
+    "name": "op_ifdup_empty",
+    "template": "op_ifdup_empty",
+    "want_accept": false
+  },
+  {
+    "name": "op_2over_underflow",
+    "template": "op_2over_underflow",
+    "want_accept": false
+  },
+  {
+    "name": "op_3dup_underflow",
+    "template": "op_3dup_underflow",
+    "want_accept": false
+  },
+  {
+    "name": "op_2rot_underflow",
+    "template": "op_2rot_underflow",
+    "want_accept": false
+  },
+  {
+    "name": "op_2dup_underflow",
+    "template": "op_2dup_underflow",
+    "want_accept": false
+  },
+  {
+    "name": "op_toaltstack_empty",
+    "template": "op_toaltstack_empty",
+    "want_accept": false
+  },
+  {
+    "name": "op_2drop_empty",
+    "template": "op_2drop_empty",
+    "want_accept": false
+  }
+]

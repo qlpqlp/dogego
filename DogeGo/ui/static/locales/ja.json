@@ -1,0 +1,1416 @@
+{
+  "meta": {
+    "code": "ja",
+    "name": "Japanese",
+    "native": "日本語"
+  },
+  "lang": {
+    "label": "言語",
+    "choose": "言語を選択",
+    "aria": "インターフェース言語を選択"
+  },
+  "common": {
+    "back": "戻る",
+    "next": "次へ",
+    "save": "設定を保存",
+    "saveStart": "保存してノードを起動",
+    "beta": "ベータ",
+    "preRelease": "プレリリース版",
+    "lockWallet": "ウォレットをロック",
+    "toggleSidebar": "サイドバーを切り替え",
+    "pinSidebar": "サイドバーを開いたまま固定",
+    "collapseSidebar": "アイコンのみに折りたたむ",
+    "refresh": "更新",
+    "run": "実行",
+    "show": "{name} を表示",
+    "helpAlways": "クリックでヘルプを固定（閉じるまで表示）",
+    "on": "オン",
+    "off": "オフ",
+    "yes": "はい",
+    "no": "いいえ",
+    "close": "閉じる",
+    "cancel": "キャンセル",
+    "unlock": "ロック解除"
+  },
+  "nav": {
+    "wallet": "ウォレット",
+    "node": "ノード",
+    "send": "送信",
+    "receive": "受信",
+    "transactions": "履歴",
+    "overview": "概要",
+    "blockstep": "BlockStep",
+    "explorer": "検索",
+    "mempool": "メモリプール",
+    "guide": "ガイド",
+    "settings": "設定",
+    "analytics": "分析",
+    "docs": "ドキュメント",
+    "features": "機能",
+    "console": "コンソール",
+    "extensions": "拡張機能",
+    "extensionsGroup": "拡張機能",
+    "home": "ホーム"
+  },
+  "wizard": {
+    "title": "DogeGo - セットアップ",
+    "firstRun": "初回起動",
+    "stepKicker": "ステップ {n} / {total}",
+    "steps": {
+      "profile": "プロファイル",
+      "data": "データ",
+      "network": "ネットワーク",
+      "sync": "同期",
+      "finish": "完了"
+    },
+    "stepMeta": [
+      {
+        "title": "セットアップを選択",
+        "desc": "プロファイルを1つ選ぶ - 次の画面で詳細を調整できます。"
+      },
+      {
+        "title": "データフォルダ",
+        "desc": "チェーンファイルの保存場所。ネットワークとモードはプロファイルから決まります。"
+      },
+      {
+        "title": "ネットワークとチェック",
+        "desc": "P2P 接続、ファイアウォール、ポート/CGNAT の自動チェック。"
+      },
+      {
+        "title": "同期とインデックス",
+        "desc": "フルノードのダウンロードオプション（SPV モードではスキップ）。"
+      },
+      {
+        "title": "ダッシュボードと完了",
+        "desc": "Web UI、任意の PIN、ノードの起動。"
+      }
+    ],
+    "profileEssential": "下のカードをタップしてください。各オプションでネットワーク、ノードモード、ウォレット、P2P のデフォルトが設定されます。",
+    "profiles": {
+      "firstRun": {
+        "title": "テストネットを試す",
+        "sub": "フルノード · ウォレット有効 · 初回起動に最適",
+        "tags": [
+          "testnet",
+          "full",
+          "auto peers"
+        ]
+      },
+      "mainnet": {
+        "title": "メインネット フルノード",
+        "sub": "本番 Dogecoin - 同期に時間がかかり、完全検証",
+        "tags": [
+          "mainnet",
+          "full",
+          "relay"
+        ]
+      },
+      "mainnetWallet": {
+        "title": "メインネット + ウォレット",
+        "sub": "送信/受信付きフルノード - 完了時にダッシュボード PIN を設定",
+        "tags": [
+          "mainnet",
+          "wallet",
+          "full"
+        ]
+      },
+      "spvWallet": {
+        "title": "ライト SPV + ウォレット",
+        "sub": "ヘッダーのみ · 低ディスク · CGNAT 向け",
+        "tags": [
+          "testnet",
+          "spv",
+          "cgnat"
+        ]
+      }
+    },
+    "showAdvanced": "後のステップで詳細オプションを表示",
+    "dataEssential": "データフォルダとネットワークを選んでください。既知のシードがない限り、ピア探索は自動のままにしてください。",
+    "whatSetupDoes": "このセットアップの内容",
+    "networkEssential": "起動前の接続と自動チェック。Starlink やポート転送ができない場合は cgnat を使用してください。",
+    "syncEssential": "フルノードはチェーンをダウンロードします。推奨ディスクレイアウトはデフォルトで有効：blk*.dat のバンドル、zstd 圧縮、コンパクトな tx インデックス（フルエクスプローラー検索も利用可能）。",
+    "spvSkip": "SPV モード - フルノード同期オプションは使用しません。P2P に進んでください。",
+    "finishEssential": "ダッシュボードはデフォルトで 127.0.0.1 で待ち受けます。送信とウォレット表示を保護する任意の PIN を設定できます。",
+    "backupTitle": "ウォレットのバックアップ（必須）",
+    "backupBody": "wallet.json のコピーをダウンロードし、オフラインの安全な場所に保管してください。バックアップがないと端末故障時に資金を復元できません。",
+    "backupPending": "ウォレットのバックアップをダウンロードし、安全に保管したことを確認してください。",
+    "backupConfirm": "バックアップをダウンロードしました - 安全に保管したら下のチェックボックスをオンにしてください。",
+    "backupReady": "バックアップを確認しました。ノードを起動できます。",
+    "backupAck": "ウォレットのバックアップを安全な場所に保存しました",
+    "backupAckRequired": "起動する前にウォレットのバックアップを保存したことを確認してください。",
+    "downloadBackup": "バックアップをダウンロード",
+    "dashboardApi": "ダッシュボードと API",
+    "dashboardSecurity": "ダッシュボードのセキュリティ（推奨）",
+    "optionalFlags": "任意のフラグ",
+    "advancedRelay": "詳細 - メモリプールリレーポリシー（任意）",
+    "reviewTitle": "確認",
+    "preflightTitle": "自動チェック",
+    "preflightRerun": "再実行",
+    "preflightHint": "このステップを開くと実行 - ファイアウォール、ポート、CGNAT のヒント。",
+    "footLove": "Dogecoin コミュニティへの愛を込めて開発しました。",
+    "footSaved": "dogecoinconf.json に保存 - ダッシュボードの設定からいつでも変更できます。",
+    "backupEncryptWarning": "ウォレットを暗号化しない限り、このファイルには HD シードとすべての秘密鍵（インポート含む）が平文で含まれます。前のステップでダッシュボード PIN を設定（この UI のみロック）し、起動後にコンソール → encryptwallet で強力な passphrase を使いディスク上の wallet.json を暗号化してください。バックアップは現金のように扱い、可能な限りオフラインで暗号化保存してください。",
+    "pinNotWalletEncrypt": "任意：チェックなしでダッシュボード PIN なしで起動できます。有効時は両方のフィールドが正確に 6 桁で一致する必要があります。ダッシュボード PIN は web_security.json にハッシュされ、このブラウザセッションのみを保護します。wallet.json は暗号化しません。起動後 encryptwallet でディスク上の鍵暗号化を行ってください。",
+    "walletEncryptTitle": "起動時にウォレットを暗号化",
+    "walletEncryptEnable": "今すぐ wallet.json を暗号化（Core encryptwallet）",
+    "walletEncryptHint": "上記バックアップをダウンロード後に推奨。バックアップファイルは平文です。オフライン保存してください。暗号化後ノードはロック状態で起動します。この passphrase で解除して送信（ダッシュボードまたは dogego-cli walletpassphrase）。",
+    "walletPass": "ウォレット passphrase",
+    "walletPassConfirm": "passphrase 確認",
+    "walletPassRequired": "暗号化有効時はウォレット passphrase を入力してください。",
+    "walletPassMismatch": "ウォレット passphrase と確認が一致する必要があります。"
+  },
+  "settings": {
+    "title": "設定",
+    "essentialDesc": "ここでネットワーク、データフォルダ、ダッシュボード PIN を変更できます。パスや P2P を変更したらノードを再起動してください。",
+    "advancedDesc": "dogecoinconf.json に保存されます。ほとんどのオプションは dogego node の再起動後に適用されます。各フィールドの ? にマウスを置くと簡単な説明が表示されます。",
+    "servicesTitle": "サービス（今回の実行）",
+    "servicesHint": "サブシステムをすぐに起動または停止します。下のタブの設定は特記がない限り、次回のノード起動時に有効になります。",
+    "tabs": {
+      "general": "一般",
+      "wallet": "ウォレット",
+      "sync": "同期とインデックス",
+      "p2p": "P2P",
+      "interface": "インターフェース",
+      "updates": "更新",
+      "extensions": "拡張機能",
+      "advanced": "詳細",
+      "tools": "ツール"
+    },
+    "extensionsTitle": "拡張機能",
+    "extensionsHint": "オプションの DogeGo 拡張機能。カタログソースの参照、zip のインストール、有効化/無効化。拡張機能はウォレット鍵にアクセスしません。",
+    "extensionsDetails": "詳細",
+    "extensionsCatalogSources": "カタログソース",
+    "extensionsCatalogSourcesHint": "GitHub フォルダまたは raw catalog.json URL。既定で公式 DogeGo カタログを含みます。",
+    "extensionsCatalogSourcesPlaceholder": "https://github.com/owner/repo/tree/main/path/to/extensions/",
+    "extensionsCatalogSourcesAdd": "ソースを追加",
+    "extensionsRefresh": "カタログを更新",
+    "extensionsInstallZip": "zip をインストール",
+    "walletTitle": "ウォレットとポスト量子",
+    "walletHint": "組み込み HD ウォレットの設定。下で有効にすると次回の送信から OP_RETURN ポスト量子コミットメントが付きます。",
+    "walletBuiltInTitle": "組み込みウォレット",
+    "walletEnable": "組み込みウォレットを有効化",
+    "walletEnableHint": "オフにすると設定で nowallet になります。設定を保存してノードを再起動してください。",
+    "walletPqTitle": "ポスト量子送信",
+    "walletPqHint": "オン時、各送信にフェーズ1 OP_RETURN コミットメント（既定 FLC1）を付与。wallet.json に即保存。",
+    "walletHistoryTitle": "ウォレット履歴",
+    "walletDisabledConfig": "設定でウォレット無効（nowallet）。設定を保存してノードを再起動してください。",
+    "walletUnavailable": "この実行ではウォレットが読み込まれていません。",
+    "walletPqOn": "ポスト量子送信オン - 各送信に {tag} OP_RETURN。",
+    "walletPqOff": "ポスト量子送信オフ。下で有効にして FLC1 コミットメントを付与。",
+    "generalTitle": "パスとネットワーク",
+    "seedPeerSummary": "固定シードピア（任意）",
+    "syncTitle": "フルノードと同期",
+    "syncHint": "過去ブロックのダウンロードとローカルインデックスを制御します。ノードモードが SPV の場合は無視されます。",
+    "txIndexMaint": "トランザクションインデックスのメンテナンス",
+    "filterMaint": "ブロックフィルターインデックスのメンテナンス",
+    "analyticsTitle": "分析",
+    "miningTitle": "マイニング",
+    "p2pTitle": "P2P 接続",
+    "p2pHint": "維持するピア数とインバウンド接続の受け入れ。再起動が必要です。",
+    "dgrTitle": "DogeGo リレー（CGNAT）",
+    "dgrHint": "QUIC で公開 DogeGo リレーに登録し、キャリアグレード NAT を回避します。メトリクスは概要 → ネットワークと GET /api/dgr に表示されます。",
+    "interfaceTitle": "表示とナビゲーション",
+    "simpleMode": "シンプルダッシュボード（ドキュメント、機能、コンソールを非表示）",
+    "simpleHint": "デフォルトではフルメニューを表示します。シンプルモードでは運用者向けタブを非表示にします。",
+    "navTogglesHint": "サイドバーと下部バーに表示するセクションを選択：",
+    "navReset": "メニューをリセットしてすべて表示",
+    "securityTitle": "セキュリティ（6桁 PIN）",
+    "rpcBindsSummary": "RPC とダッシュボードのバインド",
+    "walletFlagsSummary": "ウォレットフラグ（ライブ）",
+    "walletRescanBtn": "ウォレット履歴を再スキャン",
+    "walletRescanFullBtn": "フルスキャン（ジェネシス）",
+    "walletRescanStarted": "ウォレットの再スキャンをバックグラウンドで開始しました。",
+    "walletRescanBusy": "ウォレットの再スキャンは既に実行中です。",
+    "walletRescanFailed": "ウォレットの再スキャンを開始できませんでした。",
+    "walletRescanNeeds": "ウォレット索引はブロック {indexed} まで。チェーンは {tip}。再スキャンで手数料と hex メタデータを補完します。",
+    "walletRescanNeedsFastPath": "ウォレット索引はブロック {indexed} まで。チェーンは {tip}。履歴は高速；再スキャンで手数料と hex を補完します。",
+    "walletRescanScanning": "ウォレット再スキャン中…",
+    "walletRescanOk": "ウォレット索引はブロック {tip} まで最新です。",
+    "walletHistoryFastPath": "ウォレット履歴を索引済み（受取行で listtransactions が高速）。",
+    "walletListtransactionsUtxoWalk": "listtransactions が {n} 件の UTXO を走査して受取履歴を構築；再スキャンで wallet.db 索引を作成。",
+    "advancedTitle": "メモリプール、リレー、RPC 認証",
+    "advancedHint": "dogecoinconf.json の Core 形式ポリシーキー（特記がない限り koinu/kB）。",
+    "packageLimits": "メモリプールパッケージ制限（Core -limit*）",
+    "standardness": "標準性（Core リレーポリシー）",
+    "zmqTitle": "ZMQ 通知（Core 互換）",
+    "zmqHint": "ボット/取引所向け PUB エンドポイント（tcp://127.0.0.1:28332 または 127.0.0.1:28332）。再起動が必要です。",
+    "coreParityTitle": "オプション：Core 参照比較",
+    "coreParityHint": "Dogecoin Core を並行稼働させ、元の参照プロトコルとの整合性を確認する場合のみ使用。空のままで DogeGo を完全自律運用できます。保存後すぐ適用 - 再起動不要。",
+    "signerCmdHint": "HWI 互換 stdin/stdout JSON（enumeratesigners、signerdisplayaddress、PSBT）。保存後は再起動が必要。",
+    "coreTestBtn": "Core 接続をテスト（任意）",
+    "coreCertStatus": "ライブオペレーター認証",
+    "coreTestBusy": "Core JSON-RPC をテスト中…",
+    "coreTestOk": "Core に到達可能",
+    "coreTestFail": "Core に到達不可",
+    "saveConfig": "設定を保存",
+    "footDisclaimer": "",
+    "walletEncryptTitle": "ウォレットファイル暗号化",
+    "walletEncryptHint": "ディスク上の wallet.json を暗号化（Core encryptwallet）。設定 → インターフェースのダッシュボード PIN とは別です。",
+    "walletEncryptOff": "ウォレットファイルは暗号化されていません。下で passphrase を設定して wallet.json を暗号化してください。",
+    "walletEncryptLocked": "支出鍵がロックされています。送信または署名するには解除（Core walletpassphrase）。",
+    "walletEncryptUnlocked": "支出鍵は {time} まで解除されています。",
+    "walletEncryptUnlockedOpen": "支出鍵が解除されています（自動ロックタイムアウトなし）。",
+    "walletUnlockKeys": "鍵を解除",
+    "walletLockKeys": "鍵をロック",
+    "syncOptionsGroup": "ブロック同期とストレージ",
+    "filterIndexMaint": "ブロックフィルターインデックスメンテナンス",
+    "syncAnalyticsGroup": "分析サイドカー",
+    "miningGroup": "マイニング（testnet）",
+    "toolsTitle": "ノードツールと RPC アクション",
+    "toolsHint": "ガイド付きフォームで一般的な RPC コマンドを実行。カテゴリ別に整理。コンソールタブ不要。",
+    "dgrSetupLead": "2 つの役割：1 つを選択。Dogecoin P2P ポート 22556（TCP）とは別です。",
+    "dgrPathClientTitle": "リレーを使用（CGNAT クライアント）",
+    "dgrPathClientBody": "Starlink、モバイル、インバウンド不可の家庭ネットワーク向け。QUIC UDP で公開 DogeGo リレーにダイヤルアウト。ルーターのポート転送不要。",
+    "dgrPathClientPorts": "あなたのノード：リレー:24433 への outbound UDP · Dogecoin P2P は outbound TCP のみ。",
+    "dgrPathOperatorTitle": "リレーを運用（公開オペレーター）",
+    "dgrPathOperatorBody": "公開 IP の VPS または家庭サーバー向け。CGNAT クライアントがトンネルできる QUIC リレーをホスト。",
+    "dgrPathOperatorPorts": "ルーター/ファイアウォールで UDP 24433 をこのマシンに転送（TCP 22556 は通常 P2P、リレーではありません）。",
+    "dgrRoleOff": "オフ",
+    "dgrRoleOffSub": "QUIC リレーなし",
+    "dgrRoleClient": "リレーを使用（クライアント）",
+    "dgrRoleClientSub": "ポート転送不要 · 公開リレーにダイヤル",
+    "dgrRoleOperator": "リレーを運用（オペレーター）",
+    "dgrRoleOperatorSub": "公開 IP · UDP 24433 を開放",
+    "dgrShowAdvanced": "高度な DGR フィールドを表示",
+    "dgrSuggestCgnat": "ヒント：上でリレーを使用（クライアント）を選び、公開リレーアドレスにオペレーターの host:24433 を追加して保存・再起動。",
+    "dgrSuggestBoth": "ヒント：インバウンド P2P を受けられない場合はリレーを使用（クライアント）。公開 IP があり他者を支援したい場合はリレーを運用（オペレーター）して UDP 24433 を開放。",
+    "interfaceIntro": "ダッシュボードレイアウト、PIN セキュリティ、Web UI の提供方法をカスタマイズ。",
+    "interfaceDisplayGroup": "表示とメニュー",
+    "dashboardBindsGroup": "ダッシュボードバインド",
+    "developerGroup": "開発者オプション",
+    "updatesTitle": "ソフトウェア更新",
+    "updatesHint": "GitHub Releases を毎日確認。DOGEGO_NO_UPDATE_CHECK=1 で無効化。",
+    "mempoolGroup": "メモリプールとリレー手数料",
+    "rpcAuthGroup": "JSON-RPC 待受と認証",
+    "signerTestBtn": "外部署名者をテスト",
+    "signerTestBusy": "HWI 署名者をテスト中…",
+    "signerTestOk": "署名者準備完了",
+    "signerTestWarn": "署名者は応答、デバイスなし",
+    "signerTestFail": "署名者テスト失敗"
+  },
+  "field": {
+    "datadir": {
+      "label": "データディレクトリ",
+      "help": "すべてのチェーンファイルと dogecoinconf.json がここに保存されます。ネットワークごとに別サブフォルダ。Dogecoin Core のデータディレクトリとは互換性がありません。",
+      "hint": "存在しない場合は作成されます。DogeGo は独自レイアウト（headers.bin、rawblocks/、indexes/）を使用 - Dogecoin Core の blocks/ や chainstate/ ではありません。",
+      "placeholder": "例: C:\\Dogedata または ./dogedata"
+    },
+    "network": {
+      "label": "ネットワーク",
+      "help": "mainnet = 本番 Dogecoin。testnet = 開発用リブートテストネット（初回は推奨）。"
+    },
+    "nodeMode": {
+      "label": "ノードモード",
+      "help": "full = ブロック本体をダウンロード（エクスプローラーとほとんどの RPC に必要）。spv = ヘッダーのみ、ディスク使用量が大幅に少ない。"
+    },
+    "peer": {
+      "label": "ピア（任意）",
+      "help": "最初に接続する host:port を1つ。信頼できるシードピアがない限り空のままにしてください。",
+      "placeholder": "空 = 自動探索"
+    },
+    "p2p": {
+      "label": "P2P 接続",
+      "help": "cgnat = アウトバウンドのみ（Starlink/CGNAT）。classic = インバウンド待ち受け。both = デフォルトの混合と追加アウトバウンドリレー。"
+    },
+    "firewall": {
+      "label": "OS ファイアウォール",
+      "help": "auto = 不足時に Windows/Linux/macOS の P2P ルールを追加。always = 常にルールを管理。never = OS ファイアウォールをスキップ。"
+    },
+    "upnp": {
+      "label": "UPnP / NAT-PMP",
+      "help": "auto = 待ち受け時（classic/both）にルーターで P2P ポートをマップ。enable = 常に試行。disable = オフ（Core -upnp=0）。"
+    },
+    "maxOutbound": {
+      "label": "最大アウトバウンド",
+      "help": "プライマリ同期ピアを含むアウトバウンド P2P セッションの合計。ピアが多いとブロックダウンロードが速くなる場合があります。",
+      "placeholder": "8"
+    },
+    "maxInbound": {
+      "label": "最大インバウンド",
+      "help": "待ち受け有効時（classic/both モード）のインバウンド接続数。",
+      "placeholder": "12"
+    },
+    "noTxIndex": {
+      "label": "トランザクションインデックスを無効化",
+      "help": "オンにすると indexes/tx の構築をスキップ。ディスクを節約しますがエクスプローラーの tx/アドレス検索が制限されます。フルエクスプローラーではオフのままにしてください。"
+    },
+    "blockLayout": {
+      "label": "ブロック保存レイアウト",
+      "help": "bundled（推奨）: Core 形式の blk*.dat、ファイルシステムオーバーヘッドが少ない。perfile: ブロックごとに1つの .bin（レガシー）。"
+    },
+    "blockZstd": {
+      "label": "保存ブロックを圧縮（zstd）",
+      "help": "ディスク上で透過的に圧縮。P2P は通常のワイヤーブロックを送信。フルノードでディスクを節約。"
+    },
+    "txEmbed": {
+      "label": "tx インデックスに完全な tx バイトを埋め込む",
+      "help": "オフ（推奨）の場合、インデックスはブロックポインタのみ保存；tx はブロックファイルから読み込み。オンの場合、インデックスに tx バイトが重複保存されます。"
+    },
+    "analytics": {
+      "label": "組み込み分析サイドカー",
+      "help": "分析タブ用の任意 Pebble カタログ。小容量ディスクでは無効化しても安全；CLI から dogego indexer を実行することもできます。"
+    },
+    "blockWorkers": {
+      "label": "ブロック同期ワーカー",
+      "help": "初期同期中にブロック本体を並列ダウンロードする追加ピア。0 = 自動（通常 2-6）。",
+      "placeholder": "0 = 自動"
+    },
+    "rawBackfill": {
+      "label": "先端 raw ブロックのバックフィル",
+      "help": "同期直後にヘッダー先端から取得するブロック数。-1 = ジェネシスのみ；空 = 自動デフォルト。"
+    },
+    "reindexClear": {
+      "label": "先にインデックスをクリア",
+      "help": "tx インデックスを再構築する際、rawblocks/ をスキャンする前に indexes/tx を消去。インデックスが破損している場合に使用。"
+    },
+    "webui": {
+      "label": "Web ダッシュボード待ち受け",
+      "help": "この UI が提供されるアドレス。リモートアクセスの保護方法を理解していない限り 127.0.0.1 のままにしてください。"
+    },
+    "rpc": {
+      "label": "JSON-RPC 待ち受け（任意）",
+      "help": "他のアプリが dogego RPC を呼び出せます。空 = 無効。信頼できるマシンでのみ 127.0.0.1 を使用してください。"
+    },
+    "uacomment": {
+      "label": "ユーザーエージェントコメント",
+      "help": "P2P バージョンメッセージに付加される任意の文字列で、ピアがノードを識別できます。",
+      "placeholder": "P2P ハンドシェイクでピアに表示"
+    },
+    "pinSection": {
+      "help": "任意の6桁 PIN でウォレット表示と送信を保護。オフのままだと PIN プロンプトなしで起動。有効時は両フィールドが正確に6桁である必要があります。ディスク上でハッシュ化；3回失敗で1時間ロック。後から設定 → インターフェースで変更可能。"
+    },
+    "pinNow": {
+      "label": "今すぐ6桁 PIN を設定（任意）",
+      "help": "このダッシュボードの送信とウォレット残高を保護。チェックしないと PIN プロンプトなしで起動します。"
+    },
+    "pinNew": {
+      "label": "6桁 PIN",
+      "help": "正確に6桁。ディスク上でハッシュ保存 - ウォレットの encryptwallet パスフレーズとは別物。"
+    },
+    "pinConfirm": {
+      "label": "PIN を確認",
+      "help": "ノード起動前に上の PIN と一致する必要があります。"
+    },
+    "webauthn": {
+      "label": "PIN と併用してデバイス生体認証（WebAuthn）を許可",
+      "help": "PIN 解除後、このデバイスで指紋/顔を任意で使用。HTTPS または localhost が必要。"
+    },
+    "nowebui": {
+      "label": "起動後に Web UI を無効化",
+      "help": "ノード起動後にこのダッシュボードの提供を停止（nowebui）。RPC と P2P は引き続き動作。"
+    },
+    "nobrowser": {
+      "label": "ブラウザを自動で開かない",
+      "help": "オフの場合、DogeGo は起動後にデフォルトブラウザでダッシュボードを開きます。"
+    },
+    "nowallet": {
+      "label": "組み込みウォレットを無効化",
+      "help": "リレーのみまたはウォッチのみのノードを実行し、この UI に送信/受信は表示されません。"
+    },
+    "mine": {
+      "label": "リブートテストネットでソロマイニング（mine）",
+      "help": "mine=true のとき低難易度テストネットブロックを生成。メインネット本番マイニングには使用しないでください。"
+    },
+    "showAdvanced": {
+      "help": "後のウィザードステップでピア、RPC、メモリプールリレー、その他の運用フィールドを表示します。"
+    },
+    "profile": {
+      "help": "各プロファイルでネットワーク、ノードモード、ウォレット、P2P のデフォルトを設定。後のステップですべて変更可能。"
+    },
+    "dgrEnabled": {
+      "label": "dogego_relay_cgnat.enabled",
+      "help": "統合 QUIC CGNAT リレーのマスタースイッチ（サービスビット NODE_DOGEGO_RELAY_CGNAT）。"
+    },
+    "dgrInbound": {
+      "label": "インバウンドリレー（rdogego 運用者）",
+      "help": "CGNAT クライアントを登録する公開 QUIC リレーを実行。パブリック IP のあるサーバーで使用。"
+    },
+    "dgrOutbound": {
+      "label": "アウトバウンドリレー（CGNAT クライアント）",
+      "help": "インバウンド TCP がブロックされている場合（Starlink、キャリア NAT）に公開リレーへ接続。"
+    },
+    "dgrListen": {
+      "label": "QUIC 待ち受け",
+      "help": "インバウンドリレークライアント用 UDP アドレス。例: 全インターフェースの :24433。"
+    },
+    "dgrPort": {
+      "label": "リレーポート（探索）",
+      "help": "P2P サービスレコードでリレー探索用に広告されるポート。"
+    },
+    "dgrSeeds": {
+      "label": "静的リレーシード（host:port、1行に1つ）",
+      "help": "アウトバウンドリレー有効時にダイヤルする既知の公開リレー。"
+    },
+    "dgrDns": {
+      "label": "リレー DNS シード（TXT レコード）",
+      "help": "TXT レコードでリレー host:port を列挙する DNS 名。"
+    },
+    "dgrMaxClients": {
+      "label": "最大インバウンドクライアント",
+      "help": "このインバウンドリレーに登録できる最大 CGNAT クライアント数。"
+    },
+    "dgrMaxConns": {
+      "label": "最大アウトバウンドリレーセッション",
+      "help": "この CGNAT ノードから公開リレーへの並列 QUIC トンネル数。"
+    },
+    "dgrToken": {
+      "label": "認証トークン（任意の共有シークレット）",
+      "help": "リレー運用者とクライアント間の共有シークレット。オープンリレーは空のまま。"
+    },
+    "dgrSection": {
+      "help": "サービスビット NODE_DOGEGO_RELAY_CGNAT（1<<29）を使う統合 QUIC 到達性リレー。公開 rdogego ノードは inbound_relay を実行；CGNAT クライアントは outbound_relay でインバウンド TCP がブロックされているとき P2P をトンネル化。"
+    },
+    "simpleMode": {
+      "help": "シンプルモードではエクスプローラー、コンソール、ドキュメントなど運用者向けタブを非表示。下で任意のタブを再有効化できます。"
+    },
+    "helpAlways": {
+      "help": "モバイルや狭い画面では、ヘルプはクリックでポップオーバー表示。固定すると閉じるまで表示されます。"
+    },
+    "pinSecurity": {
+      "help": "このダッシュボードのウォレット残高、履歴、送信を保護。PIN はディスク上でハッシュ化（bcrypt）。3回失敗で1時間ロック。任意のデバイス生体認証には PIN 入力が必要 - ブラウザには何も保存されません。"
+    },
+    "pinCurrent": {
+      "label": "現在の PIN（変更時）",
+      "help": "既存のダッシュボード PIN を変更または削除する際に必要。"
+    },
+    "pinDisable": {
+      "label": "PIN を無効化（現在の PIN を入力）",
+      "help": "現在の PIN を入力し「PIN 保護を削除」をクリックすると、ロック解除なしでウォレット表示が開きます。"
+    },
+    "secBiometric": {
+      "label": "PIN 後にデバイス生体認証を使用（WebAuthn）",
+      "help": "セッションで最初の PIN 入力後、このデバイスでより速くロック解除できます。"
+    },
+    "miningAddr": {
+      "label": "マイニングアドレス（任意）",
+      "help": "generatetoaddress / テストネットソロマイン報酬用の P2PKH アドレス。"
+    },
+    "mineConfig": {
+      "label": "設定で mine（テストネットソロ）",
+      "help": "リブートテストネットで true の場合、このノードのウォレットまたはマイニングアドレスへ低難易度ブロックを生成。"
+    },
+    "pqCommitments": {
+      "label": "量子耐性送信（pq_commitments）",
+      "help": "サポート時に送信に任意の量子耐性コミットメントフィールドを追加。"
+    },
+    "avoidReuse": {
+      "label": "アドレス再利用を避ける（avoid_reuse）",
+      "help": "トランザクション構築時に新しい受信アドレスを優先。"
+    },
+    "showSummary": {
+      "label": "概要 → 同期にデバッグ JSON を表示",
+      "help": "IBD をデバッグする運用者向けに生の同期サマリー JSON を表示。"
+    },
+    "persistMempool": {
+      "label": "メモリプールをディスクに永続化（persistmempool）",
+      "help": "再起動後も未確認 tx を保持。チェーンフォルダ下で追加ディスクを使用。"
+    },
+    "maxMempool": {
+      "label": "最大メモリプール（MB）",
+      "help": "メモリ内トランザクションプールの最大 RAM（-maxmempool）。満杯時は低手数料率の tx から追い出し。空の場合デフォルト 300 MB。"
+    },
+    "mempoolExpiry": {
+      "label": "メモリプール有効期限（時間）",
+      "help": "未確認 tx がプールに留まれる最大時間（-mempoolexpiry）。空の場合デフォルト 24 時間。"
+    },
+    "maxOrphanTx": {
+      "label": "最大オーファン tx",
+      "help": "親を待つ間保持する最大オーファントランザクション数（-maxorphantx）。"
+    },
+    "blockMaxWeight": {
+      "label": "ブロック最大ウェイト",
+      "help": "このノードが受け入れリレーする最大ブロックウェイト（-blockmaxweight）。"
+    },
+    "minRelay": {
+      "label": "最小リレー手数料（koinu/kB）",
+      "help": "tx を受け入れリレーする設定最小手数料率（-minrelaytxfee）。100000 koinu/kB ≈ 0.001 DOGE/kB。"
+    },
+    "incrementalRelay": {
+      "label": "増分リレー（koinu/kB）",
+      "help": "メモリプール追い出し後にローリング最小手数料率に加算（-incrementalrelayfee）。"
+    },
+    "hardDust": {
+      "label": "ハードダスト制限（koinu）",
+      "help": "この値未満の出力はリレーでダスト扱い（-harddustlimit）。"
+    },
+    "limitAnc": {
+      "label": "祖先数",
+      "help": "パッケージ内の未確認祖先 tx の最大数（-limitancestorcount）。空の場合デフォルト 25。"
+    },
+    "limitDesc": {
+      "label": "子孫数",
+      "help": "メモリプール内の1つの親から連鎖する最大子孫 tx 数（-limitdescendantcount）。空の場合デフォルト 25。"
+    },
+    "limitAncKb": {
+      "label": "祖先サイズ（kB）",
+      "help": "tx とすべての未確認祖先の合計仮想サイズの上限（-limitancestorsize）。"
+    },
+    "limitDescKb": {
+      "label": "子孫サイズ（kB）",
+      "help": "tx とすべての未確認子孫の合計仮想サイズの上限（-limitdescendantsize）。"
+    },
+    "acceptDatacarrier": {
+      "label": "OP_RETURN データキャリア（acceptdatacarrier）",
+      "help": "オンの場合、標準 OP_RETURN データ出力をリレー。オフで OP_RETURN tx を拒否。"
+    },
+    "permitBareMs": {
+      "label": "ベアマルチシグ（permitbaremultisig）",
+      "help": "オンの場合、ベアマルチシグ出力をリレー（旧形式）。オフでより厳格な標準性。"
+    },
+    "datacarrierSize": {
+      "label": "最大 OP_RETURN サイズ（バイト）",
+      "help": "リレーする最大 OP_RETURN ペイロードサイズ（-datacarriersize）。"
+    },
+    "unverifiedMempool": {
+      "label": "未検証メモリプールを許可（テストのみ）",
+      "help": "完全検証なしで tx を受け入れ - 危険；開発専用。"
+    },
+    "fullRbf": {
+      "label": "フル RBF（mempoolfullrbf）",
+      "help": "オンの場合、BIP125 オプトイン RBF tx だけでなく、メモリプール内の任意の tx を高手数料版で置換可能。"
+    },
+    "maxTxFee": {
+      "label": "最大 tx 手数料（koinu）",
+      "help": "手数料がこの値を超える tx を拒否（-maxtxfee）。"
+    },
+    "rpcCookie": {
+      "label": "RPC cookie ファイル（rpc_cookie）",
+      "help": "ユーザー/パスワードの代わりに cookie ファイルで RPC 認証。"
+    },
+    "rpcUser": {
+      "label": "RPC ユーザー",
+      "help": "cookie 認証無効時の HTTP RPC ユーザー名。"
+    },
+    "rpcPass": {
+      "label": "RPC パスワード",
+      "help": "HTTP RPC パスワード - ループバックのみに保持。"
+    },
+    "coreRpcAddr": {
+      "label": "Core JSON-RPC アドレス（任意）",
+      "help": "任意。ループバック上の Dogecoin Core の host:port。オプションのプロトコル並列比較用のみ - 同期・ウォレット・P2P には不要。"
+    },
+    "coreRpcUser": {
+      "label": "Core RPC ユーザー",
+      "help": "Core JSON-RPC ユーザー名。空の場合は DogeGo rpc_user または env DOGEGO_CORE_RPC_USER。"
+    },
+    "coreRpcPass": {
+      "label": "Core RPC パスワード",
+      "help": "Core RPC ユーザーに対応する JSON-RPC パスワード。"
+    },
+    "signerCmd": {
+      "label": "外部署名者コマンド",
+      "help": "HWI 互換プロセス（stdin/stdout JSON）。例: python hwi.py --chain dogecoin --stdin。"
+    },
+    "zmqHashblock": {
+      "label": "zmqpubhashblock",
+      "help": "新ブロックハッシュ用 ZMQ PUB エンドポイント。空 = 無効。"
+    },
+    "zmqHashtx": {
+      "label": "zmqpubhashtx",
+      "help": "新 tx ハッシュ用 ZMQ PUB エンドポイント。空 = 無効。"
+    },
+    "zmqRawblock": {
+      "label": "zmqpubrawblock",
+      "help": "生ブロックデータ用 ZMQ PUB エンドポイント。空 = 無効。"
+    },
+    "zmqRawtx": {
+      "label": "zmqpubrawtx",
+      "help": "生 tx データ用 ZMQ PUB エンドポイント。空 = 無効。"
+    },
+    "relayPolicy": {
+      "help": "任意の Core 形式リレーポリシーを dogecoinconf.json に保存。数値を空にすると Dogecoin デフォルトを使用。下の各フィールドの ? をクリックして詳細を確認。"
+    },
+    "settingsIntro": {
+      "help": "サービスはライブで切り替え可能；パス、ネットワーク、P2P 上限は再起動が必要。"
+    },
+    "interfaceDisplay": {
+      "help": "シンプルモードではエクスプローラー、コンソール、ドキュメントなど運用者向けタブを非表示。下で任意のタブを再有効化できます。"
+    },
+    "dgrTlsPins": {
+      "label": "リレー TLS 証明書ピン（SHA-256 16 進、1 行 1 つ）",
+      "help": "アウトバウンドリレーダイヤルの任意の信頼ピン。オペレーターリレーの GET /api/dgr から server_cert_sha256 をコピー。空のままなら自己署名証明書を許可。"
+    },
+    "dgrMaxFrames": {
+      "label": "セッションあたり最大フレーム / 秒",
+      "help": "登録クライアントごとの DGR フレームに対するインバウンドオペレーターレート制限（既定 60）。"
+    },
+    "dgrMaxP2PProxy": {
+      "label": "最大 P2P プロキシ / 秒",
+      "help": "クライアントごとの P2P_FRAME プロキシ要求に対するインバウンドオペレーターレート制限（既定 20）。"
+    },
+    "dgrMaxRegister": {
+      "label": "IP あたり最大 REGISTER / 分",
+      "help": "クライアント IP あたりの REGISTER 試行に対するインバウンドオペレーター上限（既定 10）。"
+    },
+    "walletEnable": {
+      "label": "組み込みウォレットを有効化",
+      "help": "オフの場合 dogecoinconf.json に nowallet を設定。設定を保存してノードを再起動してください。"
+    }
+  },
+  "choices": {
+    "network": {
+      "mainnet": {
+        "title": "メインネット",
+        "sub": "本番 Dogecoin チェーン"
+      },
+      "testnet": {
+        "title": "テストネット",
+        "sub": "このリポジトリのリブートテストネット"
+      }
+    },
+    "networkWizard": {
+      "mainnet": {
+        "title": "メインネット",
+        "sub": "実際の Dogecoin チェーン"
+      },
+      "testnet": {
+        "title": "テストネット",
+        "sub": "安全なサンドボックス - 初回は推奨"
+      }
+    },
+    "mode": {
+      "full": {
+        "title": "フルノード",
+        "sub": "ヘッダー + ブロック本体"
+      },
+      "spv": {
+        "title": "SPV",
+        "sub": "ヘッダーのみ、ディスク使用量が少ない"
+      }
+    },
+    "modeWizard": {
+      "full": {
+        "title": "フルノード",
+        "sub": "ヘッダー + ブロック本体 + エクスプローラー"
+      },
+      "spv": {
+        "title": "SPV（ライト）",
+        "sub": "ヘッダーのみ - 小容量ディスク"
+      }
+    },
+    "p2p": {
+      "both": {
+        "title": "両方",
+        "sub": "インバウンド + アウトバウンドリレー"
+      },
+      "cgnat": {
+        "title": "CGNAT",
+        "sub": "アウトバウンドのみ（Starlink / NAT）"
+      },
+      "classic": {
+        "title": "クラシック",
+        "sub": "インバウンド待ち受け + アウトバウンド"
+      }
+    },
+    "p2pWizard": {
+      "both": {
+        "title": "両方",
+        "sub": "インバウンド + アウトバウンド · DGR リレー自動設定"
+      },
+      "cgnat": {
+        "title": "CGNAT",
+        "sub": "アウトバウンドのみ（Starlink / ポート転送なし）"
+      },
+      "classic": {
+        "title": "クラシック",
+        "sub": "インバウンド待ち受け + アウトバウンド"
+      }
+    },
+    "firewall": {
+      "auto": {
+        "title": "自動",
+        "sub": "必要時にルールを追加"
+      },
+      "always": {
+        "title": "常に",
+        "sub": "常にルールを管理"
+      },
+      "never": {
+        "title": "しない",
+        "sub": "OS ファイアウォールをスキップ"
+      }
+    },
+    "firewallWizard": {
+      "auto": {
+        "title": "自動",
+        "sub": "必要時にルールを追加"
+      },
+      "always": {
+        "title": "常に",
+        "sub": "常に管理"
+      },
+      "never": {
+        "title": "しない",
+        "sub": "スキップ"
+      }
+    },
+    "upnp": {
+      "auto": {
+        "title": "自動",
+        "sub": "待ち受け時に試行"
+      },
+      "enable": {
+        "title": "有効",
+        "sub": "常にマッピングを試行"
+      },
+      "disable": {
+        "title": "無効",
+        "sub": "オフ"
+      }
+    },
+    "upnpWizard": {
+      "auto": {
+        "title": "自動",
+        "sub": "待ち受け時"
+      },
+      "enable": {
+        "title": "有効",
+        "sub": "常に試行"
+      },
+      "disable": {
+        "title": "無効",
+        "sub": "オフ"
+      }
+    },
+    "blockLayout": {
+      "perfile": {
+        "title": "ファイルごと",
+        "sub": "ブロックごとに1つの .bin"
+      },
+      "bundled": {
+        "title": "バンドル",
+        "sub": "blk*.dat レイアウト"
+      }
+    },
+    "blockLayoutWizard": {
+      "bundled": {
+        "title": "バンドル",
+        "sub": "blk*.dat 推奨"
+      },
+      "perfile": {
+        "title": "ファイルごと",
+        "sub": "ブロックごとに1つの .bin"
+      }
+    }
+  },
+  "msg": {
+    "preflightOk": "重要なチェックはすべて合格しました。警告は参考情報 - 起動できます。",
+    "preflightWarn": "一部のチェックで警告がありました。起動前に下を確認してください。",
+    "saveOk": "設定を保存しました。",
+    "saveErr": "設定を保存できませんでした。",
+    "pinMismatch": "PIN フィールドは一致し、正確に6桁である必要があります。",
+    "starting": "ノードを起動しています…"
+  },
+  "pages": {
+    "overview": {
+      "title": "ダッシュボード",
+      "subtitle": "このマシンからのライブノードメトリクス。",
+      "chainWarn": "チェーン警告",
+      "storage": "ストレージ",
+      "firewallWarn": "ファイアウォール - 対応が必要",
+      "firewallCopy": "昇格したコマンドプロンプトまたは PowerShell（管理者）にコピー：",
+      "searchPlaceholder": "高さ、ハッシュ、txid、またはアドレス…",
+      "search": "検索",
+      "clear": "クリア",
+      "kpiTitle": "ノードの健全性",
+      "activityTitle": "アクティビティ",
+      "syncChart": "同期の進捗",
+      "syncCaption": "ヘッダー · 接続済み · 保存済みボディ",
+      "peersChart": "ピア",
+      "peersCaption": "アウトバウンドとインバウンド（ライブ）",
+      "mempoolChart": "メモリプール",
+      "mempoolCaption": "トランザクション数とサイズ",
+      "mempoolDist": "メモリプール tx サイズ",
+      "mempoolDistCaption": "待機中トランザクションの仮想サイズ",
+      "syncLearn": "何を同期していますか？",
+      "syncDoing": "ノードは何をしていますか？",
+      "blockchainSync": "ブロックチェーン同期",
+      "chainSyncRow": "チェーン同期（接続済み vs ヘッダー）",
+      "debugJson": "デバッグ JSON",
+      "p2pTitle": "P2P 接続",
+      "p2pHint": "このノードが Dogecoin ネットワークと通信する方法。設定 → P2P でモードと上限を変更（再起動が必要）。",
+      "openP2pSettings": "P2P 設定を開く",
+      "openFeatures": "機能タブを開く",
+      "ibdPhaseTitle": "初期ブロックダウンロード",
+      "ibdAuxPowOk": "AuxPoW Core パリティ",
+      "ibdPhaseConnect": "フェーズ 2/2: 保存済みブロックを chainActive (UTXO) に検証。並列ダウンロード中。",
+      "ibdPhaseDownload": "フェーズ 1/2: ピアからブロックボディを取得。ヘッダーは既に {tip}。",
+      "ibdPhaseDefault": "初期ブロックダウンロード - このウィンドウを開いたままにしてください。進捗は保存されます。",
+      "ibdConnected": "接続済み",
+      "ibdStored": "保存ボディ",
+      "ibdHeaders": "ヘッダー",
+      "ibdDownloadRate": "ダウンロード速度",
+      "ibdConnectRate": "接続速度",
+      "ibdConnectLag": "接続遅延",
+      "ibdCheckpoint": "同期チェックポイント",
+      "ibdUtxoReplay": "UTXO ボディ再生",
+      "ibdPhaseUtxoReplay": "保存済みボディを再生して UTXO を連続 raw ブロックに整合 - チェックポイント進捗は再起動後も保持。",
+      "ibdResumeWarn": "再起動再開",
+      "syncCheckpoint": "チェックポイント",
+      "syncAssistPool": "アシストプール",
+      "syncBodyLag": "ボディ遅延",
+      "ovResumeTitle": "再起動再開（ライブ）",
+      "operatorCertTitle": "オペレーター認証（ライブ）",
+      "operatorCertGates": "ライブ Web ゲート",
+      "operatorCertSolo": "solo",
+      "operatorCertMempoolCorpus": "メンプールコーパス（オフライン）",
+      "operatorCertMempoolParity": "メンプールパリティ（ライブ）",
+      "runCoreProbes": "すべてのプローブを実行",
+      "coreStatusCached": "プローブキャッシュ {sec}秒",
+      "coreStatusCoreRpc": "Core RPC",
+      "coreComparePending": "ライブプローブ待機 - IBD 中に更新、または機能 → すべてのプローブ",
+      "jsonRpc": "JSON-RPC",
+      "jsonRpcHint": "スクリプトとウォレット用 - 設定でリッスンアドレスを有効にしてください。",
+      "dataDir": "データディレクトリ",
+      "dataDirHint": "アクティブなネットワークのチェーンデータはこのフォルダに保存されます。",
+      "hashrate": "ハッシュレート（推定）",
+      "hashrateHint": "先端の難易度から算出 - プールのライブデータではありません。",
+      "blockInterval": "ブロック間隔",
+      "blockIntervalHint": "最近のヘッダー間の平均秒数。",
+      "bestHash": "最良ブロックハッシュ",
+      "openMempool": "メモリプールタブを開く",
+      "miningPayouts": "マイニング支払い（24 時間、ローカルスキャン）",
+      "viewCertMatrix": "証明書マトリクスを表示",
+      "ibdConnectBoost": "接続ブースト",
+      "ovConnectLag": "接続ラグ",
+      "ovConnectBoost": "接続ブースト"
+    },
+    "send": {
+      "title": "DOGE を送信",
+      "subtitle": "フルノードと UTXO キャッシュの準備ができたら、組み込みウォレットから支払います。",
+      "spvHint": "SPV モード - この実行ではブロードキャストは利用できません。",
+      "newPayment": "新しい支払い",
+      "payTo": "支払先アドレス",
+      "amount": "金額 (DOGE)",
+      "sendBtn": "DOGE を送信",
+      "payToPlaceholder": "ウォレット同期中…",
+      "amountPlaceholder": "0.00",
+      "pqBannerTitle": "量子対応ウォレット。",
+      "pqBannerDetail": "ポスト量子 OP_RETURN コミットメントが毎回の送信時に自動で付加されます（FLC1 キャリア）。",
+      "advancedPq": "高度な PQ オーバーライド",
+      "advancedPqHint": "任意の手動コミットメントオーバーライド。既定では DogeGo が各送信時に量子対応 OP_RETURN 証明を生成します。",
+      "tag": "タグ",
+      "commitment": "コミットメント (hex)",
+      "commitPlaceholder": "64 文字の hex",
+      "helpTab": "ヘルプ：送信タブ",
+      "tabPayment": "支払い",
+      "tabAdvanced": "詳細",
+      "pqDisabledHint": "ポスト量子コミットメントはオフです。設定 → ウォレットで有効にすると各送信に FLC1 証明を添付できます。",
+      "available": "利用可能残高",
+      "max": "最大",
+      "networkFee": "ネットワーク手数料（推定）",
+      "feeHint": "ウォレット手数料率を使用。詳細 → 手数料でカスタマイズ。",
+      "feeTitle": "トランザクション手数料",
+      "feeRate": "手数料率（DOGE/kB）",
+      "feeRateHint": "ウォレット既定（settxfee）。この送信のみに適用。",
+      "subtractFee": "金額から手数料を差し引く（受取人は少なく受け取る）",
+      "coinControl": "インプットを選択（任意）",
+      "coinControlHint": "空のままなら UTXO を自動選択。明示的に制御したい場合は特定のコインを選択。"
+    },
+    "receive": {
+      "title": "DOGE を受信",
+      "subtitle": "このネットワークで支払いを受け取るためにアドレスを共有してください。",
+      "yourAddress": "あなたのアドレス",
+      "copy": "コピー",
+      "copied": "クリップボードにコピーしました",
+      "backupTitle": "ウォレットをバックアップ",
+      "backupBody": "wallet.json のコピーをダウンロードし、オフラインの安全な場所に保管してください。バックアップがないと、このデバイスが故障した際に資金を復元できません。",
+      "backupRotateHint": "しばらくキーをローテーションしていない場合は、新しい HD ウォレットに資金を移すことを検討してください。",
+      "downloadBackup": "バックアップをダウンロード",
+      "rotateKeys": "キーをローテーション",
+      "dismiss30": "30 日間非表示",
+      "importWif": "WIF をインポート",
+      "importWifHint": "mainnet または testnet の秘密鍵 (WIF) をこのウォレットにインポートします。",
+      "privateKey": "秘密鍵 (WIF)",
+      "privateKeyPlaceholder": "Q または 6 で始まる…",
+      "labelOptional": "ラベル（任意）",
+      "import": "インポート",
+      "mnemonicTitle": "ニーモニック / BIP38",
+      "mnemonicHint": "BIP39 シードから HD ウォレットを復元するか、BIP38 暗号化ペーパーウォレットをインポートします。",
+      "seedPhrase": "シードフレーズ",
+      "seedPlaceholder": "12 または 24 語…",
+      "passphraseOptional": "パスフレーズ（任意）",
+      "importMnemonic": "ニーモニックをインポート",
+      "comingSoon": "近日公開",
+      "bip38Key": "BIP38 キー",
+      "bip38Passphrase": "BIP38 パスフレーズ",
+      "importBip38": "復号してインポート",
+      "walletDatTitle": "Core wallet.dat",
+      "walletDatHint": "このマシンの Dogecoin Core wallet.dat からキーを移行。未暗号化ファイルはネイティブインポート、暗号化ファイルはウォレットパスフレーズでネイティブ復号、または Core RPC フォールバック（設定 → 詳細）。",
+      "walletDatPath": "wallet.dat への絶対パス",
+      "walletDatPassphrase": "ウォレットパスフレーズ（暗号化 wallet.dat）",
+      "walletDatPassphrasePlaceholder": "未暗号化なら空欄",
+      "walletDatViaCore": "Core dumpwallet を使用 (via_core_rpc)",
+      "walletDatProbe": "プローブ",
+      "walletDatImport": "wallet.dat をインポート",
+      "walletDatProbing": "wallet.dat をプローブ中…",
+      "walletDatImporting": "wallet.dat をインポート中…",
+      "walletDatProbeNeedsPassphrase": "暗号化ウォレット - 下にパスフレーズを入力してからインポート（ネイティブ CCrypter 復号）。",
+      "addressBook": "アドレス帳",
+      "addressBookHint": "このノードの wallet.json に記録された HD・インポート・ウォッチ専用・共同署名者アドレス一覧。",
+      "abTypeKeypool": "Keypool",
+      "signMessage": "メッセージに署名",
+      "signHint": "ウォレットアドレス用の Core 互換コンパクト署名。",
+      "message": "メッセージ",
+      "messagePlaceholder": "署名するメッセージ…",
+      "sign": "署名",
+      "signature": "署名 (base64)",
+      "sigCopied": "署名をクリップボードにコピーしました",
+      "verifyMessage": "メッセージを検証",
+      "address": "アドレス",
+      "addressPlaceholder": "D… アドレス",
+      "verify": "検証",
+      "tabAddress": "アドレス",
+      "tabImport": "鍵をインポート",
+      "tabMessages": "署名と検証",
+      "tabBook": "アドレス帳",
+      "recvKeypoolSize": "keypool {n}",
+      "recvCorePoolIndices": "Core pool インデックス {n}",
+      "keypoolRefill": "keypool を補充",
+      "keypoolRefilling": "HD keypool を補充中…",
+      "keypoolRefillOk": "Keypool 補充完了",
+      "backupEncryptWarning": "平文 wallet.json には HD シードと秘密鍵が含まれます。ダッシュボード PIN は Web UI のみロック。コンソール → encryptwallet でディスク上のウォレットファイルを暗号化。",
+      "walletDatKeypoolHint": "プローブが pool のみの行（pool_keys_unmatched）を示してもインポートは成功 - DogeGo が新しい HD 受信鍵を補充。一致した受信 pubkey は Core pool インデックスタグ付きで wallet.json に再生。",
+      "abFilterPlaceholder": "アドレス、パス、ラベルをフィルター…",
+      "abTypeLabel": "アドレスタイプ",
+      "abTypeAll": "すべてのタイプ",
+      "abTypeReceive": "受信",
+      "abTypeChange": "お釣り",
+      "abTypeWatch": "ウォッチのみ",
+      "abTypeCosigner": "共同署名者",
+      "abGenerate": "アドレスを生成",
+      "abCopy": "コピー",
+      "abCopied": "コピーしました",
+      "abEditLabel": "ラベルを編集",
+      "abSaveLabel": "保存",
+      "abCancelLabel": "キャンセル",
+      "abNoMatch": "フィルターに一致するアドレスがありません。",
+      "abGenerateFailed": "アドレスを生成できませんでした。",
+      "abNewTitle": "新しい受信アドレス",
+      "abNewHint": "共有するにはこのアドレスをコピー。後でアドレス帳で見つける任意ラベルを追加。",
+      "abNewGenerating": "アドレス生成中…",
+      "abNewDone": "完了",
+      "abLabelPlaceholder": "例：ショップ、チップ、取引所…",
+      "rotateTitle": "自動鍵ローテーション",
+      "rotateHint": "自動鍵ローテーションは新しい HD ウォレットを生成し、全残高をスイープ、旧ウォレットが空であることを確認してから DogeGo を新しい鍵に切り替えます。先にバックアップをダウンロードしてください。",
+      "rotateStep1": "ウォレットバックアップをダウンロード（必須）",
+      "rotateStep2": "準備 → 全コインをスイープ → 確認を待つ",
+      "rotateStep3": "残高ゼロを確認 → 確定 → 必要なら旧アーカイブを削除",
+      "rotatePrepare": "1. 新ウォレットを準備",
+      "rotateSweep": "2. 残高をスイープ",
+      "rotateVerify": "3. 検証",
+      "rotateFinalize": "4. 確定",
+      "rotateCancel": "キャンセル",
+      "rotateDeleteArchive": "旧ウォレットアーカイブを削除",
+      "sectionsAria": "受信セクション",
+      "qrAria": "アドレス QR コード",
+      "abColAddress": "アドレス",
+      "abColPath": "パス / タイプ",
+      "abColLabel": "ラベル",
+      "abEmpty": "追跡中のアドレスはまだありません。",
+      "walletDisabled": "設定でウォレット無効（nowallet）。設定を保存してノードを再起動すると再有効化できます。",
+      "verifyRunning": "署名を検証中…",
+      "verifyValid": "有効な署名です。",
+      "verifyInvalid": "無効な署名です。",
+      "importWifOk": "インポートしました。再スキャンに時間がかかる場合があります。",
+      "importAddrOk": "インポートしました。アドレス: {address} - 再スキャンの可能性があります。",
+      "importAddrOkShort": "インポートしました。アドレス: {address}"
+    },
+    "history": {
+      "title": "履歴",
+      "subtitle": "このノードでインデックスされたウォレットトランザクション。",
+      "filterPlaceholder": "アドレス、ラベル、txid を検索…",
+      "transactionsLabel": "件のトランザクション",
+      "exportCsv": "CSV エクスポート",
+      "exportCsvTitle": "ウォレット履歴を CSV でエクスポート",
+      "typeFiltersAria": "トランザクションタイプでフィルター",
+      "typeAll": "すべて",
+      "typeReceived": "受信",
+      "typeSent": "送信",
+      "typeMining": "マイニング",
+      "typeQuantum": "量子",
+      "loadingMsg": "ウォレット履歴を取得中…",
+      "loadAllRemaining": "残りをすべて読み込む",
+      "clearSearch": "検索をクリア",
+      "pausedIbd": "初期ブロックダウンロード中のためウォレット履歴を一時停止しています。",
+      "pausedConnectLag": "ブロック接続中（{lag} ブロック遅れ）のためウォレット履歴を一時停止しています。",
+      "pausedScanBuilding": "再スキャンで履歴索引を構築中 - 進捗後に履歴を開くか、設定 → ウォレットを確認してください。"
+    },
+    "mempool": {
+      "title": "メモリプール",
+      "subtitle": "このノードのみが保持する未確認トランザクション（ネットワーク全体ではありません）。",
+      "summary": "概要",
+      "transactions": "トランザクション",
+      "policy": "ポリシー",
+      "broadcast": "ブロードキャスト",
+      "parityTitle": "Core ポリシーパリティプローブ",
+      "parityHint": "マイルストーン D：このノードで stateless testmempoolaccept 行を実行。完全コーパス：go test ./consensus -run TestCoreMempool。",
+      "parityRun": "パリティプローブを実行",
+      "parityOk": "すべての行が合格",
+      "parityOkCore": "DogeGo + Core 一致",
+      "parityCoreDrift": "DogeGo OK - Core に差異",
+      "parityFail": "一部の行が失敗",
+      "paritySkipped": "スキップ",
+      "statefulTitle": "ステートフル mempool (マイルストーン D)",
+      "statefulHint": "オフライン stateful コーパスはプロセス内で実行。live 24/24 は reboot testnet のスクリプトで。",
+      "statefulOfflineOk": "オフラインコーパス合格",
+      "statefulOfflineFail": "オフラインコーパス失敗",
+      "statefulLivePending": "live ゲート保留",
+      "statefulLiveReady": "live 24/24 プローブ準備完了",
+      "statefulNotReboot": "このネットワークではオフラインのみ"
+    },
+    "guide": {
+      "title": "ガイド",
+      "subtitle": "この DogeGo ビルドのオペレーターウォークスルー。"
+    },
+    "docs": {
+      "title": "ドキュメント",
+      "subtitle": "このバイナリに同梱された組み込みオペレータードキュメント。"
+    },
+    "features": {
+      "title": "機能と Core パリティ",
+      "subtitle": "この DogeGo ビルドが今日できること vs Dogecoin Core。",
+      "parityTitle": "Core パリティ概要",
+      "parityStandalone": "スタンドアロン認証",
+      "parityStandalonePartial": "進行中",
+      "parityStandaloneReady": "出口ゲート達成",
+      "parityFeaturesLive": "機能 live",
+      "parityFeaturesPartial": "機能 partial",
+      "parityGapsOpen": "ギャップ open",
+      "parityGapsPartial": "ギャップ partial",
+      "parityGapsDeclined": "意図的に declined",
+      "parityRoadmap": "ロードマップ完了",
+      "parityRpcLive": "RPC live",
+      "parityRpcPartial": "RPC partial",
+      "parityRpcStub": "RPC stub",
+      "parityProtocolLock": "プロトコルロック（このノード）",
+      "parityProtocolLockOk": "OK",
+      "parityProtocolLockFail": "不一致",
+      "parityOfflineCorpus": "メンプールコーパス（オフライン）",
+      "guidanceTitle": "Dogecoin Core vs DogeGo の使い分け",
+      "guidanceCore": "Dogecoin Core を選ぶ場合",
+      "guidanceDogeGo": "DogeGo が向く場合",
+      "guidanceIntentional": "意図的な差異（バグではない）",
+      "legendTitle": "ステータス凡例",
+      "legendLive": "典型的な運用ワークフローで動作。",
+      "legendPartial": "MVP あり；エッジケースや Core ギャップが残る。",
+      "legendPlanned": "バックログ - 未着手または大規模。",
+      "legendDeclined": "設計上スコープ外。",
+      "liveTitle": "このノードの現状",
+      "roadmapTitle": "ロードマップハイライト",
+      "gapsTitle": "Self-certification (native storage)",
+      "gapsHint": "Core-compatible consensus, RPC, wallet migration, and mining ship in this build. DogeGo uses its own Go storage layout (headers/, rawblocks/, utxo.cache, Pebble wallet.db) instead of Core LevelDB. Optional long-haul soak (dogego cert live-soak, weekly-live, workflow 10) is self-certification of that layout's resilience, not a missing Core feature. Probes above remain available when you want to run them.",
+      "rpcTitle": "JSON-RPC コマンド",
+      "rpcHint": "このビルドに登録 - ヘルプテキストから分類（live / partial / stub）。",
+      "rpcFilter": "メソッドをフィルタ…",
+      "rpcColMethod": "メソッド",
+      "rpcColClass": "クラス",
+      "rpcColHelp": "ヘルプ",
+      "openTab": "開く",
+      "corePrefix": "Core:",
+      "docsLink": "関連ドキュメント",
+      "certTitle": "認証マイルストーン (A/B/D/E)",
+      "certCorpusMempool": "メモリプールベクター",
+      "certCorpusScript": "レガシースクリプトテスト",
+      "certCorpusHeaders": "ヘッダーハーネス",
+      "certCorpusBlocks": "ブロック接続",
+      "certCorpusProbe": "ライブパリティプローブ行",
+      "certHarnessHint": "オフラインハーネス：go test ./consensus/... -run TestCore と scripts/ の PowerShell スクリプト。",
+      "certLiveTitle": "ライブオペレーター認証",
+      "certLivePass": "Web プローブ OK",
+      "certLiveFail": "Web プローブ失敗",
+      "certLiveAllOk": "すべてのライブ Web ゲート OK",
+      "certLiveSomeFail": "一部のライブ Web ゲート失敗",
+      "certScriptOnly": "スクリプト/オフラインのみ",
+      "certOffline": "オフラインテスト",
+      "certScripts": "オペレータースクリプト",
+      "coreCompareTitle": "任意：Dogecoin Core と比較",
+      "coreCompareHint": "Dogecoin Core 元プロトコルに対する任意の参照チェック。DogeGo は Core なしで完全自律稼働。並列パリティが必要な場合のみ core_rpc_addr を設定。",
+      "coreCompareRefresh": "任意比較を更新",
+      "coreCompareUnavailable": "Core に到達不可（任意）",
+      "coreCompareOptional": "未設定 - ソロノード OK",
+      "coreCompareSoloLockOk": "プロトコルロック OK（ソロ検証）",
+      "coreCompareProtocolLockFail": "プロトコルロック不一致",
+      "coreCompareOk": "チェーンフィールドは許容範囲内",
+      "coreCompareVerifyWarn": "verifychain 不一致 - 機能タブを参照",
+      "coreCompareMismatch": "チェーン不一致 - 下のフィールドを確認",
+      "coreMaintTitle": "Core メンテナンスプローブ",
+      "coreMaintHint": "マイルストーン E: verifychain、getindexinfo、getchaintxstats、getblockfilter - scripts/core_maintenance_workflow.ps1 に相当。",
+      "coreMaintRefresh": "メンテナンスプローブを実行",
+      "coreMaintOk": "メンテナンスチェック合格",
+      "coreMaintWarn": "メンテナンス警告",
+      "coreMaintFail": "メンテナンス問題あり",
+      "coreMaintSyncing": "同期中 (チェック OK)",
+      "coreResumeTitle": "再起動再開プローブ",
+      "coreResumeHint": "マイルストーン E: rawblocks_sync チェックポイント vs 連続ボディと IBD アシストプール - scripts/core_restart_resume_check.ps1 に相当。",
+      "coreResumeRefresh": "再起動再開プローブを実行",
+      "coreResumeOk": "再起動再開チェック合格",
+      "coreResumeWarn": "再起動再開警告",
+      "coreResumeFail": "再起動再開の問題あり",
+      "coreRunnerTitle": "CI ランナー準備状況 (dogego-live)",
+      "coreRunnerHint": "dogego-live ランナー向けのプロビジョニングチェックリスト + reboottestnet RPC プリフライト - dogego cert weekly 相当。完全バンドル: dogego cert weekly-live。Milestone B soak: dogego cert live-soak。",
+      "coreRunnerRefresh": "ランナープローブを実行",
+      "coreRunnerOk": "ランナー準備完了",
+      "coreRunnerWarn": "ランナー一部準備",
+      "coreRunnerFail": "ランナー問題あり",
+      "coreProbesTitle": "ライブ運用プローブ",
+      "coreProbesHint": "この DogeGo ノードへのワンクリック loopback チェック。Dogecoin Core との並列比較は任意 - 自律運用では core_rpc_addr を空のままに。",
+      "coreProbesRefresh": "すべてのプローブを実行",
+      "coreProbeCompare": "比較",
+      "coreProbeMaint": "メンテナンス",
+      "coreProbeResume": "再起動再開",
+      "coreProbeMempool": "メモリプール",
+      "coreProbeWallet": "ウォレット",
+      "coreWalletOk": "ウォレット確認 OK",
+      "coreWalletWarn": "ウォレット警告",
+      "coreWalletFail": "ウォレット問題",
+      "coreWalletSkipped": "ウォレット無効",
+      "coreWalletTitle": "Core ウォレットプローブ",
+      "coreWalletHint": "マイルストーン E: getwalletinfo, getbalance, getnewaddress, validateaddress - scripts/core_wallet_workflow.ps1 に相当。",
+      "coreWalletRefresh": "ウォレットプローブを実行",
+      "coreWalletHardwarePsbt": "ハードウェア PSBT 署名",
+      "coreProbeApisTitle": "プローブ API カタログ",
+      "coreProbeApisHint": "スクリプトと Features バンドル用のループバック JSON エンドポイント。",
+      "coreProbeBundled": "/api/core-probes に含む",
+      "coreProbeReindex": "再インデックス",
+      "coreProbeEndToEnd": "エンドツーエンド",
+      "coreEndToEndOk": "OK",
+      "coreEndToEndFail": "失敗",
+      "coreE2eTitle": "エンドツーエンドワークフロープローブ",
+      "coreE2eHint": "マイルストーン E：ノード健全性、再起動再開、メンテナンス、再インデックス、BIP152 HB、ウォレット - scripts/core_end_to_end_workflow.ps1 の必須ステップ。",
+      "coreE2eRefresh": "エンドツーエンドプローブを実行",
+      "coreE2eOk": "ワークフロー合格",
+      "coreE2eFail": "ワークフロー失敗",
+      "coreE2eSkipped": "スキップ",
+      "coreReindexTitle": "再インデックス / インデックスプローブ",
+      "coreReindexHint": "マイルストーン E: 必須 RPC メソッド + getindexinfo 同期 - scripts/core_reindex_prune_workflow.ps1（チェックのみ）。",
+      "coreReindexRefresh": "再インデックスプローブを実行",
+      "coreReindexOk": "再インデックス OK",
+      "coreReindexWarn": "再インデックス警告",
+      "coreReindexFail": "再インデックス問題",
+      "coreProbeBip152": "BIP152",
+      "coreBip152Title": "BIP152コンパクトブロックプローブ",
+      "coreBip152Hint": "マイルストーン E：getpeerinfo の bip152_hb_to/from と同期後の HB ネゴシエーション - scripts/core_bip152_probe.ps1 に相当。",
+      "coreBip152Refresh": "BIP152プローブを実行",
+      "coreBip152Ok": "BIP152チェック合格",
+      "coreBip152Warn": "BIP152警告",
+      "coreBip152Fail": "BIP152の問題あり",
+      "coreBip152Skipped": "RPC未準備",
+      "live": {
+        "mode": "モード",
+        "network": "ネットワーク",
+        "p2p": "P2P",
+        "p2pHealth": "P2P 健全性",
+        "peers": "ピア",
+        "listen": "リッスン",
+        "wallet": "ウォレット",
+        "txIndex": "Tx インデックス",
+        "rawBlocks": "生ブロック",
+        "analytics": "分析サイドカー",
+        "relayMin": "リレー最小",
+        "pkgAnc": "パッケージ祖先",
+        "coreRpc": "Core RPC",
+        "coreRpcDefault": "既定",
+        "operatorCert": "オペレーター認証",
+        "mempoolCorpus": "メンプールコーパス",
+        "utxoReplay": "UTXO 再生"
+      },
+      "certLiveHint": "この DogeGo ノード上の 13 の loopback チェック。Dogecoin Core との比較は任意（設定 → 詳細 → core_rpc_addr）。Solo N/13 は Core 未設定時に任意 Core ゲートを合格とみなします。",
+      "certLiveSoloOk": "Solo ゲート OK（Core 証明書は任意）",
+      "certLiveSoloPass": "Solo ノードでは任意",
+      "certLivePending": "ライブ状態のためにプローブを実行",
+      "certCached": "{{sec}} 秒前にキャッシュ",
+      "certScriptTitle": "スクリプト / ソークゲート（PowerShell）",
+      "certScriptHint": "リポジトリルートから DOGEGO_* 環境フラグで実行。破壊的ゲートは testnet/dev のみ。",
+      "coreAutostartTitle": "OS ログイン自動起動プローブ",
+      "coreAutostartHint": "OS サインイン起動が dogecoinconf.json の autostart=login と一致するか確認 - dogego cert autostart を反映。",
+      "coreAutostartRefresh": "自動起動プローブを実行",
+      "coreAutostartOk": "自動起動 OK",
+      "coreAutostartWarn": "自動起動の警告",
+      "coreAutostartFail": "自動起動なし",
+      "coreAutostartOff": "自動起動オフ",
+      "coreAutostartOffHint": "autostart=disable - 設定 → インターフェースまたはセットアップウィザードでログイン自動起動を有効化。",
+      "coreProbeJumpHint": "プローブカードへ移動",
+      "coreProbeConnect": "接続ラグ",
+      "coreProbeConnectOk": "接続ラグが閾値内",
+      "coreProbeConnectFail": "接続ラグが閾値超過",
+      "coreProbeConnectIbd": "IBD 中は高ラグが予想されます",
+      "certViewProbe": "プローブを表示",
+      "coreFieldEvidenceTitle": "フィールド証拠（Milestone A）",
+      "coreFieldEvidenceHint": "オフラインコミット済み mainnet ブロック/ヘッダーコーパスと、TestCoreMainnetFieldHeaderPoW および field_disk_connect_cert.ps1 向け live dogedata/mainnet 準備状態。",
+      "coreFieldEvidenceRefresh": "フィールド証拠プローブを実行",
+      "coreFieldEvidenceOk": "Live フィールド準備完了",
+      "coreFieldEvidenceOffline": "オフラインコーパスのみ",
+      "coreFieldEvidenceWarn": "部分的 live",
+      "coreFieldEvidenceMainnetOnly": "live プローブは mainnet のみ"
+    },
+    "blockstep": {
+      "title": "BlockStep",
+      "subtitle": "ブロックを1つずつ進めます。"
+    },
+    "explorer": {
+      "title": "エクスプローラー",
+      "subtitle": "このノードでブロック、トランザクション、アドレスを検索。"
+    },
+    "analytics": {
+      "title": "分析",
+      "subtitle": "組み込みサイドカーからのローカルチェーン分析。",
+      "peersTitle": "接続中のピア",
+      "peersHint": "ライブ P2P セッション（getpeerinfo）。インバウンド/アウトバウンドリンク、同期役割、ピアが DogeGo QUIC リレー（NODE_DOGEGO_RELAY_CGNAT）をアドバタイズするかを表示。",
+      "peersEmpty": "まだピアが接続されていません。設定 → P2P モードとファイアウォールルールを確認。",
+      "peersLoadFailed": "ピアリストを読み込めませんでした。",
+      "peersDgrUsing": "このノードは DGR リレー経由で P2P をトンネル中",
+      "peersDgrActive": "アクティブリレー",
+      "peersDgrMode": "P2P モード",
+      "colDirection": "方向",
+      "colAddress": "アドレス",
+      "colRole": "役割",
+      "colType": "タイプ",
+      "colHeight": "開始高さ",
+      "colSynced": "同期ブロック",
+      "colPing": "Ping",
+      "colTraffic": "トラフィック",
+      "colUserAgent": "User agent",
+      "colFlags": "フラグ",
+      "reorgTitle": "Chain reorgs",
+      "reorgHint": "Recorded when this node elects a heavier fork and truncates the header tip. Includes displaced miners, AuxPoW, and UTC hour for correlation."
+    },
+    "extensions": {
+      "title": "Extensions",
+      "subtitle": "Install optional packages, enable or disable. Extensions never access wallet keys.",
+      "backCatalog": "Back to catalog",
+      "devManual": "Developer manual",
+      "devManualHint": "How to build and package extensions for DogeGo.",
+      "showMore": "Show more",
+      "showLess": "Show less"
+    },
+    "console": {
+      "title": "コンソール",
+      "subtitle": "このノードへの JSON-RPC（ループバックのみ）とメモリ内アクティビティログ。",
+      "rpc": "RPC",
+      "method": "メソッド",
+      "params": "パラメータ（JSON 配列）",
+      "activityLog": "アクティビティログ",
+      "autoScroll": "自動スクロール",
+      "coreProbesTitle": "オペレータープローブ（このノード）",
+      "coreProbesHint": "この DogeGo ノード上の loopback GET プローブ。設定 → 詳細で core_rpc_addr が設定されている場合のみ Dogecoin Core 参照比較。",
+      "tutorialTitle": "RPC チュートリアル",
+      "tutorialHint": "RPC フォームで in-process 呼び出し（HTTP 認証不要）。Cookbook に curl と CLI の各メソッド例。",
+      "tutorialOpenDoc": "チュートリアルを開く",
+      "tutorialReference": "HTML リファレンス",
+      "cookbookTitle": "メソッド Cookbook",
+      "cookbookHint": "このビルドでサポートされるすべての JSON-RPC メソッド。コンソールで使用をクリックしてフォーム入力。スクリプト用に curl または CLI をコピー。",
+      "cookbookSearch": "メソッドを検索"
+    }
+  },
+  "syncDock": {
+    "connected": "接続済み",
+    "storedBodies": "保存ボディ",
+    "behindHeaders": "ヘッダー遅れ",
+    "bodyLag": "ボディ遅延",
+    "checkpoint": "チェックポイント",
+    "assistPool": "アシストプール",
+    "downloadRate": "ダウンロード速度",
+    "eta": "残り時間",
+    "peersOutIn": "ピア 送信/受信",
+    "mempool": "メモリプール",
+    "operatorCert": "オペレーター認証",
+    "operatorCertOk": "OK",
+    "operatorCertFail": "要確認",
+    "mempoolCorpusShort": "コーパス",
+    "utxoReplay": "UTXO 再生",
+    "warn": {
+      "checkpoint_ahead_of_contiguous": "チェックポイントが連続ボディより先行",
+      "assist_peer_pool_empty_during_ibd": "IBD 中にアシストプールが空",
+      "connect_lag_above_threshold": "接続遅延が閾値超過"
+    },
+    "connectBoost": "接続ブースト",
+    "txProcessed": "処理済み Tx",
+    "recoverHeaders": "ヘッダーを復旧",
+    "collapse": "折りたたむ",
+    "loadingLocal": "Loading local data",
+    "updating": "Updating…",
+    "staleSub": "Showing last known data · refreshing"
+  },
+  "overview": {
+    "headerTip": {
+      "label": "ヘッダー先端",
+      "help": "ノードが検証したヘッダーチェーン上の最良ブロック高。同期中はダウンロード済みブロックボディより先行することがあります。",
+      "foot": "最良チェーン高"
+    },
+    "sync": {
+      "label": "同期",
+      "help": "IBD 中の同期進捗。接続済み高さは chainActive；ブロック検証中は保存済みボディが先行することがあります。",
+      "foot": "接続済み vs ヘッダー"
+    },
+    "mempool": {
+      "label": "メモリプール",
+      "help": "ブロックに含まれる前にノードのメモリプールで待機しているトランザクション。",
+      "foot": "メモリ内 tx 数"
+    },
+    "peers": {
+      "label": "ピア",
+      "help": "ノードが開いたアウトバウンド接続と、他ノードからのインバウンド接続（リッスン時）。",
+      "foot": "出 / 入"
+    },
+    "network": {
+      "label": "ネットワーク",
+      "help": "mainnet は本番 Dogecoin。testnet はこのリポジトリの reboot テストチェーンです。"
+    },
+    "chainDisk": {
+      "label": "チェーンディスク",
+      "help": "ネットワーク datadir 下の合計サイズ（headers、rawblocks、indexes）。"
+    },
+    "blockTip": {
+      "label": "ブロック先端",
+      "help": "フルノード上の最良接続ブロック高。SPV モードではヘッダー先端を表示。",
+      "foot": "最良接続ブロック高"
+    },
+    "txProcessed": {
+      "label": "処理済み Tx",
+      "help": "接続チェーン上で索引付けされた累積トランザクション（tx インデックス有効時）。",
+      "foot": "接続チェーン上で索引付け"
+    }
+  },
+  "dgr": {
+    "adminTitle": "DogeGo QUIC リレー（CGNAT）",
+    "adminHint": "Starlink やキャリア NAT 向け UDP/QUIC トンネル。P2P モードが CGNAT、both、classic のとき自動有効。",
+    "liveTitle": "ライブ状態（今回の実行）",
+    "liveHint": "DGR 設定変更後はノードを再起動してください。GET /api/dgr から実行中の QUIC リレーを表示します。",
+    "role": "役割",
+    "roleOff": "オフ",
+    "roleOn": "オン",
+    "roleInbound": "インバウンド rdogego（QUIC サーバー）",
+    "roleOutbound": "アウトバウンドクライアント（CGNAT）",
+    "uptime": "稼働時間",
+    "listenCfg": "待受（設定）",
+    "listenBound": "バインド済み UDP",
+    "advertise": "公開アドバタイズ",
+    "relayPort": "リレーポート",
+    "serviceBit": "サービスビット",
+    "usingRelay": "リレー使用中",
+    "activeRelay": "アクティブリレー",
+    "clients": "クライアント",
+    "discovery": "ディスカバリターゲット",
+    "dialOk": "ダイヤル OK / 失敗",
+    "serverCert": "サーバー証明書 SHA-256",
+    "activeRelayCert": "アクティブリレー証明書",
+    "tlsPin": "TLS ピン OK / 失敗",
+    "rateLimited": "レート制限",
+    "copyPin": "コピー",
+    "useServerCertPin": "ライブサーバー証明書ピンを使用",
+    "starting": "DGR サブシステム起動中…",
+    "warnNoRelay": "アウトバウンドリレー未登録 - リレーシードを追加するか、NODE_DOGEGO_RELAY_CGNAT を持つ P2P ピアを待ってください。"
+  },
+  "modals": {
+    "transaction": "トランザクション",
+    "unlockWallet": "ウォレットをロック解除",
+    "unlockLead": "ウォレットファイルは暗号化されています。支出鍵を読み込む passphrase を入力（Core walletpassphrase）。",
+    "walletPassphrase": "ウォレット passphrase",
+    "unlockTimeout": "ロック解除時間（秒、0 = ロックまで）",
+    "unlockHint": "ダッシュボード PIN とは別。CLI：dogego-cli walletpassphrase \"…\" 600",
+    "unlockBtn": "ロック解除",
+    "confirmSend": "送信を確認",
+    "close": "閉じる"
+  }
+}

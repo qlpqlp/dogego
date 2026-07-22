@@ -1,0 +1,731 @@
+{
+  "meta": {
+    "title": "DogeGo | より高速な Dogecoin フルノード",
+    "description": "DogeGo は Go で書かれたオープンソースの Dogecoin フルノードで、組み込み Web ダッシュボード、GitHub からの自動更新、ウォレットバックアップリマインダー、BlockStep エクスプローラー、JSON-RPC、主要プラットフォーム向けバイナリを備えています。"
+  },
+  "lang": {
+    "aria": "言語を選択",
+    "label": "言語"
+  },
+  "skip": "コンテンツへスキップ",
+  "beta": "Beta",
+  "nav": {
+    "home": "DogeGo ホーム",
+    "openMenu": "メニューを開く",
+    "closeMenu": "メニューを閉じる",
+    "features": "機能",
+    "fullnode": "Full node",
+    "roadmap": "Roadmap",
+    "care": "ケア",
+    "blockstep": "BlockStep",
+    "setup": "セットアップ",
+    "why": "DogeGo を選ぶ理由",
+    "download": "ダウンロード",
+    "developers": "開発者",
+    "foundation": "Dogecoin Foundation",
+    "github": "GitHub",
+    "menu": "Menu",
+    "siteBadge": "website",
+    "groupExplore": "Explore",
+    "groupGetStarted": "Get started",
+    "pinSidebar": "Pin sidebar open",
+    "collapseSidebar": "Collapse to icons",
+    "docs": "Docs"
+  },
+  "hero": {
+    "eyebrow": "GitHub でオープンソース",
+    "title": "より高速な Dogecoin フルノード",
+    "lead": "ポスト量子コミットメント、zstd 圧縮、CGNAT 対応リレー、更新確認・ウォレットバックアップの促し・オペレーター Docs をアプリ内に同梱するブラウザダッシュボードを備えた、初の Dogecoin フルノード。",
+    "download": "ダウンロード",
+    "viewGithub": "GitHub で見る",
+    "note": "Beta: ready to try. Help us test and tune.",
+    "releaseNote": ""
+  },
+  "stats": {
+    "aria": "主なハイライト",
+    "quantum": {
+      "value": "量子対応",
+      "label": "ポスト量子コミットメント"
+    },
+    "testnet": {
+      "value": "T アドレス",
+      "label": "新リブート testnet"
+    },
+    "rpc": {
+      "value": "180+",
+      "label": "JSON-RPC メソッド"
+    },
+    "autoupdate": {
+      "value": "自動更新",
+      "label": "GitHub Releases チェック"
+    },
+    "walletcare": {
+      "value": "ウォレットケア",
+      "label": "バックアップリマインダー · 鍵ローテーション"
+    }
+  },
+  "demo": {
+    "aria": "DogeGo ダッシュボードのインタラクティブプレビュー",
+    "updateBanner": "更新あり - GitHub Releases の DogeGo <strong>0.2.0</strong>",
+    "full": "full",
+    "mainnet": "mainnet",
+    "english": "English",
+    "peersOutIn": "送信 {out} · 受信 {in}",
+    "mempoolTx": "{n} 件",
+    "blockHeight": "ブロック #{n}",
+    "txProcessedM": "{n}M",
+    "blockstepMonths": [
+      "1月",
+      "3月",
+      "6月",
+      "9月",
+      "12月"
+    ],
+    "navWallet": "ウォレット",
+    "navSend": "送信",
+    "navReceive": "受信",
+    "navHistory": "履歴",
+    "navNode": "ノード",
+    "navOverview": "概要",
+    "navBlockStep": "BlockStep",
+    "navSearch": "検索",
+    "navMempool": "Mempool",
+    "navDocs": "Docs",
+    "navExtensions": "Extensions",
+    "navSettings": "設定",
+    "navAnalytics": "分析",
+    "navFeatures": "機能",
+    "navConsole": "コンソール",
+    "overviewTitle": "ダッシュボード",
+    "overviewSub": "このマシンからのライブノードメトリクス。",
+    "searchPlaceholder": "高さ、ハッシュ、txid、またはアドレス…",
+    "searchBtn": "検索",
+    "kpiNodeHealth": "ノード健全性",
+    "kpiHeaderTip": "ヘッダー先端",
+    "kpiSync": "Sync",
+    "kpiMempool": "Mempool",
+    "kpiPeers": "Peers",
+    "kpiTxProcessed": "処理済み Tx",
+    "kpiChainDisk": "チェーンディスク",
+    "chipBundled": "bundled",
+    "chipZstd": "zstd",
+    "chipTxIndex": "tx index",
+    "chipIbdOptimize": "IBD optimize",
+    "chipP2pBoth": "P2P both",
+    "blockstepTitle": "BlockStep",
+    "blockstepSub": "2013 年から今日まで Dogecoin チェーンを歩く。",
+    "blockstepYear2013": "2013",
+    "blockstepSynced": "同期済み",
+    "blockstepRange": "2013年12月〜同期先端",
+    "blockstepYearTip": "先端",
+    "blockstepOpenBlock": "このブロックを開く",
+    "mempoolTitle": "Mempool",
+    "mempoolSub": "准入ポリシー、feefilter、パッケージ制限、RBF。",
+    "mempoolMeta": "124 tx · 0.42 MB · 最小リレー 0.001 DOGE/kB · Full RBF オフ",
+    "featuresTitle": "機能とパリティ",
+    "featuresSub": "ライブ RPC 能力マニフェストとオペレーター cert プローブ。",
+    "featuresPillAuxpow": "AuxPoW Core パリティ",
+    "featuresPillRpc": "180+ JSON-RPC メソッド",
+    "featuresPillMempool": "Mempool コーパス (53/53)",
+    "featuresPillPsbt": "PSBT · BIP32 · HWI",
+    "featuresPillExtensions": "Extensions · zkproof-v1",
+    "featuresNote": "設定 -> Core 接続テスト · キャッシュ cert マトリクス · OpenRPC は <code>/api/openrpc.json</code>",
+    "syncDockMain": "Body IBD · mainnet · {pct}%",
+    "syncDockMeta": "接続 <strong>{connected}</strong> · 保存 <strong>{stored}</strong> · 遅れ <strong>{behind}</strong>",
+    "explainerHead": "ライブダッシュボードのハイライト",
+    "caption": "ループバックダッシュボード <code>localhost:2013</code> - i18n、更新バナー、sync dock、組み込み Docs、オペレーター機能タブは実行中ノードと一致。",
+    "explainer": {
+      "overview": {
+        "title": "概要：オペレーターメトリクス + 検索",
+        "body": "Chart.js スパークライン付きノード健全性 KPI、チェーンディスク内訳、高さ・ハッシュ・txid・アドレス用トップ検索バー。ビルドより新しい release があると GitHub 自動更新バナー。固定 sync dock は接続 vs 保存ボディ、アシストプール、IBD ETA を表示。",
+        "tags": [
+          "自動更新",
+          "スパークライン KPI",
+          "Sync dock",
+          "エクスプローラー検索"
+        ]
+      },
+      "blockstep": {
+        "title": "BlockStep：genesis から先端までのタイムライン",
+        "body": "2013年12月から同期先端まで Dogecoin 史をスクラブ。任意ブロックをエクスプローラーで開き、coinbase と PQ OP_RETURN 出力を検査し、ワンクリックで時代をジャンプ。BlockStep はダッシュボード検索と同じ tx インデックスを共有。",
+        "tags": [
+          "Tx インデックス",
+          "タイムラインスクラブ",
+          "PQ エクスプローラー"
+        ]
+      },
+      "mempool": {
+        "title": "検査可能な Mempool ポリシー",
+        "body": "待機中トランザクションの feerate、standardness、BIP125 RBF 状態を表示。パッケージ制限、最小リレー手数料、Full RBF は dogecoinconf.json の Core フラグ名に一致。設定時は testmempoolaccept 行を Dogecoin Core とライブ比較。",
+        "tags": [
+          "BIP125 RBF",
+          "パッケージ制限",
+          "Core パリティプローブ"
+        ]
+      },
+      "features": {
+        "title": "機能タブ：能力と cert マトリクス",
+        "body": "ライブ RPC 能力マニフェスト、OpenRPC は /api/openrpc.json、オペレーター cert プローブ（AuxPoW パリティ、mempool コーパス、restart-resume、founder チェック）。設定で Core 並列接続をテストし結果を 90 秒キャッシュ。",
+        "tags": [
+          "OpenRPC",
+          "Core 比較",
+          "オペレーター cert"
+        ]
+      }
+    }
+  },
+  "console": {
+    "title": "ターミナルから実行",
+    "lead": "DogeGo は単一の Go バイナリ。GitHub Releases からダウンロードまたはソースからビルドし、ノードを起動。ダッシュボードと JSON-RPC は自動起動。",
+    "step1Title": "ダウンロードまたはビルド",
+    "step1Body": "<code>cd DogeGo && go build -o dogego ./cmd/dogego</code>",
+    "step2Title": "ノードを起動",
+    "step2Body": "<code>./dogego</code> または <code>./dogego node -network mainnet</code>",
+    "step3Title": "ダッシュボードを開く",
+    "step3Body": "ブラウザで <code>localhost:2013</code>。初回起動でセットアップウィザード。",
+    "note": "P2P user-agent はネットワーク上で <code>/DogeGo:0.1.0-beta/</code> を告知。Shibetoshi でも Core でもない。",
+    "windowTitle": "dogego node",
+    "running": "実行中",
+    "logAria": "ノード起動ログ",
+    "lines": [
+      "DogeGo 0.1.0-beta (1.14.9) · より高速な Dogecoin フルノード",
+      "$ cd DogeGo && ./dogego",
+      "Web UI  http://localhost:2013/  ·  初回はセットアップウィザード",
+      "JSON-RPC  http://127.0.0.1:22557/  (有効時 cookie 認証)",
+      "P2P both · 最大 12 送信 · DGR リレー自動設定",
+      "Storage: bundled blk*.dat + zstd · コンパクト tx インデックス",
+      "Update check: github.com/qlpqlp/dogego/releases (毎日)",
+      "Wallet enabled · BIP44 HD · ダッシュボード PIN 任意",
+      "IBD 68.4% · headers 5,412,884 · bodies 追い上げ中 …",
+      "Sync dock: connected 3,701,204 · stored 3,842,880 · assist pool 4",
+      "組み込み Docs タブ · 機能 cert マトリクス · コンソール JSON-RPC プリセット"
+    ]
+  },
+  "features": {
+    "title": "Dogecoin Core を超えて",
+    "lead": "DogeGo は Core が一度も同梱しなかったオペレーターツール、インデックス、最新ネットワークモードを、ブラウザダッシュボード付き Go バイナリ 1 つに同梱。",
+    "items": {
+      "pq": {
+        "title": "ポスト量子コミットメント",
+        "body": "Phase-1 PQ OP_RETURN キャリア (FLC1, DIL2, RCG4) を備えた初の Dogecoin フルノード。自動ウォレットコミットメントで送信、<code>dogego_verifypqcommitment</code> で検証、エクスプローラーで検査。"
+      },
+      "zstd": {
+        "title": "zstd ブロック圧縮",
+        "body": "保存ブロックボディへの任意 zstd と bundled <code>blk*.dat</code> レイアウト。Core は生ブロックを非圧縮のまま。DogeGo はダッシュボードで圧縮率とディスク節約を報告。"
+      },
+      "spv": {
+        "title": "フルノードまたは SPV",
+        "body": "headers-first IBD で完全検証、または軽量 SPV（ヘッダーのみ）で最小ディスク。同一バイナリ、同一ウィザード。初回にプロファイルを選択。"
+      },
+      "cgnat": {
+        "title": "CGNAT と Starlink リレー",
+        "body": "P2P モード：<code>classic</code>、<code>cgnat</code>（送信のみ）、<code>both</code>。最大 12 送信ピアが受信ポート転送なしでブロックを中継。キャリア NAT と Starlink 向け。"
+      },
+      "testnet": {
+        "title": "リブート testnet",
+        "body": "<strong>T</strong>（テスト用）で始まるアドレスの新 testnet。Core と同様の実 scrypt PoW（RelaxedPoW オフ）。Digishield min-diff が低ハッシュ時の solo マイニングを支援。ポート <code>44556</code>。"
+      },
+      "search": {
+        "title": "すべて検索",
+        "body": "デフォルトで完全 tx インデックス。ダッシュボードから高さ、ブロックハッシュ、txid、アドレスを検索。Dogecoin は公開台帳、DogeGo はすべてのエントリを見つけやすく。"
+      },
+      "dashboard": {
+        "title": "Web ダッシュボード",
+        "body": "ループバック UI <code>:2013</code>：KPI カード、自動更新バナー、sync dock、mempool、分析、組み込み Docs、機能 cert マトリクス、5 ステップセットアップウィザード。Qt 不要。"
+      },
+      "rpc": {
+        "title": "180+ JSON-RPC メソッド",
+        "body": "Core 互換 HTTP JSON-RPC、cookie 認証、ZMQ 通知、OpenRPC <code>/api/openrpc.json</code>、機能タブのライブ能力フラグ。"
+      },
+      "wallet": {
+        "title": "組み込み HD ウォレット",
+        "body": "BIP44 HD ウォレットで送受信と履歴、PIN アンロック、任意 WebAuthn 生体認証、coin control、手数料ヒント、BIP32 派生パス付き PSBT、任意 HWI 外部署名者、Core wallet.dat 移行（プローブ + ネイティブ BDB インポート、暗号化はパスフレーズで復号）。"
+      },
+      "autoupdate": {
+        "title": "組み込み自動更新",
+        "body": "ノードは <a href=\"https://github.com/qlpqlp/dogego/releases\">GitHub Releases</a> を毎日チェックし、ビルドより新しい semver タグを検出。概要と設定に release ノート付きバナーと、一致するプラットフォーム資産があれば直接バイナリ DL。"
+      },
+      "backup": {
+        "title": "ウォレットバックアップリマインダー",
+        "body": "初回セットアップは起動前に <code>wallet.json</code> の DL を要求。受信タブで定期的バナーがオフラインバックアップを促す - 30 日 dismiss または HD 鍵をガイド付き sweep で新ウォレットへローテーション。"
+      },
+      "dgr": {
+        "title": "DogeGo relay CGNAT (DGR)",
+        "body": "QUIC tunnel for peers behind carrier NAT. Wizard and Settings configure <code>dogego_relay_cgnat</code> roles (Off / Client / Operator), TLS cert pinning, relay DNS seeds, and live metrics on <code>GET /api/dgr</code>."
+      },
+      "dual": {
+        "title": "Dual mainnet + testnet",
+        "body": "Run both networks from one data folder with the <strong>Mainnet + testnet</strong> wizard profile. Separate <code>mainnet/</code> and <code>testnet/</code> chain dirs, dual dashboards (<code>:2013</code> / <code>:2014</code>), solo mining on testnet only."
+      },
+      "bip152": {
+        "title": "BIP152 compact blocks",
+        "body": "sendcmpct HB negotiation with up to three peers, cmpctblock announce/reconstruct, and getblocktxn fallback. Live probe at <code>GET /api/core-bip152-probe</code>."
+      },
+      "mining": {
+        "title": "Miner ready (Core parity)",
+        "body": "<code>getblocktemplate</code> with Digishield <code>NextBlockBits</code> + BIP22 longpoll, <code>createauxblock</code>/<code>submitauxblock</code> for merge-mining, and reboot-testnet solo mining with mempool txs. Certified live via <code>GET /api/core-mining-probe</code> and <code>dogego cert mining</code>."
+      },
+      "bbpow": {
+        "title": "BBPoW research (Bitcoin + DOGE)",
+        "body": "Beta extension <code>dogego.bbpow</code>: research toward Bitcoin miners securing Dogecoin the way Litecoin already does via AuxPoW. Same SHA-256 ASICs keep mining Bitcoin; Litecoin Scrypt merge-mining stays. Testnet catalog package with proof verify RPC. Research only. Not mainnet consensus."
+      },
+      "doginals": {
+        "title": "Doginals / DRC-20 L2",
+        "body": "Beta extension <code>dogego.doginals</code>: index L1 Doginals/DRC-20 data carriers, create NFT/token/image metadata off-chain, and sync L2 assets among DogeGo peers (<code>doginals-v1</code>). Friendly dashboard UI. Mainnet + testnet. No consensus change."
+      },
+      "mempoolPolicy": {
+        "title": "Mempool relay policy",
+        "body": "Wizard and Settings expose Core-shaped flags: <code>maxmempool</code>, <code>minrelaytxfee</code>, <code>incrementalrelayfee</code>, package limits, Full RBF, datacarrier, and bare multisig - plus a 58-template offline admission corpus."
+      },
+      "ibd": {
+        "title": "Parallel block download",
+        "body": "Multi-peer IBD with block-assist workers, relay lanes, height striping, and peer scores. UTXO snapshot body replay and contiguous ramp on restart."
+      },
+      "tray": {
+        "title": "System tray & notifications",
+        "body": "Optional tray icon: open dashboard, check/download/install updates with SHA256 verify, and native OS notifications when a new GitHub release is detected."
+      },
+      "extensions": {
+        "title": "Installable extensions",
+        "body": "Install zip packages with <code>dogego.extension.json</code>, enable/disable from Settings or RPC, and ship subprocess or wasm plugins. Built-in <code>dogego.zkl2</code> (ZK L2), beta <code>dogego.doginals</code> (Doginals/DRC-20 L2), and <code>dogego.bbpow</code> (Bitcoin-backed mining research). Extensions may use allowlisted wallet RPC when granted <code>wallet_rpc</code> (authenticated dashboard/RPC; no key export)."
+      },
+      "segwit": {
+        "title": "SegWit ready",
+        "body": "BIP141 interpreter, witness serialization, and weight/vsize helpers ship today, Core-aligned with Dogecoin Core. CLTV is already active. Softfork follows Core's schedule; see <a href=\"https://github.com/qlpqlp/dogego/blob/main/DogeGo/docs/SEGWIT_STATUS.md\">SEGWIT_STATUS.md</a> for upgrade effects on nodes and miners."
+      }
+    }
+  },
+  "fullnode": {
+    "title": "Full Dogecoin node - what DogeGo runs today",
+    "lead": "Headers-first IBD、ネイティブ Go ストレージ、Core 互換 JSON-RPC、オペレーターツールを1バイナリに。メインネットのコンセンサスは Dogecoin Core に従います（プロトコルフォークなし）。",
+    "liveHeading": "Live in the app & wizard",
+    "live": {
+      "sync": {
+        "title": "Chain sync & IBD",
+        "body": "Headers journal, raw block bodies (bundled <code>blk*.dat</code> or per-file), block-assist peers, auto journal recovery, forward body fill, and sync dock with assist pool metrics."
+      },
+      "consensus": {
+        "title": "Validation & mempool",
+        "body": "Block/header checks, AuxPoW CAuxPow parity, in-memory UTXO cache with snapshot replay, 58-template mempool admission corpus, BIP125 RBF, feefilter, savemempool/loadmempool."
+      },
+      "p2p": {
+        "title": "P2P networking",
+        "body": "<code>classic</code> / <code>cgnat</code> / <code>both</code>, UPnP/NAT-PMP, learned addr store, addnode, setban, multi-peer relay, DGR QUIC tunnel, BIP152 v1 compact blocks."
+      },
+      "rpc": {
+        "title": "JSON-RPC & ZMQ",
+        "body": "180+ methods, cookie auth, getblocktemplate BIP22, mining/aux RPC, estimatesmartfee, ZMQ hash/raw block+tx notifications, OpenRPC and RPC cookbooks in Settings -> Tools."
+      },
+      "wallet": {
+        "title": "Wallet & migration",
+        "body": "BIP44 HD per network, wizard backup + optional <code>encryptwallet</code>, fill-to-target <code>keypoolrefill</code>, PSBT/HWI, Core <code>wallet.dat</code> import + pool replay, coin control, Tx Flight, and <code>wallet.db</code> scan index for fast history (auto-rescan when the index lags)."
+      },
+      "ops": {
+        "title": "Operator UX",
+        "body": "Five-step wizard with five profiles, preflight (firewall, ports, CGNAT, founder), OS autostart, GitHub auto-update, 14 live cert web probes, embedded Docs, analytics Pebble sidecar, <code>dogego cert offline</code> gates."
+      },
+      "extensions": {
+        "title": "Extensions, ZK L2, Doginals & BBPoW",
+        "body": "Catalog install from GitHub, zip upload, wasm/subprocess hosts, runtime permission checks, built-in <code>dogego.zkl2</code> (<code>zkproof-v1</code>), beta <code>dogego.doginals</code> (<code>doginals-v1</code> L2 for inscriptions/NFTs), and <code>dogego.bbpow</code> (Bitcoin-backed mining research, testnet). Dynamic RPC <code>dogego_ext_&lt;id&gt;_&lt;method&gt;</code>."
+      }
+    }
+  },
+  "roadmap": {
+    "title": "Roadmap",
+    "lead": "Dogecoin Core-compatible Go full node. <strong>Mainnet consensus follows Core</strong> (no protocol forks). Sync, wallet migration, mining, RPC, and operator tooling ship today. Full checklist: <code>DogeGo/ROADMAP.md</code>.",
+    "doneTitle": "Major milestones",
+    "done": {
+      "p2p": "CGNAT / classic / both, DGR relay phases 1-4, UPnP, multi-peer IBD, BIP152 v1 HB + offline soak cert, addrman buckets + slot indices + eclipse-pressure eviction",
+      "ibd": "Headers-first body IBD, IBD optimize + auto dbcache, UTXO snapshot replay/quarantine, connect catch-up, stall recovery",
+      "consensus": "Scrypt PoW, AuxPoW check, differential harness (headers/blocks/script/mempool offline)",
+      "store": "Header segments, bundled+zstd raw blocks, UTXO cache crash quarantine/tmp purge, crash/corruption recovery suite",
+      "mempool": "58-template offline corpus, BIP125 RBF (PaysForRBF descendant conflict fees), submitpackage CPFP package feerate, package DAG property tests, live testmempoolaccept, 24/24 stateful reboottestnet map (offline)",
+      "rpc": "180+ JSON-RPC, OpenRPC, ZMQ, 17 live Features cert gates (mining GBT/aux + PQ), <code>dogego cert</code> offline / operator / pq / wallet-import / bip152-soak",
+      "wallet": "BIP44 HD wallet, fill-to-target keypoolrefill, Core wallet.dat pool replay, encrypt/unlock, coin control, HWI signer_cmd + mocksigner e2e, OS autostart",
+      "mining": "generatetoaddress, createauxblock/submitauxblock, reboot-testnet solo miner with mempool txs",
+      "ui": "Wizard, BlockStep, wallet tabs, Features cert matrix, GitHub auto-update, system tray",
+      "pq": "PQ OP_RETURN + carrier (RPC/web send; needs more soak testing)",
+      "extensions": "Extensions catalog (wasm/subprocess), dogego.zkl2 ZK L2, dogego.doginals L2, beta dogego.bbpow (Bitcoin-backed DOGE mining research)",
+      "segwit": "SegWit ready: BIP141 machinery Core-aligned (CLTV active)"
+    }
+  },
+  "care": {
+    "title": "組み込みオペレーター体験",
+    "lead": "DogeGo は sync と RPC 以上 - ループバックダッシュボードに Core が一箇所に同梱しなかった日常ツール。",
+    "items": {
+      "releases": {
+        "title": "Release 通知",
+        "body": "正規リポ <code>github.com/qlpqlp/dogego</code> への毎日更新チェック。CLI もヒント表示；Web UI または <code>POST /api/update/dismiss</code> で release ごとに dismiss。"
+      },
+      "backup": {
+        "title": "30 日ごとのバックアップ促し",
+        "body": "受信タブにウォレットバックアップバナー（コピー DL または 30 日スヌーズまで）。ウォレット有効時、セットアップウィザードはバックアップ確認まで <strong>保存して起動</strong> をブロック。"
+      },
+      "rotation": {
+        "title": "HD 鍵ローテーション",
+        "body": "ワンクリック prepare -> sweep -> verify -> finalize で残高を新 BIP44 ウォレットへ移し旧鍵をアーカイブ - 先にバックアップ必須。"
+      },
+      "autostart": {
+        "title": "OS ログイン自動起動",
+        "body": "Windows（タスクスケジューラ）、Linux（systemd user）、macOS（LaunchAgent）でサインイン時登録。ウィザードと機能タブは <code>dogego cert autostart</code> と同じプローブ。"
+      },
+      "txflight": {
+        "title": "Tx Flight 送信バー",
+        "body": "送信時のアニメーション進捗：署名、ブロードキャスト、mempool 待機、確認 - 履歴またはブロックエクスプローラーへワンクリック。"
+      },
+      "i18n": {
+        "title": "6 言語ダッシュボード",
+        "body": "English、Deutsch、Français、Português、日本語、中文 - ウィザードとダッシュボードで同じロケールピッカー。"
+      },
+      "pin": {
+        "title": "PIN と WebAuthn ロック",
+        "body": "セットアップまたは設定で任意 6 桁ダッシュボード PIN。デバイス生体認証 (WebAuthn) と組み合わせ、送信とウォレットビューを毎回入力せずアンロック。"
+      },
+      "docs": {
+        "title": "組み込み Docs タブ",
+        "body": "オペレーター runbook、統合ガイド、リポ markdown を <code>GET /api/docs</code> でブラウザ表示 - ノード調整中 GitHub タブ不要。"
+      },
+      "cert": {
+        "title": "ライブ cert マトリクス",
+        "body": "機能タブで Core パリティ数、OpenRPC <code>/api/openrpc.json</code>、10 のライブオペレータープローブ（compare、mempool、autostart、founder、restart-resume、end-to-end）。"
+      },
+      "syncdock": {
+        "title": "固定 sync dock",
+        "body": "IBD 中の Core 風フッターバー：接続 vs 保存ボディ、アシストプール、DL レート、接続ラグ、ETA、展開可能ライブログ - タブ閲覧中も常に表示。"
+      },
+      "firewall": {
+        "title": "ファイアウォールと preflight",
+        "body": "セットアップウィザードがポート、CGNAT ヒント、任意 OS ファイアウォールルールを自動チェック。要対応時に概要へコピペ可能な昇格コマンド。"
+      },
+      "history": {
+        "title": "スケールする履歴",
+        "body": "無限スクロール tx フィード、サーバー側検索とタイプフィルタ、CSV エクスポート、solo マイナー向け UTXO キャッシュ fast path、スクロール位置を保持するソフト更新。"
+      },
+      "extensions": {
+        "title": "Extensions catalog",
+        "body": "Settings -> Extensions lists catalog packages. Install from GitHub or zip, enable <code>dogego.zkl2</code> for ZK L2, <code>dogego.doginals</code> for Doginals/DRC-20 L2, or beta <code>dogego.bbpow</code> (testnet) for Bitcoin-backed mining research. Wallet only via authenticated allowlisted RPC when enabled in the extension Settings."
+      }
+    }
+  },
+  "blockstep": {
+    "title": "BlockStep：楽しく Dogecoin を探索",
+    "lead": "Dogecoin は公開台帳、すべてのブロックと tx を見つけやすく。DogeGo がチェーンをインデックスし、BlockStep がインタラクティブタイムラインに。",
+    "labelGenesis": "Genesis 2013",
+    "labelHalving": "Joke era",
+    "labelToday": "今日",
+    "labelTip": "先端",
+    "listSearch": "概要またはエクスプローラーから高さ、ハッシュ、txid、アドレスで検索",
+    "listTimeline": "BlockStep タイムライン：genesis から先端までスクラブ、任意ブロックへ",
+    "listIndex": "フラット <code>indexes/tx/</code> インデックス、Core chainstate レイアウトではない",
+    "listPq": "PQ エクスプローラーパネル：ポスト量子コミットメントスクリプトを検査"
+  },
+  "wizard": {
+    "title": "5 ステップセットアップウィザード",
+    "lead": "初回は <code>/setup</code> でガイド付きウィザード。プロファイル選択、自動 preflight、bundled+zstd ストレージ設定、任意 PIN・OS 自動起動・ウォレットバックアップで保存。",
+    "aria": "アニメーションセットアップウィザードプレビュー",
+    "setupBadge": "setup",
+    "firstRun": "初回起動",
+    "stepKicker": "ステップ {n}/5 · {label}",
+    "steps": {
+      "profile": "プロファイル",
+      "data": "データ",
+      "network": "ネットワーク",
+      "sync": "Sync",
+      "finish": "完了"
+    },
+    "progressAria": "セットアップ進捗",
+    "panels": {
+      "profileTitle": "セットアップを選択",
+      "profileHint": "カードをタップ - 各プロファイルがネットワーク、ノードモード、ウォレット、P2P デフォルトを設定。",
+      "profileTryTestnet": "testnet を試す",
+      "profileTryTestnetSub": "フルノード · ウォレット ON · 初回向け",
+      "profileMainnetFull": "Mainnet フルノード",
+      "profileMainnetFullSub": "本番 Dogecoin · 長い sync、完全検証",
+      "profileMainnetWallet": "Mainnet + ウォレット",
+      "profileMainnetWalletSub": "送受信 · 完了時任意 6 桁ダッシュボード PIN",
+      "profileLightSpv": "ライト SPV + ウォレット",
+      "profileLightSpvSub": "ヘッダーのみ · 低ディスク · CGNAT 対応",
+      "profileDual": "Mainnet + testnet",
+      "profileDualSub": "Two nodes · wallet on both · mine on testnet",
+      "advancedToggle": "後のステップで詳細オプションを表示",
+      "dataTitle": "データディレクトリとネットワーク",
+      "dataHint": "Go ネイティブレイアウト - <code>headers.bin</code>、<code>rawblocks/</code>、<code>indexes/</code> - Core <code>chainstate/</code> ではない。",
+      "dataDirLabel": "データディレクトリ",
+      "dataDirValue": "./dogedata",
+      "dataTestnet": "Testnet",
+      "dataTestnetSub": "安全なサンドボックス",
+      "dataMainnet": "Mainnet",
+      "dataFullNode": "フルノード",
+      "dataFullNodeSub": "ヘッダー + ボディ",
+      "dataSpv": "SPV (light)",
+      "dataFoot": "ピア空欄 -> 自動 DNS + addrman 発見。",
+      "networkTitle": "ネットワークと P2P",
+      "networkHint": "接続、ファイアウォール、UPnP、sync 前の自動 preflight。",
+      "networkBoth": "Both",
+      "networkBothSub": "受信 + 送信 · DGR リレー",
+      "networkCgnat": "CGNAT",
+      "networkClassic": "Classic",
+      "preflightP2p": "P2P ポート到達可能",
+      "preflightWebui": "Web UI ループバック <code>localhost:2013</code>",
+      "preflightUpnp": "リスン時 UPnP 自動",
+      "syncTitle": "Sync とストレージ",
+      "syncHint": "推奨デフォルト：bundled <code>blk*.dat</code>、zstd 圧縮、コンパクト tx インデックス。",
+      "syncBundled": "Bundled ブロックストレージ",
+      "syncZstd": "保存ブロックを圧縮 (zstd)",
+      "syncTxIndex": "トランザクションインデックス",
+      "syncEmbedTx": "インデックスに完全 tx バイトを埋め込み",
+      "syncAnalytics": "分析 sidecar (Pebble)",
+      "syncIbdOptimize": "Optimize initial block download",
+      "syncDbcache": "DB cache / UTXO (auto RAM)",
+      "syncOn": "on",
+      "syncOff": "off",
+      "syncFoot": "ブロック sync worker：自動（IBD 中 2-6 peers）。",
+      "finishTitle": "完了して起動",
+      "finishHint": "ダッシュボードセキュリティ、OS 自動起動、ウォレットバックアップ、設定サマリー。",
+      "finishBackupBanner": "<strong>ウォレットバックアップ必須</strong> - 保存して起動の前に <code>wallet.json</code> を DL",
+      "finishPin": "6 桁ダッシュボード PIN（任意）",
+      "finishAutostart": "OS サインイン時に起動",
+      "finishReview": "testnet · full · P2P both · bundled+zstd · wallet on",
+      "finishStartBtn": "保存してノード起動"
+    },
+    "list": {
+      "i18n": "6 UI 言語（English、Deutsch、Français、日本語、中文、Português）",
+      "preflight": "自動 preflight - ファイアウォール、ポート、CGNAT ヒント、リブート testnet の founder チェック",
+      "backup": "完了時ウォレットバックアップゲート；受信タブは DL または dismiss まで 30 日ごとにリマインド",
+      "autostart": "OS ログイン自動起動、<code>dogego cert autostart</code> パリティプローブ付き",
+      "dual": "Dual mainnet+testnet profile with shared datadir and separate RPC/dashboard ports",
+      "ibd": "IBD optimize on by default; auto dbcache sizes UTXO RAM from free memory",
+      "mempool": "Advanced mempool relay policy on finish (maxmempool, min relay, package limits, Full RBF)",
+      "encrypt": "Optional wallet encryption on finish (Core encryptwallet) after backup download",
+      "dgr": "DGR relay auto-configured when P2P mode is both or cgnat",
+      "tray": "System tray, <code>dogecoin://</code> link handler, and optional no-browser / no-webui flags"
+    }
+  },
+  "compare": {
+    "title": "オペレーターが DogeGo を選ぶ理由",
+    "lead": "DogeGo is beta. Run it, break things, report what needs tuning. It ships capabilities Core does not (web dashboard, CGNAT relay, analytics, extensions).",
+    "headers": {
+      "cap": "能力",
+      "doge": "DogeGo",
+      "core": "Dogecoin Core"
+    },
+    "rows": {
+      "browserDashboard": {
+        "cap": "ブラウザダッシュボード",
+        "doge": ":2013 に組み込み",
+        "core": "Qt デスクトップのみ"
+      },
+      "setupWizard": {
+        "cap": "セットアップウィザード",
+        "doge": "5 ステップ · プロファイル · preflight · ウォレットバックアップ",
+        "core": "手動設定"
+      },
+      "blockstepExplorer": {
+        "cap": "BlockStep エクスプローラー",
+        "doge": "インタラクティブタイムライン",
+        "core": "同梱エクスプローラーなし"
+      },
+      "postQuantum": {
+        "cap": "ポスト量子送信",
+        "doge": "FLC1/DIL2/RCG4 コミットメント",
+        "core": "利用不可"
+      },
+      "zstdCompression": {
+        "cap": "zstd ブロック圧縮",
+        "doge": "任意、比率メトリクス付き",
+        "core": "非圧縮 blocks/"
+      },
+      "cgnatRelay": {
+        "cap": "CGNAT / Starlink リレー",
+        "doge": "送信マルチピアモード",
+        "core": "受信ポート必要"
+      },
+      "spvMode": {
+        "cap": "SPV モード",
+        "doge": "ヘッダーのみプロファイル",
+        "core": "別ツール"
+      },
+      "analyticsSidecar": {
+        "cap": "分析 sidecar",
+        "doge": "UI 内 Pebble チャート",
+        "core": "外部ツール"
+      },
+      "testnetAddresses": {
+        "cap": "Testnet T アドレス",
+        "doge": "リブート testnet · Digishield min-diff",
+        "core": "レガシー testnet"
+      },
+      "autoUpdate": {
+        "cap": "自動更新",
+        "doge": "GitHub Releases · Web バナー · CLI 通知",
+        "core": "手動 DL"
+      },
+      "walletBackupCare": {
+        "cap": "ウォレットバックアップケア",
+        "doge": "セットアップゲート · 30 日リマインダー · 鍵ローテーション",
+        "core": "オペレーター責任"
+      },
+      "osAutostart": {
+        "cap": "OS 自動起動",
+        "doge": "ログイン自動起動 + cert プローブ",
+        "core": "手動サービス設定"
+      },
+      "dashboardI18n": {
+        "cap": "ダッシュボード i18n",
+        "doge": "ウィザード + UI で 6 言語",
+        "core": "英語 Qt のみ"
+      },
+      "coreSideBySide": {
+        "cap": "Core 並列プローブ",
+        "doge": "ライブ compare · cert マトリクス · コンソールプリセット",
+        "core": "外部スクリプト"
+      },
+      "coreWalletMigration": {
+        "cap": "Core wallet.dat 移行",
+        "doge": "ネイティブ BDB プローブ · インポート · 暗号化パスフレーズ · Core RPC フォールバック",
+        "core": "ネイティブ wallet.dat 形式"
+      },
+      "productionCertification": {
+        "cap": "本番認証",
+        "doge": "進行中 (beta)",
+        "core": "確立"
+      }
+    }
+  },
+  "networks": {
+    "title": "ネットワークとポート",
+    "headers": {
+      "service": "サービス",
+      "mainnet": "Mainnet",
+      "rebootTestnet": "リブート testnet"
+    },
+    "rows": {
+      "webDashboard": {
+        "service": "Web ダッシュボード",
+        "mainnet": "localhost:2013",
+        "rebootTestnet": "localhost:2013"
+      },
+      "jsonRpc": {
+        "service": "JSON-RPC",
+        "mainnet": "127.0.0.1:22557",
+        "rebootTestnet": "127.0.0.1:18556"
+      },
+      "p2p": {
+        "service": "P2P",
+        "mainnet": ":22556",
+        "rebootTestnet": ":44556"
+      },
+      "configFile": {
+        "service": "設定ファイル",
+        "value": "データディレクトリ内の dogecoinconf.json"
+      },
+      "testnetAddresses": {
+        "service": "Testnet アドレス",
+        "value": "リブート testnet：すべての P2PKH アドレスは T で始まる（プレフィックス 0x41）"
+      }
+    }
+  },
+  "download": {
+    "title": "DogeGo をダウンロード",
+    "lead": "Go がサポートする全プラットフォーム向けビルド済みバイナリ。",
+    "checkingTitle": "Checking GitHub Releases…",
+    "checkingBody": "Querying qlpqlp/dogego, dogeorg/dogego, and dogecoinfoundation/dogego for the latest semver tag.",
+    "soonTitle": "Pre-built binaries - available soon",
+    "soonBody": "No GitHub Release has been published yet on the configured repos. Build from source below, or watch <a href=\"https://github.com/qlpqlp/dogego\" rel=\"noopener noreferrer\" target=\"_blank\">github.com/qlpqlp/dogego</a> for the first tagged release.",
+    "soonCta": "Build from source",
+    "soonLink": "Available soon",
+    "soonHeroNote": "No release published yet - build from source or check back soon.",
+    "readyTitle": "Latest release {version}",
+    "readyBody": "Newest semver from GitHub Releases (<strong>{source}</strong>). CI publishes <code>dogego-windows-amd64.exe</code>, <code>dogego-linux-amd64</code>, <code>dogego-darwin-amd64</code>, and <code>dogego-darwin-arm64</code> with matching <code>.sha256</code> sidecars when tagged.",
+    "readyHeroNote": "Latest on {source}",
+    "heroCta": "Download {version}",
+    "viewSource": "View source on GitHub",
+    "assetsHeading": "Download by platform",
+    "getReleases": "Releases を取得",
+    "platforms": {
+      "windows": {
+        "name": "Windows",
+        "arch": "amd64 · arm64 · 386"
+      },
+      "macos": {
+        "name": "macOS",
+        "arch": "amd64 · arm64 (Apple Silicon)"
+      },
+      "linux": {
+        "name": "Linux",
+        "arch": "amd64 · arm64 · arm · 386 · ppc64le · riscv64"
+      },
+      "bsd": {
+        "name": "BSD と Unix",
+        "arch": "FreeBSD · OpenBSD · NetBSD · Solaris · AIX"
+      }
+    },
+    "downloadLink": "ダウンロード",
+    "buildTitle": "ソースからビルド",
+    "buildEditorTitle": "bash · dogego",
+    "buildCode": "git clone https://github.com/qlpqlp/dogego.git\ncd dogego/DogeGo\ngo build -o dogego ./cmd/dogego\n./dogego",
+    "buildNote": "<a href=\"https://go.dev/dl/\" rel=\"noopener noreferrer\" target=\"_blank\">Go 1.22+</a> が必要。アプリソースは <code>DogeGo/</code>、Web サイトはリポルート <code>docs/</code>。",
+    "copyCode": "Copy",
+    "copiedCode": "Copied",
+    "copyCodeAria": "Copy build commands",
+    "viewRepo": "リポジトリを見る"
+  },
+  "developers": {
+    "title": "開発者向け",
+    "lead": "Dogecoin Core と同じ JSON-RPC 形状で統合。",
+    "openrpc": {
+      "title": "OpenRPC と cookbook",
+      "body": "ライブ能力マニフェスト <code>/api/capabilities</code>、OpenRPC <code>/api/openrpc.json</code>。"
+    },
+    "zmq": {
+      "title": "ZMQ 通知",
+      "body": "hash blocks、hash transactions、raw blocks、raw transactions を購読。"
+    },
+    "auth": {
+      "title": "認証とレート制限",
+      "body": "Cookie 認証、HTTP basic auth、IP 許可リスト、設定可能レート制限。"
+    },
+    "extensions": {
+      "title": "Extension RPC",
+      "body": "Third-party packages register <code>dogego_ext_&lt;id&gt;_&lt;method&gt;</code> handlers. See <code>DogeGo/docs/EXTENSIONS.md</code>, <code>dogego.zkl2</code> (submitproof, verifyproof, P2P zkinv), <code>dogego.doginals</code> (indexrange, putasset, P2P dinv), and beta <code>dogego.bbpow</code> (compare, verifyproof, buildcommitment)."
+    }
+  },
+  "disclaimer": {
+    "title": "Beta: try it",
+    "body": "DogeGo is a pure-Go Dogecoin full node with Core-compatible consensus, RPC, wallet migration, and mining. It is <strong>beta</strong>: please run it on testnet or mainnet, try the workflows you care about, and tell us what needs tuning. Storage uses DogeGo native layout (not Core LevelDB); optional long-haul self-cert is in the dashboard Features tab (<code>dogego cert live-soak</code>)."
+  },
+  "footer": {
+    "tagline": "より高速な Dogecoin フルノード、Go で書かれブラウザから運用。",
+    "uaLabel": "P2P user-agent",
+    "uaNote": "ネットワーク上 DogeGo として告知。Shibetoshi でも Core でもない。任意コメント：<code>/DogeGo:0.1.0-beta(your-note)/</code>",
+    "productHeading": "製品",
+    "productFullnode": "Full node",
+    "productRoadmap": "Roadmap",
+    "productFeatures": "機能",
+    "productCare": "オペレーターケア",
+    "productBlockstep": "BlockStep",
+    "productWizard": "セットアップウィザード",
+    "productVsCore": "vs Core",
+    "productDownload": "ダウンロード",
+    "devHeading": "開発者",
+    "devRpc": "JSON-RPC",
+    "devGithub": "GitHub",
+    "devReleases": "Releases",
+    "devNetworks": "ポートとネットワーク",
+    "copyright": "DogeGo v0.1.0-beta · Dogecoin Node · dogego.org",
+    "disclaimer": "メインネットのコンセンサスは Core に従います（プロトコルフォークなし）。ネイティブ Go ストレージ。Features / dogego cert live-soak で任意セルフ証明。",
+    "devDocs": "Documentation"
+  },
+  "guide": {
+    "title": "DogeGo documentation",
+    "lead": "Read how DogeGo works without installing. Same guides as the in-app Docs tab, plus Satoshi Nakamoto Bitcoin white paper.",
+    "search": "Search docs...",
+    "back": "Back",
+    "index": "Index",
+    "download": "Download DogeGo",
+    "loading": "Loading documentation...",
+    "toc": "ドキュメントメニュー",
+    "tocOpen": "ドキュメントメニューを開く",
+    "tocClose": "ドキュメントメニューを閉じる"
+  }
+}

@@ -1,0 +1,1416 @@
+{
+  "meta": {
+    "code": "zh",
+    "name": "Simplified Chinese",
+    "native": "中文"
+  },
+  "lang": {
+    "label": "语言",
+    "choose": "选择语言",
+    "aria": "选择界面语言"
+  },
+  "common": {
+    "back": "返回",
+    "next": "下一步",
+    "save": "保存配置",
+    "saveStart": "保存并启动节点",
+    "beta": "测试版",
+    "preRelease": "预发布软件",
+    "lockWallet": "锁定钱包",
+    "toggleSidebar": "切换侧边栏",
+    "pinSidebar": "固定侧边栏展开",
+    "collapseSidebar": "折叠为图标",
+    "refresh": "刷新",
+    "run": "运行",
+    "show": "显示 {name}",
+    "helpAlways": "点击时固定帮助文本（保持显示直到关闭）",
+    "on": "开",
+    "off": "关",
+    "yes": "是",
+    "no": "否",
+    "close": "关闭",
+    "cancel": "取消",
+    "unlock": "解锁"
+  },
+  "nav": {
+    "wallet": "钱包",
+    "node": "节点",
+    "send": "发送",
+    "receive": "接收",
+    "transactions": "历史",
+    "overview": "概览",
+    "blockstep": "BlockStep",
+    "explorer": "搜索",
+    "mempool": "内存池",
+    "guide": "指南",
+    "settings": "设置",
+    "analytics": "分析",
+    "docs": "文档",
+    "features": "功能",
+    "console": "控制台",
+    "extensions": "扩展",
+    "extensionsGroup": "扩展",
+    "home": "首页"
+  },
+  "wizard": {
+    "title": "DogeGo - 设置",
+    "firstRun": "首次运行",
+    "stepKicker": "第 {n} 步，共 {total} 步",
+    "steps": {
+      "profile": "配置",
+      "data": "数据",
+      "network": "网络",
+      "sync": "同步",
+      "finish": "完成"
+    },
+    "stepMeta": [
+      {
+        "title": "选择设置方案",
+        "desc": "选择一个配置方案 - 可在后续页面微调细节。"
+      },
+      {
+        "title": "数据文件夹",
+        "desc": "链数据存放位置。网络与模式由所选配置决定。"
+      },
+      {
+        "title": "网络与检查",
+        "desc": "P2P 连接、防火墙及自动端口/CGNAT 检查。"
+      },
+      {
+        "title": "同步与索引",
+        "desc": "全节点下载选项（SPV 模式下跳过）。"
+      },
+      {
+        "title": "仪表盘与完成",
+        "desc": "Web 界面、可选 PIN，然后启动节点。"
+      }
+    ],
+    "profileEssential": "点击下方卡片。每个选项会为您设置网络、节点模式、钱包和 P2P 默认值。",
+    "profiles": {
+      "firstRun": {
+        "title": "试用测试网",
+        "sub": "全节点 · 启用钱包 · 适合首次运行",
+        "tags": [
+          "testnet",
+          "full",
+          "auto peers"
+        ]
+      },
+      "mainnet": {
+        "title": "主网全节点",
+        "sub": "正式 Dogecoin - 同步时间较长，完整验证",
+        "tags": [
+          "mainnet",
+          "full",
+          "relay"
+        ]
+      },
+      "mainnetWallet": {
+        "title": "主网 + 钱包",
+        "sub": "全节点含发送/接收 - 完成时设置仪表盘 PIN",
+        "tags": [
+          "mainnet",
+          "wallet",
+          "full"
+        ]
+      },
+      "spvWallet": {
+        "title": "轻量 SPV + 钱包",
+        "sub": "仅区块头 · 占用磁盘少 · 适合 CGNAT",
+        "tags": [
+          "testnet",
+          "spv",
+          "cgnat"
+        ]
+      }
+    },
+    "showAdvanced": "在后续步骤显示高级选项",
+    "dataEssential": "选择数据文件夹和网络。除非有已知种子节点，否则保持对等节点自动发现。",
+    "whatSetupDoes": "此设置的作用",
+    "networkEssential": "启动前的连接与自动检查。使用 Starlink 或无法端口转发时请选择 cgnat。",
+    "syncEssential": "全节点会下载整条链。推荐磁盘布局默认开启：打包 blk*.dat 文件、zstd 压缩及紧凑交易索引（完整区块浏览器搜索仍可用）。",
+    "spvSkip": "SPV 模式 - 不使用全节点同步选项。继续配置 P2P。",
+    "finishEssential": "仪表盘默认监听 127.0.0.1。可设置可选 PIN 以保护发送和钱包视图。",
+    "backupTitle": "备份钱包（必需）",
+    "backupBody": "下载 wallet.json 副本并离线妥善保存。没有备份则设备故障时无法恢复资金。",
+    "backupPending": "请下载钱包备份，并确认已安全保存。",
+    "backupConfirm": "备份已下载 - 安全保存后请勾选下方复选框。",
+    "backupReady": "已确认备份。可以启动节点。",
+    "backupAck": "我已将钱包备份保存在安全的地方",
+    "backupAckRequired": "启动前请确认已保存钱包备份。",
+    "downloadBackup": "下载备份",
+    "dashboardApi": "仪表盘与 API",
+    "dashboardSecurity": "仪表盘安全（推荐）",
+    "optionalFlags": "可选标志",
+    "advancedRelay": "高级 - 内存池中继策略（可选）",
+    "reviewTitle": "检查",
+    "preflightTitle": "自动检查",
+    "preflightRerun": "重新运行",
+    "preflightHint": "打开此步骤时运行 - 防火墙、端口及 CGNAT 提示。",
+    "footLove": "为 Dogecoin 社区倾情编写。",
+    "footSaved": "已保存至 dogecoinconf.json - 可随时在仪表盘设置中修改。",
+    "backupEncryptWarning": "除非您加密钱包，否则此文件包含明文 HD 种子及所有私钥（含导入）。在上一步设置仪表盘 PIN（仅锁定此 UI），启动后在控制台执行 encryptwallet 并使用强 passphrase 加密磁盘上的 wallet.json。请像对待现金一样保管备份，尽可能离线加密存储。",
+    "pinNotWalletEncrypt": "可选：不勾选则无需仪表盘 PIN 即可启动。启用时两个字段必须恰好 6 位数字且一致。仪表盘 PIN 哈希存储于 web_security.json，仅保护此浏览器会话；不会加密 wallet.json。启动后使用 encryptwallet 进行磁盘密钥加密。",
+    "walletEncryptTitle": "启动时加密钱包",
+    "walletEncryptEnable": "立即加密 wallet.json（Core encryptwallet）",
+    "walletEncryptHint": "建议在上文下载备份后执行。备份文件为明文，请离线保存。加密后节点以锁定状态启动；使用此 passphrase 解锁以发送（仪表盘或 dogego-cli walletpassphrase）。",
+    "walletPass": "钱包 passphrase",
+    "walletPassConfirm": "确认 passphrase",
+    "walletPassRequired": "启用加密时请填写钱包 passphrase。",
+    "walletPassMismatch": "钱包 passphrase 与确认必须一致。"
+  },
+  "settings": {
+    "title": "设置",
+    "essentialDesc": "在此修改网络、数据文件夹和仪表盘 PIN。修改路径或 P2P 后请重启节点。",
+    "advancedDesc": "保存至 dogecoinconf.json。大多数选项在重启 dogego node 后生效。将鼠标悬停在各字段的 ? 上查看简要说明。",
+    "servicesTitle": "服务（本次运行）",
+    "servicesHint": "立即启动或停止子系统。下方各标签页中的设置除另有说明外，均在下次启动节点时生效。",
+    "tabs": {
+      "general": "常规",
+      "wallet": "钱包",
+      "sync": "同步与索引",
+      "p2p": "P2P",
+      "interface": "界面",
+      "updates": "更新",
+      "extensions": "扩展",
+      "advanced": "高级",
+      "tools": "工具"
+    },
+    "extensionsTitle": "扩展",
+    "extensionsHint": "可选 DogeGo 扩展。浏览目录源、安装 zip、启用或禁用。扩展永不访问钱包私钥。",
+    "extensionsDetails": "详情",
+    "extensionsCatalogSources": "目录源",
+    "extensionsCatalogSourcesHint": "GitHub 文件夹或 raw catalog.json URL。默认包含官方 DogeGo 扩展目录。",
+    "extensionsCatalogSourcesPlaceholder": "https://github.com/owner/repo/tree/main/path/to/extensions/",
+    "extensionsCatalogSourcesAdd": "添加源",
+    "extensionsRefresh": "刷新目录",
+    "extensionsInstallZip": "安装 zip",
+    "walletTitle": "钱包与后量子",
+    "walletHint": "内置 HD 钱包设置。在下方启用后，下次发送将附加后量子 OP_RETURN 承诺。",
+    "walletBuiltInTitle": "内置钱包",
+    "walletEnable": "启用内置钱包",
+    "walletEnableHint": "取消勾选将在配置中设置 nowallet。保存配置并重启节点。",
+    "walletPqTitle": "后量子发送",
+    "walletPqHint": "开启后，每次发送附加阶段 1 OP_RETURN 承诺（默认 FLC1）。立即保存到 wallet.json。",
+    "walletHistoryTitle": "钱包历史",
+    "walletDisabledConfig": "配置中已禁用钱包（nowallet）。保存配置并重启节点。",
+    "walletUnavailable": "本次运行未加载钱包。",
+    "walletPqOn": "后量子发送已开启 - 每次发送附加 {tag} OP_RETURN。",
+    "walletPqOff": "后量子发送已关闭。请在下方启用以附加 FLC1 承诺。",
+    "generalTitle": "路径与网络",
+    "seedPeerSummary": "固定种子节点（可选）",
+    "syncTitle": "全节点与同步",
+    "syncHint": "控制历史区块下载与本地索引。节点模式为 SPV 时忽略。",
+    "txIndexMaint": "交易索引维护",
+    "filterMaint": "区块过滤器索引维护",
+    "analyticsTitle": "分析",
+    "miningTitle": "挖矿",
+    "p2pTitle": "P2P 连接",
+    "p2pHint": "维持的对等节点数量及是否接受入站连接。需要重启。",
+    "dgrTitle": "DogeGo 中继（CGNAT）",
+    "dgrHint": "通过 QUIC 在公共 DogeGo 中继上注册以绕过运营商级 NAT。指标显示在概览 → 网络及 GET /api/dgr。",
+    "interfaceTitle": "显示与导航",
+    "simpleMode": "简洁仪表盘（隐藏文档、功能、控制台）",
+    "simpleHint": "默认显示完整菜单。简洁模式隐藏仅运维人员使用的标签页。",
+    "navTogglesHint": "选择侧边栏和底部栏中显示的板块：",
+    "navReset": "重置菜单以显示全部",
+    "securityTitle": "安全（6 位 PIN）",
+    "rpcBindsSummary": "RPC 与仪表盘绑定",
+    "walletFlagsSummary": "钱包标志（实时）",
+    "walletRescanBtn": "重新扫描钱包历史",
+    "walletRescanFullBtn": "完整扫描（创世块）",
+    "walletRescanStarted": "钱包重新扫描已在后台启动。",
+    "walletRescanBusy": "钱包重新扫描已在进行中。",
+    "walletRescanFailed": "无法启动钱包重新扫描。",
+    "walletRescanNeeds": "钱包索引至区块 {indexed}；链高度 {tip}。重新扫描可补全交易手续费与 hex 元数据。",
+    "walletRescanNeedsFastPath": "钱包已索引至区块 {indexed}；链高度 {tip}。历史查询已加速；重新扫描可补全手续费与 hex 元数据。",
+    "walletRescanScanning": "钱包重新扫描进行中…",
+    "walletRescanOk": "钱包索引已同步至区块 {tip}。",
+    "walletHistoryFastPath": "钱包历史已索引（接收行可加速 listtransactions）。",
+    "walletListtransactionsUtxoWalk": "listtransactions 遍历 {n} 个 UTXO 构建接收历史；请运行重新扫描以建立 wallet.db 索引。",
+    "advancedTitle": "内存池、中继与 RPC 认证",
+    "advancedHint": "dogecoinconf.json 中的 Core 风格策略键（除非另有说明，单位为 koinu/kB）。",
+    "packageLimits": "内存池包限制（Core -limit*）",
+    "standardness": "标准性（Core 中继策略）",
+    "zmqTitle": "ZMQ 通知（兼容 Core）",
+    "zmqHint": "供机器人/交易所使用的 PUB 端点（tcp://127.0.0.1:28332 或 127.0.0.1:28332）。需要重启。",
+    "coreParityTitle": "可选：Core 参考对比",
+    "coreParityHint": "仅当您并行运行 Dogecoin Core 以检查与原始参考协议的一致性时使用。留空即可让 DogeGo 完全自主运行。保存后立即生效，无需重启节点。",
+    "signerCmdHint": "HWI 兼容 stdin/stdout JSON（enumeratesigners、signerdisplayaddress、PSBT）。保存后需重启节点。",
+    "coreTestBtn": "测试 Core 连接（可选）",
+    "coreCertStatus": "实时运维认证",
+    "coreTestBusy": "正在测试 Core JSON-RPC…",
+    "coreTestOk": "Core 可达",
+    "coreTestFail": "Core 不可达",
+    "saveConfig": "保存配置",
+    "footDisclaimer": "",
+    "walletEncryptTitle": "钱包文件加密",
+    "walletEncryptHint": "加密磁盘上的 wallet.json（Core encryptwallet）。与设置 → 界面中的仪表盘 PIN 无关。",
+    "walletEncryptOff": "钱包文件未加密。在下方设置 passphrase 以加密磁盘上的 wallet.json。",
+    "walletEncryptLocked": "支出密钥已锁定。解锁以发送或签名（Core walletpassphrase）。",
+    "walletEncryptUnlocked": "支出密钥已解锁至 {time}。",
+    "walletEncryptUnlockedOpen": "支出密钥已解锁（无自动锁定超时）。",
+    "walletUnlockKeys": "解锁密钥",
+    "walletLockKeys": "锁定密钥",
+    "syncOptionsGroup": "区块同步与存储",
+    "filterIndexMaint": "区块过滤器索引维护",
+    "syncAnalyticsGroup": "分析 sidecar",
+    "miningGroup": "挖矿（testnet）",
+    "toolsTitle": "节点工具与 RPC 操作",
+    "toolsHint": "通过引导表单运行常用 RPC 命令。按类别组织；无需控制台标签页。",
+    "dgrSetupLead": "两种角色：择一。与 Dogecoin P2P 端口 22556（TCP）无关。",
+    "dgrPathClientTitle": "使用中继（CGNAT 客户端）",
+    "dgrPathClientBody": "适用于 Starlink、移动网络或无入站的家庭网络。通过 QUIC UDP 拨出至公共 DogeGo 中继，无需路由器端口转发。",
+    "dgrPathClientPorts": "您的节点：出站 UDP 至中继:24433 · Dogecoin P2P 仍为仅出站 TCP。",
+    "dgrPathOperatorTitle": "运行中继（公共运营商）",
+    "dgrPathOperatorBody": "适用于具有公网 IP 的 VPS 或家庭服务器。托管 QUIC 中继供 CGNAT 客户端隧道通过。",
+    "dgrPathOperatorPorts": "在路由器/防火墙上将 UDP 24433 转发至此机器（TCP 22556 为正常 P2P，非中继）。",
+    "dgrRoleOff": "关",
+    "dgrRoleOffSub": "无 QUIC 中继",
+    "dgrRoleClient": "使用中继（客户端）",
+    "dgrRoleClientSub": "无需端口转发 · 拨号公共中继",
+    "dgrRoleOperator": "运行中继（运营商）",
+    "dgrRoleOperatorSub": "公网 IP · 开放 UDP 24433",
+    "dgrShowAdvanced": "显示高级 DGR 字段",
+    "dgrSuggestCgnat": "提示：上方选择使用中继（客户端），在公共中继地址下添加运营商 host:24433，然后保存并重启。",
+    "dgrSuggestBoth": "提示：若无法接受入站 P2P，请选择使用中继（客户端）。若有公网 IP 并想帮助他人，请选择运行中继（运营商）并开放 UDP 24433。",
+    "interfaceIntro": "自定义仪表盘布局、PIN 安全及 Web UI 服务方式。",
+    "interfaceDisplayGroup": "显示与菜单",
+    "dashboardBindsGroup": "仪表盘绑定",
+    "developerGroup": "开发者选项",
+    "updatesTitle": "软件更新",
+    "updatesHint": "每日检查 GitHub Releases。使用 DOGEGO_NO_UPDATE_CHECK=1 禁用。",
+    "mempoolGroup": "内存池与中继费用",
+    "rpcAuthGroup": "JSON-RPC 监听与认证",
+    "signerTestBtn": "测试外部签名器",
+    "signerTestBusy": "正在测试 HWI 签名器…",
+    "signerTestOk": "签名器就绪",
+    "signerTestWarn": "签名器已响应，无设备",
+    "signerTestFail": "签名器测试失败"
+  },
+  "field": {
+    "datadir": {
+      "label": "数据目录",
+      "help": "所有链文件和 dogecoinconf.json 均存放于此。各网络使用独立子文件夹。与 Dogecoin Core 数据目录不兼容。",
+      "hint": "不存在时将自动创建。DogeGo 使用自有布局（headers.bin、rawblocks/、indexes/）- 非 Dogecoin Core 的 blocks/ 或 chainstate/。",
+      "placeholder": "例如 C:\\Dogedata 或 ./dogedata"
+    },
+    "network": {
+      "label": "网络",
+      "help": "mainnet = 正式 Dogecoin。testnet = 本仓库中的重启测试网（建议首次尝试）。"
+    },
+    "nodeMode": {
+      "label": "节点模式",
+      "help": "full = 下载区块体（区块浏览器及大多数 RPC 需要）。spv = 仅区块头，磁盘占用小得多。"
+    },
+    "peer": {
+      "label": "对等节点（可选）",
+      "help": "优先连接的一个 host:port。除非有可靠种子节点，否则留空。",
+      "placeholder": "留空 = 自动发现"
+    },
+    "p2p": {
+      "label": "P2P 连接",
+      "help": "cgnat = 仅出站（Starlink/CGNAT）。classic = 入站监听。both = 默认混合并额外出站中继。"
+    },
+    "firewall": {
+      "label": "系统防火墙",
+      "help": "auto = 缺少规则时添加 Windows/Linux/macOS P2P 规则。always = 始终管理规则。never = 跳过系统防火墙。"
+    },
+    "upnp": {
+      "label": "UPnP / NAT-PMP",
+      "help": "auto = 监听时（classic/both）在路由器上映射 P2P 端口。enable = 始终尝试。disable = 关闭（Core -upnp=0）。"
+    },
+    "maxOutbound": {
+      "label": "最大出站",
+      "help": "出站 P2P 会话总数，含主同步对等节点。更多对等节点可加快区块下载。",
+      "placeholder": "8"
+    },
+    "maxInbound": {
+      "label": "最大入站",
+      "help": "启用监听时（classic/both 模式）的入站连接数。",
+      "placeholder": "12"
+    },
+    "noTxIndex": {
+      "label": "禁用交易索引",
+      "help": "开启后跳过构建 indexes/tx。节省磁盘但限制区块浏览器交易/地址搜索。完整浏览器请保持关闭。"
+    },
+    "blockLayout": {
+      "label": "区块存储布局",
+      "help": "bundled（推荐）：Core 风格 blk*.dat 文件，文件系统开销更小。perfile：每区块一个 .bin 文件（旧版）。"
+    },
+    "blockZstd": {
+      "label": "压缩存储区块（zstd）",
+      "help": "磁盘透明压缩。P2P 仍发送正常线格式区块。全节点可节省磁盘。"
+    },
+    "txEmbed": {
+      "label": "在交易索引中嵌入完整交易字节",
+      "help": "关闭时（推荐），索引仅存储区块指针；交易从区块文件加载。开启时会在索引中重复交易字节。"
+    },
+    "analytics": {
+      "label": "嵌入式分析侧车",
+      "help": "分析标签页的可选 Pebble 目录。小磁盘可安全禁用；也可通过 CLI 运行 dogego indexer。"
+    },
+    "blockWorkers": {
+      "label": "区块同步工作线程",
+      "help": "初始同步期间并行下载区块体的额外对等节点。0 = 自动（通常 2-6）。",
+      "placeholder": "0 = 自动"
+    },
+    "rawBackfill": {
+      "label": "链尖原始区块回填",
+      "help": "同步后在区块头链尖获取的区块数。-1 = 仅创世块；留空 = 自动默认。"
+    },
+    "reindexClear": {
+      "label": "先清除索引",
+      "help": "重建交易索引时，在扫描 rawblocks/ 前清空 indexes/tx。索引损坏时使用。"
+    },
+    "webui": {
+      "label": "Web 仪表盘监听",
+      "help": "本 UI 的提供服务地址。除非了解如何保护远程访问，否则保持 127.0.0.1。"
+    },
+    "rpc": {
+      "label": "JSON-RPC 监听（可选）",
+      "help": "允许其他应用调用 dogego RPC。留空 = 禁用。仅在可信机器上使用 127.0.0.1。"
+    },
+    "uacomment": {
+      "label": "用户代理注释",
+      "help": "附加到 P2P 版本消息的可选字符串，供对等节点识别您的节点。",
+      "placeholder": "在 P2P 握手中向对等节点显示"
+    },
+    "pinSection": {
+      "help": "可选 6 位 PIN 保护钱包视图和发送。关闭则启动时无 PIN 提示。启用时两个字段必须均为 6 位数字。磁盘上哈希存储；错误 3 次锁定 1 小时。稍后在设置 → 界面中修改。"
+    },
+    "pinNow": {
+      "label": "立即设置 6 位 PIN（可选）",
+      "help": "保护本仪表盘中的发送和钱包余额。不勾选则启动时无 PIN 提示。"
+    },
+    "pinNew": {
+      "label": "6 位 PIN",
+      "help": "恰好六位数字。磁盘上哈希存储 - 与钱包 encryptwallet 口令不同。"
+    },
+    "pinConfirm": {
+      "label": "确认 PIN",
+      "help": "节点启动前必须与上方 PIN 一致。"
+    },
+    "webauthn": {
+      "label": "允许设备生物识别（WebAuthn）配合 PIN",
+      "help": "PIN 解锁后，可在此设备上使用指纹/面容。需要 HTTPS 或 localhost。"
+    },
+    "nowebui": {
+      "label": "启动后禁用 Web UI",
+      "help": "节点启动后停止提供本仪表盘（nowebui）。RPC 与 P2P 仍运行。"
+    },
+    "nobrowser": {
+      "label": "不自动打开浏览器",
+      "help": "关闭时，DogeGo 启动后会在默认浏览器中打开仪表盘。"
+    },
+    "nowallet": {
+      "label": "禁用内置钱包",
+      "help": "运行仅中继或仅观察节点，本 UI 无发送/接收。"
+    },
+    "mine": {
+      "label": "在重启测试网上单独挖矿（mine）",
+      "help": "mine=true 时挖低难度测试网区块。不用于主网生产挖矿。"
+    },
+    "showAdvanced": {
+      "help": "在后续向导步骤显示对等节点、RPC、内存池中继及其他运维字段。"
+    },
+    "profile": {
+      "help": "每个配置方案设置网络、节点模式、钱包和 P2P 默认值。后续步骤可修改所有项。"
+    },
+    "dgrEnabled": {
+      "label": "dogego_relay_cgnat.enabled",
+      "help": "集成 QUIC CGNAT 中继的总开关（服务位 NODE_DOGEGO_RELAY_CGNAT）。"
+    },
+    "dgrInbound": {
+      "label": "入站中继（rdogego 运维）",
+      "help": "运行注册 CGNAT 客户端的公共 QUIC 中继。用于有公网 IP 的服务器。"
+    },
+    "dgrOutbound": {
+      "label": "出站中继（CGNAT 客户端）",
+      "help": "入站 TCP 被阻断时（Starlink、运营商 NAT）连接公共中继。"
+    },
+    "dgrListen": {
+      "label": "QUIC 监听",
+      "help": "入站中继客户端的 UDP 地址，例如所有接口上的 :24433。"
+    },
+    "dgrPort": {
+      "label": "中继端口（发现）",
+      "help": "P2P 服务记录中用于中继发现的广播端口。"
+    },
+    "dgrSeeds": {
+      "label": "静态中继种子（host:port，每行一个）",
+      "help": "启用出站中继时拨号的已知公共中继。"
+    },
+    "dgrDns": {
+      "label": "中继 DNS 种子（TXT 记录）",
+      "help": "通过 TXT 记录列出中继 host:port 的 DNS 名称。"
+    },
+    "dgrMaxClients": {
+      "label": "最大入站客户端",
+      "help": "此入站中继上注册的最大 CGNAT 客户端数。"
+    },
+    "dgrMaxConns": {
+      "label": "最大出站中继会话",
+      "help": "此 CGNAT 节点到公共中继的并行 QUIC 隧道数。"
+    },
+    "dgrToken": {
+      "label": "认证令牌（可选共享密钥）",
+      "help": "中继运维与客户端之间的共享密钥。开放中继可留空。"
+    },
+    "dgrSection": {
+      "help": "使用服务位 NODE_DOGEGO_RELAY_CGNAT（1<<29）的集成 QUIC 可达性中继。公共 rdogego 节点运行 inbound_relay；CGNAT 客户端运行 outbound_relay，在入站 TCP 被阻断时隧道化 P2P。"
+    },
+    "simpleMode": {
+      "help": "简洁模式隐藏区块浏览器、控制台、文档及其他运维标签页。可在下方重新启用任意标签页。"
+    },
+    "helpAlways": {
+      "help": "在移动设备和窄屏上，帮助以点击弹出层显示。固定后保持显示直到关闭。"
+    },
+    "pinSecurity": {
+      "help": "保护本仪表盘中的钱包余额、历史与发送。PIN 在磁盘上哈希存储（bcrypt）。错误三次锁定解锁 1 小时。可选设备生物识别需输入 PIN - 浏览器中不存储任何内容。"
+    },
+    "pinCurrent": {
+      "label": "当前 PIN（修改时）",
+      "help": "修改或移除现有仪表盘 PIN 时必填。"
+    },
+    "pinDisable": {
+      "label": "禁用 PIN（输入当前 PIN）",
+      "help": "输入当前 PIN 并点击移除 PIN 保护，即可无需解锁查看钱包。"
+    },
+    "secBiometric": {
+      "label": "PIN 后使用设备生物识别（WebAuthn）",
+      "help": "会话中首次输入 PIN 后，可在此设备上更快解锁。"
+    },
+    "miningAddr": {
+      "label": "挖矿地址（可选）",
+      "help": "generatetoaddress / 测试网单独挖矿收益的 P2PKH 地址。"
+    },
+    "mineConfig": {
+      "label": "配置中启用 mine（测试网单独挖矿）",
+      "help": "在重启测试网上为 true 时，向本节点钱包或挖矿地址挖低难度区块。"
+    },
+    "pqCommitments": {
+      "label": "量子就绪发送（pq_commitments）",
+      "help": "在支持时于发送中添加可选量子就绪承诺字段。"
+    },
+    "avoidReuse": {
+      "label": "避免地址复用（avoid_reuse）",
+      "help": "构建交易时优先使用新的接收地址。"
+    },
+    "showSummary": {
+      "label": "在概览 → 同步显示调试 JSON",
+      "help": "为调试 IBD 的运维人员显示原始同步摘要 JSON。"
+    },
+    "persistMempool": {
+      "label": "将内存池持久化到磁盘（persistmempool）",
+      "help": "重启后保留未确认交易。在链文件夹下占用额外磁盘。"
+    },
+    "maxMempool": {
+      "label": "最大内存池（MB）",
+      "help": "内存交易池的最大 RAM（-maxmempool）。满时优先驱逐低费率交易。留空默认 300 MB。"
+    },
+    "mempoolExpiry": {
+      "label": "内存池过期（小时）",
+      "help": "未确认交易在池中可停留的最长时间（-mempoolexpiry）。留空默认 24 小时。"
+    },
+    "maxOrphanTx": {
+      "label": "最大孤立交易数",
+      "help": "等待父交易时持有的最大孤立交易数（-maxorphantx）。"
+    },
+    "blockMaxWeight": {
+      "label": "区块最大权重",
+      "help": "本节点接受并中继的最大区块权重（-blockmaxweight）。"
+    },
+    "minRelay": {
+      "label": "最小中继费率（koinu/kB）",
+      "help": "接受并中继交易的配置最小费率（-minrelaytxfee）。100000 koinu/kB ≈ 0.001 DOGE/kB。"
+    },
+    "incrementalRelay": {
+      "label": "递增生中继（koinu/kB）",
+      "help": "内存池驱逐后加到滚动最小费率上（-incrementalrelayfee）。"
+    },
+    "hardDust": {
+      "label": "硬粉尘限制（koinu）",
+      "help": "低于此值的输出视为粉尘不予中继（-harddustlimit）。"
+    },
+    "limitAnc": {
+      "label": "祖先数量",
+      "help": "包中未确认祖先交易的最大数量（-limitancestorcount）。留空默认 25。"
+    },
+    "limitDesc": {
+      "label": "后代数量",
+      "help": "从内存池中一个父交易链出的最大后代交易数（-limitdescendantcount）。留空默认 25。"
+    },
+    "limitAncKb": {
+      "label": "祖先大小（kB）",
+      "help": "交易及其所有未确认祖先的最大合计虚拟大小（-limitancestorsize）。"
+    },
+    "limitDescKb": {
+      "label": "后代大小（kB）",
+      "help": "交易及其所有未确认后代的最大合计虚拟大小（-limitdescendantsize）。"
+    },
+    "acceptDatacarrier": {
+      "label": "OP_RETURN 数据载体（acceptdatacarrier）",
+      "help": "开启时中继标准 OP_RETURN 数据输出。关闭则拒绝 OP_RETURN 交易。"
+    },
+    "permitBareMs": {
+      "label": "裸多重签名（permitbaremultisig）",
+      "help": "开启时中继裸多重签名输出（旧式）。关闭则更严格的标准性。"
+    },
+    "datacarrierSize": {
+      "label": "最大 OP_RETURN 大小（字节）",
+      "help": "中继的最大 OP_RETURN 载荷大小（-datacarriersize）。"
+    },
+    "unverifiedMempool": {
+      "label": "允许未验证内存池（仅测试）",
+      "help": "接受未经完整验证的交易 - 危险；仅用于开发。"
+    },
+    "fullRbf": {
+      "label": "完整 RBF（mempoolfullrbf）",
+      "help": "开启时，任何内存池交易均可被更高费率版本替换，不仅限于 BIP125 选择加入 RBF 交易。"
+    },
+    "maxTxFee": {
+      "label": "最大交易手续费（koinu）",
+      "help": "拒绝手续费超过此值的交易（-maxtxfee）。"
+    },
+    "rpcCookie": {
+      "label": "RPC cookie 文件（rpc_cookie）",
+      "help": "使用 cookie 文件进行 RPC 认证，而非用户名/密码。"
+    },
+    "rpcUser": {
+      "label": "RPC 用户名",
+      "help": "禁用 cookie 认证时的 HTTP RPC 用户名。"
+    },
+    "rpcPass": {
+      "label": "RPC 密码",
+      "help": "HTTP RPC 密码 - 仅保留在回环地址。"
+    },
+    "coreRpcAddr": {
+      "label": "Core JSON-RPC 地址（可选）",
+      "help": "可选。环回上 Dogecoin Core 的 host:port。仅用于可选的协议一致性并排对比, 同步、钱包和 P2P 不需要。"
+    },
+    "coreRpcUser": {
+      "label": "Core RPC 用户名",
+      "help": "Core JSON-RPC 用户名。留空则使用 DogeGo rpc_user 或环境变量 DOGEGO_CORE_RPC_USER。"
+    },
+    "coreRpcPass": {
+      "label": "Core RPC 密码",
+      "help": "与 Core RPC 用户名配对的 JSON-RPC 密码。"
+    },
+    "signerCmd": {
+      "label": "外部签名器命令",
+      "help": "HWI 兼容进程（stdin/stdout JSON），例如 python hwi.py --chain dogecoin --stdin。"
+    },
+    "zmqHashblock": {
+      "label": "zmqpubhashblock",
+      "help": "新区块哈希的 ZMQ PUB 端点。留空 = 禁用。"
+    },
+    "zmqHashtx": {
+      "label": "zmqpubhashtx",
+      "help": "新交易哈希的 ZMQ PUB 端点。留空 = 禁用。"
+    },
+    "zmqRawblock": {
+      "label": "zmqpubrawblock",
+      "help": "原始区块数据的 ZMQ PUB 端点。留空 = 禁用。"
+    },
+    "zmqRawtx": {
+      "label": "zmqpubrawtx",
+      "help": "原始交易数据的 ZMQ PUB 端点。留空 = 禁用。"
+    },
+    "relayPolicy": {
+      "help": "可选 Core 风格中继策略，保存至 dogecoinconf.json。数字留空则使用 Dogecoin 默认值。点击下方各字段的 ? 查看详情。"
+    },
+    "settingsIntro": {
+      "help": "服务可实时切换；路径、网络和 P2P 上限需要重启。"
+    },
+    "interfaceDisplay": {
+      "help": "简洁模式隐藏区块浏览器、控制台、文档及其他运维标签页。可在下方重新启用任意标签页。"
+    },
+    "dgrTlsPins": {
+      "label": "中继 TLS 证书固定（SHA-256 十六进制，每行一个）",
+      "help": "出站中继拨号的可选信任固定。从运营商中继 GET /api/dgr 复制 server_cert_sha256。留空则接受任何自签证书。"
+    },
+    "dgrMaxFrames": {
+      "label": "每会话最大帧数 / 秒",
+      "help": "入站运营商对每个已注册客户端的 DGR 帧速率限制（默认 60）。"
+    },
+    "dgrMaxP2PProxy": {
+      "label": "最大 P2P 代理 / 秒",
+      "help": "入站运营商对每个客户端 P2P_FRAME 代理请求的速率限制（默认 20）。"
+    },
+    "dgrMaxRegister": {
+      "label": "每 IP 最大 REGISTER / 分钟",
+      "help": "入站运营商对每个客户端 IP 每分钟 REGISTER 尝试上限（默认 10）。"
+    },
+    "walletEnable": {
+      "label": "启用内置钱包",
+      "help": "关闭时在 dogecoinconf.json 中设置 nowallet。保存配置并重启节点。"
+    }
+  },
+  "choices": {
+    "network": {
+      "mainnet": {
+        "title": "主网",
+        "sub": "正式 Dogecoin 链"
+      },
+      "testnet": {
+        "title": "测试网",
+        "sub": "本仓库中的重启测试网"
+      }
+    },
+    "networkWizard": {
+      "mainnet": {
+        "title": "主网",
+        "sub": "真实 Dogecoin 链"
+      },
+      "testnet": {
+        "title": "测试网",
+        "sub": "安全沙盒 - 建议首次使用"
+      }
+    },
+    "mode": {
+      "full": {
+        "title": "全节点",
+        "sub": "区块头 + 区块体"
+      },
+      "spv": {
+        "title": "SPV",
+        "sub": "仅区块头，磁盘占用少"
+      }
+    },
+    "modeWizard": {
+      "full": {
+        "title": "全节点",
+        "sub": "区块头 + 区块体 + 区块浏览器"
+      },
+      "spv": {
+        "title": "SPV（轻量）",
+        "sub": "仅区块头 - 磁盘占用小"
+      }
+    },
+    "p2p": {
+      "both": {
+        "title": "两者",
+        "sub": "入站 + 出站中继"
+      },
+      "cgnat": {
+        "title": "CGNAT",
+        "sub": "仅出站（Starlink / NAT）"
+      },
+      "classic": {
+        "title": "经典",
+        "sub": "入站监听 + 出站"
+      }
+    },
+    "p2pWizard": {
+      "both": {
+        "title": "两者",
+        "sub": "入站 + 出站 · DGR 中继自动配置"
+      },
+      "cgnat": {
+        "title": "CGNAT",
+        "sub": "仅出站（Starlink / 无端口转发）"
+      },
+      "classic": {
+        "title": "经典",
+        "sub": "入站监听 + 出站"
+      }
+    },
+    "firewall": {
+      "auto": {
+        "title": "自动",
+        "sub": "需要时添加规则"
+      },
+      "always": {
+        "title": "始终",
+        "sub": "始终管理规则"
+      },
+      "never": {
+        "title": "从不",
+        "sub": "跳过系统防火墙"
+      }
+    },
+    "firewallWizard": {
+      "auto": {
+        "title": "自动",
+        "sub": "需要时添加规则"
+      },
+      "always": {
+        "title": "始终",
+        "sub": "始终管理"
+      },
+      "never": {
+        "title": "从不",
+        "sub": "跳过"
+      }
+    },
+    "upnp": {
+      "auto": {
+        "title": "自动",
+        "sub": "监听时尝试"
+      },
+      "enable": {
+        "title": "启用",
+        "sub": "始终尝试映射"
+      },
+      "disable": {
+        "title": "禁用",
+        "sub": "关闭"
+      }
+    },
+    "upnpWizard": {
+      "auto": {
+        "title": "自动",
+        "sub": "监听时"
+      },
+      "enable": {
+        "title": "启用",
+        "sub": "始终尝试"
+      },
+      "disable": {
+        "title": "禁用",
+        "sub": "关闭"
+      }
+    },
+    "blockLayout": {
+      "perfile": {
+        "title": "每文件",
+        "sub": "每区块一个 .bin"
+      },
+      "bundled": {
+        "title": "打包",
+        "sub": "blk*.dat 布局"
+      }
+    },
+    "blockLayoutWizard": {
+      "bundled": {
+        "title": "打包",
+        "sub": "推荐 blk*.dat"
+      },
+      "perfile": {
+        "title": "每文件",
+        "sub": "每区块一个 .bin"
+      }
+    }
+  },
+  "msg": {
+    "preflightOk": "所有关键检查已通过。警告仅供参考 - 仍可启动。",
+    "preflightWarn": "部分检查报告了警告。启动前请查看下方内容。",
+    "saveOk": "配置已保存。",
+    "saveErr": "无法保存配置。",
+    "pinMismatch": "PIN 字段必须一致且恰好为 6 位数字。",
+    "starting": "正在启动节点…"
+  },
+  "pages": {
+    "overview": {
+      "title": "仪表盘",
+      "subtitle": "本机节点的实时指标。",
+      "chainWarn": "链警告",
+      "storage": "存储",
+      "firewallWarn": "防火墙 - 需要操作",
+      "firewallCopy": "复制到提升权限的命令提示符或 PowerShell（管理员）：",
+      "searchPlaceholder": "高度、哈希、txid 或地址…",
+      "search": "搜索",
+      "clear": "清除",
+      "kpiTitle": "节点健康",
+      "activityTitle": "活动",
+      "syncChart": "同步进度",
+      "syncCaption": "区块头 · 已连接 · 已存储区块体",
+      "peersChart": "对等节点",
+      "peersCaption": "出站与入站（实时）",
+      "mempoolChart": "内存池",
+      "mempoolCaption": "交易数量与大小",
+      "mempoolDist": "内存池交易大小",
+      "mempoolDistCaption": "等待中交易的虚拟大小",
+      "syncLearn": "我在同步什么？",
+      "syncDoing": "节点在做什么？",
+      "blockchainSync": "区块链同步",
+      "chainSyncRow": "链同步（已连接 vs 区块头）",
+      "debugJson": "调试 JSON",
+      "p2pTitle": "P2P 连接",
+      "p2pHint": "此节点如何与 Dogecoin 网络通信。在设置 → P2P 中更改模式和限制（需重启）。",
+      "openP2pSettings": "打开 P2P 设置",
+      "openFeatures": "打开功能标签页",
+      "ibdPhaseTitle": "初始区块下载",
+      "ibdAuxPowOk": "AuxPoW Core 对等",
+      "ibdPhaseConnect": "阶段 2/2：将已存储区块验证到 chainActive（UTXO）。并行下载中。",
+      "ibdPhaseDownload": "阶段 1/2：从节点下载区块体。头高度已达 {tip}。",
+      "ibdPhaseDefault": "初始区块下载 - 请保持此窗口打开；进度会保存到数据目录。",
+      "ibdConnected": "已连接",
+      "ibdStored": "已存储区块体",
+      "ibdHeaders": "头高度",
+      "ibdDownloadRate": "下载速率",
+      "ibdConnectRate": "连接速率",
+      "ibdConnectLag": "连接滞后",
+      "ibdCheckpoint": "同步检查点",
+      "ibdUtxoReplay": "UTXO 区块回放",
+      "ibdPhaseUtxoReplay": "正在回放已存储区块体，使 UTXO 与连续原始区块对齐 - 检查点进度在重启后保留。",
+      "ibdResumeWarn": "重启恢复",
+      "syncCheckpoint": "检查点",
+      "syncAssistPool": "辅助池",
+      "syncBodyLag": "区块体滞后",
+      "ovResumeTitle": "重启恢复（实时）",
+      "operatorCertTitle": "运维认证（实时）",
+      "operatorCertGates": "个实时 Web 门禁",
+      "operatorCertSolo": "solo",
+      "operatorCertMempoolCorpus": "内存池语料（离线）",
+      "operatorCertMempoolParity": "内存池一致性（实时）",
+      "runCoreProbes": "运行全部探测",
+      "coreStatusCached": "探测缓存 {sec} 秒",
+      "coreStatusCoreRpc": "Core RPC",
+      "coreComparePending": "实时探测待运行 - IBD 期间刷新或打开功能 → 运行全部探测",
+      "jsonRpc": "JSON-RPC",
+      "jsonRpcHint": "供脚本和钱包使用 - 在设置中启用监听地址。",
+      "dataDir": "数据目录",
+      "dataDirHint": "当前网络的链数据存放在此文件夹下。",
+      "hashrate": "算力（估算）",
+      "hashrateHint": "由链尖难度推算 - 非矿池实时数据。",
+      "blockInterval": "出块间隔",
+      "blockIntervalHint": "最近区块头之间的平均秒数。",
+      "bestHash": "最佳区块哈希",
+      "openMempool": "打开内存池标签页",
+      "miningPayouts": "挖矿收益（24 小时，本地扫描）",
+      "viewCertMatrix": "查看证书矩阵",
+      "ibdConnectBoost": "连接加速",
+      "ovConnectLag": "连接延迟",
+      "ovConnectBoost": "连接加速"
+    },
+    "send": {
+      "title": "发送 DOGE",
+      "subtitle": "当全节点和 UTXO 缓存就绪后，从内置钱包付款。",
+      "spvHint": "SPV 模式 - 本次运行无法广播。",
+      "newPayment": "新付款",
+      "payTo": "付款地址",
+      "amount": "金额 (DOGE)",
+      "sendBtn": "发送 DOGE",
+      "payToPlaceholder": "钱包同步中…",
+      "amountPlaceholder": "0.00",
+      "pqBannerTitle": "量子就绪钱包。",
+      "pqBannerDetail": "每次发送时自动附加后量子 OP_RETURN 承诺（FLC1 载体）。",
+      "advancedPq": "高级 PQ 覆盖",
+      "advancedPqHint": "可选的手动承诺覆盖。默认情况下，DogeGo 在每次发送时生成量子就绪的 OP_RETURN 证明。",
+      "tag": "标签",
+      "commitment": "承诺 (hex)",
+      "commitPlaceholder": "64 位十六进制字符",
+      "helpTab": "帮助：发送标签页",
+      "tabPayment": "付款",
+      "tabAdvanced": "高级",
+      "pqDisabledHint": "后量子承诺已关闭。在设置 → 钱包中启用，以便每次发送附加 FLC1 证明。",
+      "available": "可用余额",
+      "max": "最大",
+      "networkFee": "网络手续费（估算）",
+      "feeHint": "使用钱包费率。在高级 → 费用中自定义。",
+      "feeTitle": "交易手续费",
+      "feeRate": "费率（DOGE/kB）",
+      "feeRateHint": "钱包默认（settxfee）。仅应用于本次发送。",
+      "subtractFee": "从金额中扣除手续费（收款方收到更少）",
+      "coinControl": "选择输入（可选）",
+      "coinControlHint": "留空则自动选择 UTXO。需要明确控制时选择特定币。"
+    },
+    "receive": {
+      "title": "接收 DOGE",
+      "subtitle": "分享您的地址以在此网络上收款。",
+      "yourAddress": "您的地址",
+      "copy": "复制",
+      "copied": "已复制到剪贴板",
+      "backupTitle": "备份钱包",
+      "backupBody": "下载 wallet.json 副本并离线保存在安全位置。若无备份，设备故障时无法恢复资金。",
+      "backupRotateHint": "若许久未轮换密钥，请考虑将资金移至新的 HD 钱包。",
+      "downloadBackup": "下载备份",
+      "rotateKeys": "轮换密钥",
+      "dismiss30": "30 天内不再显示",
+      "importWif": "导入 WIF",
+      "importWifHint": "将主网或测试网私钥 (WIF) 导入此钱包。",
+      "privateKey": "私钥 (WIF)",
+      "privateKeyPlaceholder": "以 Q 或 6 开头…",
+      "labelOptional": "标签（可选）",
+      "import": "导入",
+      "mnemonicTitle": "助记词 / BIP38",
+      "mnemonicHint": "从 BIP39 助记词恢复 HD 钱包，或导入 BIP38 加密纸钱包。",
+      "seedPhrase": "助记词",
+      "seedPlaceholder": "12 或 24 个词…",
+      "passphraseOptional": "口令（可选）",
+      "importMnemonic": "导入助记词",
+      "comingSoon": "即将推出",
+      "bip38Key": "BIP38 密钥",
+      "bip38Passphrase": "BIP38 口令",
+      "importBip38": "解密并导入",
+      "walletDatTitle": "Core wallet.dat",
+      "walletDatHint": "从本机 Dogecoin Core wallet.dat 迁移密钥。未加密文件可原生导入；加密文件可用钱包口令原生解密，或使用 Core RPC 回退（设置 → 高级）。",
+      "walletDatPath": "wallet.dat 绝对路径",
+      "walletDatPassphrase": "钱包口令（加密 wallet.dat）",
+      "walletDatPassphrasePlaceholder": "未加密则留空",
+      "walletDatViaCore": "使用 Core dumpwallet (via_core_rpc)",
+      "walletDatProbe": "探测",
+      "walletDatImport": "导入 wallet.dat",
+      "walletDatProbing": "正在探测 wallet.dat…",
+      "walletDatImporting": "正在导入 wallet.dat…",
+      "walletDatProbeNeedsPassphrase": "加密钱包 - 在下方输入钱包口令，然后导入（原生 CCrypter 解密）。",
+      "addressBook": "地址簿",
+      "addressBookHint": "本节点 wallet.json 中记录的所有 HD、导入、仅观察及联署地址。",
+      "abTypeKeypool": "Keypool",
+      "signMessage": "签名消息",
+      "signHint": "与 Core 兼容的紧凑签名，用于您的钱包地址。",
+      "message": "消息",
+      "messagePlaceholder": "待签名消息…",
+      "sign": "签名",
+      "signature": "签名 (base64)",
+      "sigCopied": "签名已复制到剪贴板",
+      "verifyMessage": "验证消息",
+      "address": "地址",
+      "addressPlaceholder": "D… 地址",
+      "verify": "验证",
+      "tabAddress": "地址",
+      "tabImport": "导入密钥",
+      "tabMessages": "签名与验证",
+      "tabBook": "地址簿",
+      "recvKeypoolSize": "keypool {n}",
+      "recvCorePoolIndices": "Core pool 索引 {n}",
+      "keypoolRefill": "补充 keypool",
+      "keypoolRefilling": "正在补充 HD keypool…",
+      "keypoolRefillOk": "Keypool 已补充",
+      "backupEncryptWarning": "明文 wallet.json 包含 HD 种子和私钥。仪表盘 PIN 仅锁定 Web UI。在控制台执行 encryptwallet 以加密磁盘上的钱包文件。",
+      "walletDatKeypoolHint": "当探测显示仅 pool 行（pool_keys_unmatched）时，导入仍会成功 - DogeGo 会补充新的 HD 接收密钥。匹配的接收公钥以 Core pool 索引标签重放至 wallet.json。",
+      "abFilterPlaceholder": "筛选地址、路径或标签…",
+      "abTypeLabel": "地址类型",
+      "abTypeAll": "全部类型",
+      "abTypeReceive": "接收",
+      "abTypeChange": "找零",
+      "abTypeWatch": "仅观察",
+      "abTypeCosigner": "共同签名者",
+      "abGenerate": "生成地址",
+      "abCopy": "复制",
+      "abCopied": "已复制",
+      "abEditLabel": "编辑标签",
+      "abSaveLabel": "保存",
+      "abCancelLabel": "取消",
+      "abNoMatch": "没有地址匹配您的筛选条件。",
+      "abGenerateFailed": "无法生成地址。",
+      "abNewTitle": "新接收地址",
+      "abNewHint": "复制此地址以分享。添加可选标签以便稍后在地址簿中查找。",
+      "abNewGenerating": "正在生成地址…",
+      "abNewDone": "完成",
+      "abLabelPlaceholder": "例如 商店、小费、交易所…",
+      "rotateTitle": "自动密钥轮换",
+      "rotateHint": "自动密钥轮换会生成新 HD 钱包，将全部余额扫入其中，验证旧钱包已空，然后将 DogeGo 切换到新密钥。请先下载备份。",
+      "rotateStep1": "下载钱包备份（必需）",
+      "rotateStep2": "准备 → 扫入全部币 → 等待确认",
+      "rotateStep3": "验证余额为空 → 完成 → 可选删除旧归档",
+      "rotatePrepare": "1. 准备新钱包",
+      "rotateSweep": "2. 扫入余额",
+      "rotateVerify": "3. 验证",
+      "rotateFinalize": "4. 完成",
+      "rotateCancel": "取消",
+      "rotateDeleteArchive": "删除旧钱包归档",
+      "sectionsAria": "接收分区",
+      "qrAria": "地址二维码",
+      "abColAddress": "地址",
+      "abColPath": "路径 / 类型",
+      "abColLabel": "标签",
+      "abEmpty": "尚无已跟踪地址。",
+      "walletDisabled": "配置中已禁用钱包（nowallet）。保存配置并重启节点以重新启用。",
+      "verifyRunning": "正在验证签名…",
+      "verifyValid": "签名有效。",
+      "verifyInvalid": "签名无效。",
+      "importWifOk": "已导入。重新扫描可能需要一些时间。",
+      "importAddrOk": "已导入。地址：{address} - 可能需要重新扫描。",
+      "importAddrOkShort": "已导入。地址：{address}"
+    },
+    "history": {
+      "title": "历史",
+      "subtitle": "在此节点上索引的钱包交易。",
+      "filterPlaceholder": "搜索地址、标签或 txid…",
+      "transactionsLabel": "笔交易",
+      "exportCsv": "导出 CSV",
+      "exportCsvTitle": "将钱包历史导出为 CSV",
+      "typeFiltersAria": "按交易类型筛选",
+      "typeAll": "全部",
+      "typeReceived": "接收",
+      "typeSent": "发送",
+      "typeMining": "挖矿",
+      "typeQuantum": "量子",
+      "loadingMsg": "正在获取钱包历史…",
+      "loadAllRemaining": "加载全部剩余",
+      "clearSearch": "清除搜索",
+      "pausedIbd": "初始区块下载期间暂停钱包历史。",
+      "pausedConnectLag": "节点正在连接区块（落后 {lag}），钱包历史已暂停。",
+      "pausedScanBuilding": "重新扫描正在建立历史索引 - 请在进度完成后打开历史，或查看设置 → 钱包。"
+    },
+    "mempool": {
+      "title": "内存池",
+      "subtitle": "仅保存在此节点上的未确认交易，非全网。",
+      "summary": "摘要",
+      "transactions": "交易",
+      "policy": "策略",
+      "broadcast": "广播",
+      "parityTitle": "Core 策略对等探测",
+      "parityHint": "里程碑 D：在本节点运行无状态 testmempoolaccept 行。完整语料库：go test ./consensus -run TestCoreMempool。",
+      "parityRun": "运行对等探测",
+      "parityOk": "所有行通过",
+      "parityOkCore": "DogeGo 与 Core 一致",
+      "parityCoreDrift": "DogeGo 通过 - Core 有差异",
+      "parityFail": "部分行失败",
+      "paritySkipped": "已跳过",
+      "statefulTitle": "有状态 mempool（里程碑 D）",
+      "statefulHint": "离线有状态语料库在进程内运行；live 24/24 场景在 reboot testnet 上通过脚本执行。",
+      "statefulOfflineOk": "离线语料库通过",
+      "statefulOfflineFail": "离线语料库失败",
+      "statefulLivePending": "live 门禁待运行",
+      "statefulLiveReady": "可运行 live 24/24 探测",
+      "statefulNotReboot": "当前网络仅离线"
+    },
+    "guide": {
+      "title": "指南",
+      "subtitle": "本 DogeGo 构建版的操作员指南。"
+    },
+    "docs": {
+      "title": "文档",
+      "subtitle": "随此二进制文件附带的嵌入式操作员文档。"
+    },
+    "features": {
+      "title": "功能与 Core 对等",
+      "subtitle": "本 DogeGo 构建版今日能力 vs Dogecoin Core。",
+      "parityTitle": "Core 对等一览",
+      "parityStandalone": "独立节点认证",
+      "parityStandalonePartial": "进行中",
+      "parityStandaloneReady": "出口门槛已达成",
+      "parityFeaturesLive": "能力已上线",
+      "parityFeaturesPartial": "能力部分实现",
+      "parityGapsOpen": "缺口未解决",
+      "parityGapsPartial": "缺口部分解决",
+      "parityGapsDeclined": "有意不实现",
+      "parityRoadmap": "路线图已完成",
+      "parityRpcLive": "RPC 已上线",
+      "parityRpcPartial": "RPC 部分实现",
+      "parityRpcStub": "RPC 占位",
+      "parityProtocolLock": "协议锁定（本节点）",
+      "parityProtocolLockOk": "正常",
+      "parityProtocolLockFail": "不一致",
+      "parityOfflineCorpus": "内存池语料（离线）",
+      "guidanceTitle": "何时用 Dogecoin Core vs DogeGo",
+      "guidanceCore": "优先使用 Dogecoin Core 当",
+      "guidanceDogeGo": "DogeGo 适合当",
+      "guidanceIntentional": "有意差异（非缺陷）",
+      "legendTitle": "状态图例",
+      "legendLive": "适用于典型运维流程。",
+      "legendPartial": "已有 MVP；边界情况或 Core 缺口仍在。",
+      "legendPlanned": "待办 - 未开始或工作量大。",
+      "legendDeclined": "设计上不在范围内。",
+      "liveTitle": "当前节点状态",
+      "roadmapTitle": "路线图要点",
+      "gapsTitle": "Self-certification (native storage)",
+      "gapsHint": "Core-compatible consensus, RPC, wallet migration, and mining ship in this build. DogeGo uses its own Go storage layout (headers/, rawblocks/, utxo.cache, Pebble wallet.db) instead of Core LevelDB. Optional long-haul soak (dogego cert live-soak, weekly-live, workflow 10) is self-certification of that layout's resilience, not a missing Core feature. Probes above remain available when you want to run them.",
+      "rpcTitle": "JSON-RPC 命令",
+      "rpcHint": "本构建注册的方法 - 根据帮助文本分类（live / partial / stub）。",
+      "rpcFilter": "筛选方法…",
+      "rpcColMethod": "方法",
+      "rpcColClass": "类别",
+      "rpcColHelp": "帮助",
+      "openTab": "打开",
+      "corePrefix": "Core：",
+      "docsLink": "相关文档",
+      "certTitle": "认证里程碑 (A/B/D/E)",
+      "certCorpusMempool": "内存池向量",
+      "certCorpusScript": "传统脚本测试",
+      "certCorpusHeaders": "头 harness",
+      "certCorpusBlocks": "区块连接",
+      "certCorpusProbe": "实时对等探测行",
+      "certHarnessHint": "离线 harness：运行 go test ./consensus/... -run TestCore 及 scripts/ 下的 PowerShell 脚本。",
+      "certLiveTitle": "实时操作员认证",
+      "certLivePass": "Web 探测通过",
+      "certLiveFail": "Web 探测失败",
+      "certLiveAllOk": "所有实时 Web 门禁通过",
+      "certLiveSomeFail": "部分实时 Web 门禁失败",
+      "certScriptOnly": "仅脚本/离线",
+      "certOffline": "离线测试",
+      "certScripts": "运维脚本",
+      "coreCompareTitle": "可选：与 Dogecoin Core 对比",
+      "coreCompareHint": "针对 Dogecoin Core 原始协议的可选参考检查。DogeGo 无需 Core 即可完全自主运行。仅在需要并排一致性时设置 core_rpc_addr。",
+      "coreCompareRefresh": "刷新可选对比",
+      "coreCompareUnavailable": "无法连接 Core（可选）",
+      "coreCompareOptional": "未配置 - 独立节点正常",
+      "coreCompareSoloLockOk": "协议锁定正常（独立校验）",
+      "coreCompareProtocolLockFail": "协议锁定不一致",
+      "coreCompareOk": "链字段在容差范围内",
+      "coreCompareVerifyWarn": "verifychain 不一致 - 见功能标签页",
+      "coreCompareMismatch": "链不一致 - 见下方字段",
+      "coreMaintTitle": "Core 维护探测",
+      "coreMaintHint": "里程碑 E：verifychain、getindexinfo、getchaintxstats、getblockfilter - 对应 scripts/core_maintenance_workflow.ps1。",
+      "coreMaintRefresh": "运行维护探测",
+      "coreMaintOk": "维护检查通过",
+      "coreMaintWarn": "维护警告",
+      "coreMaintFail": "发现维护问题",
+      "coreMaintSyncing": "同步中 (检查通过)",
+      "coreResumeTitle": "重启恢复探测",
+      "coreResumeHint": "里程碑 E：rawblocks_sync 检查点 vs 连续区块体及 IBD 辅助池 - 对应 scripts/core_restart_resume_check.ps1。",
+      "coreResumeRefresh": "运行重启恢复探测",
+      "coreResumeOk": "重启恢复检查通过",
+      "coreResumeWarn": "重启恢复警告",
+      "coreResumeFail": "发现重启恢复问题",
+      "coreRunnerTitle": "CI runner 就绪状态 (dogego-live)",
+      "coreRunnerHint": "dogego-live runner 的配置清单 + reboottestnet RPC 预检 - 对应 dogego cert weekly；完整套件：dogego cert weekly-live；里程碑 B soak：dogego cert live-soak。",
+      "coreRunnerRefresh": "运行 runner 探测",
+      "coreRunnerOk": "Runner 就绪",
+      "coreRunnerWarn": "Runner 部分就绪",
+      "coreRunnerFail": "Runner 问题",
+      "coreProbesTitle": "实时运维探测",
+      "coreProbesHint": "对本 DogeGo 节点的一键 loopback 检查。与 Dogecoin Core 的并排对比为可选 - 留空 core_rpc_addr 即可完全自主运行。",
+      "coreProbesRefresh": "运行全部探测",
+      "coreProbeCompare": "对比",
+      "coreProbeMaint": "维护",
+      "coreProbeResume": "重启恢复",
+      "coreProbeMempool": "内存池",
+      "coreProbeWallet": "钱包",
+      "coreWalletOk": "钱包检查通过",
+      "coreWalletWarn": "钱包警告",
+      "coreWalletFail": "钱包问题",
+      "coreWalletSkipped": "钱包未启用",
+      "coreWalletTitle": "Core 钱包探测",
+      "coreWalletHint": "里程碑 E：getwalletinfo、getbalance、getnewaddress、validateaddress - 对应 scripts/core_wallet_workflow.ps1。",
+      "coreWalletRefresh": "运行钱包探测",
+      "coreWalletHardwarePsbt": "硬件 PSBT 签名",
+      "coreProbeApisTitle": "探测 API 目录",
+      "coreProbeApisHint": "供脚本和 Features 捆绑包使用的环回 JSON 端点。",
+      "coreProbeBundled": "包含在 /api/core-probes",
+      "coreProbeReindex": "重建索引",
+      "coreProbeEndToEnd": "端到端",
+      "coreEndToEndOk": "通过",
+      "coreEndToEndFail": "失败",
+      "coreE2eTitle": "端到端工作流探测",
+      "coreE2eHint": "里程碑 E：节点健康、重启恢复、维护、重建索引、BIP152 HB、钱包 - 对应 scripts/core_end_to_end_workflow.ps1 必选步骤。",
+      "coreE2eRefresh": "运行端到端探测",
+      "coreE2eOk": "工作流通过",
+      "coreE2eFail": "工作流失败",
+      "coreE2eSkipped": "已跳过",
+      "coreReindexTitle": "重建索引探测",
+      "coreReindexHint": "里程碑 E：必需 RPC 方法 + getindexinfo 同步 - 对应 scripts/core_reindex_prune_workflow.ps1（仅检查）。",
+      "coreReindexRefresh": "运行重建索引探测",
+      "coreReindexOk": "重建索引通过",
+      "coreReindexWarn": "重建索引警告",
+      "coreReindexFail": "重建索引问题",
+      "coreProbeBip152": "BIP152",
+      "coreBip152Title": "BIP152 紧凑区块探测",
+      "coreBip152Hint": "里程碑 E：getpeerinfo 的 bip152_hb_to/from，追上后协商 HB - 对应 scripts/core_bip152_probe.ps1。",
+      "coreBip152Refresh": "运行 BIP152 探测",
+      "coreBip152Ok": "BIP152 检查通过",
+      "coreBip152Warn": "BIP152 警告",
+      "coreBip152Fail": "发现 BIP152 问题",
+      "coreBip152Skipped": "RPC 未就绪",
+      "live": {
+        "mode": "模式",
+        "network": "网络",
+        "p2p": "P2P",
+        "p2pHealth": "P2P 健康",
+        "peers": "节点",
+        "listen": "监听",
+        "wallet": "钱包",
+        "txIndex": "交易索引",
+        "rawBlocks": "原始区块",
+        "analytics": "分析侧车",
+        "relayMin": "中继最低",
+        "pkgAnc": "包祖先",
+        "coreRpc": "Core RPC",
+        "coreRpcDefault": "默认",
+        "operatorCert": "运维认证",
+        "mempoolCorpus": "内存池语料",
+        "utxoReplay": "UTXO 回放"
+      },
+      "certLiveHint": "此 DogeGo 节点上的十三项 loopback 检查。与 Dogecoin Core 对比为可选（设置 → 高级 → core_rpc_addr）。Solo N/13 在未配置 Core 时将可选 Core 门视为通过。",
+      "certLiveSoloOk": "Solo 门通过（Core 证书可选）",
+      "certLiveSoloPass": "Solo 节点可选",
+      "certLivePending": "运行探测以获取实时状态",
+      "certCached": "{{sec}} 秒前缓存",
+      "certScriptTitle": "脚本 / 浸泡门（PowerShell）",
+      "certScriptHint": "从仓库根目录使用 DOGEGO_* 环境标志运行。破坏性门仅限 testnet/dev。",
+      "coreAutostartTitle": "OS 登录自启动探测",
+      "coreAutostartHint": "验证 OS 登录启动是否与 dogecoinconf.json 中的 autostart=login 一致 - 镜像 dogego cert autostart。",
+      "coreAutostartRefresh": "运行自启动探测",
+      "coreAutostartOk": "自启动正常",
+      "coreAutostartWarn": "自启动警告",
+      "coreAutostartFail": "缺少自启动",
+      "coreAutostartOff": "自启动关闭",
+      "coreAutostartOffHint": "autostart=disable - 在设置 → 界面或设置向导中启用登录自启动。",
+      "coreProbeJumpHint": "跳转到探测卡片",
+      "coreProbeConnect": "连接延迟",
+      "coreProbeConnectOk": "连接延迟在阈值内",
+      "coreProbeConnectFail": "连接延迟超过阈值",
+      "coreProbeConnectIbd": "IBD 期间预期较高延迟",
+      "certViewProbe": "查看探测",
+      "coreFieldEvidenceTitle": "现场证据（Milestone A）",
+      "coreFieldEvidenceHint": "离线提交的主网区块/头语料库，以及 TestCoreMainnetFieldHeaderPoW 和 field_disk_connect_cert.ps1 的 live dogedata/mainnet 就绪状态。",
+      "coreFieldEvidenceRefresh": "运行现场证据探测",
+      "coreFieldEvidenceOk": "Live 现场就绪",
+      "coreFieldEvidenceOffline": "仅离线语料库",
+      "coreFieldEvidenceWarn": "部分 live",
+      "coreFieldEvidenceMainnetOnly": "live 探测仅 mainnet"
+    },
+    "blockstep": {
+      "title": "BlockStep",
+      "subtitle": "逐块浏览。"
+    },
+    "explorer": {
+      "title": "浏览器",
+      "subtitle": "在此节点上搜索区块、交易和地址。"
+    },
+    "analytics": {
+      "title": "分析",
+      "subtitle": "来自嵌入式 sidecar 的本地链分析。",
+      "peersTitle": "已连接节点",
+      "peersHint": "实时 P2P 会话（getpeerinfo）。显示入站与出站连接、同步角色，以及节点是否通告 DogeGo QUIC 中继（NODE_DOGEGO_RELAY_CGNAT）。",
+      "peersEmpty": "尚无已连接节点。请检查设置 → P2P 模式与防火墙规则。",
+      "peersLoadFailed": "无法加载节点列表。",
+      "peersDgrUsing": "此节点正通过 DGR 中继隧道 P2P",
+      "peersDgrActive": "活动中继",
+      "peersDgrMode": "P2P 模式",
+      "colDirection": "方向",
+      "colAddress": "地址",
+      "colRole": "角色",
+      "colType": "类型",
+      "colHeight": "起始高度",
+      "colSynced": "已同步区块",
+      "colPing": "Ping",
+      "colTraffic": "流量",
+      "colUserAgent": "User agent",
+      "colFlags": "标志",
+      "reorgTitle": "Chain reorgs",
+      "reorgHint": "Recorded when this node elects a heavier fork and truncates the header tip. Includes displaced miners, AuxPoW, and UTC hour for correlation."
+    },
+    "extensions": {
+      "title": "Extensions",
+      "subtitle": "Install optional packages, enable or disable. Extensions never access wallet keys.",
+      "backCatalog": "Back to catalog",
+      "devManual": "Developer manual",
+      "devManualHint": "How to build and package extensions for DogeGo.",
+      "showMore": "Show more",
+      "showLess": "Show less"
+    },
+    "console": {
+      "title": "控制台",
+      "subtitle": "对此节点的 JSON-RPC（仅 loopback）及内存活动日志。",
+      "rpc": "RPC",
+      "method": "方法",
+      "params": "参数（JSON 数组）",
+      "activityLog": "活动日志",
+      "autoScroll": "自动滚动",
+      "coreProbesTitle": "运维探测（此节点）",
+      "coreProbesHint": "此 DogeGo 节点上的 loopback GET 探测。仅在设置 → 高级中设置 core_rpc_addr 时可选对比 Dogecoin Core。",
+      "tutorialTitle": "RPC 教程",
+      "tutorialHint": "使用 RPC 表单进行进程内调用（无需 HTTP 认证）。Cookbook 列出每个方法及 curl 与 CLI 示例。",
+      "tutorialOpenDoc": "打开教程",
+      "tutorialReference": "HTML 参考",
+      "cookbookTitle": "方法 Cookbook",
+      "cookbookHint": "此构建支持的全部 JSON-RPC 方法。点击在控制台使用填充表单；复制 curl 或 CLI 用于脚本。",
+      "cookbookSearch": "搜索方法"
+    }
+  },
+  "syncDock": {
+    "connected": "已连接",
+    "storedBodies": "已存区块体",
+    "behindHeaders": "落后头",
+    "bodyLag": "区块体滞后",
+    "checkpoint": "检查点",
+    "assistPool": "辅助池",
+    "downloadRate": "下载速率",
+    "eta": "预计时间",
+    "peersOutIn": "出站/入站节点",
+    "mempool": "内存池",
+    "operatorCert": "运维认证",
+    "operatorCertOk": "通过",
+    "operatorCertFail": "待查",
+    "mempoolCorpusShort": "语料",
+    "utxoReplay": "UTXO 回放",
+    "warn": {
+      "checkpoint_ahead_of_contiguous": "检查点领先于连续区块体",
+      "assist_peer_pool_empty_during_ibd": "IBD 期间辅助池为空",
+      "connect_lag_above_threshold": "连接滞后超过阈值"
+    },
+    "connectBoost": "连接加速",
+    "txProcessed": "已处理交易",
+    "recoverHeaders": "恢复区块头",
+    "collapse": "折叠",
+    "loadingLocal": "Loading local data",
+    "updating": "Updating…",
+    "staleSub": "Showing last known data · refreshing"
+  },
+  "overview": {
+    "headerTip": {
+      "label": "区块头尖端",
+      "help": "节点已验证的区块头链上的最佳区块高度。同步期间可能领先于已下载的区块体。",
+      "foot": "最佳链高度"
+    },
+    "sync": {
+      "label": "同步",
+      "help": "IBD 期间的同步进度。已连接高度为 chainActive；区块验证时存储的区块体可能领先。",
+      "foot": "已连接 vs 区块头"
+    },
+    "mempool": {
+      "label": "内存池",
+      "help": "纳入区块前在节点内存池中等待的交易。",
+      "foot": "内存中交易数"
+    },
+    "peers": {
+      "label": "对等节点",
+      "help": "节点建立的出站连接，以及来自其他节点的入站连接（监听时）。",
+      "foot": "出 / 入"
+    },
+    "network": {
+      "label": "网络",
+      "help": "mainnet 为正式 Dogecoin。testnet 为本仓库中的 reboot 测试链。"
+    },
+    "chainDisk": {
+      "label": "链磁盘",
+      "help": "网络 datadir 下的总大小（headers、rawblocks、indexes）。"
+    },
+    "blockTip": {
+      "label": "区块尖端",
+      "help": "全节点上最佳已连接区块高度。SPV 模式下显示头链尖端。",
+      "foot": "最佳已连接区块高度"
+    },
+    "txProcessed": {
+      "label": "已处理交易",
+      "help": "已连接链上累计索引的交易（启用 tx 索引时）。",
+      "foot": "已索引于已连接链"
+    }
+  },
+  "dgr": {
+    "adminTitle": "DogeGo QUIC 中继（CGNAT）",
+    "adminHint": "适用于 Starlink 和运营商 NAT 的 UDP/QUIC 隧道。P2P 模式为 CGNAT、both 或 classic 时自动启用。",
+    "liveTitle": "实时状态（本次运行）",
+    "liveHint": "更改 DGR 设置后请重启节点。显示来自 GET /api/dgr 的运行中 QUIC 中继。",
+    "role": "角色",
+    "roleOff": "关",
+    "roleOn": "开",
+    "roleInbound": "入站 rdogego（QUIC 服务器）",
+    "roleOutbound": "出站客户端（CGNAT）",
+    "uptime": "运行时间",
+    "listenCfg": "监听（配置）",
+    "listenBound": "已绑定 UDP",
+    "advertise": "公网通告",
+    "relayPort": "中继端口",
+    "serviceBit": "服务位",
+    "usingRelay": "使用中继",
+    "activeRelay": "活动中继",
+    "clients": "客户端",
+    "discovery": "发现目标",
+    "dialOk": "拨号成功 / 失败",
+    "serverCert": "服务器证书 SHA-256",
+    "activeRelayCert": "活动中继证书",
+    "tlsPin": "TLS 固定 OK / 失败",
+    "rateLimited": "已限速",
+    "copyPin": "复制",
+    "useServerCertPin": "使用实时服务器证书固定",
+    "starting": "DGR 子系统启动中…",
+    "warnNoRelay": "出站中继未注册 - 添加中继种子或等待带有 NODE_DOGEGO_RELAY_CGNAT 的 P2P 节点。"
+  },
+  "modals": {
+    "transaction": "交易",
+    "unlockWallet": "解锁钱包",
+    "unlockLead": "钱包文件已加密。输入 passphrase 以加载支出密钥（Core walletpassphrase）。",
+    "walletPassphrase": "钱包 passphrase",
+    "unlockTimeout": "解锁时长（秒，0 = 直至锁定）",
+    "unlockHint": "与仪表盘 PIN 无关。CLI：dogego-cli walletpassphrase \"…\" 600",
+    "unlockBtn": "解锁",
+    "confirmSend": "确认发送",
+    "close": "关闭"
+  }
+}
