@@ -639,13 +639,15 @@
     "readyBody": "Newest semver from GitHub Releases (<strong>{source}</strong>). CI publishes <code>dogego-windows-amd64.exe</code>, <code>dogego-linux-amd64</code>, <code>dogego-darwin-amd64</code>, and <code>dogego-darwin-arm64</code> with matching <code>.sha256</code> sidecars when tagged.",
     "readyHeroNote": "Latest on {source}",
     "heroCta": "Download {version}",
+    "showMore": "Show more",
+    "showLess": "Show less",
     "viewSource": "View source on GitHub",
     "assetsHeading": "Download by platform",
     "getReleases": "Obter releases",
     "platforms": {
       "windows": {
         "name": "Windows",
-        "arch": "amd64 · arm64 · 386"
+        "arch": "amd64"
       },
       "macos": {
         "name": "macOS",
@@ -653,11 +655,7 @@
       },
       "linux": {
         "name": "Linux",
-        "arch": "amd64 · arm64 · arm · 386 · ppc64le · riscv64"
-      },
-      "bsd": {
-        "name": "BSD e Unix",
-        "arch": "FreeBSD · OpenBSD · NetBSD · Solaris · AIX"
+        "arch": "amd64"
       }
     },
     "downloadLink": "Transferir",
@@ -677,6 +675,14 @@
       "title": "OpenRPC e cookbooks",
       "body": "Manifesto de capacidade em tempo real em <code>/api/capabilities</code>, OpenRPC em <code>/api/openrpc.json</code>."
     },
+    "extensions": {
+      "title": "Extension RPC",
+      "body": "Third-party packages register <code>dogego_ext_&lt;id&gt;_&lt;method&gt;</code> handlers. See <code>DogeGo/docs/EXTENSIONS.md</code>, <code>dogego.zkl2</code> (submitproof, verifyproof, P2P zkinv), <code>dogego.doginals</code> (indexrange, putasset, P2P dinv), and beta <code>dogego.bbpow</code> (compare, verifyproof, buildcommitment)."
+    },
+    "docs": {
+      "title": "Full documentation",
+      "body": "Operator guides, DIPs, extension authoring, and the Bitcoin white paper on the <a href=\"guide/\">public docs site</a> - the same library as the in-app Docs tab."
+    },
     "zmq": {
       "title": "Notificações ZMQ",
       "body": "Subscreva hash blocos, hash transações, blocos brutos e transações brutas."
@@ -684,10 +690,6 @@
     "auth": {
       "title": "Auth e limites de taxa",
       "body": "Autenticação cookie, auth HTTP basic, listas brancas IP e limitação de taxa configurável."
-    },
-    "extensions": {
-      "title": "Extension RPC",
-      "body": "Third-party packages register <code>dogego_ext_&lt;id&gt;_&lt;method&gt;</code> handlers. See <code>DogeGo/docs/EXTENSIONS.md</code>, <code>dogego.zkl2</code> (submitproof, verifyproof, P2P zkinv), <code>dogego.doginals</code> (indexrange, putasset, P2P dinv), and beta <code>dogego.bbpow</code> (compare, verifyproof, buildcommitment)."
     }
   },
   "disclaimer": {

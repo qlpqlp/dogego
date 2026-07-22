@@ -1092,7 +1092,9 @@
           <span class="material-icons-round soon-banner-icon" id="release-banner-icon" aria-hidden="true">hourglass_top</span>
           <div class="release-banner-text">
             <strong id="release-banner-title" data-i18n="download.checkingTitle">Checking GitHub Releases…</strong>
-            <p id="release-banner-body" data-i18n="download.checkingBody">Querying qlpqlp/dogego, dogeorg/dogego, and dogecoinfoundation/dogego for the latest semver tag.</p>
+            <p id="release-banner-meta" class="release-banner-meta" hidden></p>
+            <div id="release-banner-body" class="release-banner-body" data-i18n="download.checkingBody">Querying qlpqlp/dogego, dogeorg/dogego, and dogecoinfoundation/dogego for the latest semver tag.</div>
+            <button type="button" id="release-notes-toggle" class="release-notes-toggle" hidden data-i18n="download.showMore">Show more</button>
           </div>
           <a href="https://github.com/qlpqlp/dogego/releases" class="btn btn-primary" id="release-banner-action" rel="noopener noreferrer" target="_blank" hidden data-i18n="download.getReleases">View release notes</a>
         </div>
@@ -1106,7 +1108,7 @@
           <article class="platform-card platform-soon" data-platform="windows">
             <span class="material-icons-round platform-icon" aria-hidden="true">desktop_windows</span>
             <h3 data-i18n="download.platforms.windows.name">Windows</h3>
-            <p class="platform-arch" data-i18n="download.platforms.windows.arch">amd64 · arm64 · 386</p>
+            <p class="platform-arch" data-i18n="download.platforms.windows.arch">amd64</p>
             <a href="#download" class="platform-link" data-i18n="download.soonLink">Available soon</a>
           </article>
           <article class="platform-card platform-soon" data-platform="macos">
@@ -1118,13 +1120,7 @@
           <article class="platform-card platform-soon" data-platform="linux">
             <span class="material-icons-round platform-icon" aria-hidden="true">computer</span>
             <h3 data-i18n="download.platforms.linux.name">Linux</h3>
-            <p class="platform-arch" data-i18n="download.platforms.linux.arch">amd64 · arm64 · arm · 386 · ppc64le · riscv64</p>
-            <a href="#download" class="platform-link" data-i18n="download.soonLink">Available soon</a>
-          </article>
-          <article class="platform-card platform-soon" data-platform="bsd">
-            <span class="material-icons-round platform-icon" aria-hidden="true">dns</span>
-            <h3 data-i18n="download.platforms.bsd.name">BSD &amp; Unix</h3>
-            <p class="platform-arch" data-i18n="download.platforms.bsd.arch">FreeBSD · OpenBSD · NetBSD · Solaris · AIX</p>
+            <p class="platform-arch" data-i18n="download.platforms.linux.arch">amd64</p>
             <a href="#download" class="platform-link" data-i18n="download.soonLink">Available soon</a>
           </article>
         </div>
@@ -1168,13 +1164,23 @@ go build -o dogego ./cmd/dogego
       <div class="container">
         <header class="section-header">
           <h2 id="developers-title" data-i18n="developers.title">Built for developers</h2>
-          <p data-i18n="developers.lead">Integrate with the same JSON-RPC shapes you already use with Dogecoin Core.</p>
+          <p data-i18n="developers.lead">Core-compatible JSON-RPC, first-class extensions you can ship yourself, and the full operator docs online and in the app.</p>
         </header>
         <div class="dev-grid">
           <article class="dev-card">
             <span class="material-icons-round" aria-hidden="true">integration_instructions</span>
             <h3 data-i18n="developers.openrpc.title">OpenRPC &amp; cookbooks</h3>
             <p data-i18n-html="developers.openrpc.body">Live capability manifest at <code>/api/capabilities</code>, OpenRPC at <code>/api/openrpc.json</code>.</p>
+          </article>
+          <article class="dev-card">
+            <span class="material-icons-round" aria-hidden="true">extension</span>
+            <h3 data-i18n="developers.extensions.title">Build extensions</h3>
+            <p data-i18n-html="developers.extensions.body">Ship Go or WASM packages with UI panels, RPC (<code>dogego_ext_&lt;id&gt;_*</code>), and optional P2P. Authoring guides and examples live in the catalog; official packs include <code>dogego.zkl2</code>, <code>dogego.doginals</code>, and beta <code>dogego.bbpow</code>.</p>
+          </article>
+          <article class="dev-card">
+            <span class="material-icons-round" aria-hidden="true">menu_book</span>
+            <h3 data-i18n="developers.docs.title">Full documentation</h3>
+            <p data-i18n-html="developers.docs.body">Operator guides, DIPs, extension authoring, and the Bitcoin white paper on the <a href="guide/">public docs site</a> - the same library as the in-app Docs tab.</p>
           </article>
           <article class="dev-card">
             <span class="material-icons-round" aria-hidden="true">notifications_active</span>
@@ -1185,11 +1191,6 @@ go build -o dogego ./cmd/dogego
             <span class="material-icons-round" aria-hidden="true">security</span>
             <h3 data-i18n="developers.auth.title">Auth &amp; rate limits</h3>
             <p data-i18n="developers.auth.body">Cookie authentication, HTTP basic auth, IP allowlists, and configurable rate limiting.</p>
-          </article>
-          <article class="dev-card">
-            <span class="material-icons-round" aria-hidden="true">extension</span>
-            <h3 data-i18n="developers.extensions.title">Extension RPC</h3>
-            <p data-i18n-html="developers.extensions.body">Third-party packages register <code>dogego_ext_&lt;id&gt;_&lt;method&gt;</code> handlers. See <code>DogeGo/docs/EXTENSIONS.md</code>, <code>dogego.zkl2</code> (submitproof, verifyproof, P2P zkinv), <code>dogego.doginals</code> (indexrange, putasset, P2P dinv), and beta <code>dogego.bbpow</code> (compare, verifyproof, buildcommitment).</p>
           </article>
         </div>
       </div>

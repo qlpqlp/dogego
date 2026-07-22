@@ -636,16 +636,18 @@
     "soonLink": "Available soon",
     "soonHeroNote": "No release published yet - build from source or check back soon.",
     "readyTitle": "Latest release {version}",
-    "readyBody": "Newest semver from GitHub Releases (<strong>{source}</strong>). CI publishes <code>dogego-windows-amd64.exe</code>, <code>dogego-linux-amd64</code>, <code>dogego-darwin-amd64</code>, and <code>dogego-darwin-arm64</code> with matching <code>.sha256</code> sidecars when tagged.",
+    "readyBody": "Newest semver from GitHub Releases (<strong>{source}</strong>).",
     "readyHeroNote": "Latest on {source}",
     "heroCta": "Download {version}",
+    "showMore": "Show more",
+    "showLess": "Show less",
     "viewSource": "View source on GitHub",
     "assetsHeading": "Download by platform",
     "getReleases": "View release notes",
     "platforms": {
       "windows": {
         "name": "Windows",
-        "arch": "amd64 · arm64 · 386"
+        "arch": "amd64"
       },
       "macos": {
         "name": "macOS",
@@ -653,11 +655,7 @@
       },
       "linux": {
         "name": "Linux",
-        "arch": "amd64 · arm64 · arm · 386 · ppc64le · riscv64"
-      },
-      "bsd": {
-        "name": "BSD & Unix",
-        "arch": "FreeBSD · OpenBSD · NetBSD · Solaris · AIX"
+        "arch": "amd64"
       }
     },
     "downloadLink": "Download",
@@ -672,10 +670,18 @@
   },
   "developers": {
     "title": "Built for developers",
-    "lead": "Integrate with the same JSON-RPC shapes you already use with Dogecoin Core.",
+    "lead": "Core-compatible JSON-RPC, first-class extensions you can ship yourself, and the full operator docs online and in the app.",
     "openrpc": {
       "title": "OpenRPC & cookbooks",
       "body": "Live capability manifest at <code>/api/capabilities</code>, OpenRPC at <code>/api/openrpc.json</code>."
+    },
+    "extensions": {
+      "title": "Build extensions",
+      "body": "Ship Go or WASM packages with UI panels, RPC (<code>dogego_ext_&lt;id&gt;_*</code>), and optional P2P. Authoring guides and examples live in the catalog; official packs include <code>dogego.zkl2</code>, <code>dogego.doginals</code>, and beta <code>dogego.bbpow</code>."
+    },
+    "docs": {
+      "title": "Full documentation",
+      "body": "Operator guides, DIPs, extension authoring, and the Bitcoin white paper on the <a href=\"guide/\">public docs site</a> - the same library as the in-app Docs tab."
     },
     "zmq": {
       "title": "ZMQ notifications",
@@ -684,10 +690,6 @@
     "auth": {
       "title": "Auth & rate limits",
       "body": "Cookie authentication, HTTP basic auth, IP allowlists, and configurable rate limiting."
-    },
-    "extensions": {
-      "title": "Extension RPC",
-      "body": "Third-party packages register <code>dogego_ext_&lt;id&gt;_&lt;method&gt;</code> handlers. See <code>DogeGo/docs/EXTENSIONS.md</code>, <code>dogego.zkl2</code> (submitproof, verifyproof, P2P zkinv), <code>dogego.doginals</code> (indexrange, putasset, P2P dinv), and beta <code>dogego.bbpow</code> (compare, verifyproof, buildcommitment)."
     }
   },
   "disclaimer": {

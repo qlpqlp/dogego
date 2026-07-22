@@ -130,6 +130,8 @@
       return {
         tag: rel.tag_name,
         version: normalizeSemver(rel.tag_name),
+        name: rel.name || rel.tag_name,
+        body: typeof rel.body === "string" ? rel.body : "",
         htmlUrl: rel.html_url,
         source: "https://github.com/" + owner + "/" + repo,
         sourceLabel: owner + "/" + repo,
@@ -213,10 +215,133 @@
     if (el) el.innerHTML = html;
   }
 
+  function escapeHtml(s) {
+    return String(s)
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;")
+      .replace(/"/g, "&quot;");
+  }
+
+  /** Small safe subset of GitHub release markdown for the download banner. */
+  function renderReleaseMarkdown(md) {
+    var lines = String(md || "").replace(/\r\n/g, "\n").split("\n");
+    var html = [];
+    var inList = false;
+
+    function closeList() {
+      if (inList) {
+        html.push("</ul>");
+        inList = false;
+      }
+    }
+
+    function inlineFormat(s) {
+      s = escapeHtml(s);
+      s = s.replace(/`([^`]+)`/g, "<code>$1</code>");
+      s = s.replace(/\*\*([^*]+)\*\*/g, "<strong>$1</strong>");
+      s = s.replace(
+        /\[([^\]]+)\]\((https?:[^)\s]+)\)/g,
+        '<a href="$2" rel="noopener noreferrer" target="_blank">$1</a>'
+      );
+      return s;
+    }
+
+    lines.forEach(function (line) {
+      if (/^###\s+/.test(line)) {
+        closeList();
+        html.push("<h4>" + inlineFormat(line.replace(/^###\s+/, "")) + "</h4>");
+        return;
+      }
+      if (/^##\s+/.test(line)) {
+        closeList();
+        html.push("<h3>" + inlineFormat(line.replace(/^##\s+/, "")) + "</h3>");
+        return;
+      }
+      if (/^#\s+/.test(line)) {
+        closeList();
+        html.push("<h3>" + inlineFormat(line.replace(/^#\s+/, "")) + "</h3>");
+        return;
+      }
+      if (/^[-*]\s+/.test(line)) {
+        if (!inList) {
+          html.push("<ul>");
+          inList = true;
+        }
+        html.push("<li>" + inlineFormat(line.replace(/^[-*]\s+/, "")) + "</li>");
+        return;
+      }
+      if (!String(line).trim()) {
+        closeList();
+        return;
+      }
+      closeList();
+      html.push("<p>" + inlineFormat(line) + "</p>");
+    });
+    closeList();
+    return html.join("");
+  }
+
+  var notesExpanded = false;
+
+  function setNotesToggle(visible) {
+    var btn = document.getElementById("release-notes-toggle");
+    if (!btn) return;
+    btn.hidden = !visible;
+    if (!visible) {
+      notesExpanded = false;
+      return;
+    }
+    btn.textContent = notesExpanded ? t("download.showLess") : t("download.showMore");
+  }
+
+  function applyNotesCollapse(bannerBody) {
+    if (!bannerBody) return;
+    bannerBody.classList.remove("is-collapsed", "is-expanded");
+    setNotesToggle(false);
+    requestAnimationFrame(function () {
+      bannerBody.classList.add("is-collapsed");
+      if (notesExpanded) bannerBody.classList.add("is-expanded");
+      var overflow = bannerBody.scrollHeight > bannerBody.clientHeight + 4;
+      if (!overflow) {
+        bannerBody.classList.remove("is-collapsed", "is-expanded");
+        setNotesToggle(false);
+        return;
+      }
+      setNotesToggle(true);
+    });
+  }
+
+  function bindNotesToggle() {
+    var btn = document.getElementById("release-notes-toggle");
+    if (!btn || btn.getAttribute("data-bound") === "1") return;
+    btn.setAttribute("data-bound", "1");
+    btn.addEventListener("click", function () {
+      notesExpanded = !notesExpanded;
+      var body = document.getElementById("release-banner-body");
+      if (!body) return;
+      body.classList.toggle("is-expanded", notesExpanded);
+      body.classList.add("is-collapsed");
+      btn.textContent = notesExpanded ? t("download.showLess") : t("download.showMore");
+    });
+  }
+
+  function clearBannerNotesChrome() {
+    var meta = document.getElementById("release-banner-meta");
+    var body = document.getElementById("release-banner-body");
+    if (meta) {
+      meta.hidden = true;
+      meta.innerHTML = "";
+    }
+    if (body) body.classList.remove("is-collapsed", "is-expanded");
+    setNotesToggle(false);
+  }
+
   function render() {
     var banner = document.getElementById("release-banner");
     var bannerIcon = document.getElementById("release-banner-icon");
     var bannerTitle = document.getElementById("release-banner-title");
+    var bannerMeta = document.getElementById("release-banner-meta");
     var bannerBody = document.getElementById("release-banner-body");
     var bannerAction = document.getElementById("release-banner-action");
     var assetsWrap = document.getElementById("release-assets");
@@ -228,6 +353,7 @@
       if (banner) banner.setAttribute("data-state", "loading");
       if (bannerIcon) bannerIcon.textContent = "hourglass_top";
       setText(bannerTitle, t("download.checkingTitle"));
+      clearBannerNotesChrome();
       setText(bannerBody, t("download.checkingBody"));
       if (bannerAction) bannerAction.hidden = true;
       if (assetsWrap) assetsWrap.hidden = true;
@@ -240,6 +366,7 @@
       if (banner) banner.setAttribute("data-state", "soon");
       if (bannerIcon) bannerIcon.textContent = "schedule";
       setText(bannerTitle, t("download.soonTitle"));
+      clearBannerNotesChrome();
       setHtml(bannerBody, t("download.soonBody"));
       if (bannerAction) {
         bannerAction.hidden = false;
@@ -273,15 +400,23 @@
     }
 
     var rows = assetRows(rel);
-    var detected = detectPlatform();
-    var spec = pickPlatformSpec(detected);
-    var primary = spec ? findAsset(rel.assets, spec.asset) : null;
     var tagDisplay = rel.tag || ("v" + rel.version);
 
     if (banner) banner.setAttribute("data-state", "ready");
     if (bannerIcon) bannerIcon.textContent = "rocket_launch";
     setText(bannerTitle, t("download.readyTitle", { version: tagDisplay }));
-    setHtml(bannerBody, t("download.readyBody", { source: rel.sourceLabel }));
+    if (bannerMeta) {
+      bannerMeta.hidden = false;
+      setHtml(bannerMeta, t("download.readyBody", { source: rel.sourceLabel }));
+    }
+    if (rel.body && String(rel.body).trim()) {
+      setHtml(bannerBody, renderReleaseMarkdown(rel.body));
+      applyNotesCollapse(bannerBody);
+    } else {
+      clearBannerNotesChrome();
+      if (bannerMeta) bannerMeta.hidden = true;
+      setHtml(bannerBody, t("download.readyBody", { source: rel.sourceLabel }));
+    }
     if (bannerAction) {
       bannerAction.hidden = false;
       bannerAction.textContent = t("download.getReleases");
@@ -290,17 +425,17 @@
       bannerAction.rel = "noopener noreferrer";
     }
 
+    // Multi-platform releases: hero CTA scrolls to #download so users pick an OS.
+    // Platform cards / asset rows still deep-link each binary.
     if (heroDownload) {
-      if (primary && primary.browser_download_url) {
-        heroDownload.href = primary.browser_download_url;
-        heroDownload.target = "_blank";
-        heroDownload.rel = "noopener noreferrer";
-        var hl = heroDownload.querySelector("[data-i18n='hero.download']");
-        if (hl) hl.textContent = t("download.heroCta", { version: tagDisplay });
-      } else {
-        heroDownload.href = rel.htmlUrl;
-        heroDownload.target = "_blank";
-        heroDownload.rel = "noopener noreferrer";
+      heroDownload.href = "#download";
+      heroDownload.removeAttribute("target");
+      heroDownload.removeAttribute("rel");
+      var hl = heroDownload.querySelector("[data-i18n='hero.download']");
+      if (hl) {
+        hl.textContent = rows.length
+          ? t("download.heroCta", { version: tagDisplay })
+          : t("hero.download");
       }
     }
     setHeroReleaseNote(t("download.readyHeroNote", { source: rel.sourceLabel }));
@@ -392,6 +527,7 @@
   }
 
   function init() {
+    bindNotesToggle();
     render();
     refresh();
     document.addEventListener("dogego:locale", function () { render(); });

@@ -1636,7 +1636,7 @@ body.site-sidebar-open {
 /* Download / coming soon */
 .soon-banner {
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   gap: 1.25rem;
   flex-wrap: wrap;
   padding: 1.25rem 1.5rem;
@@ -1865,6 +1865,90 @@ body.site-sidebar-open {
 }
 
 .release-banner-text { flex: 1; min-width: 200px; }
+
+.release-banner-meta {
+  margin: 0.35rem 0 0;
+  color: var(--text-dim);
+  font-size: 0.9rem;
+}
+
+.release-banner-body {
+  margin: 0.55rem 0 0;
+  color: var(--text);
+  font-size: 0.92rem;
+  line-height: 1.55;
+}
+
+.release-banner-body.is-collapsed {
+  max-height: 7.2rem;
+  overflow: hidden;
+  -webkit-mask-image: linear-gradient(to bottom, #000 50%, transparent);
+  mask-image: linear-gradient(to bottom, #000 50%, transparent);
+}
+
+.release-banner-body.is-collapsed.is-expanded {
+  max-height: none;
+  overflow: visible;
+  -webkit-mask-image: none;
+  mask-image: none;
+}
+
+.release-banner-body h3,
+.release-banner-body h4 {
+  margin: 0.75rem 0 0.35rem;
+  font-size: 0.95rem;
+  font-weight: 650;
+}
+
+.release-banner-body h3:first-child,
+.release-banner-body h4:first-child,
+.release-banner-body p:first-child {
+  margin-top: 0;
+}
+
+.release-banner-body p {
+  margin: 0 0 0.55rem;
+}
+
+.release-banner-body ul {
+  margin: 0 0 0.55rem;
+  padding-left: 1.15rem;
+}
+
+.release-banner-body li {
+  margin: 0.15rem 0;
+}
+
+.release-banner-body code {
+  font-family: var(--mono);
+  font-size: 0.86em;
+  padding: 0.05em 0.3em;
+  border-radius: 4px;
+  background: rgba(0, 0, 0, 0.06);
+}
+
+.release-banner-body a {
+  color: var(--accent-dim);
+}
+
+.release-notes-toggle {
+  display: inline-flex;
+  align-items: center;
+  margin-top: 0.45rem;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--accent-dim);
+  font: inherit;
+  font-weight: 600;
+  cursor: pointer;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.release-notes-toggle[hidden] {
+  display: none;
+}
 
 .release-assets {
   margin-bottom: 2rem;
