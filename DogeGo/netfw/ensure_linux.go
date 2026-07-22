@@ -9,7 +9,6 @@
 package netfw
 
 import (
-	"bytes"
 	"fmt"
 	"os/exec"
 	"strings"

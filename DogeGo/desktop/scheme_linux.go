@@ -77,5 +77,3 @@ func quoteDesktopExec(exe string) string {
 	}
 	return exe
 }
-
-func platformTraySupported() bool { return true }

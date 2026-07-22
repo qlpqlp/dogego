@@ -58,5 +58,3 @@ func urlSchemeStatusPlatform(scheme string) (bool, string, error) {
 	}
 	return true, cmd, nil
 }
-
-func platformTraySupported() bool { return true }

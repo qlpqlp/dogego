@@ -7,7 +7,6 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
-	"strings"
 )
 
 func handlerAppPath(scheme string) (string, error) {
@@ -84,5 +83,3 @@ func urlSchemeStatusPlatform(scheme string) (bool, string, error) {
 	}
 	return true, app, nil
 }
-
-func platformTraySupported() bool { return true }

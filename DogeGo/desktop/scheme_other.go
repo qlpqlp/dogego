@@ -15,5 +15,3 @@ func unregisterURLSchemePlatform(scheme string) error {
 func urlSchemeStatusPlatform(scheme string) (bool, string, error) {
 	return false, "", nil
 }
-
-func platformTraySupported() bool { return false }

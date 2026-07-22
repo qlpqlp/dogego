@@ -1,4 +1,4 @@
-//go:build windows || linux || darwin
+//go:build windows || linux || (darwin && cgo)
 
 package desktop
 
@@ -14,6 +14,8 @@ import (
 )
 
 const trayUpdatePollInterval = 5 * time.Minute
+
+func platformTraySupported() bool { return true }
 
 func runTray(cfg TrayConfig, icon []byte) error {
 	done := make(chan struct{})

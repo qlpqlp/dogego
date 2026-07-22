@@ -34,7 +34,6 @@ func ensurePlatform(cfg Config) Result {
 		return Result{Err: fmt.Errorf("netfw: executable path required on macOS")}
 	}
 	try := func(useSudo bool) error {
-		run := exec.Command
 		name := socketFilterFW
 		args := [][]string{
 			{"--add", cfg.ExePath},
