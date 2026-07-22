@@ -6,7 +6,7 @@
 
 package main
 
-//go:generate go run github.com/akavel/rsrc@v0.10.2 -ico ../../assets/dogecoin.ico -o rsrc.syso -arch amd64
+//go:generate go run github.com/akavel/rsrc@v0.10.2 -ico ../../assets/dogecoin.ico -o rsrc_windows_amd64.syso -arch amd64
 
 import (
 	"context"
