@@ -3202,6 +3202,12 @@ section[id] {
     flex-shrink: 0;
     transform-origin: top center;
     will-change: transform;
+    height: 374px;
+    max-height: 374px;
+  }
+  .demo-webui {
+    height: 374px;
+    max-height: 374px;
   }
   /* Icon-only demo rail (like collapsed site sidebar) for more main content when scaled */
   .demo-shell {
