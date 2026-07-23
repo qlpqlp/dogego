@@ -23,7 +23,8 @@ let
     pname = "dogego";
     version = "0.1.0";
 
-    go = pkgs.go_1_22;
+    # DogeBox nixpkgs no longer ships go_1_22; 1.23+ builds DogeGo (go.mod 1.22.0).
+    go = pkgs.go_1_23;
 
     src = dogegoSrc;
     modRoot = "DogeGo";
