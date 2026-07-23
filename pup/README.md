@@ -50,4 +50,8 @@ $h = [System.Security.Cryptography.SHA256]::Create().ComputeHash($b)
 
 Put that hex string in `manifest.json` → `container.build.nixFileSha256`.
 
-Prefer pinning `pup.nix` `rev` to a release tag (`refs/tags/v0.1.0`) once you cut a GitHub release, instead of floating `refs/heads/main`.
+Prefer pinning `pup.nix` `rev` to a **full commit SHA** of the Go app you want to build (not a moving `v*` tag). This repo is a monorepo: editing `pup.nix` and retagging `v0.1.0` changes the git tree, so a tag-based `fetchgit` hash can never stay self-consistent.
+
+**DogeBox pup updates:** push `pup/` to `main` and reinstall/upgrade the pup source. You usually do **not** need to delete/recreate the GitHub Release tag for pup.nix fixes.
+
+**GitHub Release (`v*`):** keep for website/binary downloads. Move or cut a new tag when you want new binaries; keep `fetchgit.rev` on the commit that should be compiled inside DogeBox (update `hash` when you change `rev`).

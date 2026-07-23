@@ -19,9 +19,12 @@ let
 
     src = pkgs.fetchgit {
       url = "https://github.com/qlpqlp/dogego.git";
-      rev = "refs/tags/v0.1.0";
-      # Bootstrap hash: first nix build fails and prints the correct value.
-      hash = "sha256-AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=";
+      # Pin a commit SHA (not a moving tag). pup.nix lives in this same repo; if
+      # rev tracked refs/tags/v0.1.0 and you retagged after editing pup.nix, the
+      # tree hash would change and break fetchgit. DogeBox loads pup.nix from the
+      # pup source (usually main); this rev only pins the Go sources to build.
+      rev = "9d88c34dd3f8f64bc2c5c6afb58062b0da2adb5c";
+      hash = "sha256-r1OzX4f9whHdDEruH0/n+yW7kydgGl5S2cAWwaK2xuE=";
     };
 
     modRoot = "DogeGo";
