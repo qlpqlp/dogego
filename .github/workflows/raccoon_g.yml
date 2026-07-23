@@ -36,7 +36,7 @@ jobs:
             os: linux
           - runs-on: windows-latest
             os: windows
-          - runs-on: macos-14
+          - runs-on: macos-15
             os: darwin-arm64
     steps:
       - uses: actions/checkout@v4

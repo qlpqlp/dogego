@@ -51,8 +51,8 @@ Push a version tag (`v*`). Release CI builds each platform on its own runner:
 |-------|--------|----------------------|
 | `dogego-linux-amd64` | `ubuntu-latest` | `libgmp-dev` `libmpfr-dev` `libzstd-dev` |
 | `dogego-windows-amd64.exe` | `windows-latest` + MSYS2 MinGW | `mingw-w64-*-gmp/mpfr/zstd` |
-| `dogego-darwin-amd64` | `macos-13` | Homebrew `gmp` `mpfr` `zstd` |
-| `dogego-darwin-arm64` | `macos-14` | Homebrew `gmp` `mpfr` `zstd` |
+| `dogego-darwin-amd64` | `macos-15-intel` | Homebrew `gmp` `mpfr` `zstd` |
+| `dogego-darwin-arm64` | `macos-15` | Homebrew `gmp` `mpfr` `zstd` |
 
 Users who download those release binaries get real Raccoon-G with **no manual
 commands**. Local `build.ps1` on Windows may still use `CGO_ENABLED=0` for a
