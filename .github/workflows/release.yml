@@ -41,11 +41,12 @@ jobs:
             goos: windows
             goarch: amd64
             asset: dogego-windows-amd64.exe
-          - runs-on: macos-13
+          # macos-13 retired; Intel CGO needs macos-15-intel (see actions/runner-images#13046).
+          - runs-on: macos-15-intel
             goos: darwin
             goarch: amd64
             asset: dogego-darwin-amd64
-          - runs-on: macos-14
+          - runs-on: macos-15
             goos: darwin
             goarch: arm64
             asset: dogego-darwin-arm64
