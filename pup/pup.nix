@@ -1,5 +1,4 @@
-# DogeGo PUP for DogeBox.
-# Builds the Go node from this GitHub repo (modRoot = DogeGo/).
+# DogeGo PUP for DogeBox (same pattern as silly-pups gigawallet / pq-wallet).
 # Service attr name MUST match manifest container.services[0].name ("dogego").
 #
 # Configure the node in the DogeGo web dashboard after start (Settings / setup).
@@ -8,25 +7,23 @@
 # After the first DogeBox build, replace src.hash and vendorHash with the
 # values printed in the nix log (got: sha256-...), then recompute
 # manifest.json container.build.nixFileSha256 (LF-normalized SHA-256 of this file).
-{ pkgs ? import {} }:
+{ pkgs ? import <nixpkgs> {} }:
 
 let
-  dogegoSrc = pkgs.fetchgit {
-    url = "https://github.com/qlpqlp/dogego.git";
-    # Pin to a release tag when available, e.g. refs/tags/v0.1.0
-    rev = "refs/heads/main";
-    # Bootstrap hash: first nix build fails and prints the correct value.
-    hash = "sha256-AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=";
-  };
-
   dogego_bin = pkgs.buildGoModule {
     pname = "dogego";
     version = "0.1.0";
 
-    # DogeBox nixpkgs no longer ships go_1_22; 1.23+ builds DogeGo (go.mod 1.22.0).
-    go = pkgs.go_1_23;
+    # Matches silly-pups Go pups (gigawallet, pq-wallet, memetracker, …).
+    go = pkgs.go_1_24;
 
-    src = dogegoSrc;
+    src = pkgs.fetchgit {
+      url = "https://github.com/qlpqlp/dogego.git";
+      rev = "refs/tags/v0.1.0";
+      # Bootstrap hash: first nix build fails and prints the correct value.
+      hash = "sha256-AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=";
+    };
+
     modRoot = "DogeGo";
     # Bootstrap hash: first nix build fails and prints the correct value.
     vendorHash = "sha256-AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=";
