@@ -12,7 +12,7 @@
       "homepage": "https://github.com/qlpqlp/dogego",
       "repository": "https://github.com/qlpqlp/dogego/tree/main/DogeGo/extensions/catalog/doginals",
       "download_url": "https://raw.githubusercontent.com/qlpqlp/dogego/main/DogeGo/extensions/catalog/doginals/dist/doginals.zip",
-      "sha256": "6bc9056981faa2ea0248e4f2997f97c39bc9459717c2d4c06cdab095700a3e21",
+      "sha256": "bb8bb77aece001d4f33cff37144de47c10d9591723f40db41f8ba60462fce586",
       "dogego_min_version": "0.1.0",
       "networks": [
         "mainnet",
@@ -69,7 +69,7 @@
         "ui_panel",
         "research_bbpow"
       ],
-      "sha256": "f5233df4a93239e60da6da87d71ec3409a1a23a01080f982a17230a8fabaff90",
+      "sha256": "48d07620f9000f163512ad072c85c7894ed5ab024a0803fb8bfebfba64a9280e",
       "download_url": "https://raw.githubusercontent.com/qlpqlp/dogego/main/DogeGo/extensions/catalog/bbpow/dist/bbpow.zip"
     },
     {
@@ -81,11 +81,11 @@
       "homepage": "https://github.com/qlpqlp/dogego",
       "repository": "https://github.com/qlpqlp/dogego/tree/main/DogeGo/extensions/catalog/zkl2",
       "download_url": "https://raw.githubusercontent.com/qlpqlp/dogego/main/DogeGo/extensions/catalog/zkl2/dist/zkl2.zip",
-      "sha256": "8c4a45677ea7b1d662a0a0df5e929af5ef44c0844556bb672d77977763ba5133",
+      "sha256": "1bd377c2ad90a8bff0855412e1086679ff4989f5d26413b5b59b9a54ede4f2a5",
       "downloads": {
         "universal": {
           "download_url": "https://raw.githubusercontent.com/qlpqlp/dogego/main/DogeGo/extensions/catalog/zkl2/dist/zkl2-universal.zip",
-          "sha256": "8c4a45677ea7b1d662a0a0df5e929af5ef44c0844556bb672d77977763ba5133"
+          "sha256": "1bd377c2ad90a8bff0855412e1086679ff4989f5d26413b5b59b9a54ede4f2a5"
         }
       },
       "dogego_min_version": "0.1.0",
@@ -125,7 +125,7 @@
       "downloads": {
         "universal": {
           "download_url": "https://raw.githubusercontent.com/qlpqlp/dogego/main/DogeGo/extensions/catalog/example-go/dist/hello-universal.zip",
-          "sha256": "bc83f46bcb6244352bd2b67f70d07e48fe36094526dffd17c67ff27a4a51009f"
+          "sha256": "7dfbaf70ccb1cf500fa186f89b966f596fca08a51a855d37c05b64498f1dfae1"
         }
       },
       "dogego_min_version": "0.1.0",
