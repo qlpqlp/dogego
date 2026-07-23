@@ -11,6 +11,7 @@ import (
 	"context"
 	"encoding/hex"
 	"encoding/json"
+	"fmt"
 	"io"
 	"io/fs"
 	"net"
@@ -148,7 +149,32 @@ func isLoopback(r *http.Request) bool {
 		return false
 	}
 	ip := net.ParseIP(host)
-	return ip != nil && ip.IsLoopback()
+	if ip == nil {
+		return false
+	}
+	if ip.IsLoopback() {
+		return true
+	}
+	// Trusted dashboard client (not literal loopback): DogeBox and similar reverse
+	// proxies connect from a private container/host address. Opt in with
+	// DOGEGO_TRUST_PRIVATE_CLIENTS=1. Uses RemoteAddr only (ignores X-Forwarded-For).
+	// When enabled, ALL loopback-gated UI routes (wallet backup/send/unlock, config
+	// writes, updates, Console RPC, …) treat RFC1918 / link-local clients as local.
+	// Safe only when the web UI is not reachable by untrusted LAN/WAN hosts
+	// (bind to the pup IP; front with Dogebox auth; do not publish :2013 to the world).
+	if trustPrivateDashboardClients() && (ip.IsPrivate() || ip.IsLinkLocalUnicast()) {
+		return true
+	}
+	return false
+}
+
+func trustPrivateDashboardClients() bool {
+	switch strings.TrimSpace(strings.ToLower(os.Getenv("DOGEGO_TRUST_PRIVATE_CLIENTS"))) {
+	case "1", "true", "yes", "on":
+		return true
+	default:
+		return false
+	}
 }
 
 // Start runs the HTTP server until ctx is cancelled. Returns the base URL (e.g. http://localhost:2013/).
@@ -171,6 +197,13 @@ func Start(ctx context.Context, cfg StartConfig) (baseURL string, err error) {
 	baseURL = publicDashboardURL(scheme, cfg.ListenAddr, ln)
 	if cfg.ActivityLog != nil {
 		cfg.ActivityLog.Add("ui", "Web dashboard listening at "+baseURL)
+	}
+	if trustPrivateDashboardClients() {
+		msg := "DOGEGO_TRUST_PRIVATE_CLIENTS: private/link-local clients are treated as local for dashboard APIs (DogeBox); keep webui bound to the pup IP and behind the host gateway"
+		fmt.Fprintln(os.Stderr, "DogeGo:", msg)
+		if cfg.ActivityLog != nil {
+			cfg.ActivityLog.Add("ui", msg)
+		}
 	}
 
 	mux := http.NewServeMux()

@@ -73,12 +73,13 @@ func DefaultDocsManifest() DocsManifest {
 		{Term: "GET /api/core-pq-probe", Explain: "Live PQ format/carrier probe (Features tab); offline mirror: dogego cert pq."},
 		{Term: "Raccoon-G / raccoon_g", Explain: "In-tree Foundation port by Ed Tubbs (github.com/edtubbs / x.com/EdTubbs); not full libdogecoin. GitHub Releases compile it with CGO on native OS runners (not cross-compile) because GMP/MPFR must match the target. See docs/RACCOON_G_BUILD.md and docs/CREDITS.md."},
 		{Term: "-notls / DOGEGO_NO_TLS", Explain: "Plain HTTP: skips local HTTPS, cert generation, and OS CA install. Use on DogeBox or first installs without TLS. Documented in WEB_UI.md and SECURITY.md."},
+		{Term: "DOGEGO_TRUST_PRIVATE_CLIENTS", Explain: "When 1, RFC1918/link-local RemoteAddr is treated as local for loopback-gated dashboard APIs (DogeBox reverse proxy). Default off. Do not enable if untrusted LAN can reach the webui port. See SECURITY.md."},
 	})
 	wallet.Links = append(wallet.Links, DocsLink{Label: "WALLET.md", Path: "docs/WALLET.md"})
 	wallet.Links = append(wallet.Links, DocsLink{Label: "WEB_UI.md (-notls)", Path: "docs/WEB_UI.md"})
 	wallet.Links = append(wallet.Links, DocsLink{Label: "RACCOON_G_BUILD.md (CI / why not cross-compile)", Path: "docs/RACCOON_G_BUILD.md"})
 	wallet.Links = append(wallet.Links, DocsLink{Label: "CREDITS.md (Ed Tubbs / helpers)", Path: "docs/CREDITS.md"})
-	wallet.Links = append(wallet.Links, DocsLink{Label: "SECURITY.md (-notls)", Path: "docs/SECURITY.md"})
+	wallet.Links = append(wallet.Links, DocsLink{Label: "SECURITY.md (-notls / private clients)", Path: "docs/SECURITY.md"})
 	sections := []DocsSection{
 		{
 			ID:    "start_here",

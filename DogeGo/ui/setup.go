@@ -58,6 +58,9 @@ func RunSetupWizard(ctx context.Context, listenAddr string, seed config.File, sa
 		return config.File{}, err
 	}
 	baseURL := publicDashboardURL(scheme, listenAddr, ln)
+	if trustPrivateDashboardClients() {
+		fmt.Fprintln(os.Stderr, "DogeGo setup: DOGEGO_TRUST_PRIVATE_CLIENTS — private/link-local clients treated as local (DogeBox)")
+	}
 
 	okCh := make(chan config.File, 1)
 
@@ -67,6 +70,7 @@ func RunSetupWizard(ctx context.Context, listenAddr string, seed config.File, sa
 	registerSetupAutostartPreflight(mux)
 	registerSetupWalletBackup(mux)
 	registerSetupUAComment(mux)
+	registerUACommentPreview(mux)
 	addBrandingRoutes(mux)
 	mux.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
 		if r.URL.Path != "/" {

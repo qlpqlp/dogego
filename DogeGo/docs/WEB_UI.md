@@ -30,6 +30,8 @@ New wizard installs default to **HTTPS** (`webui_tls_local` + `local_tls_trust_c
 
 Use **`-notls`** on hosts that cannot terminate TLS (e.g. **DogeBox** pup entrypoint already passes it). The flag also overrides TLS flags already saved in `dogecoinconf.json` for that process. Persisted `"no_tls": true` from a `-notls` wizard save keeps HTTP on later starts.
 
+**DogeBox proxy:** set **`DOGEGO_TRUST_PRIVATE_CLIENTS=1`** so the reverse proxy’s private `RemoteAddr` passes the same loopback gates as `127.0.0.1` (wallet backup, send, Settings writes, Console, …). Default remains off. See [SECURITY.md](SECURITY.md).
+
 See [SECURITY.md](SECURITY.md#local-https-optional) and [OPERATOR.md](OPERATOR.md#tls).
 
 ## First-run setup wizard
