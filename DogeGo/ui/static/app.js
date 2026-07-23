@@ -2279,10 +2279,14 @@
 
   function applyUpdateBanner(s) {
     const el = $("update-banner");
-    if (!el) return;
+    if (!el) {
+      applySettingsUpdatePanel(s);
+      return;
+    }
     const avail = s && s.dogego_update_available === true && s.dogego_update_dismissed !== true;
     el.hidden = !avail;
     if (!avail) {
+      applySettingsUpdatePanel(s);
       scheduleDashboardBannerStackSync();
       return;
     }
@@ -2308,7 +2312,7 @@
     }
     const direct = s.dogego_update_direct_available && s.dogego_update_download_url;
     const dl = $("update-banner-download");
-    if (dl) dl.hidden = !direct;
+    if (dl) dl.hidden = true;
     const apply = $("update-banner-apply");
     if (apply) apply.hidden = !direct;
     const dismiss = $("update-banner-dismiss");
@@ -2340,18 +2344,18 @@
     if (detail) {
       let text = "";
       if (s && s.dogego_update_checked_at) text += "Last checked " + s.dogego_update_checked_at + ". ";
-      if (s && s.dogego_update_checksum_sha256) text += "Release SHA256 " + s.dogego_update_checksum_sha256 + ". ";
-      if (s && s.dogego_update_instructions) text += s.dogego_update_instructions;
+      if (avail && s && s.dogego_update_checksum_sha256) text += "Release SHA256 " + s.dogego_update_checksum_sha256 + ". ";
+      if (avail && s && s.dogego_update_instructions) text += s.dogego_update_instructions;
       detail.textContent = text.trim();
       detail.hidden = !text.trim();
     }
     if (rel) {
-      rel.hidden = !relHref;
+      rel.hidden = !(avail && relHref);
       if (relHref) rel.href = relHref;
     }
-    if (dl) dl.hidden = !(avail && direct);
+    if (dl) dl.hidden = true;
     if (applyBtn) applyBtn.hidden = !(avail && direct);
-    if (dismiss) dismiss.hidden = !avail;
+    if (dismiss) dismiss.hidden = true;
   }
 
   async function settingsUpdateAction(path, btn) {
@@ -9411,14 +9415,10 @@
   function syncTopbarLockButton(wal) {
     const btn = $("topbar-lock");
     if (!btn) return;
-    if (!wal || wal.enabled === false || typeof wal.encrypted !== "boolean") {
-      btn.hidden = true;
-      return;
-    }
-    const walletEnc = wal.encrypted === true;
-    const walletLocked = walletEnc && wal.unlocked === false;
+    const walletEnc = !!(wal && wal.enabled !== false && wal.encrypted === true);
     btn.hidden = !walletEnc;
-    if (btn.hidden) return;
+    if (!walletEnc) return;
+    const walletLocked = wal.unlocked === false;
     const icon = btn.querySelector(".material-icons-round");
     if (walletLocked) {
       btn.title = "Wallet keys locked; click to enter passphrase";
@@ -12318,7 +12318,28 @@
     void loadExtensionDocsInto(docBox, ext);
   }
 
+  function setExtensionCardExpanded(card, open) {
+    if (!card) return;
+    card.classList.toggle("expanded", !!open);
+    const expandBtn = card.querySelector(".ext-card-expand-btn");
+    if (expandBtn) {
+      expandBtn.setAttribute("aria-expanded", open ? "true" : "false");
+      expandBtn.innerHTML = open
+        ? "<span class=\"material-icons-round\" aria-hidden=\"true\">expand_less</span> <span data-i18n=\"pages.extensions.showLess\">Show less</span>"
+        : "<span class=\"material-icons-round\" aria-hidden=\"true\">expand_more</span> <span data-i18n=\"pages.extensions.showMore\">Show more</span>";
+    }
+    if (window.DogeGoI18n && window.DogeGoI18n.apply) window.DogeGoI18n.apply(card);
+  }
+
+  function collapseExtensionCards(except) {
+    document.querySelectorAll(".ext-card.expanded").forEach((c) => {
+      if (c !== except) setExtensionCardExpanded(c, false);
+    });
+  }
+
   function renderExtensionCard(ext) {
+    const slot = document.createElement("div");
+    slot.className = "ext-card-slot";
     const card = document.createElement("article");
     card.className = "ext-card";
     card.dataset.extId = ext.id || "";
@@ -12377,13 +12398,13 @@
     const expandBtn = document.createElement("button");
     expandBtn.type = "button";
     expandBtn.className = "btn btn-ghost btn-sm ext-card-expand-btn";
+    expandBtn.setAttribute("aria-expanded", "false");
     expandBtn.innerHTML = "<span class=\"material-icons-round\" aria-hidden=\"true\">expand_more</span> <span data-i18n=\"pages.extensions.showMore\">Show more</span>";
-    expandBtn.addEventListener("click", () => {
-      const open = card.classList.toggle("expanded");
-      expandBtn.innerHTML = open
-        ? "<span class=\"material-icons-round\" aria-hidden=\"true\">expand_less</span> <span data-i18n=\"pages.extensions.showLess\">Show less</span>"
-        : "<span class=\"material-icons-round\" aria-hidden=\"true\">expand_more</span> <span data-i18n=\"pages.extensions.showMore\">Show more</span>";
-      if (window.DogeGoI18n && window.DogeGoI18n.apply) window.DogeGoI18n.apply(card);
+    expandBtn.addEventListener("click", (ev) => {
+      ev.stopPropagation();
+      const open = !card.classList.contains("expanded");
+      collapseExtensionCards(card);
+      setExtensionCardExpanded(card, open);
     });
     expandRow.appendChild(expandBtn);
     requestAnimationFrame(() => {
@@ -12455,7 +12476,8 @@
       actions.appendChild(open);
     }
     card.append(head, body, expandRow, actions);
-    return card;
+    slot.appendChild(card);
+    return slot;
   }
 
   let extDevManualLoaded = false;
@@ -12545,6 +12567,8 @@
           ? rows.length + " extension(s). Install from catalog or zip, then enable."
           : "No extensions listed. Install a zip or add a catalog source.";
       }
+      list.removeAttribute("data-doge-wait");
+      list.classList.remove("doge-wait-host");
       list.innerHTML = "";
       if (!rows.length) {
         list.innerHTML = "<p class=\"label\">No extensions in catalog. Use Install zip or add a catalog source.</p>";
@@ -12552,6 +12576,8 @@
       }
       rows.forEach((ext) => list.appendChild(renderExtensionCard(ext)));
     } catch (e) {
+      list.removeAttribute("data-doge-wait");
+      list.classList.remove("doge-wait-host");
       list.innerHTML = "<p class=\"label\">Failed to load extensions: " + escapeHtml(String(e.message || e)) + "</p>";
     }
   }
@@ -14609,6 +14635,16 @@
     openDogeGoGitHubIssue();
   });
   $("ext-refresh") && $("ext-refresh").addEventListener("click", () => void loadExtensionsCatalog(true));
+  document.addEventListener("pointerdown", (ev) => {
+    const open = document.querySelector(".ext-card.expanded");
+    if (!open) return;
+    if (open.contains(ev.target)) return;
+    setExtensionCardExpanded(open, false);
+  });
+  document.addEventListener("keydown", (ev) => {
+    if (ev.key !== "Escape") return;
+    collapseExtensionCards();
+  });
   $("ext-notice-bar") && $("ext-notice-bar").addEventListener("click", (ev) => {
     const btn = ev.target.closest(".ext-notice-dismiss");
     if (!btn) return;
@@ -14668,7 +14704,11 @@
       await loadExtensionsCatalog(true);
     } catch (e) {
       pushExtNotice("err", "Install failed", String(e.message || e));
-      if (list) list.innerHTML = "<p class=\"label\">" + escapeHtml(String(e.message || e)) + "</p>";
+      if (list) {
+        list.removeAttribute("data-doge-wait");
+        list.classList.remove("doge-wait-host");
+        list.innerHTML = "<p class=\"label\">" + escapeHtml(String(e.message || e)) + "</p>";
+      }
     }
     input.value = "";
   });

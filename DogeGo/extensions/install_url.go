@@ -83,18 +83,44 @@ func (m *Manager) InstallCatalogEntry(ctx context.Context, id string) (Installed
 			return InstalledRow{}, err
 		}
 		row, err := m.InstallFromURL(ctx, art.DownloadURL, art.SHA256)
-		if err != nil {
-			return InstalledRow{}, fmt.Errorf("install %s (%s): %w", id, plat, err)
+		if err == nil {
+			return row, nil
 		}
-		return row, nil
+		if repo := strings.TrimSpace(entry.Repository); repo != "" && isDownloadHTTPError(err) {
+			row, repoErr := m.InstallFromRepository(ctx, repo)
+			if repoErr == nil {
+				return row, nil
+			}
+			return InstalledRow{}, fmt.Errorf("install %s (%s): %w (github source fallback: %v)", id, plat, err, repoErr)
+		}
+		return InstalledRow{}, fmt.Errorf("install %s (%s): %w", id, plat, err)
 	}
 	if entry.DownloadURL != "" {
-		return m.InstallFromURL(ctx, entry.DownloadURL, entry.SHA256)
+		row, err := m.InstallFromURL(ctx, entry.DownloadURL, entry.SHA256)
+		if err == nil {
+			return row, nil
+		}
+		if repo := strings.TrimSpace(entry.Repository); repo != "" && isDownloadHTTPError(err) {
+			row, repoErr := m.InstallFromRepository(ctx, repo)
+			if repoErr == nil {
+				return row, nil
+			}
+			return InstalledRow{}, fmt.Errorf("install %s: %w (github source fallback: %v)", id, err, repoErr)
+		}
+		return InstalledRow{}, err
 	}
 	if strings.TrimSpace(entry.Repository) != "" {
 		return m.InstallFromRepository(ctx, entry.Repository)
 	}
 	return InstalledRow{}, fmt.Errorf("catalog entry %q has no downloads, download_url, or repository", id)
+}
+
+func isDownloadHTTPError(err error) bool {
+	if err == nil {
+		return false
+	}
+	msg := strings.ToLower(err.Error())
+	return strings.Contains(msg, "download http") || strings.Contains(msg, "github archive:")
 }
 
 func DefaultBuiltinManifest(id string) Manifest {

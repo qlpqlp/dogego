@@ -976,6 +976,14 @@ main > .panel.active {
   transition: background 0.15s, border-color 0.15s, box-shadow 0.15s, transform 0.1s;
   box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
 }
+/* Class display rules must not defeat the HTML hidden attribute. */
+.btn[hidden],
+a.btn[hidden],
+.nav-item[hidden],
+.topbar-lock[hidden],
+.update-banner[hidden] {
+  display: none !important;
+}
 .btn:hover { background: var(--surface-2); }
 .btn:active:not(:disabled) { transform: translateY(1px); }
 .btn:disabled { opacity: 0.5; cursor: not-allowed; }
@@ -2950,7 +2958,19 @@ body.setup-wizard {
 
 .services-list { display: flex; flex-direction: column; gap: 12px; }
 
-.ext-grid { display: grid; gap: 14px; grid-template-columns: repeat(auto-fill, minmax(280px, 360px)); align-items: stretch; justify-content: start; }
+.ext-grid {
+  display: grid;
+  gap: 14px;
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 280px), 1fr));
+  align-items: start;
+  justify-content: start;
+  overflow: visible;
+}
+.ext-card-slot {
+  position: relative;
+  min-height: 300px;
+  min-width: 0;
+}
 .ext-card {
   display: flex;
   flex-direction: column;
@@ -2960,13 +2980,25 @@ body.setup-wizard {
   border-radius: calc(var(--radius) + 2px);
   background: linear-gradient(180deg, var(--surface-2) 0%, var(--surface) 100%);
   box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
-  min-height: 300px;
-  max-width: 360px;
+  position: absolute;
+  inset: 0;
+  min-width: 0;
   width: 100%;
-  max-height: 300px;
+  max-width: 100%;
   overflow: hidden;
+  z-index: 1;
+  transition: box-shadow 0.18s ease, border-color 0.18s ease;
 }
-.ext-card.expanded { max-height: none; }
+.ext-card.expanded {
+  bottom: auto;
+  height: auto;
+  max-height: min(72vh, 560px);
+  overflow-x: hidden;
+  overflow-y: auto;
+  z-index: 40;
+  box-shadow: 0 16px 40px rgba(15, 23, 42, 0.18);
+  border-color: rgba(15, 23, 42, 0.16);
+}
 .ext-card-body {
   display: flex;
   flex-direction: column;
@@ -2976,6 +3008,16 @@ body.setup-wizard {
   overflow: hidden;
 }
 .ext-card:not(.expanded) .ext-card-body { max-height: 96px; }
+.ext-card.expanded .ext-card-body {
+  max-height: none;
+  overflow: visible;
+  flex: 0 1 auto;
+}
+.ext-card.expanded .ext-card-desc {
+  display: block;
+  -webkit-line-clamp: unset;
+  overflow: visible;
+}
 .ext-card-head { display: flex; align-items: flex-start; gap: 12px; }
 .ext-card-icon {
   width: 52px;
@@ -3018,7 +3060,9 @@ body.setup-wizard {
 .ext-detail-page.ext-card-busy { opacity: 0.72; pointer-events: none; }
 .ext-card.ext-card-busy .ext-state-pill,
 .ext-detail-page.ext-card-busy .ext-state-pill { border-color: var(--warn-border, #d4bc5a); background: var(--warn-bg, #f7f1d7); color: var(--accent-dim, #9a8428); }
+.ext-card-expand { flex: 0 0 auto; }
 .ext-card-expand .btn { font-size: 12px; padding: 2px 8px; min-height: 28px; }
+.ext-card-expand-btn[aria-expanded="true"] .material-icons-round { transform: none; }
 .ext-dev-manual-disclosure { margin-bottom: 12px; }
 .ext-dev-manual-body { max-height: 420px; overflow: auto; }
 .ext-card-expand-body { display: flex; flex-direction: column; gap: 10px; }
@@ -3120,13 +3164,13 @@ body.setup-wizard {
 }
 .ext-notice-dismiss:hover { background: rgba(0, 0, 0, 0.06); color: var(--text); }
 
-.ext-grid-host.doge-wait-host {
+.ext-grid-host.doge-wait-host:has(.doge-wait) {
   display: flex;
   align-items: center;
   justify-content: center;
   min-height: 140px;
 }
-.ext-grid-host.doge-wait-host .doge-wait-stage {
+.ext-grid-host.doge-wait-host:has(.doge-wait) .doge-wait-stage {
   margin: 0 auto;
 }
 
@@ -3448,7 +3492,7 @@ body.setup-wizard {
 }
 
 .ext-page-view { display: flex; flex-direction: column; gap: 14px; }
-.ext-catalog-card { padding: 16px; }
+.ext-catalog-card { padding: 16px; overflow: visible; }
 .ext-detail-toolbar { margin-bottom: 4px; }
 .ext-detail-root { min-height: 120px; }
 .ext-detail-page { padding: 16px 18px; display: flex; flex-direction: column; gap: 16px; }
@@ -3796,8 +3840,10 @@ body.setup-wizard {
 
 @media (max-width: 720px) {
   .ext-grid { grid-template-columns: 1fr; gap: 12px; }
-  .ext-card { min-height: 168px; }
+  .ext-card-slot { min-height: 220px; }
+  .ext-card.expanded { max-height: min(78vh, 640px); }
   .ext-card-badges { display: none; }
+  .ext-card.expanded .ext-card-badges { display: flex; }
   .ext-sources-add { flex-direction: column; }
   .ext-source-field { min-width: 0; }
   .ext-detail-hero { flex-direction: column; }

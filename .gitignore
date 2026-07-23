@@ -1,9 +1,10 @@
-# DogeGo runtime data (do not publish)
-DogeGo/dogedata/
-
-# Local build outputs
-**/dist/
+# Local build outputs (keep published extension package zips trackable)
+**/dist/**
+!**/dist/**/
+!**/dist/*.zip
 *.exe
 DogeGo/dogego
 DogeGo/dogego.exe
 
+# DogeGo runtime data (do not publish)
+DogeGo/dogedata/

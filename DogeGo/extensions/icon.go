@@ -20,6 +20,7 @@ const defaultExtensionIcon = "icon.png"
 var BuiltinCatalogDir = map[string]string{
 	"dogego.zkl2":     "zkl2",
 	"dogego.doginals": "doginals",
+	"dogego.bbpow":    "bbpow",
 	"example.go":      "example-go",
 	"example.wasm":    "example-wasm",
 }

@@ -19,8 +19,10 @@ import (
 const PathPrefix = "extensions/catalog/"
 
 // Files holds the official extensions catalog (embedded at build time).
+// bbpow is embedded selectively so local dist/*.zip|*.exe build outputs are not pulled into the binary.
 //
 //go:embed catalog.json *.md example-go example-wasm zkl2 doginals
+//go:embed bbpow/icon.png bbpow/dogego.extension.json bbpow/docs bbpow/README.md
 var Files embed.FS
 
 // NormalizeDocPath maps legacy or absolute paths to a path relative to extensions/catalog/.
