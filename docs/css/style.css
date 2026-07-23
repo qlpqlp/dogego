@@ -3190,28 +3190,45 @@ section[id] {
 
 @media (max-width: 960px) {
   .hero-top { grid-template-columns: 1fr; }
-  .hero-preview { order: -1; }
+  .hero-preview {
+    order: -1;
+    overflow: hidden;
+    display: flex;
+    justify-content: center;
+    width: 100%;
+  }
   .hero-status { grid-template-columns: 1fr; }
+  .demo-stack {
+    flex-shrink: 0;
+    transform-origin: top center;
+    will-change: transform;
+  }
+  /* Icon-only demo rail (like collapsed site sidebar) for more main content when scaled */
+  .demo-shell {
+    grid-template-columns: 48px 1fr;
+  }
+  .demo-sidebar {
+    padding: 0.4rem 0.2rem;
+  }
+  .demo-nav-label,
+  .demo-nav-divider {
+    display: none;
+  }
+  .demo-nav-item {
+    justify-content: center;
+    padding: 0.42rem 0.2rem;
+    gap: 0;
+  }
+  .demo-nav-item > :not(.material-icons-round) {
+    display: none;
+  }
+  .demo-nav-active {
+    box-shadow: inset 3px 0 0 var(--demo-accent);
+  }
   .stats-grid { grid-template-columns: repeat(2, 1fr); }
   .feature-grid { grid-template-columns: repeat(2, 1fr); }
   .feature-grid-lg { grid-template-columns: repeat(2, 1fr); }
   .care-grid { grid-template-columns: repeat(2, 1fr); }
-  .demo-shell { grid-template-columns: 1fr; }
-  .demo-sidebar {
-    flex-direction: row;
-    overflow-x: auto;
-    overflow-y: hidden;
-    padding: 0.35rem;
-    mask-image: none;
-    -webkit-mask-image: none;
-  }
-  .demo-nav-label, .demo-nav-divider { display: none; }
-  .demo-nav-item { white-space: nowrap; font-size: 0.68rem; }
-  .demo-webui,
-  .demo-stack {
-    height: auto;
-    max-height: none;
-  }
   .dev-grid { grid-template-columns: 1fr; }
   .blockstep-showcase { grid-template-columns: 1fr; }
   .footer-grid { grid-template-columns: 1fr 1fr; }
@@ -3244,8 +3261,6 @@ section[id] {
   .wiz-profile-grid { grid-template-columns: 1fr; }
   .wiz-setup-steps li::before { top: 15px; }
   .wizard-feature-list { grid-template-columns: 1fr; }
-  .demo-kpi-grid-6 { grid-template-columns: repeat(2, 1fr); }
-  .demo-features-grid { grid-template-columns: 1fr; }
   .stats-grid { grid-template-columns: 1fr 1fr; gap: 1rem; }
 }
 

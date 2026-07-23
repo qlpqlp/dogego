@@ -70,16 +70,18 @@
       <span class="material-icons-round" aria-hidden="true">download</span>
       <span data-i18n="nav.download">Download</span>
     </a>
-    <div class="lang-picker" id="site-lang-picker">
-      <button type="button" class="lang-picker-btn" id="site-lang-btn" aria-haspopup="listbox" data-i18n-aria="lang.aria" aria-expanded="false" aria-controls="site-lang-menu">
-        <span class="material-icons-round" aria-hidden="true">language</span>
-        <span id="site-lang-label">English</span>
-      </button>
-      <div class="lang-picker-menu" id="site-lang-menu" role="listbox" hidden></div>
+    <div class="topbar-chrome" id="topbar-chrome">
+      <div class="lang-picker" id="site-lang-picker">
+        <button type="button" class="lang-picker-btn" id="site-lang-btn" aria-haspopup="listbox" data-i18n-aria="lang.aria" aria-expanded="false" aria-controls="site-lang-menu">
+          <span class="material-icons-round" aria-hidden="true">language</span>
+          <span id="site-lang-label">English</span>
+        </button>
+        <div class="lang-picker-menu" id="site-lang-menu" role="listbox" hidden></div>
+      </div>
+      <a href="https://foundation.dogecoin.com" class="topbar-foundation" id="site-foundation" rel="noopener noreferrer" target="_blank" data-i18n-title="nav.foundation">
+        <img src="assets/dogecoin-foundation.svg" alt="Dogecoin Foundation" width="120" height="28">
+      </a>
     </div>
-    <a href="https://foundation.dogecoin.com" class="topbar-foundation" rel="noopener noreferrer" target="_blank" data-i18n-title="nav.foundation">
-      <img src="assets/dogecoin-foundation.svg" alt="Dogecoin Foundation" width="120" height="28">
-    </a>
     <button type="button" class="nav-toggle" id="nav-toggle" aria-expanded="false" aria-controls="sidebar-nav" data-i18n-aria="nav.openMenu">
       <span class="material-icons-round" aria-hidden="true">menu</span>
     </button>
@@ -141,6 +143,7 @@
         <span class="material-icons-round nav-icon" aria-hidden="true">code</span>
         <span class="nav-label" data-i18n="nav.github">GitHub</span>
       </a>
+      <div class="sidebar-foot" id="sidebar-chrome" hidden></div>
     </nav>
 
     <div class="site-main">

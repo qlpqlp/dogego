@@ -69,6 +69,26 @@
     setNavOpen(false);
   }
 
+  function placeTopbarChrome() {
+    var topSlot = document.getElementById("topbar-chrome");
+    var sideSlot = document.getElementById("sidebar-chrome");
+    var lang = document.getElementById("site-lang-picker");
+    var foundation = document.getElementById("site-foundation");
+    if (!topSlot || !sideSlot || !lang || !foundation) return;
+
+    if (isMobile()) {
+      if (lang.parentElement !== sideSlot) sideSlot.appendChild(lang);
+      if (foundation.parentElement !== sideSlot) sideSlot.appendChild(foundation);
+      sideSlot.hidden = false;
+      topSlot.hidden = true;
+    } else {
+      if (lang.parentElement !== topSlot) topSlot.appendChild(lang);
+      if (foundation.parentElement !== topSlot) topSlot.appendChild(foundation);
+      sideSlot.hidden = true;
+      topSlot.hidden = false;
+    }
+  }
+
   function toggleSidebar() {
     if (!shell) return;
     if (isMobile()) {
@@ -109,9 +129,11 @@
   mobileMq.addEventListener("change", function () {
     closeMobileNav();
     applyDesktopPref();
+    placeTopbarChrome();
   });
 
   applyDesktopPref();
+  placeTopbarChrome();
 
   if (window.DogeGoSiteI18n) {
     DogeGoSiteI18n.ready().then(syncToggleLabel);

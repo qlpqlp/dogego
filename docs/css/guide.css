@@ -7,6 +7,8 @@
   grid-template-columns: var(--guide-rail-w) minmax(0, 1fr);
   gap: 0;
   min-height: calc(100dvh - var(--topbar-h));
+  max-width: 100%;
+  overflow-x: clip;
   background:
     radial-gradient(ellipse 80% 50% at 10% 0%, rgba(194, 166, 51, 0.12), transparent 55%),
     radial-gradient(ellipse 60% 40% at 100% 20%, rgba(27, 31, 36, 0.06), transparent 50%),
@@ -217,7 +219,9 @@
 
 .guide-stage {
   min-width: 0;
+  max-width: 100%;
   padding: 28px 28px 64px;
+  overflow-x: clip;
 }
 
 .guide-hero {
@@ -271,6 +275,8 @@
   border-radius: calc(var(--radius) + 2px);
   background: var(--surface);
   box-shadow: var(--shadow);
+  max-width: 100%;
+  overflow-x: hidden;
 }
 
 .guide-doc.markdown-body > :first-child {
@@ -326,10 +332,30 @@
 }
 
 .guide-doc.markdown-body table {
-  width: 100%;
+  width: max-content;
+  min-width: 100%;
   border-collapse: collapse;
   font-size: 0.9rem;
+  margin: 0;
+}
+
+.guide-table-scroll {
+  display: block;
+  width: 100%;
+  max-width: 100%;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
   margin: 1rem 0;
+  border-radius: var(--radius-sm);
+}
+
+.guide-doc.markdown-body img {
+  max-width: 100%;
+  height: auto;
+}
+
+.guide-doc.markdown-body pre {
+  max-width: 100%;
 }
 
 .guide-doc.markdown-body th,
@@ -466,6 +492,15 @@
 
   .guide-doc {
     padding: 20px 16px;
+  }
+
+  .guide-doc.markdown-body table {
+    font-size: 0.82rem;
+  }
+
+  .guide-doc.markdown-body th,
+  .guide-doc.markdown-body td {
+    padding: 6px 8px;
   }
 
   .guide-toolbar-actions {

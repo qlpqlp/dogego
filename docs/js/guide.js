@@ -162,6 +162,19 @@
     });
   }
 
+  function wrapGuideTables(root) {
+    if (!root) return;
+    root.querySelectorAll("table").forEach(function (table) {
+      if (table.parentElement && table.parentElement.classList.contains("guide-table-scroll")) return;
+      var wrap = document.createElement("div");
+      wrap.className = "guide-table-scroll";
+      wrap.setAttribute("role", "region");
+      wrap.setAttribute("aria-label", "Table");
+      table.parentNode.insertBefore(wrap, table);
+      wrap.appendChild(table);
+    });
+  }
+
   function parseMarkdown(md) {
     ensureMarked();
     var extracted = extractMath(md);
@@ -380,6 +393,7 @@
         body.innerHTML = "<pre>" + escapeHtml(md) + "</pre>";
       }
       renderMath(body);
+      wrapGuideTables(body);
       if (title) {
         var h1 = body.querySelector("h1");
         title.textContent = h1 ? h1.textContent : path;
