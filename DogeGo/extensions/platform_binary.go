@@ -23,6 +23,7 @@ func materializePlatformBinary(extDir string, man Manifest) error {
 	if binName == "" {
 		return nil
 	}
+	removeForeignSubprocessBinaries(extDir, binName)
 	if subprocessBinaryExists(extDir, binName) {
 		return nil
 	}
@@ -38,7 +39,11 @@ func materializePlatformBinary(extDir string, man Manifest) error {
 		return err
 	}
 	if st, err := os.Stat(src); err != nil || st.IsDir() {
-		return fmt.Errorf("extension %q: platform binary %q missing", man.ID, rel)
+		// Soft-miss: allow source build when the universal zip omitted this platform.
+		return nil
+	}
+	if !hostNativeExecutable(src) {
+		return nil
 	}
 	dst := filepath.Join(extDir, binName)
 	if runtime.GOOS == "windows" && !strings.HasSuffix(strings.ToLower(dst), ".exe") {

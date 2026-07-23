@@ -37,11 +37,18 @@ base["entry"]["binaries"] = {
 pathlib.Path("dist/dogego.extension.json").write_text(json.dumps(base, separators=(",", ":")))
 PY
 
+stage="$dist/stage"
+rm -rf "$stage"
+mkdir -p "$stage"
+cp -f "$manifest" "$stage/dogego.extension.json"
+cp -f icon.png "$stage/icon.png"
+cp -rf "$bin_root" "$stage/bin"
+
 zip="$dist/zkl2-universal.zip"
 rm -f "$zip"
-(cd "$dist" && zip -r -q zkl2-universal.zip dogego.extension.json)
-(cd "$(pwd)" && zip -r -q "$zip" icon.png bin)
-rm -f "$dist/dogego.extension.json"
+(cd "$stage" && zip -r -q ../zkl2-universal.zip dogego.extension.json icon.png bin)
+rm -rf "$stage"
+rm -f "$manifest"
 cp "$zip" "$dist/zkl2.zip"
 echo "Wrote $zip ($(wc -c < "$zip") bytes)"
 if command -v sha256sum >/dev/null; then

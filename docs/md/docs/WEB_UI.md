@@ -16,7 +16,21 @@ Configure with `webui` in `dogecoinconf.json` or `-webui`. Disable with `nowebui
 
 **Default `localhost` vs `127.0.0.1`:** the default is **`localhost:2013`** so optional **device biometrics (WebAuthn)** work in browsers on Windows, Linux, and macOS. You may set `"webui": "127.0.0.1:2013"` if you do not need biometrics. Local HTTPS (`webui_tls_local`) certificates include **both** `localhost` and `127.0.0.1` (and `::1`) as SANs, so either URL works over HTTPS. When `webui` is `localhost:…`, DogeGo binds IPv4 and IPv6 loopback so both names reach the dashboard.
 
-Open the dashboard at **`https://localhost:2013/`** (or `http://` if TLS is off).
+Open the dashboard at **`https://localhost:2013/`** when local HTTPS is on, or **`http://localhost:2013/`** when TLS is off (including **`-notls`** / DogeBox).
+
+## Local HTTPS and `-notls`
+
+New wizard installs default to **HTTPS** (`webui_tls_local` + `local_tls_trust_ca`) and may install a local CA into the OS trust store. Toggle these under **Settings → Interface → Local HTTPS**.
+
+| Mode | How | Effect |
+|------|-----|--------|
+| Local HTTPS (default wizard) | `webui_tls_local` / Settings | Certs under `{datadir}/tls/`; open `https://…` |
+| Trust CA | `local_tls_trust_ca` or `dogego tls trust-ca` | Fewer browser warnings |
+| **Plain HTTP** | **`dogego node -notls`** or **`DOGEGO_NO_TLS=1`** | No cert gen, no CA install; wizard + dashboard stay `http://` |
+
+Use **`-notls`** on hosts that cannot terminate TLS (e.g. **DogeBox** pup entrypoint already passes it). The flag also overrides TLS flags already saved in `dogecoinconf.json` for that process. Persisted `"no_tls": true` from a `-notls` wizard save keeps HTTP on later starts.
+
+See [SECURITY.md](SECURITY.md#local-https-optional) and [OPERATOR.md](OPERATOR.md#tls).
 
 ## First-run setup wizard
 
@@ -73,7 +87,7 @@ The node must be running for payment links; `dogego open --url %1` is invoked by
 ### Send
 - Pay from built-in wallet (`sendtoaddress`) with optional fee/conf_target options.
 - **Spendable balance** card (amount + optional pending / immature mining / UTXO meta chips).
-- **Post-quantum (optional):** when **`pq_commitments`** is enabled (Settings → Wallet), Advanced exposes **PQ mode**: **OP_RETURN** (FLC1/DIL2/RCG4 tagged commitment on the send tx) or **carrier** (TX_C/TX_R P2SH pair via `dogego_sendpqcarrier`). Carrier mode requires **`pq_carrier_enabled`** (`setwalletflag pq_carrier` or Settings toggle). Web send uses `POST /api/wallet/send` with optional **`pq_mode: "carrier"`** (default OP_RETURN when PQ is on). Offline cert: **`dogego cert pq`**; live probe: **`GET /api/core-pq-probe`** (Features tab).
+- **Post-quantum (optional):** when **`pq_commitments`** is enabled (Settings → Wallet), Advanced exposes **PQ mode**: **OP_RETURN** (FLC1/DIL2/RCG4 tagged commitment on the send tx) or **carrier** (TX_C/TX_R P2SH pair via `dogego_sendpqcarrier`). Carrier mode requires **`pq_carrier_enabled`**. Raccoon-G (`RCG4`) is the Foundation [in-tree port](https://github.com/dogecoinfoundation/libdogecoin/tree/0.1.5-dev/src/raccoon_g) by [Ed Tubbs](https://github.com/edtubbs) ([@EdTubbs](https://x.com/EdTubbs); [Core PR #8](https://github.com/dogecoinfoundation/dogecoin/pull/8); [CREDITS.md](CREDITS.md)) linked in **GitHub Release** binaries via native CGO builds (see [pqcrypto/raccoon_g/BUILD.md](../pqcrypto/raccoon_g/BUILD.md)). Offline cert: **`dogego cert pq`**; live probe: **`GET /api/core-pq-probe`** (Features tab).
 - **Coin control** (Advanced) loads `/api/wallet/utxos` from the in-memory UTXO cache when wired (fast on solo miners). Matches all wallet **SpendScripts** (HD receive/change). Shows immature coinbases disabled; lists first **300** UTXOs with a total count hint; surfaces unlock/fetch errors instead of hanging on “Loading…”.
 - **Fee hints** on send failure - suggested feerate + one-click retry when the node rejects for insufficient fee.
 - **Encrypted wallet** - when `wallet.json` is encrypted (setup wizard **Encrypt wallet on start** or Console `encryptwallet`), the node starts **locked** like Core. Click **Unlock & send** to open a passphrase dialog (`POST /api/wallet/unlock` → Core `walletpassphrase`), or unlock from CLI/RPC before spending.

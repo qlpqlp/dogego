@@ -1,0 +1,96 @@
+# Copyright (c) 2026 Paulo Vidal (https://x.com/inevitable360, https://github.com/qlpqlp)
+# Copyright (c) 2026 Dogecoin Foundation
+# SPDX-License-Identifier: MIT
+#
+# Compile-check Raccoon-G CGO builds on Linux / Windows / macOS (no release upload).
+# Runs on PRs that touch pqcrypto or this workflow so release surprises are caught early.
+name: Raccoon-G CGO
+
+on:
+  pull_request:
+    paths:
+      - "DogeGo/pqcrypto/**"
+      - ".github/workflows/raccoon_g.yml"
+      - ".github/workflows/release.yml"
+  push:
+    branches: [main, master]
+    paths:
+      - "DogeGo/pqcrypto/**"
+      - ".github/workflows/raccoon_g.yml"
+      - ".github/workflows/release.yml"
+  workflow_dispatch:
+
+defaults:
+  run:
+    working-directory: DogeGo
+
+jobs:
+  raccoon-cgo:
+    name: raccoon_g ${{ matrix.os }}
+    runs-on: ${{ matrix.runs-on }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - runs-on: ubuntu-latest
+            os: linux
+          - runs-on: windows-latest
+            os: windows
+          - runs-on: macos-14
+            os: darwin-arm64
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version: "1.22"
+          cache-dependency-path: DogeGo/go.sum
+
+      - name: Deps (Linux)
+        if: runner.os == 'Linux'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y build-essential pkg-config libgmp-dev libmpfr-dev libzstd-dev
+
+      - name: Deps (Windows / MSYS2)
+        if: runner.os == 'Windows'
+        uses: msys2/setup-msys2@v2
+        with:
+          msystem: MINGW64
+          update: true
+          path-type: inherit
+          install: >-
+            mingw-w64-x86_64-gcc
+            mingw-w64-x86_64-pkg-config
+            mingw-w64-x86_64-gmp
+            mingw-w64-x86_64-mpfr
+            mingw-w64-x86_64-zstd
+
+      - name: Deps (macOS)
+        if: runner.os == 'macOS'
+        run: brew install gmp mpfr zstd pkg-config
+
+      - name: Test + build (Unix)
+        if: runner.os != 'Windows'
+        env:
+          CGO_ENABLED: "1"
+        run: |
+          if [ "${{ runner.os }}" = "macOS" ]; then
+            export CGO_CFLAGS="-I$(brew --prefix gmp)/include -I$(brew --prefix mpfr)/include -I$(brew --prefix zstd)/include"
+            export CGO_LDFLAGS="-L$(brew --prefix gmp)/lib -L$(brew --prefix mpfr)/lib -L$(brew --prefix zstd)/lib"
+          fi
+          go test -tags raccoon_g ./pqcrypto/ -run 'TestRaccoon|TestFalcon|TestDilithium' -count=1
+          go test -tags raccoon_g ./consensus/ -run TestVerifyPQCarrierPairRaccoon -count=1
+          go build -tags raccoon_g -o /tmp/dogego-raccoon ./cmd/dogego
+          /tmp/dogego-raccoon version
+
+      - name: Test + build (Windows)
+        if: runner.os == 'Windows'
+        shell: msys2 {0}
+        env:
+          CGO_ENABLED: "1"
+        run: |
+          export PATH="/mingw64/bin:$PATH"
+          go test -tags raccoon_g ./pqcrypto/ -run 'TestRaccoon|TestFalcon|TestDilithium' -count=1
+          go test -tags raccoon_g ./consensus/ -run TestVerifyPQCarrierPairRaccoon -count=1
+          go build -tags raccoon_g -o dogego-raccoon.exe ./cmd/dogego
+          ./dogego-raccoon.exe version

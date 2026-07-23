@@ -611,6 +611,7 @@
       let walletBackupDownloaded = false;
       let wizardWebUITLSLocal = true;
       let wizardLocalTLSTrustCA = true;
+      let wizardNoTLS = false;
 
       function $(id) { return document.getElementById(id); }
 
@@ -1486,8 +1487,9 @@
         if (!r.ok) return;
         const d = await r.json();
         if (d.datadir) $("datadir").value = d.datadir;
-        wizardWebUITLSLocal = d.webui_tls_local !== false;
-        wizardLocalTLSTrustCA = d.local_tls_trust_ca !== false;
+        wizardNoTLS = !!d.no_tls;
+        wizardWebUITLSLocal = wizardNoTLS ? false : (d.webui_tls_local !== false);
+        wizardLocalTLSTrustCA = wizardNoTLS ? false : (d.local_tls_trust_ca !== false);
         if ($("setup_wallet_encrypt") && d.nowallet !== true) {
           $("setup_wallet_encrypt").checked = true;
         }
@@ -1735,6 +1737,7 @@
         }
         body.webui_tls_local = wizardWebUITLSLocal;
         body.local_tls_trust_ca = wizardLocalTLSTrustCA;
+        if (wizardNoTLS) body.no_tls = true;
 
         let pendingPin = "";
         if ($("setup_pin_now") && $("setup_pin_now").checked) {

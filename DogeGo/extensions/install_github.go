@@ -71,12 +71,12 @@ func (m *Manager) installFromArchiveSubdir(zipPath, entryPrefix string) (Install
 		if rel == "" || strings.HasPrefix(rel, "/") {
 			continue
 		}
-		clean := filepath.Clean(rel)
-		if clean == ".." || strings.HasPrefix(clean, ".."+string(os.PathSeparator)) {
+		clean, err := sanitizeZipEntryRel(rel)
+		if err != nil {
 			return InstalledRow{}, fmt.Errorf("zip path traversal: %q", f.Name)
 		}
 		dest := filepath.Join(tmpDir, clean)
-		if !strings.HasPrefix(dest, tmpDir+string(os.PathSeparator)) && dest != tmpDir {
+		if !strings.HasPrefix(dest, tmpDir+string(filepath.Separator)) && dest != tmpDir {
 			return InstalledRow{}, fmt.Errorf("zip path escape: %q", f.Name)
 		}
 		if f.FileInfo().IsDir() {

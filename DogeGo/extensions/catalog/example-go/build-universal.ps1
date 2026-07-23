@@ -40,10 +40,19 @@ $base.entry | Add-Member -NotePropertyName "binaries" -NotePropertyValue ([order
 $json = $base | ConvertTo-Json -Depth 10 -Compress
 [System.IO.File]::WriteAllText($manifestPath, $json, [System.Text.UTF8Encoding]::new($false))
 
+$stage = Join-Path $dist "stage"
+if (Test-Path $stage) { Remove-Item $stage -Recurse -Force }
+New-Item -ItemType Directory -Force -Path $stage | Out-Null
+Copy-Item $manifestPath (Join-Path $stage "dogego.extension.json") -Force
+Copy-Item (Join-Path $PSScriptRoot "icon.png") (Join-Path $stage "icon.png") -Force
+Copy-Item $binRoot (Join-Path $stage "bin") -Recurse -Force
+
 $zip = Join-Path $dist "hello-universal.zip"
 if (Test-Path $zip) { Remove-Item $zip -Force }
-Compress-Archive -Path $manifestPath, (Join-Path $PSScriptRoot "icon.png"), $binRoot -DestinationPath $zip
+# Stage first so Compress-Archive never stores "../icon.png" (PowerShell relative-path quirk).
+Compress-Archive -Path (Join-Path $stage "*") -DestinationPath $zip
 Remove-Item $manifestPath -Force
+Remove-Item $stage -Recurse -Force
 
 Write-Host "Wrote $zip ($((Get-Item $zip).Length) bytes)"
 $hash = (Get-FileHash $zip -Algorithm SHA256).Hash.ToLower()

@@ -120,7 +120,7 @@ func DefaultCoreParityGaps() []CoreParityGap {
 			Summary: "getblocktemplate Digishield bits + BIP22 longpoll; createauxblock/submitauxblock; getmininginfo; GET /api/core-mining-probe + dogego cert mining + scripts/core_mining_workflow.ps1; optional Core GBT side-by-side when tips align.",
 			Ref:     "rpc/getblocktemplate.go, rpc/auxpow_mining.go"},
 		{ID: "pq_verify", Area: "PQC", Title: "PQ commitment verify + relay", Status: "done", Effort: "L",
-			Summary: "MVP complete: off-chain OP_RETURN + TX_C/TX_R verify (dogego_verifypqcommitment/verifypqcarrier); web Settings pq_carrier + Send carrier mode; GET /api/core-pq-probe; dogego cert pq; mempool corpus pq_commitment_op_return / pq_carrier_p2sh_accept. No production PQ safety claim.",
+			Summary: "MVP complete: off-chain OP_RETURN + TX_C/TX_R verify; Raccoon-G = vendored libdogecoin src/raccoon_g (Core PR #8; CGO -tags raccoon_g; no placeholder); web Settings pq_carrier + Send carrier mode; GET /api/core-pq-probe; dogego cert pq. No production PQ safety claim.",
 			Ref:     "ROADMAP Phase 10"},
 
 		// Docs (Phase 12 - not Core parity but tracked on roadmap)

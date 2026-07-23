@@ -18,10 +18,12 @@ const falconLogN = 9 // degree 512
 // Falcon512 implements Falcon-512 / FN-DSA degree-512 via go-fn-dsa.
 type Falcon512 struct{}
 
-func (Falcon512) Name() string        { return "falcon-512" }
-func (Falcon512) OPReturnTag() string { return "FLC1" }
-func (Falcon512) CarrierTag8() string { return "FLC1FULL" }
-func (Falcon512) PartTotal() int { return 2 } // pk||sig may exceed one 3×520-byte part
+func (Falcon512) Name() string                { return "falcon-512" }
+func (Falcon512) OPReturnTag() string         { return "FLC1" }
+func (Falcon512) CarrierTag8() string         { return "FLC1FULL" }
+func (Falcon512) PartTotal() int              { return 2 } // pk||sig may exceed one 3×520-byte part
+func (Falcon512) Backend() string             { return "go-fn-dsa" }
+func (Falcon512) LibdogecoinCompatible() bool { return false }
 
 func (Falcon512) GenerateKey(seed []byte) (pk, sk []byte, err error) {
 	_ = seed

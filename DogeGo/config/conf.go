@@ -157,6 +157,8 @@ type File struct {
 	RpcTLSLocal bool `json:"rpc_tls_local,omitempty"`
 	// LocalTLSTrustCA attempts to install the generated local CA into the OS user trust store on startup.
 	LocalTLSTrustCA bool `json:"local_tls_trust_ca,omitempty"`
+	// NoTLS disables local HTTPS defaults (wizard + startup). Set by -notls / DOGEGO_NO_TLS (e.g. DogeBox).
+	NoTLS bool `json:"no_tls,omitempty"`
 	// WebUIPINEnabled when true prompts for a 6-digit dashboard PIN (stored hashed in web_security.json).
 	WebUIPINEnabled bool `json:"web_ui_pin_enabled,omitempty"`
 	// WebUIRemoteAuth when true requires a valid dashboard PIN session for non-loopback /api reads

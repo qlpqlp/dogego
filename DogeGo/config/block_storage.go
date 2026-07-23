@@ -33,6 +33,9 @@ func SetupWizardSeed(base File) File {
 	ApplyRecommendedStorageDefaults(&out)
 	ApplyRecommendedNetworkDefaults(&out)
 	ApplyRecommendedSecurityDefaults(&out)
+	if out.NoTLS {
+		DisableLocalTLS(&out)
+	}
 	if strings.TrimSpace(out.DataDir) == "" {
 		out.DataDir = "dogedata"
 	}

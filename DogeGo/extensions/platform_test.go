@@ -42,7 +42,9 @@ func TestMaterializePlatformBinary(t *testing.T) {
 		srcName += ".exe"
 	}
 	srcPath := filepath.Join(srcDir, srcName)
-	if err := os.WriteFile(srcPath, []byte("fake"), 0o755); err != nil {
+	// Minimal PE/MZ header so hostNativeExecutable accepts the fake binary on Windows.
+	payload := []byte("MZ fake-extension-binary")
+	if err := os.WriteFile(srcPath, payload, 0o755); err != nil {
 		t.Fatal(err)
 	}
 	rel := filepath.ToSlash(filepath.Join("bin", CurrentPlatformKey(), srcName))

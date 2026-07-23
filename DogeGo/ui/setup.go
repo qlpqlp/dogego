@@ -103,6 +103,9 @@ func RunSetupWizard(ctx context.Context, listenAddr string, seed config.File, sa
 			return
 		}
 		f := req.File
+		if seed.NoTLS {
+			config.DisableLocalTLS(&f)
+		}
 		startNode := true
 		if req.StartNode != nil {
 			startNode = *req.StartNode

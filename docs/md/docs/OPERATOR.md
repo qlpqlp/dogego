@@ -104,6 +104,8 @@ Use PEM files (e.g. from Let’s Encrypt). The dashboard opens `https://…` whe
 
 **Auto-generated local HTTPS** (development / loopback): set `webui_tls_local` and/or `rpc_tls_local` to generate a local CA and leaf certs under `{datadir}/tls/`. HTTP remains the default when these are off. To avoid browser warnings, set `local_tls_trust_ca=true` on startup or run `dogego tls trust-ca` (also available from Settings → Interface → Local HTTPS). See [SECURITY.md](SECURITY.md#local-https-optional).
 
+**Disable TLS entirely** (DogeBox / first install without cert support): `dogego node -notls` or `DOGEGO_NO_TLS=1`. Skips wizard HTTPS, cert generation, and OS CA install.
+
 **Recommended for production:** still run `dogego` on localhost and put **nginx**, **Caddy**, or **Traefik** in front with TLS, auth, and IP restrictions.
 
 Example nginx location (illustrative):

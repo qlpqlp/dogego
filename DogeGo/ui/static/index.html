@@ -603,7 +603,7 @@
                 <select id="send-pq-tag" class="wallet-input-full" disabled>
                   <option value="FLC1">FLC1 (Falcon)</option>
                   <option value="DIL2">DIL2 (Dilithium)</option>
-                  <option value="RCG4">RCG4 (RingCT)</option>
+                  <option value="RCG4">RCG4 (Raccoon-G-44)</option>
                 </select>
               </div>
               <div class="form-field"><label for="send-pq-commit" data-i18n="pages.send.commitment">Commitment (hex)</label><input id="send-pq-commit" class="wallet-addr-mono wallet-input-full" disabled data-i18n-placeholder="pages.send.commitPlaceholder" placeholder="64 hex chars" autocomplete="off" spellcheck="false" /></div>
@@ -1178,7 +1178,7 @@
         </div>
         <div class="card card-wide stack-gap" id="feat-core-pq">
           <h2 data-i18n="pages.features.corePqTitle">Post-quantum format probe</h2>
-          <p class="label" data-i18n="pages.features.corePqHint">Offline OP_RETURN + TX_C/TX_R carrier checks (verifier-side only; not production PQ safety).</p>
+          <p class="label" data-i18n="pages.features.corePqHint">Offline OP_RETURN + TX_C/TX_R. Falcon/Dilithium are pure-Go; Raccoon-G is the vendored libdogecoin in-tree port (CGO -tags raccoon_g; no placeholder). Verifier-side only; not production PQ safety.</p>
           <div class="dgr-status-row">
             <span id="feat-core-pq-pill" class="p2p-health-pill starting">...</span>
             <span class="label mono" id="feat-core-pq-summary">...</span>
@@ -2301,7 +2301,7 @@
               <details class="ui-disclosure" id="st-local-tls-wrap">
                 <summary><span class="material-icons-round disclosure-chevron" aria-hidden="true">expand_more</span> <span data-i18n="settings.localTlsTitle">Local HTTPS (optional)</span></summary>
                 <div class="ui-disclosure-body">
-                  <p class="field-hint" data-i18n="settings.localTlsIntro">HTTP is the default. When enabled, DogeGo generates a local CA and leaf certs under <code>datadir/tls/</code>. Restart required after Save.</p>
+                  <p class="field-hint" data-i18n="settings.localTlsIntro">HTTP is the default when TLS is off. New wizard installs enable HTTPS unless you start with <code>-notls</code> / <code>DOGEGO_NO_TLS=1</code> (DogeBox). When enabled, DogeGo generates a local CA under <code>datadir/tls/</code>. Restart required after Save.</p>
                   <div class="switch"><span><span data-i18n="field.webuiTlsLocal.label">HTTPS dashboard (<code>webui_tls_local</code>)</span>
                     <button type="button" class="help-btn" tabindex="0" data-i18n-help="field.webuiTlsLocal.help">?</button></span><input type="checkbox" id="st-webui-tls-local" /></div>
                   <div class="switch"><span><span data-i18n="field.rpcTlsLocal.label">HTTPS JSON-RPC (<code>rpc_tls_local</code>)</span>

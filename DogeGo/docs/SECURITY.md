@@ -30,12 +30,14 @@ DogeGo follows **Dogecoin Core mainnet consensus rules**. It does not introduce 
 
 ## Local HTTPS (optional)
 
-DogeGo defaults to **HTTPS on loopback** for new wizard installs (`webui_tls_local` + `local_tls_trust_ca`). Plain HTTP remains available when those flags are off.
+DogeGo defaults to **HTTPS on loopback** for new wizard installs (`webui_tls_local` + `local_tls_trust_ca`). Plain HTTP remains available when those flags are off, or when you start with **`-notls`** / **`DOGEGO_NO_TLS=1`** (skips cert generation and OS CA install — use this on DogeBox and other hosts without TLS).
 
 1. Set `webui_tls_local=true` and/or `rpc_tls_local=true` in `dogecoinconf.json` (or Settings → Interface → Local HTTPS).
 2. Restart the node. PEM files are created under `{datadir}/tls/` (`local-ca.crt`, `webui.crt`, `rpc.crt`).
 3. Open the dashboard with `https://127.0.0.1:2013` (or your configured bind).
 4. To avoid browser warnings, set `local_tls_trust_ca=true` or run `dogego tls trust-ca` (loopback-only API: POST `/api/tls/trust-ca` from Settings).
+
+**DogeBox / plain HTTP:** `dogego node -notls` (or `DOGEGO_NO_TLS=1`). The setup wizard then serves `http://` and does not install a local CA.
 
 | OS | Trust install |
 |----|----------------|

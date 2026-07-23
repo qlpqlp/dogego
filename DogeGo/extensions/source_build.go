@@ -25,12 +25,13 @@ func buildSubprocessIfNeeded(extDir string, man Manifest) error {
 	if binName == "" {
 		return fmt.Errorf("subprocess extension %q missing entry.binary", man.ID)
 	}
+	removeForeignSubprocessBinaries(extDir, binName)
 	if subprocessBinaryExists(extDir, binName) {
 		return nil
 	}
 	pkg, err := locateGoMainPackage(extDir, man)
 	if err != nil {
-		return fmt.Errorf("extension %q: no prebuilt binary and %w (install Go or ship a binary in the zip)", man.ID, err)
+		return fmt.Errorf("extension %q: no prebuilt binary for %s/%s and %w (install a matching platform zip, or ship source that builds on this host)", man.ID, runtime.GOOS, runtime.GOARCH, err)
 	}
 	outPath := filepath.Join(extDir, binName)
 	if runtime.GOOS == "windows" && !strings.HasSuffix(strings.ToLower(outPath), ".exe") {
@@ -38,7 +39,7 @@ func buildSubprocessIfNeeded(extDir string, man Manifest) error {
 	}
 	goBin, err := exec.LookPath("go")
 	if err != nil {
-		return fmt.Errorf("extension %q: go not found on PATH", man.ID)
+		return fmt.Errorf("extension %q: go not found on PATH (needed to build %s for this OS)", man.ID, binName)
 	}
 	cmd := exec.Command(goBin, "build", "-ldflags=-s -w", "-trimpath", "-o", outPath, pkg)
 	cmd.Dir = extDir
@@ -53,22 +54,45 @@ func buildSubprocessIfNeeded(extDir string, man Manifest) error {
 }
 
 func subprocessBinaryExists(extDir, binName string) bool {
+	path, ok := findSubprocessBinaryPath(extDir, binName)
+	return ok && hostNativeExecutable(path)
+}
+
+func findSubprocessBinaryPath(extDir, binName string) (string, bool) {
+	binName = strings.TrimSpace(binName)
+	if binName == "" {
+		return "", false
+	}
 	base := filepath.Join(extDir, binName)
+	if runtime.GOOS == "windows" {
+		exe := base
+		if !strings.HasSuffix(strings.ToLower(exe), ".exe") {
+			exe = base + ".exe"
+		}
+		if st, err := os.Stat(exe); err == nil && !st.IsDir() {
+			return exe, true
+		}
+	}
 	if st, err := os.Stat(base); err == nil && !st.IsDir() {
-		return true
+		return base, true
 	}
 	if runtime.GOOS == "windows" {
 		if st, err := os.Stat(base + ".exe"); err == nil && !st.IsDir() {
-			return true
+			return base + ".exe", true
 		}
 	}
-	return false
+	return "", false
 }
 
 func locateGoMainPackage(extDir string, man Manifest) (string, error) {
+	bin := strings.TrimSpace(man.Entry.Binary)
+	bin = strings.TrimSuffix(bin, ".exe")
 	candidates := []string{}
+	if bin != "" {
+		candidates = append(candidates, "./cmd/"+bin, "./"+bin)
+	}
 	if seg := extensionIDTail(man.ID); seg != "" {
-		candidates = append(candidates, "./"+seg)
+		candidates = append(candidates, "./cmd/"+seg+"-ext", "./cmd/"+seg, "./"+seg)
 	}
 	candidates = append(candidates, "./hello", ".")
 	seen := make(map[string]struct{})
@@ -85,7 +109,7 @@ func locateGoMainPackage(extDir string, man Manifest) (string, error) {
 			return rel, nil
 		}
 	}
-	return "", fmt.Errorf("no Go main package found under %s", extDir)
+	return "", fmt.Errorf("no Go main package found under %s (tried cmd/<binary>, hello, .)", extDir)
 }
 
 func extensionIDTail(id string) string {

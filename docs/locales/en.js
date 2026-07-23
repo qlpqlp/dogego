@@ -207,7 +207,7 @@
     "items": {
       "pq": {
         "title": "Post-Quantum commitments",
-        "body": "First Dogecoin full node with Phase-1 PQ OP_RETURN carriers (FLC1, DIL2, RCG4). Send with automatic wallet commitments, verify via <code>dogego_verifypqcommitment</code>, and inspect in the explorer."
+        "body": "First Dogecoin full node with Phase-1 PQ OP_RETURN carriers (FLC1, DIL2, RCG4). Raccoon-G uses the Foundation <a href=\"https://github.com/dogecoinfoundation/libdogecoin/tree/0.1.5-dev/src/raccoon_g\">in-tree port</a> by <a href=\"https://github.com/edtubbs\">Ed Tubbs</a> (<a href=\"https://x.com/EdTubbs\">@EdTubbs</a>; <a href=\"https://github.com/dogecoinfoundation/dogecoin/pull/8\">Core green PR #8</a>); GitHub Releases compile it with CGO on <strong>native</strong> OS runners (not cross-compile, because GMP/MPFR must match the target). Send with wallet commitments, verify via <code>dogego_verifypqcommitment</code>, and inspect in the explorer."
       },
       "zstd": {
         "title": "zstd block compression",

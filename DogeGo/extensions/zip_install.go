@@ -47,16 +47,16 @@ func (m *Manager) InstallZip(zipPath string) (InstalledRow, error) {
 		if name == "" || strings.HasPrefix(name, "/") {
 			continue
 		}
-		clean := filepath.Clean(name)
-		if clean == ".." || strings.HasPrefix(clean, ".."+string(os.PathSeparator)) {
+		clean, err := sanitizeZipEntryRel(name)
+		if err != nil {
 			return InstalledRow{}, fmt.Errorf("zip path traversal: %q", f.Name)
 		}
 		// Never extract a zip "data/" tree over the operator's live extension database.
-		if clean == "data" || strings.HasPrefix(clean, "data"+string(os.PathSeparator)) || strings.HasPrefix(clean, "data/") {
+		if clean == "data" || strings.HasPrefix(clean, "data"+string(filepath.Separator)) || strings.HasPrefix(clean, "data/") {
 			continue
 		}
 		dest := filepath.Join(tmpDir, clean)
-		if !strings.HasPrefix(dest, tmpDir+string(os.PathSeparator)) && dest != tmpDir {
+		if !strings.HasPrefix(dest, tmpDir+string(filepath.Separator)) && dest != tmpDir {
 			return InstalledRow{}, fmt.Errorf("zip path escape: %q", f.Name)
 		}
 		if f.FileInfo().IsDir() {

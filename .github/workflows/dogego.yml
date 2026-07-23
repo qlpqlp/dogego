@@ -64,6 +64,14 @@ jobs:
         env:
           CGO_ENABLED: "0"
         run: bash scripts/ci_offline_gate.sh
+      - name: Raccoon-G in-tree (CGO)
+        env:
+          CGO_ENABLED: "1"
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libgmp-dev libmpfr-dev
+          go test -tags raccoon_g ./pqcrypto/ -run 'TestRaccoon|TestFalcon|TestDilithium' -count=1
+          go test -tags raccoon_g ./consensus/ -run TestVerifyPQCarrierPairRaccoon -count=1
 
   live-weekly:
     name: Live weekly (Core 24/24 + corruption mini)

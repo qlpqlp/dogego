@@ -45,12 +45,12 @@ func NewSubprocessExtension(dir string, man Manifest) (*SubprocessExtension, err
 	if strings.TrimSpace(man.ID) == "" {
 		return nil, fmt.Errorf("subprocess: empty id")
 	}
-	bin, err := resolveSubprocessBinary(dir, man.Entry.Binary)
-	if err != nil {
-		return nil, err
+	name := strings.TrimSpace(man.Entry.Binary)
+	if name == "" {
+		return nil, fmt.Errorf("entry.binary required")
 	}
-	if _, err := os.Stat(bin); err != nil {
-		return nil, fmt.Errorf("subprocess binary %q: %w", man.Entry.Binary, err)
+	if strings.Contains(name, "..") || strings.ContainsAny(name, `/\`) {
+		return nil, fmt.Errorf("invalid binary name")
 	}
 	return &SubprocessExtension{manifest: man, extDir: dir}, nil
 }
@@ -63,16 +63,12 @@ func resolveSubprocessBinary(dir, name string) (string, error) {
 	if strings.Contains(name, "..") || strings.ContainsAny(name, `/\`) {
 		return "", fmt.Errorf("invalid binary name")
 	}
-	base := filepath.Join(dir, name)
-	if runtime.GOOS == "windows" {
-		if _, err := os.Stat(base); os.IsNotExist(err) {
-			alt := base + ".exe"
-			if _, err2 := os.Stat(alt); err2 == nil {
-				return alt, nil
-			}
-		}
+	removeForeignSubprocessBinaries(dir, name)
+	path, ok := findSubprocessBinaryPath(dir, name)
+	if !ok || !hostNativeExecutable(path) {
+		return "", fmt.Errorf("subprocess binary %q not found for %s/%s", name, runtime.GOOS, runtime.GOARCH)
 	}
-	clean, err := filepath.Abs(base)
+	clean, err := filepath.Abs(path)
 	if err != nil {
 		return "", err
 	}
@@ -80,7 +76,7 @@ func resolveSubprocessBinary(dir, name string) (string, error) {
 	if err != nil {
 		return "", err
 	}
-	if !strings.HasPrefix(clean, absDir+string(os.PathSeparator)) && clean != absDir {
+	if !strings.HasPrefix(clean, absDir+string(filepath.Separator)) && clean != absDir {
 		return "", fmt.Errorf("binary path escape")
 	}
 	return clean, nil

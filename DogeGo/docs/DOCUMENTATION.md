@@ -19,7 +19,8 @@ Open **Docs** in the dashboard (`http://localhost:2013/` by default), or read th
 | External apps | [INTEGRATION.md](INTEGRATION.md) | Docs tab | JSON-RPC, auth, examples |
 | RPC workflows | [RPC.md](RPC.md), [RPC_CONSOLE_TUTORIAL.md](RPC_CONSOLE_TUTORIAL.md) | Console + Features tab | Full cookbook: `GET /api/rpc/cookbook` |
 | Wallet | [WALLET.md](WALLET.md) | Guide + Send/Receive | PSBT, import, bumpfee, PQ commitments/carrier |
-| **Post-quantum** | [WALLET.md](WALLET.md) § PQ flags, [WEB_UI.md](WEB_UI.md) | Features → PQ probe | Ships today; more soak testing welcome; `dogego cert pq`; not a consensus fork |
+| **Post-quantum** | [WALLET.md](WALLET.md) § PQ flags, [WEB_UI.md](WEB_UI.md), [RACCOON_G_BUILD.md](RACCOON_G_BUILD.md), [CREDITS.md](CREDITS.md) | Features → PQ probe | Raccoon-G = Foundation in-tree port by [Ed Tubbs](https://github.com/edtubbs); GitHub Releases use **native** CGO runners (**not** cross-compile); `dogego cert pq` |
+| **Plain HTTP / DogeBox** | [WEB_UI.md](WEB_UI.md) § `-notls`, [SECURITY.md](SECURITY.md), [OPERATOR.md](OPERATOR.md) | Settings → Local HTTPS | `-notls` / `DOGEGO_NO_TLS=1` skips cert + CA install |
 | Architecture | [ARCHITECTURE.md](ARCHITECTURE.md) | Docs tab | Packages, data flow |
 | **Contributors** | **[DEVELOPER_GUIDE.md](DEVELOPER_GUIDE.md)** | Docs tab | Repo map, how to add RPC/consensus |
 | **Chain / networks** | **[CHAIN_PARAMETERS.md](CHAIN_PARAMETERS.md)** | Docs tab | Mainnet, testnet, seeds, genesis, checkpoints |
@@ -54,6 +55,7 @@ Track documentation work in **ROADMAP.md → Phase 12 - Documentation & integrat
 
 ## For contributors
 
+- **[CREDITS.md](CREDITS.md)** - acknowledgements (Raccoon-G author Ed Tubbs and others helping DogeGo)
 - **[DEVELOPER_GUIDE.md](DEVELOPER_GUIDE.md)** - repo layout, packages, tests, how to add RPC/consensus
 - **[CHAIN_PARAMETERS.md](CHAIN_PARAMETERS.md)** - mainnet / reboot testnet / seeds / DNS / genesis (not one file; full map)
 

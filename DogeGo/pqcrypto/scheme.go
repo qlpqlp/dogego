@@ -4,8 +4,11 @@
 // SPDX-License-Identifier: MIT
 // See LICENSE for copyright attribution to upstream Bitcoin/Dogecoin Core.
 
-// Package pqcrypto provides experimental pure-Go post-quantum sign/verify backends
-// for DogeGo Phase-1 verifier-side PQ carrier workflows (not consensus-enforced).
+// Package pqcrypto provides Phase-1 post-quantum sign/verify backends for
+// DogeGo verifier-side PQ carrier workflows (not consensus-enforced).
+// Falcon-512 and Dilithium2 use pure-Go libraries. Raccoon-G-44 is the
+// Foundation in-tree C port under pqcrypto/raccoon_g (by Ed Tubbs;
+// CGO_ENABLED=1 -tags raccoon_g). See docs/CREDITS.md.
 package pqcrypto
 
 import (
@@ -30,6 +33,10 @@ type Scheme interface {
 	Verify(pk, message32, sig []byte) bool
 	Commit(pk, sig []byte) [32]byte
 	PartTotal() int
+	// Backend names the crypto implementation (e.g. circl, go-fn-dsa, libdogecoin-raccoon_g).
+	Backend() string
+	// LibdogecoinCompatible reports byte-compatibility with Foundation libdogecoin PQC APIs.
+	LibdogecoinCompatible() bool
 }
 
 // Commit computes SHA256(pk || sig).

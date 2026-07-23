@@ -270,7 +270,7 @@
     "securityChecklistTlsOk": "HTTPS enabled (dashboard or JSON-RPC)",
     "securityChecklistTlsInfo": "Optional: enable local HTTPS under Local HTTPS below",
     "localTlsTitle": "Local HTTPS (optional)",
-    "localTlsIntro": "New installs enable HTTPS by default (local CA under datadir/tls/). You can turn it off here; HTTP remains available when disabled.",
+    "localTlsIntro": "New wizard installs enable HTTPS unless you started with -notls / DOGEGO_NO_TLS=1 (DogeBox). Turn HTTPS off here for plain HTTP. When on, DogeGo generates a local CA under datadir/tls/; restart after Save.",
     "localTlsTrustBtn": "Install CA for this browser",
     "localTlsTrustHint": "Also: dogego tls trust-ca from a terminal. Linux Chrome needs libnss3-tools (certutil). Firefox uses its own store; import local-ca.crt manually.",
     "localTlsStatusOff": "Local HTTPS off (plain HTTP). Enable toggles above, Save, and restart.",
@@ -646,7 +646,7 @@
     },
     "webuiTlsLocal": {
       "label": "HTTPS dashboard (webui_tls_local)",
-      "help": "Auto-generate HTTPS for the web UI under datadir/tls/. Use https:// in the browser after restart. Combine with Trust local CA to avoid browser warnings."
+      "help": "Auto-generate HTTPS for the web UI under datadir/tls/. Use https:// in the browser after restart. Combine with Trust local CA to avoid browser warnings. For DogeBox / no-TLS hosts use dogego node -notls or DOGEGO_NO_TLS=1 instead."
     },
     "rpcTlsLocal": {
       "label": "HTTPS JSON-RPC (rpc_tls_local)",
@@ -654,7 +654,7 @@
     },
     "localTlsTrustCa": {
       "label": "Trust local CA on startup (local_tls_trust_ca)",
-      "help": "On node start, install the generated DogeGo local CA into the OS user trust store (Windows certutil, macOS security, Linux NSS). Best-effort; may need dogego tls trust-ca manually."
+      "help": "On node start, install the generated DogeGo local CA into the OS user trust store (Windows certutil, macOS security, Linux NSS). Best-effort; may need dogego tls trust-ca manually. Skipped when -notls / DOGEGO_NO_TLS is set."
     },
     "rpcUser": {
       "label": "RPC user",
@@ -1219,7 +1219,7 @@
       "coreMiningFail": "Mining issues found",
       "coreMiningSkipped": "RPC not ready",
       "corePqTitle": "Post-quantum format probe",
-      "corePqHint": "Offline OP_RETURN + TX_C/TX_R carrier checks (more soak testing welcome; not a consensus fork).",
+      "corePqHint": "Offline OP_RETURN + TX_C/TX_R. Falcon/Dilithium are pure-Go; Raccoon-G is the vendored Foundation in-tree port by Ed Tubbs (CGO -tags raccoon_g; no placeholder). Verifier-side only; not production PQ safety.",
       "corePqRefresh": "Run PQ probe",
       "corePqOk": "PQ format checks passed",
       "corePqFail": "PQ format issues found",

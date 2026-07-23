@@ -28,7 +28,11 @@ DogeGo tracks the **draft BIP-style specification** for *post-quantum signature 
 
 `https://github.com/edtubbs/libdogecoin/blob/0.1.5-dev-pqc-carrier/doc/spec/bip-post-quantum-signature-commitments.mediawiki`
 
+**Raccoon-G-44:** vendored Foundation in-tree C port under `pqcrypto/raccoon_g/native` ([libdogecoin `src/raccoon_g`](https://github.com/dogecoinfoundation/libdogecoin/tree/0.1.5-dev/src/raccoon_g), [Core green PR #8](https://github.com/dogecoinfoundation/dogecoin/pull/8)), authored by Foundation engineer [Ed Tubbs](https://github.com/edtubbs) ([@EdTubbs](https://x.com/EdTubbs)) — see [CREDITS.md](CREDITS.md). No placeholder. **GitHub Releases do not cross-compile CGO** — each OS builds on a native runner with GMP/MPFR installed (`CGO_ENABLED=1 -tags raccoon_g`). Why and how: [RACCOON_G_BUILD.md](RACCOON_G_BUILD.md) (same text as `pqcrypto/raccoon_g/BUILD.md`).
+
 **Status in this repository:** PQ OP_RETURN FLC1/DIL2/RCG4, TX_C/TX_R carriers, wallet flags, web Send, `GET /api/core-pq-probe`, and `dogego cert pq` ship today. More soak testing is welcome. This is not a consensus softfork and is not a production PQ-hardening claim yet.
+
+**Plain HTTP / DogeBox:** use **`dogego node -notls`** or **`DOGEGO_NO_TLS=1`** to skip local HTTPS and CA install (wizard + dashboard). See [WEB_UI.md](WEB_UI.md#local-https-and--notls) and [SECURITY.md](SECURITY.md#local-https-optional).
 
 ---
 

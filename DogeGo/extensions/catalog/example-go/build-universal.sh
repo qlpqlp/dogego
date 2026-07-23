@@ -38,7 +38,13 @@ for spec in "${platforms[@]}"; do
 done
 
 rm -f dist/hello-universal.zip
-(cd dist && zip -r hello-universal.zip dogego.extension.json ../icon.png bin/)
+mkdir -p dist/stage
+cp -f dogego.extension.json icon.png dist/stage/
+# rebuild staged manifest with binaries (overwrite plain copy)
+cp -f "$manifest" dist/stage/dogego.extension.json
+cp -rf dist/bin dist/stage/bin
+(cd dist/stage && zip -r ../hello-universal.zip dogego.extension.json icon.png bin/)
+rm -rf dist/stage
 rm -f "$manifest"
 echo "Wrote dist/hello-universal.zip ($(wc -c < dist/hello-universal.zip) bytes)"
 sha256sum dist/hello-universal.zip | awk '{print "sha256="$1}'

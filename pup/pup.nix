@@ -3,6 +3,7 @@
 #
 # Configure the node in the DogeGo web dashboard after start (Settings / setup).
 # This entrypoint only binds the UI for DogeBox and keeps data under /storage.
+# -notls: DogeBox does not terminate TLS; skip local CA install / HTTPS wizard.
 #
 # After the first DogeBox build, replace src.hash and vendorHash with the
 # values printed in the nix log (got: sha256-...), then recompute
@@ -55,7 +56,8 @@ let
     exec ${dogego_bin}/bin/dogego node \
       -datadir "$DATADIR" \
       -webui "''${BIND}:''${WEBUI_PORT}" \
-      -nobrowser
+      -nobrowser \
+      -notls
   '';
 in
 {

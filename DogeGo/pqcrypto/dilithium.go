@@ -15,10 +15,12 @@ import (
 // Dilithium2 implements CRYSTALS-Dilithium2 (ML-DSA-44 compatible sizes).
 type Dilithium2 struct{}
 
-func (Dilithium2) Name() string        { return "dilithium2" }
-func (Dilithium2) OPReturnTag() string { return "DIL2" }
-func (Dilithium2) CarrierTag8() string { return "DIL2FULL" }
-func (Dilithium2) PartTotal() int      { return 3 }
+func (Dilithium2) Name() string                { return "dilithium2" }
+func (Dilithium2) OPReturnTag() string         { return "DIL2" }
+func (Dilithium2) CarrierTag8() string         { return "DIL2FULL" }
+func (Dilithium2) PartTotal() int              { return 3 }
+func (Dilithium2) Backend() string             { return "circl-dilithium-mode2" }
+func (Dilithium2) LibdogecoinCompatible() bool { return false }
 
 func (Dilithium2) GenerateKey(seed []byte) (pk, sk []byte, err error) {
 	if len(seed) == 32 {

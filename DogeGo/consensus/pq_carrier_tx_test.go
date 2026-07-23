@@ -43,7 +43,11 @@ func TestVerifyPQCarrierPairDilithiumRoundTrip(t *testing.T) {
 }
 
 func TestVerifyPQCarrierPairRaccoonRoundTrip(t *testing.T) {
-	runPQCarrierVerifyRoundTrip(t, pqcrypto.RaccoonG44{}, "raccoon-carrier")
+	s := pqcrypto.RaccoonG44{}
+	if !s.Available() {
+		t.Skip("Raccoon-G-44 requires CGO_ENABLED=1 -tags raccoon_g (libgmp+libmpfr)")
+	}
+	runPQCarrierVerifyRoundTrip(t, s, "raccoon-carrier")
 }
 
 func runPQCarrierVerifyRoundTrip(t *testing.T, scheme pqcrypto.Scheme, label string) {

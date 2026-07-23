@@ -78,7 +78,7 @@ func usage() {
 		"  %s genesis\n" +
 		"  %s address [-network testnet|mainnet] [-n N]  (random sample P2PKH strings; not real wallets)\n" +
 		"  %s ping [-network testnet|mainnet] [-host H] [-port P] [-uacomment TEXT] (port 0 = chain default)\n" +
-		"  %s node [-datadir DIR] [-peer HOST:PORT] [-network testnet|mainnet] [-mode full|spv] [-rpc ADDR] [-webui ADDR] [-nowebui] [-nobrowser] [-tray]\n" +
+		"  %s node [-datadir DIR] [-peer HOST:PORT] [-network testnet|mainnet] [-mode full|spv] [-rpc ADDR] [-webui ADDR] [-nowebui] [-nobrowser] [-notls] [-tray]\n" +
 		"        [-nowallet] [-mine] [-uacomment TEXT] [-rawblock_backfill N] [-no_tx_index] [-allowunverifiedmempool] [-mempoolfullrbf]\n" +
 		"        [-p2p classic|cgnat|both] [-maxoutbound N] [-maxinbound N]  (CGNAT/Starlink: use cgnat or both for multi-peer relay without inbound)\n" +
 		"        [-firewall auto|always|never]  (OS firewall rules for P2P; default auto)\n" +
@@ -136,6 +136,7 @@ func runNodeMode(args []string, defaultNodeMode string) {
 	webui := fs.String("webui", config.DefaultWebUIListen, "local web dashboard listen address (default localhost:2013 for WebAuthn; 127.0.0.1:2013 also works)")
 	nowebui := fs.Bool("nowebui", false, "disable the local web dashboard")
 	nobrowser := fs.Bool("nobrowser", false, "do not open the dashboard in a browser automatically")
+	notls := fs.Bool("notls", false, "disable local HTTPS (webui_tls_local / CA trust); plain HTTP for wizard and node (DogeBox / hosts without TLS)")
 	tray := fs.Bool("tray", false, "show system tray icon (Open Dashboard / Shutdown Node)")
 	nowallet := fs.Bool("nowallet", false, "disable built-in wallet (wallet.json under datadir/<network>/; Receive tab)")
 	mine := fs.Bool("mine", false, "reboot testnet background mining (default on; use -mine=false to disable)")
@@ -160,6 +161,10 @@ func runNodeMode(args []string, defaultNodeMode string) {
 	}
 	visited := map[string]bool{}
 	fs.Visit(func(f *flag.Flag) { visited[f.Name] = true })
+	wantNoTLS := *notls || config.EnvNoTLS()
+	if wantNoTLS {
+		visited["notls"] = true
+	}
 
 	if visited["mode"] {
 		m := strings.ToLower(strings.TrimSpace(*mode))
@@ -177,6 +182,9 @@ func runNodeMode(args []string, defaultNodeMode string) {
 	}
 	confFile, confPath := config.LoadFirst()
 	merged := config.MergeNode(visited, confFile, *dataDir, *peer, *netName, *rpcAddr, *webui, *nowebui, *nobrowser, *mine, *nowallet, *uaComment, *rawBF, *allowUV, *mempoolFullRBF, *noTxIdx, *mode, visited["mode"], defaultNodeMode, *alertNotify)
+	if wantNoTLS {
+		config.ApplyNoTLSMerged(&merged)
+	}
 	if !visited["tray"] && confFile.Tray == nil && desktop.InteractiveSession() && desktop.TraySupported() {
 		merged.Tray = true
 	}
@@ -267,7 +275,12 @@ func runNodeMode(args []string, defaultNodeMode string) {
 			Mine:            merged.Mine,
 			UAComment:       merged.UAComment,
 			NoTxIndex:       merged.NoTxIndex,
+			NoTLS:           wantNoTLS,
 		})
+		if wantNoTLS {
+			config.DisableLocalTLS(&seed)
+			fmt.Fprintln(os.Stderr, "DogeGo: -notls / DOGEGO_NO_TLS — setup wizard and node use plain HTTP (no local CA install)")
+		}
 		desktop.ApplyWizardDefaults(&seed)
 		openWizard := desktop.OpenWizardInBrowser(merged.NoBrowser)
 		fmt.Fprintf(os.Stderr, "DogeGo: need data directory - starting setup web UI (save to %s)\n", savePath)
@@ -279,6 +292,9 @@ func runNodeMode(args []string, defaultNodeMode string) {
 			os.Exit(1)
 		}
 		merged = config.FromFile(saved)
+		if wantNoTLS {
+			config.ApplyNoTLSMerged(&merged)
+		}
 		skipBrowserThisStart = true
 	}
 

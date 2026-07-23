@@ -71,9 +71,14 @@ func DefaultDocsManifest() DocsManifest {
 		{Term: "simulaterawtransaction", Explain: "Estimated wallet balance change (DOGE) for raw hex txs before broadcast."},
 		{Term: "pq_commitments / pq_carrier", Explain: "Optional wallet flags for OP_RETURN PQ commitments and TX_C/TX_R carrier sends. Settings → Wallet toggles; POST /api/wallet/flags; Send Advanced carrier mode (pq_mode: carrier). Verifier-side only."},
 		{Term: "GET /api/core-pq-probe", Explain: "Live PQ format/carrier probe (Features tab); offline mirror: dogego cert pq."},
+		{Term: "Raccoon-G / raccoon_g", Explain: "In-tree Foundation port by Ed Tubbs (github.com/edtubbs / x.com/EdTubbs); not full libdogecoin. GitHub Releases compile it with CGO on native OS runners (not cross-compile) because GMP/MPFR must match the target. See docs/RACCOON_G_BUILD.md and docs/CREDITS.md."},
+		{Term: "-notls / DOGEGO_NO_TLS", Explain: "Plain HTTP: skips local HTTPS, cert generation, and OS CA install. Use on DogeBox or first installs without TLS. Documented in WEB_UI.md and SECURITY.md."},
 	})
 	wallet.Links = append(wallet.Links, DocsLink{Label: "WALLET.md", Path: "docs/WALLET.md"})
-
+	wallet.Links = append(wallet.Links, DocsLink{Label: "WEB_UI.md (-notls)", Path: "docs/WEB_UI.md"})
+	wallet.Links = append(wallet.Links, DocsLink{Label: "RACCOON_G_BUILD.md (CI / why not cross-compile)", Path: "docs/RACCOON_G_BUILD.md"})
+	wallet.Links = append(wallet.Links, DocsLink{Label: "CREDITS.md (Ed Tubbs / helpers)", Path: "docs/CREDITS.md"})
+	wallet.Links = append(wallet.Links, DocsLink{Label: "SECURITY.md (-notls)", Path: "docs/SECURITY.md"})
 	sections := []DocsSection{
 		{
 			ID:    "start_here",
@@ -183,6 +188,7 @@ func DefaultDocsManifest() DocsManifest {
 			Body:  "Package layout: cmd/dogego (CLI), node/ (run loop), p2p/, consensus/, store/, mempool/, rpc/, wallet/, ui/. Mainnet consensus is locked to Dogecoin Core (no protocol forks; see ROADMAP.md). Offline certification: dogego cert offline (CI gate), cert_offline_prerequisites bundle, dogego cert wallet-import, dogego cert wallet-migration (-offline-only), dogego cert field-evidence, dogego cert pq (format/carrier), dogego cert operator (Milestone E deep cert). Chain params (mainnet, reboot testnet, DNS/fixed seeds, genesis) are under chain/ - see CHAIN_PARAMETERS.md (not a single file). New RPC: add handler in rpc/, register in dispatch.go SupportedMethods, one-line help in help.go, test in rpc/*_test.go, checkbox in ROADMAP.md, and a row in docs/RPC.md + this Docs manifest. Consensus changes must match Dogecoin Core semantics or document intentional differences.",
 			Links: []DocsLink{
 				{Label: "ROADMAP.md (protocol lock)", Path: "ROADMAP.md"},
+				{Label: "CREDITS.md (acknowledgements)", Path: "docs/CREDITS.md"},
 				{Label: "DEVELOPER_GUIDE.md", Path: "docs/DEVELOPER_GUIDE.md"},
 				{Label: "CHAIN_PARAMETERS.md", Path: "docs/CHAIN_PARAMETERS.md"},
 				{Label: "ARCHITECTURE.md", Path: "docs/ARCHITECTURE.md"},

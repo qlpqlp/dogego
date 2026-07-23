@@ -8,28 +8,40 @@ package pqcrypto
 
 import (
 	"crypto/rand"
-	"crypto/sha256"
 	"fmt"
 
-	"golang.org/x/crypto/sha3"
+	"dogego/pqcrypto/raccoon_g"
 )
 
-// Raccoon-G-44 BIP profile sizes (lattice-hd-wallets wire format).
+// Raccoon-G-44 wire sizes — byte-exact with libdogecoin thrc.h / raccoong_*_len
+// (dogecoinfoundation/libdogecoin@0.1.5-dev/src/raccoon_g) and Core green PR #8.
 const (
-	raccoonPKLen  = 16144
-	raccoonSigLen = 20768
+	raccoonPKLen  = raccoon_g.PKBytes  // 16144
+	raccoonSKLen  = raccoon_g.SKBytes  // 32272
+	raccoonSigLen = raccoon_g.SigBytes // 20768
 )
 
-// RaccoonG44 implements Raccoon-G-44 carrier metadata and an experimental
-// deterministic sign/verify backend for DogeGo Phase-1 tooling. It uses the BIP
-// message binding mu = SHAKE256(SHAKE256(pk).read(32) || sighash32).read(32).
-// This is NOT byte-compatible with libdogecoin lattice Raccoon-G-44 signatures.
+// RaccoonG44 is Raccoon-G-44 via the Dogecoin Foundation in-tree C port
+// (pqcrypto/raccoon_g/native — same sources as libdogecoin src/raccoon_g and
+// https://github.com/dogecoinfoundation/dogecoin/pull/8).
+//
+// The Foundation in-tree port was developed by Ed Tubbs
+// (https://github.com/edtubbs · https://x.com/EdTubbs). See docs/CREDITS.md.
+// There is no Go placeholder: crypto requires CGO_ENABLED=1 -tags raccoon_g
+// (libgmp + libmpfr). See pqcrypto/raccoon_g/BUILD.md.
 type RaccoonG44 struct{}
 
-func (RaccoonG44) Name() string        { return "raccoon-g-44" }
-func (RaccoonG44) OPReturnTag() string { return "RCG4" }
-func (RaccoonG44) CarrierTag8() string { return "RCG4FULL" }
-func (RaccoonG44) PartTotal() int      { return 24 }
+func (RaccoonG44) Name() string                { return "raccoon-g-44" }
+func (RaccoonG44) OPReturnTag() string         { return "RCG4" }
+func (RaccoonG44) CarrierTag8() string         { return "RCG4FULL" }
+func (RaccoonG44) PartTotal() int              { return 24 }
+func (RaccoonG44) Backend() string             { return raccoonBackendName() }
+func (RaccoonG44) LibdogecoinCompatible() bool { return raccoonLibdogecoinCompatible() }
+func (RaccoonG44) UpstreamRef() string         { return raccoon_g.UpstreamRef }
+func (RaccoonG44) UpstreamAuthor() string      { return raccoon_g.UpstreamAuthor }
+
+// Available reports whether the in-tree raccoong_* backend is linked and ready.
+func (RaccoonG44) Available() bool { return raccoonLibdogecoinCompatible() }
 
 func (RaccoonG44) GenerateKey(seed []byte) (pk, sk []byte, err error) {
 	if len(seed) == 0 {
@@ -38,82 +50,18 @@ func (RaccoonG44) GenerateKey(seed []byte) (pk, sk []byte, err error) {
 			return nil, nil, err
 		}
 	}
-	h := sha256.Sum256(append([]byte("dogego/raccoon-g44/sk/v1/"), seed...))
-	sk = append([]byte(nil), h[:]...)
-	root := sha256.Sum256(sk)
-	pk = raccoonExpandWire(root[:], raccoonPKLen)
-	copy(pk[:32], root[:])
-	return pk, sk, nil
+	if len(seed) != 32 {
+		return nil, nil, fmt.Errorf("raccoon: seed must be 32 bytes")
+	}
+	return raccoonNativeKeygen(seed)
 }
 
 func (RaccoonG44) Sign(sk, message32 []byte) (sig []byte, err error) {
-	if len(message32) != 32 {
-		return nil, errWant32
-	}
-	if len(sk) == 0 {
-		return nil, fmt.Errorf("raccoon: empty signing key")
-	}
-	root := sha256.Sum256(sk)
-	pk := raccoonExpandWire(root[:], raccoonPKLen)
-	copy(pk[:32], root[:])
-	mu, err := raccoonMessageMu(pk, message32)
-	if err != nil {
-		return nil, err
-	}
-	return raccoonExpandSig(root[:], mu), nil
+	return raccoonNativeSign(sk, message32)
 }
 
 func (RaccoonG44) Verify(pk, message32, sig []byte) bool {
-	if len(pk) != raccoonPKLen || len(sig) != raccoonSigLen || len(message32) != 32 {
-		return false
-	}
-	mu, err := raccoonMessageMu(pk, message32)
-	if err != nil {
-		return false
-	}
-	want := raccoonExpandSig(pk[:32], mu)
-	return string(sig) == string(want)
+	return raccoonNativeVerify(pk, message32, sig)
 }
 
 func (RaccoonG44) Commit(pk, sig []byte) [32]byte { return Commit(pk, sig) }
-
-func raccoonExpandWire(root []byte, n int) []byte {
-	out := make([]byte, n)
-	off := 0
-	ctr := 0
-	for off < n {
-		h := sha256.New()
-		_, _ = h.Write([]byte("dogego/raccoon-g44/wire/"))
-		_, _ = h.Write(root)
-		_, _ = h.Write([]byte{byte(ctr), byte(ctr >> 8), byte(ctr >> 16), byte(ctr >> 24)})
-		block := h.Sum(nil)
-		ctr++
-		copied := copy(out[off:], block)
-		off += copied
-	}
-	return out
-}
-
-func raccoonExpandSig(root, mu []byte) []byte {
-	return raccoonExpandWire(append(append([]byte("sig/"), root...), mu...), raccoonSigLen)
-}
-
-func raccoonMessageMu(pk, sighash32 []byte) ([]byte, error) {
-	if len(sighash32) != 32 {
-		return nil, fmt.Errorf("raccoon: sighash32 must be 32 bytes")
-	}
-	h1 := sha3.NewShake256()
-	_, _ = h1.Write(pk)
-	pkHash := make([]byte, 32)
-	if _, err := h1.Read(pkHash); err != nil {
-		return nil, err
-	}
-	h2 := sha3.NewShake256()
-	_, _ = h2.Write(pkHash)
-	_, _ = h2.Write(sighash32)
-	mu := make([]byte, 32)
-	if _, err := h2.Read(mu); err != nil {
-		return nil, err
-	}
-	return mu, nil
-}

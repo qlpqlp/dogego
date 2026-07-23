@@ -40,7 +40,7 @@ func ProbeCorePQ() CorePQProbeResult {
 	out := CorePQProbeResult{
 		CheckedAt: time.Now().UTC().Format(time.RFC3339),
 		OK:        true,
-		Hint:      "Verifier-side PQ MVP: OP_RETURN FLC1/DIL2/RCG4 format + TX_C/TX_R carrier round-trip via pqcrypto. Not consensus-enforced; not production PQ safety. Offline bundle: dogego cert pq.",
+		Hint:      "Verifier-side PQ: OP_RETURN FLC1/DIL2/RCG4 + TX_C/TX_R. Falcon/Dilithium are pure-Go; Raccoon-G is the vendored libdogecoin in-tree port (CGO -tags raccoon_g). Not consensus-enforced. Offline: dogego cert pq.",
 		Notes:     []string{"pq_probe_offline"},
 	}
 	probePQCommitmentTags(&out)
@@ -100,6 +100,19 @@ func probePQCarrierSchemes(out *CorePQProbeResult) {
 	}
 	pkScript := pqProbeCarrierSpendScript()
 	for _, row := range schemes {
+		if row.tag == consensus.PQTagRaccoon && !row.scheme.LibdogecoinCompatible() {
+			out.Checks = append(out.Checks, CorePQProbeCheck{
+				Name: "carrier_" + row.tag, Status: "warning",
+				Value: map[string]any{
+					"scheme":                 row.scheme.Name(),
+					"backend":                row.scheme.Backend(),
+					"libdogecoin_compatible": false,
+				},
+				Note: "Raccoon-G-44 not linked — rebuild with CGO_ENABLED=1 -tags raccoon_g (libgmp+libmpfr); OP_RETURN RCG4 format still ok",
+			})
+			out.Notes = append(out.Notes, "raccoon_backend_unavailable")
+			continue
+		}
 		ok, note := pqProbeCarrierRoundTrip(row.scheme, row.label, pkScript)
 		st := "ok"
 		if !ok {
@@ -107,11 +120,17 @@ func probePQCarrierSchemes(out *CorePQProbeResult) {
 			out.Issues = append(out.Issues, "carrier_"+row.tag)
 		}
 		check := CorePQProbeCheck{
-			Name: "carrier_" + row.tag, Status: st, Value: row.scheme.Name(), Note: note,
+			Name: "carrier_" + row.tag, Status: st,
+			Value: map[string]any{
+				"scheme":                 row.scheme.Name(),
+				"backend":                row.scheme.Backend(),
+				"libdogecoin_compatible": row.scheme.LibdogecoinCompatible(),
+			},
+			Note: note,
 		}
 		if row.tag == consensus.PQTagRaccoon {
-			check.Note = note + " (experimental deterministic backend; not libdogecoin-compatible)"
-			out.Notes = append(out.Notes, "raccoon_experimental_backend")
+			check.Note = note + " (libdogecoin in-tree raccoon_g; Core green PR #8)"
+			out.Notes = append(out.Notes, "raccoon_libdogecoin_backend")
 		}
 		out.Checks = append(out.Checks, check)
 	}

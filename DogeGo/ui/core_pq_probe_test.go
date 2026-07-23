@@ -17,26 +17,33 @@ func TestProbeCorePQOK(t *testing.T) {
 	if !out.OK {
 		t.Fatalf("ok=false issues=%v checks=%+v", out.Issues, out.Checks)
 	}
-	want := map[string]bool{
+	wantOK := map[string]bool{
 		"op_return_" + consensus.PQTagFalcon:    false,
 		"op_return_" + consensus.PQTagDilithium: false,
 		"op_return_" + consensus.PQTagRaccoon:   false,
 		"carrier_" + consensus.PQTagFalcon:      false,
 		"carrier_" + consensus.PQTagDilithium:   false,
-		"carrier_" + consensus.PQTagRaccoon:     false,
 		"mempool_corpus_pq":                     false,
 	}
+	raccoonCarrier := ""
 	for _, c := range out.Checks {
-		if c.Status != "ok" {
-			t.Fatalf("check %s status=%s note=%s", c.Name, c.Status, c.Note)
+		if c.Name == "carrier_"+consensus.PQTagRaccoon {
+			raccoonCarrier = c.Status
+			continue
 		}
-		if _, ok := want[c.Name]; ok {
-			want[c.Name] = true
+		if _, ok := wantOK[c.Name]; ok {
+			if c.Status != "ok" {
+				t.Fatalf("check %s status=%s note=%s", c.Name, c.Status, c.Note)
+			}
+			wantOK[c.Name] = true
 		}
 	}
-	for name, seen := range want {
+	for name, seen := range wantOK {
 		if !seen {
 			t.Fatalf("missing check %s", name)
 		}
+	}
+	if raccoonCarrier != "ok" && raccoonCarrier != "warning" {
+		t.Fatalf("carrier_RCG4 status=%q want ok or warning", raccoonCarrier)
 	}
 }

@@ -842,7 +842,7 @@ DogeGo does **not** read or write Dogecoin Core `blocks/` + `chainstate/` LevelD
 - [x] **`createrawtransaction`** `pqcommit` output (`tag` + 32-byte `commitment` hex) via `BuildPQCommitmentScript`.
 - [x] Web UI **wallet flags** (`pq_commitments`, `avoid_reuse`) + optional PQ OP_RETURN on **Send** tab (`/api/wallet/flags`, `/api/wallet/send`).
 - [x] **Verification path** (off-chain format + pqcrypto verify) - `dogego_verifypqcommitment` / `dogego_verifypqcarrier` + `consensus.VerifyPQCommitmentScriptHex` / `VerifyPQCarrierPair`; offline **`dogego cert pq`** (`pqcert/`); live **`GET /api/core-pq-probe`**; mempool relay standardness for PQ OP_RETURN + carrier P2SH - shipped (more soak testing welcome; not consensus-enforced)
-- [x] **Phase-1 TX_C/TX_R P2SH carrier** (`consensus/pq_carrier.go`, `pqcrypto/`, `dogego_createpqcarrier`, `dogego_sendpqcarrier`, `dogego_verifypqcarrier`) - format + sign/verify metadata; **no consensus fork**
+- [x] **Phase-1 TX_C/TX_R P2SH carrier** (`consensus/pq_carrier.go`, `pqcrypto/`, `dogego_createpqcarrier`, `dogego_sendpqcarrier`, `dogego_verifypqcarrier`) - format + sign/verify metadata; Raccoon-G vendors [libdogecoin `src/raccoon_g`](https://github.com/dogecoinfoundation/libdogecoin/tree/0.1.5-dev/src/raccoon_g) / [Core PR #8](https://github.com/dogecoinfoundation/dogecoin/pull/8); **no consensus fork**
 - [x] **Wallet flags** **`pq_commitments_enabled`** + **`pq_carrier_enabled`** + separate PQ key storage (`wallet/pq_carrier.go`); Settings → Wallet toggles; Send → Advanced carrier mode (`pq_mode: carrier`); History detects `carrier_scriptsig` via `walletPQMetaFromTxHex`
 - [x] PQ ships for testing; more soak welcome; not a consensus-enforced PQ softfork.
 

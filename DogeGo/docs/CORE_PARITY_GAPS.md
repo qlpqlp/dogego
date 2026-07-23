@@ -120,7 +120,7 @@ DogeGo **never** reads/writes Core `blocks/` + `chainstate/` LevelDB ([ROADMAP P
 |------|--------|
 | Recognize FLC1/DIL2/RCG4 + RPC/web Send | partial (MVP done; `dogego cert pq` + `GET /api/core-pq-probe`; web Settings + Send carrier mode) |
 | TX_C/TX_R P2SH carrier encode/parse + `dogego_*pqcarrier` RPCs | partial (MVP done; verifier-side PQ only; `pq_carrier` wallet flag; `pqcert/`) |
-| Pure-Go Falcon/Dilithium/Raccoon backends (`pqcrypto/`) | partial (Falcon+Dilithium real; Raccoon beta wire) |
+| Falcon/Dilithium + Raccoon backends (`pqcrypto/`) | partial (Falcon+Dilithium pure-Go; Raccoon-G = vendored Foundation `src/raccoon_g` by [Ed Tubbs](https://github.com/edtubbs) / [Core PR #8](https://github.com/dogecoinfoundation/dogecoin/pull/8) via `CGO_ENABLED=1 -tags raccoon_g`; no placeholder; [CREDITS.md](CREDITS.md)) |
 | Mempool relay policy (PQ OP_RETURN + carrier P2SH) | **partial** - `pq_commitment_op_return` / `pq_carrier_p2sh_accept` / `pq_commitment_nonzero_reject` in offline mempool corpus + `TestMempoolAdmissionAcceptsPQ*` |
 | Production PQ safety claim | **not claimed** (verifier MVP only) |
 

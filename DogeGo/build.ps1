@@ -3,6 +3,10 @@
 # SPDX-License-Identifier: MIT
 # Build DogeGo CLI for Windows (run from DogeGo repo root).
 # Output: .\dogego.exe (ignored by repo *.exe rule)
+#
+# Falcon/Dilithium PQ work in this pure-Go build. Raccoon-G-44 needs
+# CGO_ENABLED=1 -tags raccoon_g plus libgmp/libmpfr (MSYS2/MinGW) — see
+# pqcrypto/raccoon_g/BUILD.md.
 $ErrorActionPreference = "Stop"
 Set-Location $PSScriptRoot
 # Pebble (wallet.db + analytics) is pure Go when CGO is off; with CGO_ENABLED=1 the
