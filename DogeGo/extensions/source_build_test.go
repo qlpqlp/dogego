@@ -11,13 +11,17 @@ import (
 	"io"
 	"os"
 	"path/filepath"
+	"strings"
 	"testing"
 	"time"
 )
 
 func TestEnrichDocsPath(t *testing.T) {
 	if got := EnrichDocsPath("dogego.zkl2", ""); got == "" {
-		t.Fatal("expected builtin docs path")
+		t.Fatal("expected discovered docs path for dogego.zkl2")
+	}
+	if got := EnrichDocsPath("dogego.radiodoge", ""); !strings.Contains(got, "radiodoge") {
+		t.Fatalf("expected radiodoge docs path, got %q", got)
 	}
 	if got := EnrichDocsPath("custom.foo", "docs/custom.md"); got != "docs/custom.md" {
 		t.Fatalf("got %q", got)

@@ -16,15 +16,6 @@ import (
 
 const defaultExtensionIcon = "icon.png"
 
-// BuiltinCatalogDir maps built-in extension ids to catalog package folders.
-var BuiltinCatalogDir = map[string]string{
-	"dogego.zkl2":     "zkl2",
-	"dogego.doginals": "doginals",
-	"dogego.bbpow":    "bbpow",
-	"example.go":      "example-go",
-	"example.wasm":    "example-wasm",
-}
-
 // NormalizeIconRel returns a safe relative PNG path inside an extension package.
 func NormalizeIconRel(icon string) string {
 	icon = strings.TrimSpace(icon)
@@ -62,7 +53,18 @@ func ValidateIconRel(icon string) error {
 	return nil
 }
 
-// ResolveIconBytes loads a PNG for id using mgr when wired, then catalog builtins.
+func catalogDirFor(id string) (string, bool) {
+	return catalog.PackageDir(id)
+}
+
+func catalogIconRelFor(id string) string {
+	if rel := catalog.PackageIconRel(id); rel != "" {
+		return NormalizeIconRel(rel)
+	}
+	return defaultExtensionIcon
+}
+
+// ResolveIconBytes loads a PNG for id using mgr when wired, then catalog packages.
 func ResolveIconBytes(m *Manager, id string) ([]byte, error) {
 	id = strings.TrimSpace(id)
 	if id == "" {
@@ -73,8 +75,9 @@ func ResolveIconBytes(m *Manager, id string) ([]byte, error) {
 			return b, nil
 		}
 	}
-	if dir, ok := BuiltinCatalogDir[id]; ok {
-		if b, err := catalog.ReadIconBytes(dir, defaultExtensionIcon); err == nil && len(b) > 0 {
+	if dir, ok := catalogDirFor(id); ok {
+		rel := catalogIconRelFor(id)
+		if b, err := catalog.ReadIconBytes(dir, rel); err == nil && len(b) > 0 {
 			return b, nil
 		}
 	}
@@ -102,7 +105,10 @@ func (m *Manager) IconBytes(id string) ([]byte, error) {
 			return b, nil
 		}
 	}
-	if dir, ok := BuiltinCatalogDir[id]; ok {
+	if dir, ok := catalogDirFor(id); ok {
+		if manRel := catalog.PackageIconRel(id); manRel != "" {
+			rel = NormalizeIconRel(manRel)
+		}
 		if b, err := catalog.ReadIconBytes(dir, rel); err == nil {
 			return b, nil
 		}

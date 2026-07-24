@@ -8,7 +8,7 @@ package catalog
 import "testing"
 
 func TestReadIconBytesEmbedded(t *testing.T) {
-	for _, dir := range []string{"zkl2", "doginals", "bbpow", "example-go", "example-wasm"} {
+	for _, dir := range []string{"zkl2", "doginals", "bbpow", "radiodoge", "example-go", "example-wasm"} {
 		b, err := ReadIconBytes(dir, "icon.png")
 		if err != nil || len(b) < 8 {
 			t.Fatalf("%s icon: err=%v len=%d", dir, err, len(b))

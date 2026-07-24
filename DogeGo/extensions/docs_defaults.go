@@ -5,15 +5,15 @@
 
 package extensions
 
-import "strings"
+import (
+	"strings"
 
-// Builtin docs paths ship with DogeGo (embedded markdown under extensions/catalog/).
-var builtinDocsPaths = map[string]string{
-	"dogego.zkl2":     "extensions/catalog/zkl2/docs/USER_GUIDE.md",
-	"dogego.doginals": "extensions/catalog/doginals/docs/USER_GUIDE.md",
-	"example.go":      "extensions/catalog/example-go/docs/README.md",
-	"example.hello":   "extensions/catalog/HELLO_WORLD.md", // legacy id
-	"example.wasm":    "extensions/catalog/example-wasm/docs/README.md",
+	"dogego/extensions/catalog"
+)
+
+// Legacy docs aliases for ids that do not match an embedded package folder.
+var legacyDocsPaths = map[string]string{
+	"example.hello": "extensions/catalog/HELLO_WORLD.md",
 }
 
 // NormalizeDocsPath maps legacy docs/extensions paths to extensions/catalog.
@@ -23,10 +23,15 @@ func NormalizeDocsPath(docsPath string) string {
 	return p
 }
 
-// EnrichDocsPath returns docsPath when set, otherwise a built-in default for known extensions.
+// EnrichDocsPath returns docsPath when set, otherwise the package manifest docs_path
+// (auto-discovered from embedded/disk catalog packages), then legacy aliases.
 func EnrichDocsPath(id, docsPath string) string {
 	if p := NormalizeDocsPath(docsPath); p != "" {
 		return p
 	}
-	return builtinDocsPaths[strings.TrimSpace(id)]
+	id = strings.TrimSpace(id)
+	if p := NormalizeDocsPath(catalog.PackageDocsPath(id)); p != "" {
+		return p
+	}
+	return legacyDocsPaths[id]
 }

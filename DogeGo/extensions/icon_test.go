@@ -10,7 +10,7 @@ import (
 )
 
 func TestResolveIconBytesWithoutManager(t *testing.T) {
-	for _, id := range []string{"dogego.zkl2", "dogego.doginals", "dogego.bbpow", "example.go", "example.wasm"} {
+	for _, id := range []string{"dogego.zkl2", "dogego.doginals", "dogego.bbpow", "dogego.radiodoge", "example.go", "example.wasm"} {
 		b, err := ResolveIconBytes(nil, id)
 		if err != nil || len(b) < 8 {
 			t.Fatalf("%s icon without mgr: err=%v len=%d", id, err, len(b))
@@ -21,7 +21,7 @@ func TestResolveIconBytesWithoutManager(t *testing.T) {
 func TestManagerIconBytesBuiltin(t *testing.T) {
 	dir := t.TempDir()
 	m := NewManager(dir, "testnet", nil)
-	for _, id := range []string{"dogego.zkl2", "dogego.doginals", "dogego.bbpow", "example.go", "example.wasm"} {
+	for _, id := range []string{"dogego.zkl2", "dogego.doginals", "dogego.bbpow", "dogego.radiodoge", "example.go", "example.wasm"} {
 		b, err := m.IconBytes(id)
 		if err != nil || len(b) < 8 {
 			t.Fatalf("%s icon: err=%v len=%d", id, err, len(b))
