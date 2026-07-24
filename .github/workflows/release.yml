@@ -85,8 +85,8 @@ jobs:
         if: runner.os == 'macOS'
         run: brew install gmp mpfr zstd pkg-config
 
-      - name: Build (Linux / macOS)
-        if: runner.os != 'Windows'
+      - name: Build (Linux)
+        if: runner.os == 'Linux'
         env:
           CGO_ENABLED: "1"
           GOOS: ${{ matrix.goos }}
@@ -94,13 +94,46 @@ jobs:
         run: |
           set -euo pipefail
           mkdir -p dist
-          if [ "${{ runner.os }}" = "macOS" ]; then
-            export CGO_CFLAGS="-I$(brew --prefix gmp)/include -I$(brew --prefix mpfr)/include -I$(brew --prefix zstd)/include"
-            export CGO_LDFLAGS="-L$(brew --prefix gmp)/lib -L$(brew --prefix mpfr)/lib -L$(brew --prefix zstd)/lib"
-          fi
+          # Static-link GMP/MPFR/zstd so release binaries do not need those .so files at runtime.
+          export CGO_LDFLAGS="-Wl,-Bstatic -lmpfr -lgmp -lzstd -Wl,-Bdynamic -lm -lpthread"
           go build -tags raccoon_g -trimpath -ldflags="-s -w" -o "dist/${{ matrix.asset }}" ./cmd/dogego
-          # Smoke: binary must report raccoon backend when probed offline is heavy;
-          # at least ensure the binary links and runs.
+          echo "Dynamic deps:"
+          ldd "dist/${{ matrix.asset }}" || true
+          if ldd "dist/${{ matrix.asset }}" | grep -E 'libmpfr\.|libgmp\.|libzstd\.'; then
+            echo "::error::Linux binary still dynamically links libmpfr/libgmp/libzstd. Refusing to publish."
+            exit 1
+          fi
+          ./dist/${{ matrix.asset }} version
+
+      - name: Build (macOS)
+        if: runner.os == 'macOS'
+        env:
+          CGO_ENABLED: "1"
+          GOOS: ${{ matrix.goos }}
+          GOARCH: ${{ matrix.goarch }}
+        run: |
+          set -euo pipefail
+          mkdir -p dist
+          GMP="$(brew --prefix gmp)"
+          MPFR="$(brew --prefix mpfr)"
+          ZSTD="$(brew --prefix zstd)"
+          for f in "$MPFR/lib/libmpfr.a" "$GMP/lib/libgmp.a" "$ZSTD/lib/libzstd.a"; do
+            if [ ! -f "$f" ]; then
+              echo "::error::Missing static archive $f (Homebrew must ship .a for out-of-box releases)"
+              ls -la "$(dirname "$f")" || true
+              exit 1
+            fi
+          done
+          export CGO_CFLAGS="-I${GMP}/include -I${MPFR}/include -I${ZSTD}/include"
+          # Link static archives by path so the binary does not depend on Homebrew dylibs.
+          export CGO_LDFLAGS="${MPFR}/lib/libmpfr.a ${GMP}/lib/libgmp.a ${ZSTD}/lib/libzstd.a"
+          go build -tags raccoon_g -trimpath -ldflags="-s -w" -o "dist/${{ matrix.asset }}" ./cmd/dogego
+          echo "Linked libraries:"
+          otool -L "dist/${{ matrix.asset }}"
+          if otool -L "dist/${{ matrix.asset }}" | grep -Ei 'libmpfr|libgmp|libzstd'; then
+            echo "::error::macOS binary still links Homebrew libmpfr/libgmp/libzstd dylibs. Refusing to publish."
+            exit 1
+          fi
           ./dist/${{ matrix.asset }} version
 
       - name: Build (Windows)
@@ -114,8 +147,20 @@ jobs:
           set -euo pipefail
           export PATH="/mingw64/bin:$PATH"
           mkdir -p dist
+          # Static-link GMP/MPFR/zstd so the release .exe does not need libmpfr-6.dll on PATH
+          # (CI has MinGW; end users downloading from GitHub Releases do not).
+          export CGO_LDFLAGS="-Wl,-Bstatic -lmpfr -lgmp -lzstd -Wl,-Bdynamic -lbcrypt -static-libgcc"
           go build -tags raccoon_g -trimpath -ldflags="-s -w" -o "dist/${{ matrix.asset }}" ./cmd/dogego
-          ./dist/${{ matrix.asset }} version
+          # Fail the release if we accidentally shipped a dynamic MinGW crypto dependency.
+          if objdump -p "dist/${{ matrix.asset }}" | grep -Ei 'DLL Name:.*(libmpfr|libgmp|libzstd)'; then
+            echo "::error::Windows binary still imports MinGW DLLs (libmpfr/libgmp/libzstd). Refusing to publish."
+            objdump -p "dist/${{ matrix.asset }}" | grep -i 'DLL Name' || true
+            exit 1
+          fi
+          # Smoke without mingw64 on PATH (simulates a normal Windows user).
+          PATH="/usr/bin:/bin" ./dist/${{ matrix.asset }} version
+          echo "Windows DLL imports:"
+          objdump -p "dist/${{ matrix.asset }}" | grep -i 'DLL Name' || true
 
       - name: SHA256 sidecar (Unix)
         if: runner.os != 'Windows'
@@ -162,6 +207,8 @@ jobs:
           generate_release_notes: true
           files: artifacts/**/*
           body: |
-            Official binaries include **Raccoon-G-44** (vendored libdogecoin in-tree port; CGO + libgmp/libmpfr) on Linux, Windows, and macOS.
+            Official binaries include **Raccoon-G-44** (vendored libdogecoin in-tree port) on Linux, Windows, and macOS.
+
+            Release builds **static-link** GMP/MPFR/zstd on all platforms so downloads run out of the box (no MSYS2 DLLs, no apt `libgmp`/`libmpfr`, no Homebrew dylibs).
 
             Falcon / Dilithium PQ also ship in all builds.

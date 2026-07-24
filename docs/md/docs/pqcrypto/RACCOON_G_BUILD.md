@@ -38,6 +38,12 @@ CGO_ENABLED=1 go build -tags raccoon_g ./cmd/dogego
 That is intentional: not “cross-compile,” but **same-OS compile** so every
 GitHub Release asset ships real Raccoon-G with no end-user install steps.
 
+**Out-of-box releases:** CI **static-links** `libmpfr` / `libgmp` / `libzstd` on
+**Windows, Linux, and macOS**, then asserts those libraries are absent from
+`objdump` / `ldd` / `otool -L`. Dynamic MinGW / apt / Homebrew links would only
+work on the build agent — that caused the Windows `libmpfr-6.dll was not found`
+dialog for early release assets.
+
 Workflows:
 
 - [`.github/workflows/release.yml`](../../../.github/workflows/release.yml) — tag `v*` releases

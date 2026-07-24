@@ -71,7 +71,7 @@ First run without datadir opens the **setup wizard** (Web UI). Config file: `%AP
 
 **Plain HTTP (DogeBox):** `.\dogego.exe node -notls` or `DOGEGO_NO_TLS=1` — skips local HTTPS / CA install. See [WEB_UI.md](WEB_UI.md#local-https-and--notls).
 
-**Raccoon-G in releases:** GitHub Actions does **not** cross-compile CGO. Each OS builds on a native runner with GMP/MPFR (`CGO_ENABLED=1 -tags raccoon_g`). Why: [pqcrypto/raccoon_g/BUILD.md](../pqcrypto/raccoon_g/BUILD.md). The Foundation in-tree port is by [Ed Tubbs](https://github.com/edtubbs) ([@EdTubbs](https://x.com/EdTubbs)); see [CREDITS.md](CREDITS.md). Local Windows `build.ps1` stays pure-Go; use a Release binary or `./build_raccoon.sh` for Raccoon.
+**Raccoon-G in releases:** GitHub Actions does **not** cross-compile CGO. Each OS builds on a native runner with GMP/MPFR (`CGO_ENABLED=1 -tags raccoon_g`), then **static-links** those libs so downloads work out of the box. Why: [pqcrypto/raccoon_g/BUILD.md](../pqcrypto/raccoon_g/BUILD.md). The Foundation in-tree port is by [Ed Tubbs](https://github.com/edtubbs) ([@EdTubbs](https://x.com/EdTubbs)); see [CREDITS.md](CREDITS.md). Local Windows `build.ps1` stays pure-Go; use a Release binary or `./build_raccoon.sh` for Raccoon.
 
 Debug from VS Code: use **Go: launch** on `cmd/dogego` (see repo `.vscode/launch.json` if configured).
 

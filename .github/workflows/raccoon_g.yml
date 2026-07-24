@@ -69,18 +69,45 @@ jobs:
         if: runner.os == 'macOS'
         run: brew install gmp mpfr zstd pkg-config
 
-      - name: Test + build (Unix)
-        if: runner.os != 'Windows'
+      - name: Test + build (Linux)
+        if: runner.os == 'Linux'
         env:
           CGO_ENABLED: "1"
         run: |
-          if [ "${{ runner.os }}" = "macOS" ]; then
-            export CGO_CFLAGS="-I$(brew --prefix gmp)/include -I$(brew --prefix mpfr)/include -I$(brew --prefix zstd)/include"
-            export CGO_LDFLAGS="-L$(brew --prefix gmp)/lib -L$(brew --prefix mpfr)/lib -L$(brew --prefix zstd)/lib"
-          fi
+          set -euo pipefail
+          export CGO_LDFLAGS="-Wl,-Bstatic -lmpfr -lgmp -lzstd -Wl,-Bdynamic -lm -lpthread"
           go test -tags raccoon_g ./pqcrypto/ -run 'TestRaccoon|TestFalcon|TestDilithium' -count=1
           go test -tags raccoon_g ./consensus/ -run TestVerifyPQCarrierPairRaccoon -count=1
           go build -tags raccoon_g -o /tmp/dogego-raccoon ./cmd/dogego
+          if ldd /tmp/dogego-raccoon | grep -E 'libmpfr\.|libgmp\.|libzstd\.'; then
+            echo "::error::Linux binary still dynamically links libmpfr/libgmp/libzstd"
+            ldd /tmp/dogego-raccoon
+            exit 1
+          fi
+          /tmp/dogego-raccoon version
+
+      - name: Test + build (macOS)
+        if: runner.os == 'macOS'
+        env:
+          CGO_ENABLED: "1"
+        run: |
+          set -euo pipefail
+          GMP="$(brew --prefix gmp)"
+          MPFR="$(brew --prefix mpfr)"
+          ZSTD="$(brew --prefix zstd)"
+          for f in "$MPFR/lib/libmpfr.a" "$GMP/lib/libgmp.a" "$ZSTD/lib/libzstd.a"; do
+            test -f "$f" || { echo "missing $f"; ls -la "$(dirname "$f")"; exit 1; }
+          done
+          export CGO_CFLAGS="-I${GMP}/include -I${MPFR}/include -I${ZSTD}/include"
+          export CGO_LDFLAGS="${MPFR}/lib/libmpfr.a ${GMP}/lib/libgmp.a ${ZSTD}/lib/libzstd.a"
+          go test -tags raccoon_g ./pqcrypto/ -run 'TestRaccoon|TestFalcon|TestDilithium' -count=1
+          go test -tags raccoon_g ./consensus/ -run TestVerifyPQCarrierPairRaccoon -count=1
+          go build -tags raccoon_g -o /tmp/dogego-raccoon ./cmd/dogego
+          if otool -L /tmp/dogego-raccoon | grep -Ei 'libmpfr|libgmp|libzstd'; then
+            echo "::error::macOS binary still links Homebrew dylibs"
+            otool -L /tmp/dogego-raccoon
+            exit 1
+          fi
           /tmp/dogego-raccoon version
 
       - name: Test + build (Windows)
@@ -90,7 +117,12 @@ jobs:
           CGO_ENABLED: "1"
         run: |
           export PATH="/mingw64/bin:$PATH"
+          export CGO_LDFLAGS="-Wl,-Bstatic -lmpfr -lgmp -lzstd -Wl,-Bdynamic -lbcrypt -static-libgcc"
           go test -tags raccoon_g ./pqcrypto/ -run 'TestRaccoon|TestFalcon|TestDilithium' -count=1
           go test -tags raccoon_g ./consensus/ -run TestVerifyPQCarrierPairRaccoon -count=1
           go build -tags raccoon_g -o dogego-raccoon.exe ./cmd/dogego
-          ./dogego-raccoon.exe version
+          if objdump -p dogego-raccoon.exe | grep -Ei 'DLL Name:.*(libmpfr|libgmp|libzstd)'; then
+            echo "::error::Windows binary still imports MinGW DLLs"
+            exit 1
+          fi
+          PATH="/usr/bin:/bin" ./dogego-raccoon.exe version
