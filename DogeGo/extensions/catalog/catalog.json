@@ -12,7 +12,7 @@
       "homepage": "https://github.com/qlpqlp/dogego",
       "repository": "https://github.com/qlpqlp/dogego/tree/main/DogeGo/extensions/catalog/doginals",
       "download_url": "https://raw.githubusercontent.com/qlpqlp/dogego/main/DogeGo/extensions/catalog/doginals/dist/doginals.zip",
-      "sha256": "d435d3aafcee33bc553845f9aef8353887592739a0fb7e8d44919910747e9c73",
+      "sha256": "8f079f5912b03b82293b2dea82863a09401371dfeef616d93f7b94e8d81c335c",
       "downloads": {
         "universal": {
           "download_url": "https://raw.githubusercontent.com/qlpqlp/dogego/main/DogeGo/extensions/catalog/doginals/dist/doginals-universal.zip",
@@ -75,7 +75,7 @@
         "ui_panel",
         "research_bbpow"
       ],
-      "sha256": "7dbf11d0fda8a23fcebb3bf68dc908581eb3b492ca75881b89034be859718938",
+      "sha256": "5733576ced15ee5167b7670194c7744aea0750c33f8a04caa0c23d2e675b552e",
       "download_url": "https://raw.githubusercontent.com/qlpqlp/dogego/main/DogeGo/extensions/catalog/bbpow/dist/bbpow.zip",
       "downloads": {
         "universal": {
@@ -93,11 +93,11 @@
       "homepage": "https://github.com/qlpqlp/dogego",
       "repository": "https://github.com/qlpqlp/dogego/tree/main/DogeGo/extensions/catalog/zkl2",
       "download_url": "https://raw.githubusercontent.com/qlpqlp/dogego/main/DogeGo/extensions/catalog/zkl2/dist/zkl2.zip",
-      "sha256": "1bd377c2ad90a8bff0855412e1086679ff4989f5d26413b5b59b9a54ede4f2a5",
+      "sha256": "ac6b488fcf88e58c56e83efe90f5592f7f80eef5a3fc0ccd5812d8e03c54a29e",
       "downloads": {
         "universal": {
           "download_url": "https://raw.githubusercontent.com/qlpqlp/dogego/main/DogeGo/extensions/catalog/zkl2/dist/zkl2-universal.zip",
-          "sha256": "1bd377c2ad90a8bff0855412e1086679ff4989f5d26413b5b59b9a54ede4f2a5"
+          "sha256": "ac6b488fcf88e58c56e83efe90f5592f7f80eef5a3fc0ccd5812d8e03c54a29e"
         }
       },
       "dogego_min_version": "0.1.0",
@@ -137,7 +137,7 @@
       "downloads": {
         "universal": {
           "download_url": "https://raw.githubusercontent.com/qlpqlp/dogego/main/DogeGo/extensions/catalog/example-go/dist/hello-universal.zip",
-          "sha256": "7dfbaf70ccb1cf500fa186f89b966f596fca08a51a855d37c05b64498f1dfae1"
+          "sha256": "c35e7d5d27dd441da046437e0ccd9ef1c94d6ade8240e172a75177ec8b4da5ec"
         }
       },
       "dogego_min_version": "0.1.0",
