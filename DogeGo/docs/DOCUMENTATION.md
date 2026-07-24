@@ -30,7 +30,7 @@ Open **Docs** in the dashboard (`http://localhost:2013/` by default), or read th
 | Standalone readiness | [STANDALONE_FULLNODE_ACCEPTANCE.md](STANDALONE_FULLNODE_ACCEPTANCE.md) | - | Checklist vs Core |
 | Quick standalone start | [STANDALONE_NODE_QUICKSTART.md](STANDALONE_NODE_QUICKSTART.md) | - | Build, post-aux upgrade, scripts |
 | **Offline certification** | [DEVELOPER_GUIDE.md](DEVELOPER_GUIDE.md) § Offline | Features → Certification | `dogego cert offline`, `wallet-import`, `operator`, `pq` |
-| **Extensions & ZK L2** | [EXTENSIONS.md](EXTENSIONS.md) | Extensions sidebar + Docs tab | Catalog/zip install, `dogego.zkl2`, wasm/subprocess; no wallet access |
+| **Extensions** | [EXTENSIONS.md](EXTENSIONS.md), catalog USER_GUIDEs | Extensions sidebar + Docs tab + website guide | ZK L2, Doginals, RadioDoge, BBPoW; wasm/subprocess |
 
 Track documentation work in **ROADMAP.md → Phase 12 - Documentation & integrator UX**.
 
@@ -40,7 +40,7 @@ Track documentation work in **ROADMAP.md → Phase 12 - Documentation & integrat
 - **Chain / networks:** [CHAIN_PARAMETERS.md](CHAIN_PARAMETERS.md) - mainnet, reboot testnet, seeds (including **`seed.dogego.org`**), genesis
 - **First run:** [OPERATOR.md](OPERATOR.md) + setup wizard (`dogego node` without datadir)
 - **Standalone mainnet (Beta):** [STANDALONE_NODE_QUICKSTART.md](STANDALONE_NODE_QUICKSTART.md) - build, sync, `dogego cert` (Windows / Linux / macOS)
-- **Production mainnet / reboot testnet:** [CORE_OPERATOR_RUNBOOK.md](CORE_OPERATOR_RUNBOOK.md)
+- **Operator runbook (mainnet / reboot testnet):** [CORE_OPERATOR_RUNBOOK.md](CORE_OPERATOR_RUNBOOK.md)
 - **Dashboard:** [WEB_UI.md](WEB_UI.md) - default `http://localhost:2013/`
 - **Mainnet + reboot testnet:** [MAINNET_TESTNET_OPERATIONAL.md](MAINNET_TESTNET_OPERATIONAL.md) - `dogego cert operational`, dual-run, founder checklist; testnet DNS **`seed.dogego.org`**
 - **Scripts (all OS):** [scripts/README.md](../scripts/README.md) - prefer `dogego cert`; `.sh` / `.ps1` when needed
@@ -50,7 +50,7 @@ Track documentation work in **ROADMAP.md → Phase 12 - Documentation & integrat
 - **Protocol lock:** mainnet consensus follows Dogecoin Core; no protocol forks ([ROADMAP.md](../ROADMAP.md))
 - **What we do not do:** [INTENTIONAL_DIFFERENCES.md](INTENTIONAL_DIFFERENCES.md)
 - **Core parity gaps:** [CORE_PARITY_GAPS.md](CORE_PARITY_GAPS.md)
-- **Extensions & ZK L2:** [EXTENSIONS.md](EXTENSIONS.md), [extensions/catalog/zkl2/docs/USER_GUIDE.md](../extensions/catalog/zkl2/docs/USER_GUIDE.md), [extensions/catalog/README.md](../extensions/catalog/README.md)
+- **Extensions:** [EXTENSIONS.md](EXTENSIONS.md), [zkl2](../extensions/catalog/zkl2/docs/USER_GUIDE.md), [doginals](../extensions/catalog/doginals/docs/USER_GUIDE.md), [radiodoge](../extensions/catalog/radiodoge/docs/USER_GUIDE.md), [bbpow](../extensions/catalog/bbpow/docs/USER_GUIDE.md), [catalog README](../extensions/catalog/README.md)
 - **Offline certification:** `go run ./cmd/dogego cert offline` (CI gate); `dogego cert wallet-import`; `dogego cert operator` (deep Milestone E); `dogego cert pq` (PQ format/carrier) - [DEVELOPER_GUIDE.md](DEVELOPER_GUIDE.md) § Offline certification
 
 ## For contributors

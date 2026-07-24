@@ -99,7 +99,7 @@
       "id": "extensions",
       "title": "Extensions",
       "icon": "extension",
-      "body": "Catalog packages, ZK L2, Doginals, BBPoW research, authoring guides.",
+      "body": "Official catalog packages: ZK L2, Doginals, RadioDoge, BBPoW, plus authoring guides.",
       "links": [
         {
           "label": "Extensions overview",
@@ -110,12 +110,48 @@
           "path": "extensions/catalog/README.md"
         },
         {
+          "label": "ZK L2 user guide",
+          "path": "extensions/catalog/zkl2/docs/USER_GUIDE.md"
+        },
+        {
+          "label": "ZK L2 protocol",
+          "path": "extensions/catalog/zkl2/docs/PROTOCOL.md"
+        },
+        {
           "label": "Doginals user guide",
           "path": "extensions/catalog/doginals/docs/USER_GUIDE.md"
         },
         {
-          "label": "ZK L2 user guide",
-          "path": "extensions/catalog/zkl2/docs/USER_GUIDE.md"
+          "label": "Doginals protocol",
+          "path": "extensions/catalog/doginals/docs/PROTOCOL.md"
+        },
+        {
+          "label": "RadioDoge user guide",
+          "path": "extensions/catalog/radiodoge/docs/USER_GUIDE.md"
+        },
+        {
+          "label": "BBPoW user guide",
+          "path": "extensions/catalog/bbpow/docs/USER_GUIDE.md"
+        },
+        {
+          "label": "BBPoW protocol",
+          "path": "extensions/catalog/bbpow/docs/PROTOCOL.md"
+        },
+        {
+          "label": "BBPoW plain English",
+          "path": "extensions/catalog/bbpow/docs/PLAIN_ENGLISH.md"
+        },
+        {
+          "label": "Authoring",
+          "path": "extensions/catalog/AUTHORING.md"
+        },
+        {
+          "label": "Building packages",
+          "path": "extensions/catalog/BUILDING.md"
+        },
+        {
+          "label": "Hello world",
+          "path": "extensions/catalog/HELLO_WORLD.md"
         }
       ]
     },
@@ -200,6 +236,7 @@
     "docs/CORE_OPERATOR_RUNBOOK.md",
     "docs/CORE_PARITY_GAPS.md",
     "docs/CORE_SIDE_BY_SIDE_WORKFLOWS.md",
+    "docs/CREDITS.md",
     "docs/DEVELOPER_GUIDE.md",
     "docs/DOCUMENTATION.md",
     "docs/DOGEGO_RELAY_CGNAT.md",
@@ -210,6 +247,7 @@
     "docs/MILESTONE_B_CERT.md",
     "docs/OPERATOR.md",
     "docs/OVERVIEW.md",
+    "docs/RACCOON_G_BUILD.md",
     "docs/RPC.md",
     "docs/RPC_CONSOLE_TUTORIAL.md",
     "docs/SECURITY.md",
@@ -230,9 +268,10 @@
     "extensions/catalog/doginals/docs/PROTOCOL.md",
     "extensions/catalog/doginals/docs/README.md",
     "extensions/catalog/doginals/docs/USER_GUIDE.md",
+    "extensions/catalog/radiodoge/docs/USER_GUIDE.md",
     "extensions/catalog/zkl2/docs/PROTOCOL.md",
     "extensions/catalog/zkl2/docs/README.md",
     "extensions/catalog/zkl2/docs/USER_GUIDE.md"
   ],
-  "generatedAt": "2026-07-22T16:27:21.884Z"
+  "generatedAt": "2026-07-24T15:40:49.052Z"
 }

@@ -1,6 +1,6 @@
 # Core parity gaps (Dogecoin Core → DogeGo)
 
-Dogecoin **Core** (`src/`) is the consensus and operator specification. DogeGo targets **Core-compatible behavior** on critical paths but is **not production-certified** until the standalone acceptance matrix is complete.
+Dogecoin **Core** (`src/`) is the consensus and operator specification. DogeGo targets **Core-compatible behavior** on critical paths and is beta: please run it live and help us complete the standalone acceptance matrix.
 
 **Protocol lock:** DogeGo does not change mainnet consensus rules (no protocol forks). Rows below are **implementation parity** gaps, not alternate Dogecoin rules. Chain "fork" in tests means **reorg**, not a new activation.
 
@@ -185,7 +185,7 @@ The **Features** tab is the live operator view of this document. Data comes from
 | JSON field | UI section |
 |------------|------------|
 | `parity_summary` | Top cards: standalone exit gate, capability counts (live/partial), gap counts (open/partial/declined), roadmap done/total, RPC class breakdown |
-| `core_guidance` | When to use Core vs DogeGo, intentional differences, doc link buttons |
+| `core_guidance` | Why try DogeGo, intentional differences, doc link buttons |
 | `certification` | Milestones A/B/D/E, offline test names, operator script paths |
 | `core_probe_apis` | Probe API catalog (paths, milestones, bundle membership) |
 | `live` | **This node right now** strip (P2P mode, peers, wallet, indexes, DGR, relay policy) |

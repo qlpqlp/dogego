@@ -108,7 +108,7 @@ func probePQCarrierSchemes(out *CorePQProbeResult) {
 					"backend":                row.scheme.Backend(),
 					"libdogecoin_compatible": false,
 				},
-				Note: "Raccoon-G-44 not linked — rebuild with CGO_ENABLED=1 -tags raccoon_g (libgmp+libmpfr); OP_RETURN RCG4 format still ok",
+				Note: "Raccoon-G-44 not linked  -  rebuild with CGO_ENABLED=1 -tags raccoon_g (libgmp+libmpfr); OP_RETURN RCG4 format still ok",
 			})
 			out.Notes = append(out.Notes, "raccoon_backend_unavailable")
 			continue

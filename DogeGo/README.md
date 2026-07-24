@@ -9,17 +9,18 @@ Much Faster Full Dogecoin Node - beta Go implementation with mainnet IBD, reboot
 DogeGo is [MIT licensed](LICENSE). Copyright (c) 2026 Paulo Vidal and Dogecoin Foundation.
 Implementation is informed by [Dogecoin Core](https://github.com/dogecoin/dogecoin) and [Bitcoin Core](https://github.com/bitcoin/bitcoin) (both MIT); see `LICENSE` for upstream attribution.
 
-**Beta:** please run DogeGo, try the workflows you care about, and report what needs tuning. Core-compatible consensus, RPC, wallet migration, mining, and a loopback web UI ship today; storage is DogeGo’s native Go layout (not Core LevelDB). See **`docs/OVERVIEW.md`** and **`ROADMAP.md`**.
+**Beta:** please run DogeGo, try the workflows you care about, and report what needs tuning. Core-compatible consensus, RPC, wallet migration, mining, and a loopback web UI ship today; storage is DogeGo's native Go layout (not Core LevelDB). See **`docs/OVERVIEW.md`** and **`ROADMAP.md`**.
 
 ### Mainnet full node (beta)
 
-DogeGo targets a **standalone** mainnet full node (headers + bodies, P2P, RPC, web UI) with Core-aligned behavior on consensus-critical paths where implemented. It is **not** production-certified - see **`docs/STANDALONE_FULLNODE_ACCEPTANCE.md`**. **Mainnet consensus follows Dogecoin Core** (no protocol forks; see **`ROADMAP.md`** **Dogecoin protocol lock**). For exchange-grade deployments, still prefer **Dogecoin Core** until the acceptance matrix is complete.
+DogeGo targets a **standalone** mainnet full node (headers + bodies, P2P, RPC, web UI) with Core-aligned behavior on consensus-critical paths. **Mainnet consensus follows Dogecoin Core** (no protocol forks; see **`ROADMAP.md`** **Dogecoin protocol lock**). Please use DogeGo live and help us complete the remaining acceptance matrix in **`docs/STANDALONE_FULLNODE_ACCEPTANCE.md`**.
 
 **Practical options today:**
 
 - **DogeGo** mainnet IBD + operator tooling: **`docs/STANDALONE_NODE_QUICKSTART.md`**, **`docs/CORE_OPERATOR_RUNBOOK.md`**, `go run ./cmd/dogego cert offline` (see **`scripts/README.md`**; Windows also `.\scripts\operator_workflow_cert.ps1`).
-- **Dogecoin Core** when you need full script corpus parity, `wallet.dat`, or established operator SLOs.
-- **Automation in Go:** call **`dogecoin-cli`** / JSON-RPC from Go, or use DogeGo’s JSON-RPC where methods are implemented (`docs/RPC.md`).
+- **Optional Dogecoin Core** side-by-side only when you want differential parity compares (`core_rpc_addr` / Features probes).
+- **Automation in Go:** call DogeGo JSON-RPC (`docs/RPC.md`), or Core `dogecoin-cli` if you keep a reference node.
+
 ## Long-term project (full node)
 
 DogeGo is being grown **incrementally** toward a Dogecoin-compatible node in Go.
@@ -36,7 +37,7 @@ DogeGo is being grown **incrementally** toward a Dogecoin-compatible node in Go.
 - **`docs/ARCHITECTURE.md`** - target package layout and design rules.
 - **Reserved packages** - `node/`, `p2p/`, `consensus/`, `store/`, `rpc/` (skeleton `doc.go` only until each phase starts).
 
-Use **`dogego node`** for a **minimal experimental process** (headers sync + optional RPC). It is **not** a safe replacement for Core on untrusted networks.
+Use **`dogego node`** (or just `dogego`) for the full node process: headers sync, bodies, P2P, RPC, and web UI. See **`docs/STANDALONE_NODE_QUICKSTART.md`**.
 
 Running just `dogego` (or `dogego.exe`) is equivalent to `dogego node`.
 

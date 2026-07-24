@@ -77,7 +77,7 @@ func DefaultCapabilitiesManifest() CapabilitiesManifest {
 	rpc := buildRPCMethodRows()
 	return CapabilitiesManifest{
 		ClientVersion: version.Display(),
-		Disclaimer:    "DogeGo is experimental Go node software. It is not Dogecoin Core. Use official Core for production wallets, mining pools, and exchange integrations.",
+		Disclaimer:    "DogeGo is beta Go node software with Core-compatible consensus rules (no protocol forks). Please run it live on testnet or mainnet, try the workflows you care about, and report what needs tuning so we can improve it together.",
 		CoreGuidance:  DefaultCoreGuidance(),
 		Certification: DefaultCoreCertManifest(),
 		CoreProbeAPIs: defaultCoreProbeAPIs(),
@@ -116,6 +116,9 @@ func roadmapHighlights() []RoadmapHighlight {
 		{Phase: "Operator", Title: "Settings RPC tools tab", Done: true, Summary: "GET /api/rpc/cookbook in Settings → Tools; run RPC without Console tab."},
 		{Phase: "Extensions", Title: "Extension platform", Done: true, Summary: "Manifest v1, wasm/subprocess hosts, catalog+zip install, scoped permissions, dynamic dogego_ext_* RPC; Settings → Extensions tab."},
 		{Phase: "Extensions", Title: "dogego.zkl2 ZK L2 overlay", Done: true, Summary: "zkproof-v1 P2P sync, Groth16 verify off-L1 (compressed + DIP + inline VK), Pebble store; no consensus fork."},
+		{Phase: "Extensions", Title: "dogego.doginals Doginals/DRC-20 L2", Done: true, Summary: "L1 index + wallet_rpc mint + doginals-v1 P2P asset sync; mainnet + testnet; no consensus fork."},
+		{Phase: "Extensions", Title: "dogego.radiodoge SoftAP bridge", Done: true, Summary: "Heltec V3 SoftAP HTTP: offline LoRa mesh broadcast; online inbound relay via sendrawtransaction."},
+		{Phase: "Extensions", Title: "dogego.bbpow BBPoW research", Done: true, Summary: "Testnet-only Bitcoin SHA-256 commitment research verifier; not AuxPoW; not L1 consensus."},
 	}
 }
 

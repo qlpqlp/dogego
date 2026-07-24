@@ -19,6 +19,8 @@ This folder is the **remote catalog** (`catalog.json`) plus **reference packages
 |----|------|--------|---------|
 | `dogego.zkl2` | **subprocess** (universal zip) | [zkl2/](zkl2/) | Catalog **Install** (zip) then **Enable** |
 | `dogego.bbpow` | **subprocess** (research, testnet) | [bbpow/](bbpow/) | Build zip locally (`build.ps1` / `build.sh`) then Install → Enable on **testnet only** |
+| `dogego.radiodoge` | **subprocess** (SoftAP / LoRa) | [radiodoge/](radiodoge/) | Build universal zip then Install → Enable; Heltec V3 SoftAP HTTP |
+| `dogego.doginals` | **subprocess** | [doginals/](doginals/) | Catalog / zip Install → Enable |
 | `example.go` | **subprocess** | [example-go/](example-go/) | Catalog **Install** (source from GitHub + compile) or per-platform / universal zip see [BUILDING.md](BUILDING.md) |
 | `example.wasm` | **wasm** (portable) | [example-wasm/](example-wasm/) | Catalog **Install** (one zip for all OSes) |
 

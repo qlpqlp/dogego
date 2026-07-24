@@ -14,6 +14,7 @@
     "openMenu": "打开菜单",
     "closeMenu": "关闭菜单",
     "features": "功能",
+    "extensions": "Extensions",
     "fullnode": "Full node",
     "roadmap": "Roadmap",
     "care": "关怀",
@@ -265,14 +266,6 @@
         "title": "Miner ready (Core parity)",
         "body": "<code>getblocktemplate</code> with Digishield <code>NextBlockBits</code> + BIP22 longpoll, <code>createauxblock</code>/<code>submitauxblock</code> for merge-mining, and reboot-testnet solo mining with mempool txs. Certified live via <code>GET /api/core-mining-probe</code> and <code>dogego cert mining</code>."
       },
-      "bbpow": {
-        "title": "BBPoW research (Bitcoin + DOGE)",
-        "body": "Beta extension <code>dogego.bbpow</code>: research toward Bitcoin miners securing Dogecoin the way Litecoin already does via AuxPoW. Same SHA-256 ASICs keep mining Bitcoin; Litecoin Scrypt merge-mining stays. Testnet catalog package with proof verify RPC. Research only. Not mainnet consensus."
-      },
-      "doginals": {
-        "title": "Doginals / DRC-20 L2",
-        "body": "Beta extension <code>dogego.doginals</code>: index L1 Doginals/DRC-20 data carriers, create NFT/token/image metadata off-chain, and sync L2 assets among DogeGo peers (<code>doginals-v1</code>). Friendly dashboard UI. Mainnet + testnet. No consensus change."
-      },
       "mempoolPolicy": {
         "title": "Mempool relay policy",
         "body": "Wizard and Settings expose Core-shaped flags: <code>maxmempool</code>, <code>minrelaytxfee</code>, <code>incrementalrelayfee</code>, package limits, Full RBF, datacarrier, and bare multisig - plus a 58-template offline admission corpus."
@@ -292,6 +285,33 @@
       "segwit": {
         "title": "SegWit ready",
         "body": "BIP141 interpreter, witness serialization, and weight/vsize helpers ship today, Core-aligned with Dogecoin Core. CLTV is already active. Softfork follows Core's schedule; see <a href=\"https://github.com/qlpqlp/dogego/blob/main/DogeGo/docs/SEGWIT_STATUS.md\">SEGWIT_STATUS.md</a> for upgrade effects on nodes and miners."
+      }
+    }
+  },
+  "extensions": {
+    "title": "Official extensions",
+    "lead": "Optional catalog packages you install beside the node. They do not fork mainnet consensus. Install from <strong>Settings → Extensions</strong> or the GitHub catalog, then enable.",
+    "footnote": "Author your own packages too. Docs: <a href=\"guide/#/docs/EXTENSIONS.md\">EXTENSIONS.md</a> · <a href=\"https://github.com/qlpqlp/dogego/tree/main/DogeGo/extensions/catalog\">catalog on GitHub</a>.",
+    "items": {
+      "zkl2": {
+        "id": "dogego.zkl2",
+        "title": "ZK Layer 2",
+        "body": "Submit and sync ZK proofs anchored to confirmed Dogecoin txs over the <code>zkproof-v1</code> P2P overlay. No L1 consensus fork. Mainnet + testnet."
+      },
+      "doginals": {
+        "id": "dogego.doginals",
+        "title": "Doginals / DRC-20 L2",
+        "body": "Index L1 Doginals/DRC-20 carriers, mint via allowlisted wallet RPC, and sync off-chain NFT/token metadata among peers (<code>doginals-v1</code>). Mainnet + testnet."
+      },
+      "radiodoge": {
+        "id": "dogego.radiodoge",
+        "title": "RadioDoge",
+        "body": "Connect a Heltec V3 SoftAP device: broadcast signed txs over LoRa when offline, and relay inbound mesh txs into DogeGo with <code>sendrawtransaction</code> when online. Same HTTP API as Dogecoin Wallet RadioDoge support."
+      },
+      "bbpow": {
+        "id": "dogego.bbpow",
+        "title": "BBPoW research",
+        "body": "Testnet-only research toward Bitcoin SHA-256 commitments as a Dogecoin security signal (not AuxPoW, not mainnet consensus). Proof verify RPC and dual-lane difficulty sketch."
       }
     }
   },

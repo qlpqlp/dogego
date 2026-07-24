@@ -126,7 +126,7 @@ func (s *SubprocessExtension) OnEnable(ctx context.Context, host Host) error {
 	if err := cmd.Start(); err != nil {
 		err = fmt.Errorf("subprocess start: %w", err)
 		if strings.Contains(err.Error(), "exec format error") {
-			err = fmt.Errorf("%w (wrong OS/arch binary — uninstall and reinstall from catalog so the universal zip materializes %s)", err, CurrentPlatformKey())
+			err = fmt.Errorf("%w (wrong OS/arch binary  -  uninstall and reinstall from catalog so the universal zip materializes %s)", err, CurrentPlatformKey())
 		}
 		return err
 	}

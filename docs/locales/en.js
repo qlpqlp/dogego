@@ -14,6 +14,7 @@
     "openMenu": "Open menu",
     "closeMenu": "Close menu",
     "features": "Features",
+    "extensions": "Extensions",
     "fullnode": "Full node",
     "roadmap": "Roadmap",
     "care": "Care",
@@ -128,7 +129,7 @@
     "featuresPillRpc": "180+ JSON-RPC methods",
     "featuresPillMempool": "Mempool corpus (58/58)",
     "featuresPillPsbt": "PSBT · BIP32 · HWI",
-    "featuresPillExtensions": "Extensions · zkproof-v1",
+    "featuresPillExtensions": "Modular extensions",
     "featuresNote": "Settings -> Test Core connection · cached cert matrix · OpenRPC at <code>/api/openrpc.json</code>",
     "syncDockMain": "Body IBD · mainnet · {pct}%",
     "syncDockMeta": "Connected <strong>{connected}</strong> · Stored <strong>{stored}</strong> · Behind <strong>{behind}</strong> · <strong>{rate}</strong> blk/min",
@@ -207,7 +208,7 @@
     "items": {
       "pq": {
         "title": "Post-Quantum commitments",
-        "body": "First Dogecoin full node with Phase-1 PQ OP_RETURN carriers (FLC1, DIL2, RCG4). Raccoon-G uses the Foundation <a href=\"https://github.com/dogecoinfoundation/libdogecoin/tree/0.1.5-dev/src/raccoon_g\">in-tree port</a> by <a href=\"https://github.com/edtubbs\">Ed Tubbs</a> (<a href=\"https://x.com/EdTubbs\">@EdTubbs</a>; <a href=\"https://github.com/dogecoinfoundation/dogecoin/pull/8\">Core green PR #8</a>); GitHub Releases compile it with CGO on <strong>native</strong> OS runners (not cross-compile, because GMP/MPFR must match the target). Send with wallet commitments, verify via <code>dogego_verifypqcommitment</code>, and inspect in the explorer."
+        "body": "First Dogecoin full node with Phase-1 PQ OP_RETURN carriers (FLC1, DIL2, RCG4). Send with automatic wallet commitments, verify via <code>dogego_verifypqcommitment</code>, and inspect in the explorer."
       },
       "zstd": {
         "title": "zstd block compression",
@@ -265,14 +266,6 @@
         "title": "Miner ready (Core parity)",
         "body": "<code>getblocktemplate</code> with Digishield <code>NextBlockBits</code> + BIP22 longpoll, <code>createauxblock</code>/<code>submitauxblock</code> for merge-mining, and reboot-testnet solo mining with mempool txs. Certified live via <code>GET /api/core-mining-probe</code> and <code>dogego cert mining</code>."
       },
-      "bbpow": {
-        "title": "BBPoW research (Bitcoin + DOGE)",
-        "body": "Beta extension <code>dogego.bbpow</code>: research toward Bitcoin miners securing Dogecoin the way Litecoin already does via AuxPoW. Same SHA-256 ASICs keep mining Bitcoin; Litecoin Scrypt merge-mining stays. Testnet catalog package with proof verify RPC. Research only. Not mainnet consensus."
-      },
-      "doginals": {
-        "title": "Doginals / DRC-20 L2",
-        "body": "Beta extension <code>dogego.doginals</code>: index L1 Doginals/DRC-20 data carriers, create NFT/token/image metadata off-chain, and sync L2 assets among DogeGo peers (<code>doginals-v1</code>). Friendly dashboard UI. Mainnet + testnet. No consensus change."
-      },
       "mempoolPolicy": {
         "title": "Mempool relay policy",
         "body": "Wizard and Settings expose Core-shaped flags: <code>maxmempool</code>, <code>minrelaytxfee</code>, <code>incrementalrelayfee</code>, package limits, Full RBF, datacarrier, and bare multisig - plus a 58-template offline admission corpus, PaysForRBF descendant fees, and submitpackage CPFP."
@@ -286,12 +279,39 @@
         "body": "Optional tray icon: open dashboard, check/download/install updates with SHA256 verify, and native OS notifications when a new GitHub release is detected."
       },
       "extensions": {
-        "title": "Installable extensions",
-        "body": "Install zip packages with <code>dogego.extension.json</code>, enable/disable from Settings or RPC, and ship subprocess or wasm plugins. Built-in <code>dogego.zkl2</code> (ZK L2), beta <code>dogego.doginals</code> (Doginals/DRC-20 L2), and <code>dogego.bbpow</code> (Bitcoin-backed mining research). Extensions may use allowlisted wallet RPC when granted <code>wallet_rpc</code> (authenticated dashboard/RPC; no key export)."
+        "title": "Modular extension platform",
+        "body": "Install and enable catalog packages without changing Dogecoin consensus: zip or GitHub install, subprocess/wasm hosts, allowlisted permissions, optional <code>wallet_rpc</code>, and host-rendered UI panels. See the <a href=\"#extensions\">Extensions</a> section for each official package."
       },
       "segwit": {
         "title": "SegWit ready",
         "body": "BIP141 interpreter, witness serialization, and weight/vsize helpers ship today, Core-aligned with Dogecoin Core. CLTV is already active. Softfork follows Core's schedule; see <a href=\"https://github.com/qlpqlp/dogego/blob/main/DogeGo/docs/SEGWIT_STATUS.md\">SEGWIT_STATUS.md</a> for upgrade effects on nodes and miners."
+      }
+    }
+  },
+  "extensions": {
+    "title": "Official extensions",
+    "lead": "Optional catalog packages you install beside the node. They do not fork mainnet consensus. Install from <strong>Settings → Extensions</strong> or the GitHub catalog, then enable.",
+    "footnote": "Author your own packages too. Docs: <a href=\"guide/#/docs/EXTENSIONS.md\">EXTENSIONS.md</a> · <a href=\"https://github.com/qlpqlp/dogego/tree/main/DogeGo/extensions/catalog\">catalog on GitHub</a>.",
+    "items": {
+      "zkl2": {
+        "id": "dogego.zkl2",
+        "title": "ZK Layer 2",
+        "body": "Submit and sync ZK proofs anchored to confirmed Dogecoin txs over the <code>zkproof-v1</code> P2P overlay. No L1 consensus fork. Mainnet + testnet."
+      },
+      "doginals": {
+        "id": "dogego.doginals",
+        "title": "Doginals / DRC-20 L2",
+        "body": "Index L1 Doginals/DRC-20 carriers, mint via allowlisted wallet RPC, and sync off-chain NFT/token metadata among peers (<code>doginals-v1</code>). Mainnet + testnet."
+      },
+      "radiodoge": {
+        "id": "dogego.radiodoge",
+        "title": "RadioDoge",
+        "body": "Connect a Heltec V3 SoftAP device: broadcast signed txs over LoRa when offline, and relay inbound mesh txs into DogeGo with <code>sendrawtransaction</code> when online. Same HTTP API as Dogecoin Wallet RadioDoge support."
+      },
+      "bbpow": {
+        "id": "dogego.bbpow",
+        "title": "BBPoW research",
+        "body": "Testnet-only research toward Bitcoin SHA-256 commitments as a Dogecoin security signal (not AuxPoW, not mainnet consensus). Proof verify RPC and dual-lane difficulty sketch."
       }
     }
   },
@@ -325,8 +345,8 @@
         "body": "Five-step wizard with five profiles, preflight (firewall, ports, CGNAT, founder), OS autostart, GitHub auto-update, 17 live cert web probes (mining GBT/aux + PQ), embedded Docs, analytics Pebble sidecar, <code>dogego cert offline</code> / bip152-soak / operator gates."
       },
       "extensions": {
-        "title": "Extensions, ZK L2, Doginals & BBPoW",
-        "body": "Catalog install from GitHub, zip upload, wasm/subprocess hosts, runtime permission checks, built-in <code>dogego.zkl2</code> (<code>zkproof-v1</code>), beta <code>dogego.doginals</code> (<code>doginals-v1</code> L2 for inscriptions/NFTs), and <code>dogego.bbpow</code> (Bitcoin-backed mining research, testnet). Dynamic RPC <code>dogego_ext_&lt;id&gt;_&lt;method&gt;</code>."
+        "title": "Modular extensions",
+        "body": "Catalog / zip install, subprocess and wasm hosts, runtime permission checks, host-rendered UI panels, and dynamic RPC <code>dogego_ext_&lt;id&gt;_&lt;method&gt;</code>. See <a href=\"#extensions\">Official extensions</a> for ZK L2, Doginals, RadioDoge, and BBPoW."
       }
     }
   },
@@ -403,7 +423,7 @@
       },
       "extensions": {
         "title": "Extensions catalog",
-        "body": "Settings -> Extensions lists catalog packages. Install from GitHub or zip, enable <code>dogego.zkl2</code> for ZK L2, <code>dogego.doginals</code> for Doginals/DRC-20 L2, or beta <code>dogego.bbpow</code> (testnet) for Bitcoin-backed mining research. Wallet only via authenticated allowlisted RPC when enabled in the extension Settings."
+        "body": "Settings → Extensions installs packages from GitHub or zip. Enable what you need; wallet access only via authenticated allowlisted RPC when an extension opts in. Browse packages in <a href=\"#extensions\">Official extensions</a>."
       }
     }
   },

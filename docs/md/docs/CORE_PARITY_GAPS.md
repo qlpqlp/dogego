@@ -1,6 +1,6 @@
 # Core parity gaps (Dogecoin Core → DogeGo)
 
-Dogecoin **Core** (`src/`) is the consensus and operator specification. DogeGo targets **Core-compatible behavior** on critical paths but is **not production-certified** until the standalone acceptance matrix is complete.
+Dogecoin **Core** (`src/`) is the consensus and operator specification. DogeGo targets **Core-compatible behavior** on critical paths and is beta: please run it live and help us complete the standalone acceptance matrix.
 
 **Protocol lock:** DogeGo does not change mainnet consensus rules (no protocol forks). Rows below are **implementation parity** gaps, not alternate Dogecoin rules. Chain "fork" in tests means **reorg**, not a new activation.
 
@@ -61,7 +61,7 @@ Evidence: `consensus/testdata/core_*.json`, `TestCoreScriptTestsRunnerSubset` (*
 |------|--------|-------|
 | **Core bucketed addrman** | **partial** | 256/1024 hash buckets + **64-deep per-bucket slot indices** (`TriedSlot` / `NewRefs`) + multi-ref new (up to **8**, Core `ADDRMAN_NEW_BUCKETS_PER_ADDRESS`) + Core-scale flat caps (**16384** tried / **65536** new); nKey + `learned_addrs.json` v3; occupancy maps for slot place/evict; inbound eviction-when-full (`AttemptEvictInboundForNew`) |
 | Peer management under churn / eclipse pressure | partial | Inbound eviction-when-full: protect addnode (`addnodeMatchesSession`) + BIP152 HB; prefer crowded `/16` victims; offline soak `TestEclipseInboundPressureSoak` + eviction table tests. Live multi-peer eclipse soak still open. |
-| Message coverage / protocol conformance | partial | Required flows vs Core-shaped behavior |
+| Message coverage / protocol conformance | partial | Required flows vs Core-shaped behavior; **BIP37 bloom** server + SPV client (`bloom/`, `NODE_BLOOM`, `filterload`/`add`/`clear`, `MSG_FILTERED_BLOCK`/`merkleblock`, bloom-gated tx relay; SPV wallet `filterload` + filtered-block ingest) |
 | Stall handling / forward IBD | partial | **Core-style body IBD pump** (1.5s proactive getdata on primary + relay; `ensureBodyDownloadArmed`; 90s body-only stall recovery + assist relaunch); body-IBD header pause; connect boost up to **512×8** passes when lag>8k (`connect_catchup_test.go`); RPC **`dogego_connect_catch_up_{passes,batch,interval_ms}`** + Web UI sync dock / Overview / restart-resume card; operator cert **restart_connect** row notes boost; **`GET /api/core-ibd-convergence-probe`** snapshot (**15th** live web gate); IBD CSV log column **`connect_boost`**; operator **`node_health.ps1`**, **`sync_status.ps1`**, **`watch_sync.ps1`**, **`log_ibd_progress.ps1`**, **`ibd_convergence_check.ps1`**, **`core_end_to_end_workflow.ps1`**; post-restart startup burst (32 rounds); **pre-P2P RPC + connect workers** (defer raw purge / autoRecoverSweep); extended soak open |
 | Inbound serving (getdata/getheaders) | partial | Adversarial + reorg-policy tests: batch caps, witness/filtered inv, invalid header reject, getheaders 2000 cap, BIP157 filter range, duplicate getdata | `node/getdata_serve_test.go`, `node/getheaders_serve_test.go`, `node/filter_serve_test.go`, `node/headers_apply_test.go` |
 | **BIP152 compact blocks** | **partial** | v1 HB relay **code-complete** + offline AuxPoW/cmpct edge tests; `dogego_cmpct_reconstruct_fallback_getdata` in probe schema; **`dogego cert bip152-soak`** (offline default; live PS1 optional). Extended mainnet/reboottestnet HB soak with advancing `dogego_cmpct_*` remains **operator-owned** (`scripts/bip152_live_soak_gate.ps1`, `DOGEGO_BIP152_LIVE_SOAK=1`). |
@@ -185,7 +185,7 @@ The **Features** tab is the live operator view of this document. Data comes from
 | JSON field | UI section |
 |------------|------------|
 | `parity_summary` | Top cards: standalone exit gate, capability counts (live/partial), gap counts (open/partial/declined), roadmap done/total, RPC class breakdown |
-| `core_guidance` | When to use Core vs DogeGo, intentional differences, doc link buttons |
+| `core_guidance` | Why try DogeGo, intentional differences, doc link buttons |
 | `certification` | Milestones A/B/D/E, offline test names, operator script paths |
 | `core_probe_apis` | Probe API catalog (paths, milestones, bundle membership) |
 | `live` | **This node right now** strip (P2P mode, peers, wallet, indexes, DGR, relay policy) |

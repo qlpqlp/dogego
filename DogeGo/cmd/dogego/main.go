@@ -279,7 +279,7 @@ func runNodeMode(args []string, defaultNodeMode string) {
 		})
 		if wantNoTLS {
 			config.DisableLocalTLS(&seed)
-			fmt.Fprintln(os.Stderr, "DogeGo: -notls / DOGEGO_NO_TLS — setup wizard and node use plain HTTP (no local CA install)")
+			fmt.Fprintln(os.Stderr, "DogeGo: -notls / DOGEGO_NO_TLS  -  setup wizard and node use plain HTTP (no local CA install)")
 		}
 		desktop.ApplyWizardDefaults(&seed)
 		openWizard := desktop.OpenWizardInBrowser(merged.NoBrowser)

@@ -84,7 +84,7 @@ func manualPlatform(cfg Config) string {
 	if exe == "" {
 		exe = "/path/to/dogego"
 	}
-	return "macOS — run in Terminal:\n" +
+	return "macOS  -  run in Terminal:\n" +
 		"sudo " + socketFilterFW + " --add " + exe + "\n" +
 		"sudo " + socketFilterFW + " --unblockapp " + exe + "\n" +
 		"# Or: System Settings → Network → Firewall → Options → allow incoming for DogeGo\n" +

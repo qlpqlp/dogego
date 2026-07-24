@@ -1,6 +1,6 @@
 # DogeGo operator runbook (mainnet + reboot testnet)
 
-Practical guide for running DogeGo as a **full node** when you might otherwise use **Dogecoin Core**. DogeGo is **not** Core - read [INTENTIONAL_DIFFERENCES.md](INTENTIONAL_DIFFERENCES.md) first.
+Practical guide for running DogeGo as a **full Dogecoin node**. Storage layout differs from Dogecoin Core; read [INTENTIONAL_DIFFERENCES.md](INTENTIONAL_DIFFERENCES.md) first.
 
 **Protocol lock:** mainnet block, header, script, subsidy, and auxpow rules follow Dogecoin Core. DogeGo does **not** introduce protocol forks or new consensus activations on mainnet. See [ROADMAP.md](../ROADMAP.md) **Dogecoin protocol lock**.
 
@@ -16,13 +16,15 @@ Prefer these in order:
 
 Many IBD helpers (`watch_sync`, `node_health`, `log_ibd_progress`, …) are still PowerShell-first. On Linux/macOS use the dashboard, `curl`, and `dogego cert ibd-convergence` / `dogego cert operational` instead. Full map: [scripts/README.md](../scripts/README.md).
 
-## When to use DogeGo vs Core
+## Why run DogeGo (beta)
 
-| Use DogeGo when… | Use Core when… |
-|------------------|----------------|
-| You want a Go codebase, embedded web UI, and documented native storage | You need maximum network compatibility and battle-tested release binaries |
-| Reboot **testnet** development / CI | You mine mainnet at scale with the full pool stack |
-| You want to **test DogeGo** (beta) and help tune it | You need native USB/HID signers without HWI (out of scope; use HWI `signer_cmd`) |
+| Run DogeGo when you want… | Optional Core side-by-side when… |
+|---------------------------|----------------------------------|
+| A Go full node with embedded web UI and documented native storage | You are comparing RPC/consensus against Core for parity testing (`core_rpc_addr`) |
+| Live testing on reboot **testnet** or **mainnet** to help improve DogeGo | You already operate Core and want dual-node workflows |
+| CGNAT/Starlink modes, extensions (ZK L2, Doginals, RadioDoge), and operator cert probes | You need a second reference process for differential scripts |
+
+Please use DogeGo as your day-to-day node while it is beta. Report bugs and rough edges so we can harden it.
 
 ## Networks
 

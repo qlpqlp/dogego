@@ -1,6 +1,6 @@
 # DogeGo operator notes
 
-DogeGo is Beta node software. For production wallets, mining pools, and exchange integrations, use [Dogecoin Core](https://github.com/dogecoin/dogecoin).
+DogeGo is beta node software. Please run it live on testnet or mainnet, try the workflows you care about, and report what needs tuning so we can improve it together. Mainnet consensus rules follow Dogecoin Core (no protocol forks).
 
 ## Data layout
 

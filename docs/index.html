@@ -96,6 +96,10 @@
         <span class="material-icons-round nav-icon" aria-hidden="true">star</span>
         <span class="nav-label" data-i18n="nav.features">Features</span>
       </a>
+      <a class="nav-item" href="#extensions" data-nav-id="extensions">
+        <span class="material-icons-round nav-icon" aria-hidden="true">extension</span>
+        <span class="nav-label" data-i18n="nav.extensions">Extensions</span>
+      </a>
       <a class="nav-item" href="#fullnode" data-nav-id="fullnode">
         <span class="material-icons-round nav-icon" aria-hidden="true">dns</span>
         <span class="nav-label" data-i18n="nav.fullnode">Full node</span>
@@ -344,7 +348,7 @@
                       <div class="demo-feature-pill demo-feature-ok"><span class="material-icons-round">check_circle</span> <span data-i18n="demo.featuresPillRpc">180+ JSON-RPC methods</span></div>
                       <div class="demo-feature-pill demo-feature-ok"><span class="material-icons-round">check_circle</span> <span data-i18n="demo.featuresPillMempool">Mempool corpus (58/58)</span></div>
                       <div class="demo-feature-pill demo-feature-warn"><span class="material-icons-round">schedule</span> <span data-i18n="demo.featuresPillPsbt">Hardware PSBT</span></div>
-                      <div class="demo-feature-pill demo-feature-ok"><span class="material-icons-round">check_circle</span> <span data-i18n="demo.featuresPillExtensions">Extensions · zkproof-v1</span></div>
+                      <div class="demo-feature-pill demo-feature-ok"><span class="material-icons-round">check_circle</span> <span data-i18n="demo.featuresPillExtensions">Modular extensions</span></div>
                     </div>
                     <p class="demo-features-note" data-i18n-html="demo.featuresNote">Settings → Test Core connection · cached cert matrix · OpenRPC at <code>/api/openrpc.json</code></p>
                   </div>
@@ -551,16 +555,6 @@
             <h3 data-i18n="features.items.mining.title">Miner ready (Core parity)</h3>
             <p data-i18n-html="features.items.mining.body"><code>getblocktemplate</code> with Digishield <code>NextBlockBits</code> + BIP22 longpoll, <code>createauxblock</code>/<code>submitauxblock</code> for merge-mining, and reboot-testnet solo mining with mempool txs. Certified live via <code>GET /api/core-mining-probe</code> and <code>dogego cert mining</code>.</p>
           </article>
-          <article class="feature-card feature-highlight">
-            <span class="material-icons-round feature-icon" aria-hidden="true">currency_bitcoin</span>
-            <h3 data-i18n="features.items.bbpow.title">BBPoW research (Bitcoin + DOGE)</h3>
-            <p data-i18n-html="features.items.bbpow.body">Beta extension <code>dogego.bbpow</code>: research toward Bitcoin miners securing Dogecoin the way Litecoin already does via AuxPoW. Same SHA-256 ASICs keep mining Bitcoin; Litecoin Scrypt merge-mining stays. Testnet catalog package with proof verify RPC. Research only. Not mainnet consensus.</p>
-          </article>
-          <article class="feature-card feature-highlight">
-            <span class="material-icons-round feature-icon" aria-hidden="true">collections</span>
-            <h3 data-i18n="features.items.doginals.title">Doginals / DRC-20 L2</h3>
-            <p data-i18n-html="features.items.doginals.body">Beta extension <code>dogego.doginals</code>: index L1 Doginals/DRC-20 data carriers, create NFT/token/image metadata off-chain, and sync L2 assets among DogeGo peers (<code>doginals-v1</code>). Friendly dashboard UI. Mainnet + testnet. No consensus change.</p>
-          </article>
           <article class="feature-card">
             <span class="material-icons-round feature-icon" aria-hidden="true">bolt</span>
             <h3 data-i18n="features.items.bip152.title">BIP152 compact blocks</h3>
@@ -578,8 +572,8 @@
           </article>
           <article class="feature-card feature-highlight">
             <span class="material-icons-round feature-icon" aria-hidden="true">extension</span>
-            <h3 data-i18n="features.items.extensions.title">Installable extensions</h3>
-            <p data-i18n-html="features.items.extensions.body">Install zip packages with <code>dogego.extension.json</code>, enable/disable from Settings or RPC, and ship subprocess or wasm plugins. Built-in <code>dogego.zkl2</code> (ZK L2), beta <code>dogego.doginals</code> (Doginals/DRC-20 L2), and <code>dogego.bbpow</code> (Bitcoin-backed mining research). Extensions may use allowlisted wallet RPC when granted <code>wallet_rpc</code> (authenticated dashboard/RPC; no key export).</p>
+            <h3 data-i18n="features.items.extensions.title">Modular extension platform</h3>
+            <p data-i18n-html="features.items.extensions.body">Install and enable catalog packages without changing Dogecoin consensus: zip or GitHub install, subprocess/wasm hosts, allowlisted permissions, optional <code>wallet_rpc</code>, and host-rendered UI panels. See the <a href="#extensions">Extensions</a> section for each official package.</p>
           </article>
           <article class="feature-card">
             <span class="material-icons-round feature-icon" aria-hidden="true">verified</span>
@@ -595,7 +589,43 @@
       </div>
     </section>
 
-    <section class="section section-alt" id="fullnode" aria-labelledby="fullnode-title">
+    <section class="section section-alt" id="extensions" aria-labelledby="extensions-title">
+      <div class="container">
+        <header class="section-header">
+          <h2 id="extensions-title" data-i18n="extensions.title">Official extensions</h2>
+          <p data-i18n-html="extensions.lead">Optional catalog packages you install beside the node. They do not fork mainnet consensus. Install from <strong>Settings → Extensions</strong> or the GitHub catalog, then enable.</p>
+        </header>
+        <div class="feature-grid feature-grid-lg">
+          <article class="feature-card feature-highlight">
+            <span class="material-icons-round feature-icon" aria-hidden="true">psychology</span>
+            <p class="ext-id" data-i18n="extensions.items.zkl2.id">dogego.zkl2</p>
+            <h3 data-i18n="extensions.items.zkl2.title">ZK Layer 2</h3>
+            <p data-i18n-html="extensions.items.zkl2.body">Submit and sync ZK proofs anchored to confirmed Dogecoin txs over the <code>zkproof-v1</code> P2P overlay. No L1 consensus fork. Mainnet + testnet.</p>
+          </article>
+          <article class="feature-card feature-highlight">
+            <span class="material-icons-round feature-icon" aria-hidden="true">collections</span>
+            <p class="ext-id" data-i18n="extensions.items.doginals.id">dogego.doginals</p>
+            <h3 data-i18n="extensions.items.doginals.title">Doginals / DRC-20 L2</h3>
+            <p data-i18n-html="extensions.items.doginals.body">Index L1 Doginals/DRC-20 carriers, mint via allowlisted wallet RPC, and sync off-chain NFT/token metadata among peers (<code>doginals-v1</code>). Mainnet + testnet.</p>
+          </article>
+          <article class="feature-card feature-highlight">
+            <span class="material-icons-round feature-icon" aria-hidden="true">cell_tower</span>
+            <p class="ext-id" data-i18n="extensions.items.radiodoge.id">dogego.radiodoge</p>
+            <h3 data-i18n="extensions.items.radiodoge.title">RadioDoge</h3>
+            <p data-i18n-html="extensions.items.radiodoge.body">Connect a Heltec V3 SoftAP device: broadcast signed txs over LoRa when offline, and relay inbound mesh txs into DogeGo with <code>sendrawtransaction</code> when online. Same HTTP API as Dogecoin Wallet RadioDoge support.</p>
+          </article>
+          <article class="feature-card">
+            <span class="material-icons-round feature-icon" aria-hidden="true">currency_bitcoin</span>
+            <p class="ext-id" data-i18n="extensions.items.bbpow.id">dogego.bbpow</p>
+            <h3 data-i18n="extensions.items.bbpow.title">BBPoW research</h3>
+            <p data-i18n-html="extensions.items.bbpow.body">Testnet-only research toward Bitcoin SHA-256 commitments as a Dogecoin security signal (not AuxPoW, not mainnet consensus). Proof verify RPC and dual-lane difficulty sketch.</p>
+          </article>
+        </div>
+        <p class="extensions-footnote" data-i18n-html="extensions.footnote">Author your own packages too. Docs: <a href="guide/#/docs/EXTENSIONS.md">EXTENSIONS.md</a> · <a href="https://github.com/qlpqlp/dogego/tree/main/DogeGo/extensions/catalog">catalog on GitHub</a>.</p>
+      </div>
+    </section>
+
+    <section class="section" id="fullnode" aria-labelledby="fullnode-title">
       <div class="container">
         <header class="section-header">
           <h2 id="fullnode-title" data-i18n="fullnode.title">Full Dogecoin node - what DogeGo runs today</h2>
@@ -635,8 +665,8 @@
           </article>
           <article class="feature-card feature-ok">
             <span class="material-icons-round feature-icon" aria-hidden="true">extension</span>
-            <h3 data-i18n="fullnode.live.extensions.title">Extensions, ZK L2, Doginals &amp; BBPoW</h3>
-            <p data-i18n-html="fullnode.live.extensions.body">Catalog install from GitHub, zip upload, wasm/subprocess hosts, runtime permission checks, built-in <code>dogego.zkl2</code> (<code>zkproof-v1</code>), beta <code>dogego.doginals</code> (<code>doginals-v1</code> L2 for inscriptions/NFTs), and <code>dogego.bbpow</code> (Bitcoin-backed mining research, testnet). Dynamic RPC <code>dogego_ext_&lt;id&gt;_&lt;method&gt;</code>.</p>
+            <h3 data-i18n="fullnode.live.extensions.title">Modular extensions</h3>
+            <p data-i18n-html="fullnode.live.extensions.body">Catalog / zip install, subprocess and wasm hosts, runtime permission checks, host-rendered UI panels, and dynamic RPC <code>dogego_ext_&lt;id&gt;_&lt;method&gt;</code>. See <a href="#extensions">Official extensions</a> for ZK L2, Doginals, RadioDoge, and BBPoW.</p>
           </article>
         </div>
       </div>
@@ -712,7 +742,7 @@
           <article class="care-card">
             <span class="material-icons-round care-icon" aria-hidden="true">extension</span>
             <h3 data-i18n="care.items.extensions.title">Extensions catalog</h3>
-            <p data-i18n-html="care.items.extensions.body">Settings -> Extensions lists catalog packages. Install from GitHub or zip, enable <code>dogego.zkl2</code> for ZK L2, <code>dogego.doginals</code> for Doginals/DRC-20 L2, or beta <code>dogego.bbpow</code> (testnet) for Bitcoin-backed mining research. Wallet only via authenticated allowlisted RPC when enabled in the extension Settings.</p>
+            <p data-i18n-html="care.items.extensions.body">Settings → Extensions installs packages from GitHub or zip. Enable what you need; wallet access only via authenticated allowlisted RPC when an extension opts in. Browse packages in <a href="#extensions">Official extensions</a>.</p>
           </article>
         </div>
       </div>
@@ -1178,7 +1208,7 @@ go build -o dogego ./cmd/dogego
           <article class="dev-card">
             <span class="material-icons-round" aria-hidden="true">extension</span>
             <h3 data-i18n="developers.extensions.title">Build extensions</h3>
-            <p data-i18n-html="developers.extensions.body">Ship Go or WASM packages with UI panels, RPC (<code>dogego_ext_&lt;id&gt;_*</code>), and optional P2P. Authoring guides and examples live in the catalog; official packs include <code>dogego.zkl2</code>, <code>dogego.doginals</code>, and beta <code>dogego.bbpow</code>.</p>
+            <p data-i18n-html="developers.extensions.body">Ship Go or WASM packages with UI panels, RPC (<code>dogego_ext_&lt;id&gt;_*</code>), and optional P2P. Authoring guides live in the catalog. Official packages are listed under <a href="#extensions">Extensions</a>.</p>
           </article>
           <article class="dev-card">
             <span class="material-icons-round" aria-hidden="true">menu_book</span>
@@ -1219,7 +1249,7 @@ go build -o dogego ./cmd/dogego
               <li><span class="material-icons-round">check_circle</span> <span data-i18n="roadmap.done.mining">generatetoaddress, createauxblock/submitauxblock, getblocktemplate NextBlockBits + BIP22 longpoll, reboot-testnet solo miner with mempool txs</span></li>
               <li><span class="material-icons-round">check_circle</span> <span data-i18n="roadmap.done.ui">Wizard, BlockStep, Features matrix, GitHub auto-update, tray, local HTTPS, sync dock</span></li>
               <li><span class="material-icons-round">check_circle</span> <span data-i18n="roadmap.done.pq">PQ OP_RETURN + carrier (RPC/web send; needs more soak testing)</span></li>
-              <li><span class="material-icons-round">check_circle</span> <span data-i18n="roadmap.done.extensions">Extensions catalog (wasm/subprocess), dogego.zkl2 ZK L2, dogego.doginals L2, beta dogego.bbpow (Bitcoin-backed DOGE mining research)</span></li>
+              <li><span class="material-icons-round">check_circle</span> <span data-i18n="roadmap.done.extensions">Modular extensions catalog (wasm/subprocess) plus official ZK L2, Doginals, RadioDoge, and BBPoW packages</span></li>
               <li><span class="material-icons-round">check_circle</span> <span data-i18n="roadmap.done.segwit">SegWit ready: BIP141 machinery Core-aligned (CLTV active)</span></li>
             </ul>
           </div>

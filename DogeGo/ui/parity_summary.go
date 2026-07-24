@@ -31,7 +31,7 @@ type ParitySummary struct {
 	OfflineCorpusTotal   int    `json:"offline_corpus_total,omitempty"`
 }
 
-// CoreGuidance tells operators when to prefer Core vs DogeGo.
+// CoreGuidance tells operators why to run DogeGo (beta) and how it differs from Core storage/layout.
 type CoreGuidance struct {
 	UseCoreWhen   []string   `json:"use_core_when"`
 	UseDogeGoWhen []string   `json:"use_dogego_when"`
@@ -117,11 +117,11 @@ func DefaultCoreGuidance() CoreGuidance {
 	return CoreGuidance{
 		UseCoreWhen: nil,
 		UseDogeGoWhen: []string{
-			"Beta: run a full Dogecoin node from the browser and help us test and tune.",
-			"Fully autonomous operation without Dogecoin Core (solo protocol-lock sanity via GET /api/core-compare).",
+			"Run a full Dogecoin node from the browser and help us live-test and tune the beta.",
+			"Fully autonomous operation without needing Dogecoin Core installed (optional Core compare only when you set core_rpc_addr).",
 			"CGNAT / Starlink outbound relay (classic | cgnat | both) and DGR QUIC relay.",
-			"Built-in HD wallet on mainnet/testnet with Send/Receive (same keypool idea as Core, stored in wallet.json).",
-			"Core wallet.dat import, mining GBT/aux, PQ OP_RETURN + carrier, and the Features cert probes.",
+			"Built-in HD wallet on mainnet/testnet with Send/Receive (wallet.json keypool).",
+			"Core wallet.dat import, mining GBT/aux, PQ OP_RETURN + carrier, extensions catalog, and Features cert probes.",
 		},
 		Intentional: []string{
 			"Mainnet consensus rules match Dogecoin Core; no protocol forks (ROADMAP protocol lock).",

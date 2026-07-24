@@ -28,12 +28,34 @@ func TestDocsManifestIncludesExtensionsSection(t *testing.T) {
 		if !strings.Contains(s.Body, "dogego.zkl2") {
 			t.Fatal("extensions section missing dogego.zkl2")
 		}
-		for _, l := range s.Links {
-			if l.Path == "docs/EXTENSIONS.md" {
-				return
+		if !strings.Contains(s.Body, "dogego.doginals") {
+			t.Fatal("extensions section missing dogego.doginals")
+		}
+		if !strings.Contains(s.Body, "dogego.radiodoge") {
+			t.Fatal("extensions section missing dogego.radiodoge")
+		}
+		if !strings.Contains(s.Body, "dogego.bbpow") {
+			t.Fatal("extensions section missing dogego.bbpow")
+		}
+		wantPaths := []string{
+			"docs/EXTENSIONS.md",
+			"extensions/catalog/radiodoge/docs/USER_GUIDE.md",
+			"extensions/catalog/doginals/docs/USER_GUIDE.md",
+			"extensions/catalog/bbpow/docs/USER_GUIDE.md",
+		}
+		for _, want := range wantPaths {
+			found := false
+			for _, l := range s.Links {
+				if l.Path == want {
+					found = true
+					break
+				}
+			}
+			if !found {
+				t.Fatalf("extensions section missing link %s", want)
 			}
 		}
-		t.Fatal("extensions section missing EXTENSIONS.md link")
+		return
 	}
 	t.Fatal("merged docs manifest missing extensions section")
 }

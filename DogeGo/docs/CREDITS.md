@@ -1,8 +1,8 @@
 # Credits & acknowledgements
 
-DogeGo is built by [Paulo Vidal](https://github.com/qlpqlp) ([@inevitable360](https://x.com/inevitable360)) with support from the Dogecoin Foundation and the wider community. This page names people whose work DogeGo depends on or integrates — starting with post-quantum Raccoon-G.
+DogeGo is built by [Paulo Vidal](https://github.com/qlpqlp) ([@inevitable360](https://x.com/inevitable360)) with support from the Dogecoin Foundation and the wider community. This page names people whose work DogeGo depends on or integrates  -  starting with post-quantum Raccoon-G.
 
-## Dogecoin Foundation — post-quantum (Raccoon-G-44)
+## Dogecoin Foundation  -  post-quantum (Raccoon-G-44)
 
 The in-tree **Raccoon-G-44** C port vendored under `pqcrypto/raccoon_g/native/` (and integrated into Core green) was developed for the Dogecoin Foundation by:
 

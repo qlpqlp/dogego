@@ -1,7 +1,7 @@
 # Building Raccoon-G-44 (libdogecoin in-tree port)
 
 DogeGo vendors the Dogecoin Foundation Raccoon-G-44 C port under
-[`pqcrypto/raccoon_g/native/`](../pqcrypto/raccoon_g/native/) — the same tree as
+[`pqcrypto/raccoon_g/native/`](../pqcrypto/raccoon_g/native/)  -  the same tree as
 [libdogecoin `src/raccoon_g` @ 0.1.5-dev](https://github.com/dogecoinfoundation/libdogecoin/tree/0.1.5-dev/src/raccoon_g)
 and [Core green PR #8](https://github.com/dogecoinfoundation/dogecoin/pull/8).
 DogeGo does **not** link the full libdogecoin library; it compiles this port
@@ -43,13 +43,13 @@ GitHub Release asset ships real Raccoon-G with no end-user install steps.
 `objdump` / `ldd` / `otool -L`. On macOS, static `.a` files are copied into a
 private `-L` directory so the linker cannot prefer Homebrew `.dylib`s (cgo
 merges `#cgo LDFLAGS` with `CGO_LDFLAGS`). Dynamic MinGW / apt / Homebrew links
-would only work on the build agent — that caused the Windows `libmpfr-6.dll was
+would only work on the build agent  -  that caused the Windows `libmpfr-6.dll was
 not found` dialog for [v0.1.0](https://github.com/qlpqlp/dogego/releases).
 
 Workflows:
 
-- [`.github/workflows/release.yml`](../../.github/workflows/release.yml) — tag `v*` releases
-- [`.github/workflows/raccoon_g.yml`](../../.github/workflows/raccoon_g.yml) — PR/push compile gate for `pqcrypto/`
+- [`.github/workflows/release.yml`](../../.github/workflows/release.yml)  -  tag `v*` releases
+- [`.github/workflows/raccoon_g.yml`](../../.github/workflows/raccoon_g.yml)  -  PR/push compile gate for `pqcrypto/`
 
 ## Official releases (automatic)
 

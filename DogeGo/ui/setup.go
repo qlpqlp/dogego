@@ -107,7 +107,7 @@ func RunSetupWizard(ctx context.Context, listenAddr string, seed config.File, sa
 	}
 	baseURL := publicDashboardURL(scheme, listenAddr, ln)
 	if trustPrivateDashboardClients() {
-		fmt.Fprintln(os.Stderr, "DogeGo setup: DOGEGO_TRUST_PRIVATE_CLIENTS — private/link-local clients treated as local (DogeBox)")
+		fmt.Fprintln(os.Stderr, "DogeGo setup: DOGEGO_TRUST_PRIVATE_CLIENTS  -  private/link-local clients treated as local (DogeBox)")
 	}
 
 	okCh := make(chan config.File, 1)

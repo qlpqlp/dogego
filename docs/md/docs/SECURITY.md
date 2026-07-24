@@ -13,7 +13,8 @@ DogeGo follows **Dogecoin Core mainnet consensus rules**. It does not introduce 
 | RPC / web UI | Unauthorized control of node or wallet | Bind to loopback; **`rpc_cookie`** or strong `rpc_user`/`rpc_password`; DogeGo **auto-enables `rpc_cookie`** when `rpcallowip` or non-loopback RPC bind would expose JSON-RPC without credentials; optional `rpcwhitelist`, `rpclimit`, `rpcauthmaxfail` |
 | P2P | Eclipse, DoS, invalid data | Header/body validation; misbehavior scoring; `setban` + persistent `banlist.json` |
 | Wallet (`wallet.json`) | Key theft | **scrypt + AES-GCM encryption** (`encryptwallet` / UI encrypt); **mainnet spend/export blocked until encrypted**; file mode **0600**; PQ carrier keys stored inside the encrypted secrets blob |
-| Web UI remote reads | Balance/history leak over LAN | Wallet read APIs (`/api/wallet`, txs, utxos, addresses) are **loopback-only**; optional 6-digit PIN + WebAuthn for other dashboard reads when `webui_remote_auth` is on |
+| Web UI remote reads | Balance/history leak over LAN | Wallet read APIs (`/api/wallet`, txs, utxos, addresses) are **loopback-only** by default; optional 6-digit PIN + WebAuthn for other dashboard reads when `webui_remote_auth` is on. **`DOGEGO_TRUST_PRIVATE_CLIENTS=1`** (DogeBox) treats RFC1918/link-local `RemoteAddr` as local for **all** loopback-gated UI routes  -  only enable behind Dogebox’s gateway with webui bound to the pup IP |
+
 | Datadir | Tampering | OS file permissions; separate user account for the node process |
 
 ## Operator checklist
@@ -30,7 +31,7 @@ DogeGo follows **Dogecoin Core mainnet consensus rules**. It does not introduce 
 
 ## Local HTTPS (optional)
 
-DogeGo defaults to **HTTPS on loopback** for new wizard installs (`webui_tls_local` + `local_tls_trust_ca`). Plain HTTP remains available when those flags are off, or when you start with **`-notls`** / **`DOGEGO_NO_TLS=1`** (skips cert generation and OS CA install — use this on DogeBox and other hosts without TLS).
+DogeGo defaults to **HTTPS on loopback** for new wizard installs (`webui_tls_local` + `local_tls_trust_ca`). Plain HTTP remains available when those flags are off, or when you start with **`-notls`** / **`DOGEGO_NO_TLS=1`** (skips cert generation and OS CA install  -  use this on DogeBox and other hosts without TLS).
 
 1. Set `webui_tls_local=true` and/or `rpc_tls_local=true` in `dogecoinconf.json` (or Settings → Interface → Local HTTPS).
 2. Restart the node. PEM files are created under `{datadir}/tls/` (`local-ca.crt`, `webui.crt`, `rpc.crt`).
@@ -38,6 +39,8 @@ DogeGo defaults to **HTTPS on loopback** for new wizard installs (`webui_tls_loc
 4. To avoid browser warnings, set `local_tls_trust_ca=true` or run `dogego tls trust-ca` (loopback-only API: POST `/api/tls/trust-ca` from Settings).
 
 **DogeBox / plain HTTP:** `dogego node -notls` (or `DOGEGO_NO_TLS=1`). The setup wizard then serves `http://` and does not install a local CA.
+
+**DogeBox / private proxy clients:** Dogebox’s reverse proxy connects from a private container IP, so `isLoopback` would otherwise return 403 on wallet backup, send, config writes, etc. Set **`DOGEGO_TRUST_PRIVATE_CLIENTS=1`** (pup entrypoint does this). That expands “local” to RFC1918 + link-local **`RemoteAddr` only** (no `X-Forwarded-For`). Public IPs stay forbidden. Do **not** enable this on a host where untrusted LAN users can TCP to the web UI port directly.
 
 | OS | Trust install |
 |----|----------------|

@@ -1,0 +1,34 @@
+{
+  "manifest_version": 1,
+  "id": "dogego.radiodoge",
+  "name": "RadioDoge",
+  "version": "0.1.0",
+  "author": "DogeGo",
+  "description": "Connect a RadioDoge Heltec V3 SoftAP device to broadcast signed transactions over LoRa when offline, and relay inbound mesh txs to the local node when online. Same HTTP API as Dogecoin Wallet RadioDoge support.",
+  "homepage": "https://github.com/dogecoinfoundation/radiodoge",
+  "repository": "https://github.com/qlpqlp/dogego/tree/main/DogeGo/extensions/catalog/radiodoge",
+  "dogego_min_version": "0.1.0",
+  "permissions": ["datadir_write", "rpc_register", "ui_panel", "wallet_rpc"],
+  "networks": ["mainnet", "testnet"],
+  "icon": "icon.png",
+  "docs_path": "extensions/catalog/radiodoge/docs/USER_GUIDE.md",
+  "ui": { "status_method": "info" },
+  "entry": {
+    "type": "subprocess",
+    "module": "dogego.radiodoge",
+    "binary": "radiodoge-ext"
+  },
+  "capabilities": ["rpc", "ui_panel", "wallet_rpc", "radiodoge"],
+  "rpc": [
+    { "name": "info", "help": "Device status + UI workspace." },
+    { "name": "probe", "help": "Probe SoftAP /api/status." },
+    { "name": "should_use_radio", "help": "Whether offline + RadioDoge should carry broadcasts." },
+    { "name": "broadcast", "help": "POST signed tx hex to SoftAP /api/broadcast (mesh)." },
+    { "name": "broadcast_smart", "help": "Local sendrawtransaction or RadioDoge mesh depending on connectivity." },
+    { "name": "send_direct", "help": "POST signed tx to /api/transaction for one LoRa address." },
+    { "name": "configure_gateway", "help": "Push saved gateway credentials to the device." },
+    { "name": "logs", "help": "Fetch SoftAP /api/logs and parse confirmations." },
+    { "name": "getconfig", "help": "Read persisted RadioDoge settings." },
+    { "name": "setconfig", "help": "Update persisted RadioDoge settings." }
+  ]
+}

@@ -32,7 +32,7 @@ type GuideManifest struct {
 func DefaultGuideManifest() GuideManifest {
 	return GuideManifest{
 		Title:    "How DogeGo works",
-		Subtitle: "Short explanations for the dashboard and setup wizard. DogeGo is experimental - use official Dogecoin Core for production wallets and exchanges.",
+		Subtitle: "Short explanations for the dashboard and setup wizard. DogeGo is beta: please run it live, try your workflows, and report what needs tuning.",
 		Sections: []GuideSection{
 			{
 				ID:    "sync",
@@ -89,7 +89,7 @@ func DefaultGuideManifest() GuideManifest {
 					{Term: "Explorer", Explain: "Height, block hash, txid, or address lookup via local tx index + rawblocks."},
 					{Term: "Mempool", Explain: "Live pool size, feerates, relay policy strip, pause/resume admission."},
 					{Term: "Analytics", Explain: "Charts from embedded sidecar Pebble store (optional at setup)."},
-					{Term: "Features", Explain: "Core parity dashboard: summary counts, when to use Core vs DogeGo, live node flags, roadmap, backlog, capability categories, searchable RPC table (GET /api/capabilities)."},
+					{Term: "Features", Explain: "Parity dashboard: summary counts, why try DogeGo, live node flags, roadmap, backlog, capability categories, searchable RPC table (GET /api/capabilities)."},
 					{Term: "Docs", Explain: "Merged documentation: sync/P2P/mempool concepts, integration, operator runbooks, embedded markdown viewer."},
 					{Term: "Console", Explain: "JSON-RPC console and rolling node log."},
 					{Term: "Settings", Explain: "Paths, P2P, mempool package limits, RPC auth, restart node - most fields need restart."},
@@ -109,7 +109,7 @@ func DefaultGuideManifest() GuideManifest {
 			{
 				ID:    "core_parity",
 				Title: "DogeGo vs Dogecoin Core",
-				Body:  "Dogecoin Core (src/) is the specification. DogeGo targets Core-compatible sync, mempool policy, and JSON-RPC on typical operator paths but is not production-certified until the standalone acceptance matrix is complete. Mainnet consensus rules are locked to Core (no protocol forks); chain reorg in code means competing tips, not new activations. Open the Features tab for live counts (capabilities live/partial, parity gaps open/partial/declined, RPC class breakdown) and runtime flags for this node. Intentional differences include native chain storage and no Litecoin parent-chain sync for AuxPoW. BIP152 compact blocks are partial (v1 HB relay in code; live operator soak remains open).",
+				Body:  "Dogecoin Core (src/) is the consensus specification DogeGo follows on mainnet (no protocol forks). DogeGo is beta: please run it live and help us close remaining parity gaps. Open the Features tab for live counts (capabilities live/partial, parity gaps open/partial/declined, RPC class breakdown) and runtime flags for this node. Intentional differences include native chain storage and no Litecoin parent-chain sync for AuxPoW. BIP152 compact blocks are partial (v1 HB relay in code; live operator soak remains open).",
 				Terms: []GuideTerm{
 					{Term: "Dogecoin protocol lock", Explain: "DogeGo does not change mainnet consensus rules. Block/header/script/subsidy/auxpow follow Dogecoin Core; any divergence is a bug. PQ and experimental wallet paths are optional and off-chain unless explicitly reviewed. See ROADMAP.md and docs/INTENTIONAL_DIFFERENCES.md."},
 					{Term: "GET /api/capabilities", Explain: "parity_summary, core_guidance, certification, categories, core_parity_gaps, roadmap, rpc_methods, live - powers the Features tab."},

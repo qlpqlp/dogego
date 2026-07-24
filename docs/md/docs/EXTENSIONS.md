@@ -134,6 +134,22 @@ dogego-cli dogego_ext_dogego_bbpow_compare
 
 Docs: [BBPoW user guide](../extensions/catalog/bbpow/docs/USER_GUIDE.md), [BBPoW protocol sketch](../extensions/catalog/bbpow/docs/PROTOCOL.md).
 
+## Catalog: `dogego.radiodoge`
+
+**RadioDoge** SoftAP bridge for [Heltec firmware V3](https://github.com/dogecoinfoundation/radiodoge/tree/0.0.1-Beta-1/heltec-firmware-v3):
+
+- **Offline client**: broadcast signed tx hex via `POST /api/broadcast` on `http://192.168.4.1` (same API as Dogecoin Wallet RadioDoge support)
+- **Online gateway**: poll `/api/logs` and relay inbound mesh txs with `sendrawtransaction`
+- **UI**: Extensions workspace (probe, broadcast, smart broadcast, gateway push, settings)
+
+Package: [extensions/catalog/radiodoge/](../extensions/catalog/radiodoge/). Build with `build-universal.ps1` / `build-universal.sh`, install zip, enable `dogego.radiodoge`. Docs: [USER_GUIDE](../extensions/catalog/radiodoge/docs/USER_GUIDE.md).
+
+```bash
+dogego-cli dogego_instextensionzip path/to/radiodoge-universal.zip
+dogego-cli dogego_enableextension dogego.radiodoge
+dogego-cli dogego_ext_dogego_radiodoge_probe
+```
+
 ## Catalog: `dogego.doginals`
 
 Beta **Doginals / DRC-20 L2** - same overlay style as ZK L2 (`exthello`/`extack`), protocol id **`doginals-v1`**.

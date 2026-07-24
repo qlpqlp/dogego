@@ -61,7 +61,7 @@ func ensurePlatform(cfg Config) Result {
 		return Result{
 			Platform:    platformName(),
 			NeedsAdmin:  true,
-			UserMessage: "no active ufw or firewalld detected — open TCP " + itoa(cfg.Port) + " manually (commands below), or install/enable ufw or firewalld",
+			UserMessage: "no active ufw or firewalld detected  -  open TCP " + itoa(cfg.Port) + " manually (commands below), or install/enable ufw or firewalld",
 			Err:         fmt.Errorf("netfw: install and enable ufw or firewalld, or open TCP %d manually", cfg.Port),
 		}
 	}
@@ -144,11 +144,11 @@ func needsRoot(err error) bool {
 
 func manualPlatform(cfg Config) string {
 	p := itoa(cfg.Port)
-	return "Linux — run ONE of these in a terminal:\n" +
+	return "Linux  -  run ONE of these in a terminal:\n" +
 		"sudo ufw allow " + p + "/tcp comment 'DogeGo P2P'\n" +
 		"sudo firewall-cmd --permanent --add-port=" + p + "/tcp && sudo firewall-cmd --reload\n" +
 		"# If you use nftables/iptables only, allow TCP " + p + " inbound (and outbound if restricted).\n" +
-		"# On DogeBox, the host/gateway may already allow P2P — use Dismiss if peers connect fine."
+		"# On DogeBox, the host/gateway may already allow P2P  -  use Dismiss if peers connect fine."
 }
 
 func bytesTrim(b []byte) string {

@@ -30,13 +30,15 @@ New wizard installs default to **HTTPS** (`webui_tls_local` + `local_tls_trust_c
 
 Use **`-notls`** on hosts that cannot terminate TLS (e.g. **DogeBox** pup entrypoint already passes it). The flag also overrides TLS flags already saved in `dogecoinconf.json` for that process. Persisted `"no_tls": true` from a `-notls` wizard save keeps HTTP on later starts.
 
+**DogeBox proxy:** set **`DOGEGO_TRUST_PRIVATE_CLIENTS=1`** so the reverse proxy’s private `RemoteAddr` passes the same loopback gates as `127.0.0.1` (wallet backup, send, Settings writes, Console, …). Default remains off. See [SECURITY.md](SECURITY.md).
+
 See [SECURITY.md](SECURITY.md#local-https-optional) and [OPERATOR.md](OPERATOR.md#tls).
 
 ## First-run setup wizard
 
 1. Run `dogego node` without `-datadir` (or without `datadir` in config).
 2. On a **desktop** session (Windows/macOS, or Linux with `DISPLAY` / `WAYLAND_DISPLAY`), DogeGo **opens the setup wizard in your default browser** automatically. Headless servers print the URL instead; set `DOGEGO_HEADLESS=1` to force headless behavior on a desktop.
-3. Five steps: **Profile** → **Data** → **Network** → **Sync** (skipped in SPV) → **Finish**.
+3. Five steps: **Profile** → **Data** → **Network** → **Sync** (skipped in SPV) → **Finish**. SPV + wallet uses BIP37 bloom filtered-block sync (not headers-only when the wallet is active).
 4. On the last step:
    - **Back** - previous step only (no **Next**).
    - **Save & start node** (green) - saves config, starts the node process, and navigates to the **dashboard in the same tab** (not a new browser window).
@@ -175,6 +177,7 @@ See also [CORE_PARITY_GAPS.md](CORE_PARITY_GAPS.md) § Web dashboard mapping.
 ### Settings
 - Edits `dogecoinconf.json` for the **next** run (or **Restart node** for live service toggles).
 - **Services (this run)** card at the top: contextual start/stop/restart for **solo mining**, **mempool relay**, **analytics sidecar**, and **node process** (`GET/POST /api/services`, **`POST /api/control/restart`**). Each row shows only the action that applies (Start when stopped, Stop when running). P2P and JSON-RPC are status-only (restart node to change). Mining controls apply to **this run**; Wallet tab **mine** checkbox persists after save+restart.
+- Overview firewall banner: OS-specific copy-paste commands (Windows / Linux / macOS) plus **Dismiss** when a gateway already allows P2P (common on DogeBox).
 - **Tools** tab - searchable RPC catalog from **`GET /api/rpc/cookbook`** (`st-tools-groups`): Run in-process or **Open in Console** without leaving Settings.
 - **Extensions** (sidebar) - GitHub extension catalog (`GET /api/extensions/catalog`), catalog sources, developer manual, enable/disable, install (catalog id or zip upload), uninstall. Each enabled extension opens a dedicated detail page; extensions with `ui_panel` show a dashboard from the extension status RPC (`GET /api/extensions/panel?id=…`), not host locale files. See [EXTENSIONS.md](EXTENSIONS.md).
 - **Interface → Updates** - running version, last GitHub check, **Check now** (`POST /api/update/check`), download, install, dismiss (`st-update-status`).

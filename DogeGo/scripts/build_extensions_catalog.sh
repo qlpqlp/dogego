@@ -83,6 +83,17 @@ if [[ -f "$CATALOG/bbpow/dist/bbpow.zip" ]]; then
   update_json_hash "dogego.bbpow" "bbpow/dist/bbpow.zip" sha256 || true
 fi
 
+echo "==> radiodoge"
+if [[ -f "$CATALOG/radiodoge/build-universal.sh" ]]; then
+  bash "$CATALOG/radiodoge/build-universal.sh" || true
+fi
+if [[ -f "$CATALOG/radiodoge/dist/radiodoge.zip" ]]; then
+  update_json_hash "dogego.radiodoge" "radiodoge/dist/radiodoge.zip" sha256 || true
+fi
+if [[ -f "$CATALOG/radiodoge/dist/radiodoge-universal.zip" ]]; then
+  update_json_hash "dogego.radiodoge" "radiodoge/dist/radiodoge-universal.zip" universal
+fi
+
 echo "==> example-go"
 if [[ -f "$CATALOG/example-go/build-universal.sh" ]]; then
   bash "$CATALOG/example-go/build-universal.sh" || true
