@@ -124,7 +124,11 @@ func (s *SubprocessExtension) OnEnable(ctx context.Context, host Host) error {
 	}
 	cmd.Stderr = os.Stderr
 	if err := cmd.Start(); err != nil {
-		return fmt.Errorf("subprocess start: %w", err)
+		err = fmt.Errorf("subprocess start: %w", err)
+		if strings.Contains(err.Error(), "exec format error") {
+			err = fmt.Errorf("%w (wrong OS/arch binary — uninstall and reinstall from catalog so the universal zip materializes %s)", err, CurrentPlatformKey())
+		}
+		return err
 	}
 	reader := bufio.NewReaderSize(stdout, 64*1024)
 	bridge := newSubprocessBridge(stdin, reader, host, s.manifest)

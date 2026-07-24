@@ -16,6 +16,7 @@ import (
 	"time"
 
 	"dogego/applog"
+	"dogego/bloom"
 	"dogego/chain"
 	"dogego/extensions"
 	"dogego/mempool"
@@ -94,6 +95,7 @@ type peerLink struct {
 	bestHeaderHash    string // tip hash hex for bestHeaderHeight (empty unknown)
 	tipUpdatedUnix    int64  // last time best header tip was updated
 	commonBlockHeight int64  // Core getpeerinfo synced_blocks (-1 unknown)
+	bloom             *bloom.Filter // BIP37 per-peer filter (nil = none)
 }
 
 // NewPeerMgr creates a peer manager; call RegisterPrimary, SetRelayEnv, then Start.
@@ -977,6 +979,49 @@ func (pm *PeerMgr) NotePeerFeeFilter(addr string, rate uint64) {
 	}
 }
 
+// SetPeerBloom installs or replaces the BIP37 filter for a peer session.
+func (pm *PeerMgr) SetPeerBloom(addr string, f *bloom.Filter) {
+	if pm == nil || addr == "" {
+		return
+	}
+	pm.mu.Lock()
+	defer pm.mu.Unlock()
+	if l, ok := pm.sessions[addr]; ok {
+		l.bloom = f
+	}
+}
+
+// ClearPeerBloom removes the BIP37 filter for a peer.
+func (pm *PeerMgr) ClearPeerBloom(addr string) {
+	pm.SetPeerBloom(addr, nil)
+}
+
+// PeerBloom returns the peer's bloom filter (may be nil).
+func (pm *PeerMgr) PeerBloom(addr string) *bloom.Filter {
+	if pm == nil || addr == "" {
+		return nil
+	}
+	pm.mu.Lock()
+	defer pm.mu.Unlock()
+	if l, ok := pm.sessions[addr]; ok {
+		return l.bloom
+	}
+	return nil
+}
+
+// PeerRelayTxes reports whether the peer's version fRelay allows unsolicited tx inv.
+func (pm *PeerMgr) PeerRelayTxes(addr string) bool {
+	if pm == nil || addr == "" {
+		return true
+	}
+	pm.mu.Lock()
+	defer pm.mu.Unlock()
+	if l, ok := pm.sessions[addr]; ok && l.peer != nil {
+		return l.peer.RelayTxes
+	}
+	return true
+}
+
 func (pm *PeerMgr) inboundCount() int {
 	pm.mu.Lock()
 	defer pm.mu.Unlock()
@@ -1253,8 +1298,10 @@ func (pm *PeerMgr) BroadcastTx(raw []byte, excludeAddr string, pool *mempool.Poo
 		return
 	}
 	type target struct {
-		mw  *MsgWriter
-		fee uint64
+		mw        *MsgWriter
+		fee       uint64
+		bloom     *bloom.Filter
+		relayTxes bool
 	}
 	pm.mu.Lock()
 	targets := make([]target, 0, len(pm.sessions))
@@ -1262,11 +1309,15 @@ func (pm *PeerMgr) BroadcastTx(raw []byte, excludeAddr string, pool *mempool.Poo
 		if l.primary || l.mw == nil || addr == excludeAddr {
 			continue
 		}
-		targets = append(targets, target{mw: l.mw, fee: l.peerFeeFilter})
+		relay := true
+		if l.peer != nil {
+			relay = l.peer.RelayTxes
+		}
+		targets = append(targets, target{mw: l.mw, fee: l.peerFeeFilter, bloom: l.bloom, relayTxes: relay})
 	}
 	pm.mu.Unlock()
 	for _, t := range targets {
-		_ = RelayTxToPeer(t.mw, raw, t.fee, pool, txIx, rawBlocks)
+		_ = RelayTxToPeerBloom(t.mw, raw, t.fee, t.bloom, t.relayTxes, pool, txIx, rawBlocks)
 	}
 }
 

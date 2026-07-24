@@ -189,10 +189,20 @@ func handleRelayP2PMessage(ctx context.Context, env RelayEnv, pm *PeerMgr, link 
 			HandleInboundTxAdmissionFailure(pl, link.addr, mw, env.Misbehavior, err)
 		}
 	case "getdata":
-		serve := GetDataServeEnv{Raw: env.RawBlocks, Pool: env.Pool, TxIx: env.TxIndex}
+		serve := GetDataServeEnv{Raw: env.RawBlocks, Pool: env.Pool, TxIx: env.TxIndex, Bloom: pm.PeerBloom(link.addr)}
 		if serve.Raw != nil || serve.Pool != nil || serve.TxIx != nil {
 			_ = HandleInboundGetData(ctx, mw, serve, pl)
 		}
+	case "filterload":
+		if err := HandleFilterLoad(pm, link.addr, pl, env.Misbehavior); err != nil {
+			applog.Line("net", fmt.Sprintf("relay %s filterload: %v", link.addr, err))
+		}
+	case "filteradd":
+		if err := HandleFilterAdd(pm, link.addr, pl, env.Misbehavior); err != nil {
+			applog.Line("net", fmt.Sprintf("relay %s filteradd: %v", link.addr, err))
+		}
+	case "filterclear":
+		HandleFilterClear(pm, link.addr)
 	case "getheaders":
 		if env.Journal != nil {
 			_ = HandleInboundGetHeaders(ctx, mw, GetHeadersServeEnv{Journal: env.Journal, Aux: env.Aux}, pl)

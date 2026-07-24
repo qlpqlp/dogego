@@ -32,8 +32,10 @@ func TestCatalogExampleZipSHA256(t *testing.T) {
 		"example.wasm":    filepath.Join("catalog", "example-wasm", "ping.zip"),
 	}
 	universalZipPaths := map[string]string{
-		"example.go":   filepath.Join("catalog", "example-go", "dist", "hello-universal.zip"),
-		"dogego.zkl2": filepath.Join("catalog", "zkl2", "dist", "zkl2-universal.zip"),
+		"example.go":      filepath.Join("catalog", "example-go", "dist", "hello-universal.zip"),
+		"dogego.zkl2":     filepath.Join("catalog", "zkl2", "dist", "zkl2-universal.zip"),
+		"dogego.bbpow":    filepath.Join("catalog", "bbpow", "dist", "bbpow-universal.zip"),
+		"dogego.doginals": filepath.Join("catalog", "doginals", "dist", "doginals-universal.zip"),
 	}
 	for _, e := range cat.Extensions {
 		zipPath, ok := zipPaths[e.ID]

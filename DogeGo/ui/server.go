@@ -221,6 +221,7 @@ func Start(ctx context.Context, cfg StartConfig) (baseURL string, err error) {
 		SecureCookies:     cfg.TLS.Enabled(),
 	})
 	registerTLSRoutes(mux, cfg)
+	registerFirewallRoutes(mux)
 	readAuth := func(w http.ResponseWriter, r *http.Request) bool {
 		return requireDashboardRead(w, r, webGate, cfg.EffectiveFile, cfg.ListenAddr)
 	}

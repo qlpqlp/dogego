@@ -107,7 +107,7 @@ func blockstepNavigableHeight(headerTip, contig, chainActive int64, hasRaw bool)
 
 func blockstepIndexingNote(raw *store.RawBlockStore, txIx *store.TxIndex, contig, tip, navHeight int64) string {
 	if raw == nil {
-		return "SPV mode - headers only; block bodies and transaction walks need a full node."
+		return "SPV mode - headers (+ BIP37 filtered blocks when wallet bloom is active); full bodies need a full node."
 	}
 	if contig >= 0 && contig < tip {
 		return fmt.Sprintf("Block bodies through height %d are on this node - slide and open blocks in that range while sync continues.", navHeight)

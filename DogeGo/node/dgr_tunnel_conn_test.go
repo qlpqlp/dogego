@@ -8,6 +8,7 @@ package node
 
 import (
 	"bytes"
+	"context"
 	"net"
 	"testing"
 	"time"
@@ -99,7 +100,7 @@ func TestDGRTunnelConnHandshake(t *testing.T) {
 		t.Fatal(err)
 	}
 	defer conn.Close()
-	dv, err := Handshake(t.Context(), conn, p, "/dogego-test/", p.NodeNetwork)
+	dv, err := Handshake(context.Background(), conn, p, "/dogego-test/", p.NodeNetwork)
 	if err != nil {
 		t.Fatal(err)
 	}

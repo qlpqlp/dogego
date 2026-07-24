@@ -18,9 +18,12 @@ func TestHandshakeAdvertisesCompactFiltersBit(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	svc := chain.EffectiveP2PServices(p, true, false)
+	svc := chain.EffectiveP2PServices(p, true, false, true)
 	if svc&chain.ServiceCompactFilters == 0 {
 		t.Fatalf("services %x", svc)
+	}
+	if svc&chain.ServiceBloom == 0 {
+		t.Fatalf("missing NODE_BLOOM in %x", svc)
 	}
 	pl := wire.BuildVersionPayload(p.ProtocolVersion, svc, nil, 0, 1, "/DogeGo/", 0, true)
 	dv, err := wire.ParseVersionPayload(pl)

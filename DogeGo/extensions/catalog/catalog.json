@@ -1,18 +1,24 @@
 {
   "catalog_version": 1,
-  "updated": "2026-07-23",
+  "updated": "2026-07-24",
   "source": "https://github.com/qlpqlp/dogego",
   "extensions": [
     {
       "id": "dogego.doginals",
       "name": "Doginals / DRC-20 L2",
-      "version": "0.2.0",
+      "version": "0.3.0",
       "author": "DogeGo",
       "description": "Experimental L2 for Doginals and DRC-20: index L1 inscriptions/tokens, deploy/mint via authenticated wallet RPC, off-L1 assets with P2P sync, modern workspace UI. Does not change Dogecoin consensus.",
       "homepage": "https://github.com/qlpqlp/dogego",
       "repository": "https://github.com/qlpqlp/dogego/tree/main/DogeGo/extensions/catalog/doginals",
       "download_url": "https://raw.githubusercontent.com/qlpqlp/dogego/main/DogeGo/extensions/catalog/doginals/dist/doginals.zip",
-      "sha256": "bb8bb77aece001d4f33cff37144de47c10d9591723f40db41f8ba60462fce586",
+      "sha256": "d435d3aafcee33bc553845f9aef8353887592739a0fb7e8d44919910747e9c73",
+      "downloads": {
+        "universal": {
+          "download_url": "https://raw.githubusercontent.com/qlpqlp/dogego/main/DogeGo/extensions/catalog/doginals/dist/doginals-universal.zip",
+          "sha256": "d435d3aafcee33bc553845f9aef8353887592739a0fb7e8d44919910747e9c73"
+        }
+      },
       "dogego_min_version": "0.1.0",
       "networks": [
         "mainnet",
@@ -69,8 +75,14 @@
         "ui_panel",
         "research_bbpow"
       ],
-      "sha256": "48d07620f9000f163512ad072c85c7894ed5ab024a0803fb8bfebfba64a9280e",
-      "download_url": "https://raw.githubusercontent.com/qlpqlp/dogego/main/DogeGo/extensions/catalog/bbpow/dist/bbpow.zip"
+      "sha256": "7dbf11d0fda8a23fcebb3bf68dc908581eb3b492ca75881b89034be859718938",
+      "download_url": "https://raw.githubusercontent.com/qlpqlp/dogego/main/DogeGo/extensions/catalog/bbpow/dist/bbpow.zip",
+      "downloads": {
+        "universal": {
+          "download_url": "https://raw.githubusercontent.com/qlpqlp/dogego/main/DogeGo/extensions/catalog/bbpow/dist/bbpow-universal.zip",
+          "sha256": "7dbf11d0fda8a23fcebb3bf68dc908581eb3b492ca75881b89034be859718938"
+        }
+      }
     },
     {
       "id": "dogego.zkl2",

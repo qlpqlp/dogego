@@ -11,6 +11,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io/fs"
+	"net"
 	"net/http"
 	"os"
 	"strings"
@@ -41,10 +42,57 @@ func setupDashboardURL(f config.File) string {
 	return scheme + "://" + webui + "/"
 }
 
+// alignWebUIWithListen keeps a non-loopback wizard listen address in dogecoinconf.json.
+// The setup form defaults to localhost:2013; without this, finishing setup on DogeBox
+// (or any -webui pup-IP) would bind only loopback and break the reverse proxy.
+func alignWebUIWithListen(listenAddr, webui string) string {
+	webui = strings.TrimSpace(webui)
+	listenAddr = strings.TrimSpace(listenAddr)
+	if listenAddr == "" || listenHostIsLoopback(listenAddr) {
+		if webui == "" {
+			return config.DefaultWebUIListen
+		}
+		return webui
+	}
+	if webui == "" || webUIHostIsLoopback(webui) {
+		return listenAddr
+	}
+	return webui
+}
+
+func listenHostIsLoopback(addr string) bool {
+	host, _, err := net.SplitHostPort(strings.TrimSpace(addr))
+	if err != nil {
+		host = strings.TrimSpace(addr)
+	}
+	host = strings.Trim(host, "[]")
+	switch strings.ToLower(host) {
+	case "", "localhost", "127.0.0.1", "::1":
+		return true
+	case "0.0.0.0", "::", "::0", "*":
+		return false
+	}
+	ip := net.ParseIP(host)
+	return ip != nil && ip.IsLoopback()
+}
+
+func webUIHostIsLoopback(webui string) bool {
+	webui = strings.TrimSpace(webui)
+	if strings.HasPrefix(webui, "http://") || strings.HasPrefix(webui, "https://") {
+		u := webui
+		u = strings.TrimPrefix(u, "https://")
+		u = strings.TrimPrefix(u, "http://")
+		u = strings.TrimSuffix(u, "/")
+		webui = u
+	}
+	return listenHostIsLoopback(webui)
+}
+
 // RunSetupWizard serves a local-only setup page until POST /api/setup succeeds or ctx is cancelled.
 // savePath is where dogecoinconf.json will be written on success.
 func RunSetupWizard(ctx context.Context, listenAddr string, seed config.File, savePath string, openBrowser bool) (config.File, error) {
 	seed = config.SetupWizardSeed(seed)
+	seed.WebUI = alignWebUIWithListen(listenAddr, seed.WebUI)
 	html, err := fs.ReadFile(static, "static/setup.html")
 	if err != nil {
 		return config.File{}, err
@@ -109,6 +157,9 @@ func RunSetupWizard(ctx context.Context, listenAddr string, seed config.File, sa
 		f := req.File
 		if seed.NoTLS {
 			config.DisableLocalTLS(&f)
+		}
+		if !req.DualInstance {
+			f.WebUI = alignWebUIWithListen(listenAddr, f.WebUI)
 		}
 		startNode := true
 		if req.StartNode != nil {
@@ -303,8 +354,10 @@ func RunSetupWizard(ctx context.Context, listenAddr string, seed config.File, sa
 
 	if openBrowser {
 		time.AfterFunc(400*time.Millisecond, func() { OpenURLLog(baseURL) })
-	} else {
+	} else if scheme == "https" {
 		fmt.Fprintf(os.Stderr, "DogeGo setup: open %s in your browser (use https://, not http://)\n", baseURL)
+	} else {
+		fmt.Fprintf(os.Stderr, "DogeGo setup: open %s in your browser\n", baseURL)
 	}
 
 	shutdown := func() {

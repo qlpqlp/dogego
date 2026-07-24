@@ -30,6 +30,12 @@ DogeGo uses **native storage only** - it does not read Dogecoin Core `blocks/` o
 | Wallet | Built-in `wallet.json` under `mainnet/` (BIP44 `m/44'/3'/…`, same as Core). Use `-nowallet` to disable. |
 | Sync | Full node needs `rawblocks/` + optional tx index; wallet balances use the in-memory **UTXO cache** (`rescan` calls `SyncUtxo`). |
 
+## SPV mode
+
+- Profile **SPV + wallet** (or `-mode spv` / `FullNode=false`): headers sync without storing `rawblocks/`.
+- With wallet enabled, DogeGo builds a **BIP37 bloom filter** from watched scripts, sends `filterload` to `NODE_BLOOM` peers, requests `MSG_FILTERED_BLOCK`, and ingests matched txs into wallet history. Peers without bloom still work for headers; BIP157 compact filters are preferred when advertised.
+- Full-node DogeGo advertises `NODE_BLOOM` so libdogecoin / Core SPV clients can sync against it the same way.
+
 ## Wallet encryption
 
 - `encryptwallet "passphrase"` - encrypts spend keys in `wallet.json` and locks the wallet.

@@ -1,57 +1,31 @@
-# DogeGo PUP (DogeBox)
+# DogeGo on DogeBox
 
-Packaging so DogeBox can install **DogeGo** from this GitHub repo, compile it with Nix, and run the node with the web dashboard.
+Installs **[DogeGo](https://github.com/qlpqlp/dogego)** (Go Dogecoin full node + web dashboard) on DogeBox via this silly-pups source.
 
-Pattern matches [silly-pups](https://github.com/qlpqlp/silly-pups/) (`dogebox.json` + per-pup `manifest.json` / `pup.nix` / `logo.png`).
+## Why TLS was still enabling
 
-There is **no DogeBox pup config UI**. After start, open the DogeGo web dashboard and configure network, wallet, RPC, etc. there (or via `dogecoinconf.json` under the datadir).
+Older pins (`9d88c34` and earlier) **do not** implement `-notls`. The wizard always defaulted to `webui_tls_local` + OS CA install. Nix `postPatch` workarounds were fragile, and the old setup UI treated missing `webui_tls_local` in JSON (`omitempty`) as “TLS on”, so saving the wizard could turn HTTPS back on.
 
-If this DogeBox runs reboot testnet with public P2P, point DNS **`seed.dogego.org`** at it so new DogeGo nodes discover the network quickly (built-in first DNS seed; see root README and `DogeGo/docs/CHAIN_PARAMETERS.md`).
+This pup pins DogeGo **`2eb7e69`** (native `-notls` / `DOGEGO_NO_TLS`) and starts with:
 
-## Add this repo as a DogeBox pup source
-
-1. Push this repository (including `DogeGo/` and `pup/`) to `https://github.com/qlpqlp/dogego`.
-2. On DogeBox, add a custom pup source pointing at that URL (same flow as silly-pups).
-3. Install the **DogeGo** pup. The first build will fail on bootstrap Nix hashes; copy the `got: sha256-...` values into `pup/pup.nix` (`fetchgit.hash` and `vendorHash`), recompute `nixFileSha256`, push, and reinstall/upgrade.
-
-## Layout
-
-| File | Role |
-|------|------|
-| `../dogebox.json` | Source catalog (`location: "pup"`) |
-| `manifest.json` | Pup metadata, ports, service name |
-| `pup.nix` | `fetchgit` + `buildGoModule` (`modRoot = "DogeGo"`) + `run.sh` |
-| `logo.png` | Pup icon in DogeBox UI |
-
-## Runtime
-
-`run.sh` only sets what DogeBox needs:
-
-```text
-dogego node -datadir /storage/dogego -webui $DBX_PUP_IP:2013 -nobrowser
+```bash
+DOGEGO_NO_TLS=1 DOGEGO_NOTLS=1 dogego node -webui $DBX_PUP_IP:2013 -nobrowser -notls
 ```
 
-Everything else (network, mode, peers, RPC, mining, …) is configured in the DogeGo web UI.
+## Setup
 
-## Hash checklist (after any `pup.nix` edit)
+Source is built from `https://github.com/qlpqlp/dogego` with `modRoot = "DogeGo"`.
 
-Normalize to LF, then:
+There is **no DogeBox pup config UI**. The pup starts the DogeGo **setup wizard** over **plain HTTP**. Use datadir `./dogedata` (under `/storage/dogego`) and finish setup in the web UI.
 
-**PowerShell (LF-normalized):**
+After the first Nix build, paste the `got: sha256-…` values into `pup.nix` (`src.hash` and `goModules` `outputHash`), then set `manifest.json` → `container.build.nixFileSha256` to the **LF-normalized** SHA-256 of `pup.nix`.
 
-```powershell
-$p = 'pup\pup.nix'
-$raw = [System.IO.File]::ReadAllText($p)
-$lf = $raw -replace "`r`n", "`n"
-$b = [System.Text.Encoding]::UTF8.GetBytes($lf)
-$h = [System.Security.Cryptography.SHA256]::Create().ComputeHash($b)
-($h | ForEach-Object ToString x2) -join ''
+### Manual equivalent
+
+```bash
+cd /storage/dogego && DOGEGO_NO_TLS=1 dogego node -webui $DBX_PUP_IP:2013 -nobrowser -notls
 ```
 
-Put that hex string in `manifest.json` → `container.build.nixFileSha256`.
+Wizard default data dir is `./dogedata` → `/storage/dogego/dogedata`.
 
-Prefer pinning `pup.nix` `rev` to a **full commit SHA** of the Go app you want to build (not a moving `v*` tag). This repo is a monorepo: editing `pup.nix` and retagging `v0.1.0` changes the git tree, so a tag-based `fetchgit` hash can never stay self-consistent.
-
-**DogeBox pup updates:** push `pup/` to `main` and reinstall/upgrade the pup source. You usually do **not** need to delete/recreate the GitHub Release tag for pup.nix fixes.
-
-**GitHub Release (`v*`):** keep for website/binary downloads. Move or cut a new tag when you want new binaries; keep `fetchgit.rev` on the commit that should be compiled inside DogeBox (update `hash` when you change `rev`).
+If an old install already wrote `webui_tls_local: true` into `dogecoinconf.json`, this entrypoint clears those flags on start (or delete the conf and re-run the wizard).

@@ -9096,18 +9096,36 @@
       const fwBox = $("ov-firewall-alert");
       const fwTxt = $("ov-firewall-alert-text");
       const fwCmds = $("ov-firewall-alert-cmds");
+      const fwCopy = $("ov-firewall-alert-copy");
+      const fwNotes = $("ov-firewall-alert-notes");
       if (fwBox && fwTxt) {
-        if (fwAlert && fwAlert.active) {
+        const showFw = fwAlert && fwAlert.active && !fwAlert.dismissed;
+        if (showFw) {
           fwBox.hidden = false;
           fwTxt.textContent = fwAlert.message || s.dogego_firewall_warning || "Allow DogeGo through the firewall for P2P sync.";
+          if (fwCopy) {
+            fwCopy.textContent = fwAlert.copy_hint || "Copy the OS-specific commands below into a terminal with admin rights:";
+          }
           if (fwCmds) {
             const cmds = fwAlert.manual_commands;
             fwCmds.textContent = cmds && cmds.length ? cmds.join("\n") : "";
+            fwCmds.hidden = !(cmds && cmds.length);
+          }
+          if (fwNotes) {
+            const notes = fwAlert.manual_notes;
+            if (notes && notes.length) {
+              fwNotes.hidden = false;
+              fwNotes.textContent = notes.join(" ");
+            } else {
+              fwNotes.hidden = true;
+              fwNotes.textContent = "";
+            }
           }
         } else {
           fwBox.hidden = true;
           fwTxt.textContent = "";
           if (fwCmds) fwCmds.textContent = "";
+          if (fwNotes) { fwNotes.hidden = true; fwNotes.textContent = ""; }
         }
       }
       const ovStorageDetail = $("ov-storage-detail");
@@ -14530,6 +14548,14 @@
       const el = $("update-banner");
       if (el) el.hidden = true;
       scheduleDashboardBannerStackSync();
+      await refresh();
+    } catch (_) { /* ignore */ }
+  });
+  $("ov-firewall-dismiss") && $("ov-firewall-dismiss").addEventListener("click", async () => {
+    try {
+      await fetch("/api/firewall/dismiss", { method: "POST", credentials: "same-origin" });
+      const el = $("ov-firewall-alert");
+      if (el) el.hidden = true;
       await refresh();
     } catch (_) { /* ignore */ }
   });

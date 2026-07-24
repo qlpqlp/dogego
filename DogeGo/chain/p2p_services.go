@@ -19,13 +19,16 @@ const (
 )
 
 // EffectiveP2PServices returns service bits advertised on version/addr for this run.
-func EffectiveP2PServices(p Params, advertiseCompactFilters, advertiseRelayCGNAT bool) uint64 {
+func EffectiveP2PServices(p Params, advertiseCompactFilters, advertiseRelayCGNAT, advertiseBloom bool) uint64 {
 	s := p.NodeNetwork
 	if advertiseCompactFilters {
 		s |= ServiceCompactFilters
 	}
 	if advertiseRelayCGNAT {
 		s |= ServiceDogeGoRelayCGNAT
+	}
+	if advertiseBloom {
+		s |= ServiceBloom
 	}
 	return s
 }

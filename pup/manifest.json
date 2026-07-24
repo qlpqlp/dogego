@@ -5,7 +5,7 @@
     "version": "0.1.0",
     "logoPath": "logo.png",
     "shortDescription": "Much Faster Full Dogecoin Node",
-    "longDescription": "DogeGo is an open-source Dogecoin full node written in Go, with a built-in web dashboard, BlockStep explorer, HD wallet, and Core-compatible JSON-RPC. This PUP builds DogeGo from the qlpqlp/dogego GitHub source on DogeBox. Configure the node in the DogeGo web UI after it starts.",
+    "longDescription": "DogeGo is an open-source Dogecoin full node written in Go, with a built-in web dashboard, BlockStep explorer, HD wallet, and Core-compatible JSON-RPC. This PUP starts the setup wizard over plain HTTP (native -notls / DOGEGO_NO_TLS) for DogeBox. Use ./dogedata under /storage/dogego in the wizard, then configure the node in the web UI.",
     "upstreamVersions": {
       "DogeGo": "0.1.0-beta"
     }
@@ -16,13 +16,21 @@
   "container": {
     "build": {
       "nixFile": "pup.nix",
-      "nixFileSha256": "99d7e6ac7d11d958874d7f474f105936831dcc9fc5074ba52c5ae31b84a7f899"
+      "nixFileSha256": "4936442dabbfac6fad72d34020028b92e4107d056c17ac2af4e03b68100fbe22"
     },
     "services": [
       {
         "name": "dogego",
         "command": {
           "exec": "/bin/run.sh",
+          "cwd": "",
+          "env": null
+        }
+      },
+      {
+        "name": "monitor",
+        "command": {
+          "exec": "/bin/monitor",
           "cwd": "",
           "env": null
         }
@@ -127,5 +135,132 @@
     }
   ],
   "dependencies": [],
-  "metrics": null
+  "metrics": [
+    {
+      "name": "chain",
+      "label": "Chain",
+      "type": "string",
+      "history": 1
+    },
+    {
+      "name": "network",
+      "label": "Network",
+      "type": "string",
+      "history": 1
+    },
+    {
+      "name": "node_mode",
+      "label": "Node mode",
+      "type": "string",
+      "history": 1
+    },
+    {
+      "name": "blocks",
+      "label": "Block height",
+      "type": "int",
+      "history": 30
+    },
+    {
+      "name": "headers",
+      "label": "Headers",
+      "type": "int",
+      "history": 30
+    },
+    {
+      "name": "peers",
+      "label": "Peers",
+      "type": "int",
+      "history": 30
+    },
+    {
+      "name": "connections_in",
+      "label": "Inbound peers",
+      "type": "int",
+      "history": 30
+    },
+    {
+      "name": "connections_out",
+      "label": "Outbound peers",
+      "type": "int",
+      "history": 30
+    },
+    {
+      "name": "mempool_txs",
+      "label": "Mempool txs",
+      "type": "int",
+      "history": 30
+    },
+    {
+      "name": "blocks_behind",
+      "label": "Blocks behind headers",
+      "type": "int",
+      "history": 30
+    },
+    {
+      "name": "blocks_per_minute",
+      "label": "Blocks / min",
+      "type": "float",
+      "history": 30
+    },
+    {
+      "name": "verification_progress",
+      "label": "Verification progress",
+      "type": "string",
+      "history": 1
+    },
+    {
+      "name": "initial_block_download",
+      "label": "Initial download",
+      "type": "string",
+      "history": 1
+    },
+    {
+      "name": "sync_status",
+      "label": "Sync status",
+      "type": "string",
+      "history": 1
+    },
+    {
+      "name": "sync_health",
+      "label": "Sync health",
+      "type": "string",
+      "history": 1
+    },
+    {
+      "name": "sync_phase",
+      "label": "Sync phase",
+      "type": "string",
+      "history": 1
+    },
+    {
+      "name": "primary_peer",
+      "label": "Primary peer",
+      "type": "string",
+      "history": 1
+    },
+    {
+      "name": "best_hash",
+      "label": "Best hash",
+      "type": "string",
+      "history": 1
+    },
+    {
+      "name": "raw_blocks",
+      "label": "Raw blocks stored",
+      "type": "int",
+      "history": 30
+    },
+    {
+      "name": "contiguous_raw_height",
+      "label": "Contiguous raw height",
+      "type": "int",
+      "history": 30
+    },
+    {
+      "name": "chain_size_human",
+      "label": "Chain size",
+      "type": "string",
+      "history": 1
+    }
+  ]
 }

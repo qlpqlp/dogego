@@ -13,20 +13,36 @@ import (
 
 // UserAlert is exposed to the web UI and native dialogs when firewall rules are missing.
 type UserAlert struct {
-	Active          bool     `json:"active"`
-	Severity        string   `json:"severity"` // warn | ok
-	Title           string   `json:"title"`
-	Message         string   `json:"message"`
-	ManualCommands  []string `json:"manual_commands,omitempty"`
-	RulesPresent    bool     `json:"rules_present"`
-	Platform        string   `json:"platform"`
-	Port            int      `json:"port"`
-	ExePath         string   `json:"exe_path,omitempty"`
-	ElevationOffered bool    `json:"elevation_offered"`
+	Active           bool     `json:"active"`
+	Severity         string   `json:"severity"` // warn | ok
+	Title            string   `json:"title"`
+	Message          string   `json:"message"`
+	CopyHint         string   `json:"copy_hint,omitempty"`
+	ManualCommands   []string `json:"manual_commands,omitempty"`
+	ManualNotes      []string `json:"manual_notes,omitempty"`
+	RulesPresent     bool     `json:"rules_present"`
+	Platform         string   `json:"platform"`
+	Port             int      `json:"port"`
+	ExePath          string   `json:"exe_path,omitempty"`
+	ElevationOffered bool     `json:"elevation_offered"`
+	Dismissed        bool     `json:"dismissed"`
 }
 
 var alertMu sync.RWMutex
 var lastAlert UserAlert
+var alertDismissed bool
+var alertDismissPort int
+
+// DismissUserAlert hides the dashboard firewall banner until rules change or the process restarts
+// with a different P2P port. Operators can still open Settings → OS firewall later.
+func DismissUserAlert() {
+	alertMu.Lock()
+	defer alertMu.Unlock()
+	alertDismissed = true
+	alertDismissPort = lastAlert.Port
+	lastAlert.Dismissed = true
+	lastAlert.Active = false
+}
 
 // PublishResult records the outcome of Ensure for UI and optional native notify.
 func PublishResult(cfg Config, res Result) {
@@ -38,20 +54,31 @@ func PublishResult(cfg Config, res Result) {
 		Port:         cfg.Port,
 		ExePath:      cfg.ExePath,
 		RulesPresent: Present(cfg),
+		CopyHint:     CopyHint(cfg),
 	}
 	if res.OK || res.AlreadyOK {
 		a.Message = "P2P firewall rules are in place."
 		if res.UserMessage != "" {
 			a.Message = res.UserMessage
 		}
-	} else if cfg.Mode != ModeNever {
+		alertMu.Lock()
+		alertDismissed = false
+		lastAlert = a
+		alertMu.Unlock()
+		return
+	}
+	if cfg.Mode != ModeNever {
 		a.Active = true
 		a.Severity = "warn"
 		a.Title = "Firewall rules required for P2P"
-		a.ManualCommands = ManualCommands(cfg)
+		a.ManualCommands, a.ManualNotes = ManualCommandsAndNotes(cfg)
 		a.Message = buildAlertMessage(cfg, res)
 	}
 	alertMu.Lock()
+	if alertDismissed && alertDismissPort == cfg.Port && a.Active {
+		a.Dismissed = true
+		a.Active = false
+	}
 	lastAlert = a
 	alertMu.Unlock()
 }
@@ -65,7 +92,7 @@ func buildAlertMessage(cfg Config, res Result) string {
 	}
 	if !Present(cfg) {
 		b.WriteString("\n\nDogeGo could not add OS firewall rules automatically.")
-		b.WriteString("\nOther programs show an Administrator prompt for this; if you dismissed it or run from a service account, add the rules manually (commands below).")
+		b.WriteString("\nIf you dismissed an admin prompt, or run under a service/container account, add the rules manually using the commands below for this OS.")
 	}
 	if cfg.Mode == ModeAuto {
 		b.WriteString("\n\nUntil rules exist, peers may disconnect (e.g. “connection aborted by the software on your host machine”).")
@@ -74,6 +101,7 @@ func buildAlertMessage(cfg Config, res Result) string {
 		b.WriteString("\n\n")
 		b.WriteString(thirdPartyNote)
 	}
+	b.WriteString("\n\nYou can Dismiss this banner if a gateway or host firewall already allows P2P (common on DogeBox).")
 	return strings.TrimSpace(b.String())
 }
 
@@ -84,32 +112,49 @@ func UserAlertSnapshot() UserAlert {
 	return lastAlert
 }
 
-// ManualCommands returns one command per line for UI copy-paste.
-func ManualCommands(cfg Config) []string {
-	text := ManualInstructions(cfg)
-	if text == "" {
-		return nil
+// CopyHint is the OS-specific line above the command list in the dashboard.
+func CopyHint(cfg Config) string {
+	switch platformName() {
+	case "windows":
+		return "Copy into an elevated Command Prompt or PowerShell (Run as administrator):"
+	case "darwin":
+		return "Copy into Terminal (enter your Mac admin password when sudo asks):"
+	case "linux":
+		return "Copy into a terminal (use sudo when prompted). Pick ufw or firewalld:"
+	default:
+		return "Copy the commands below into a terminal with admin rights:"
 	}
-	var out []string
+}
+
+// ManualCommandsAndNotes returns executable lines plus short operator notes for the UI.
+func ManualCommandsAndNotes(cfg Config) (cmds []string, notes []string) {
+	text := ManualInstructions(cfg)
 	for _, line := range strings.Split(text, "\n") {
 		line = strings.TrimSpace(line)
-		if line == "" || strings.HasPrefix(line, "Run in") || strings.HasPrefix(line, "Linux") || strings.HasPrefix(line, "macOS") {
+		if line == "" {
 			continue
 		}
 		if strings.HasPrefix(line, "#") {
+			notes = append(notes, strings.TrimSpace(strings.TrimPrefix(line, "#")))
 			continue
 		}
-		out = append(out, line)
-	}
-	if len(out) == 0 {
-		for _, line := range strings.Split(text, "\n") {
-			line = strings.TrimSpace(line)
-			if line != "" {
-				out = append(out, line)
-			}
+		lower := strings.ToLower(line)
+		if strings.HasPrefix(lower, "run in") || strings.HasPrefix(lower, "linux") || strings.HasPrefix(lower, "macos") || strings.HasPrefix(lower, "windows") {
+			notes = append(notes, line)
+			continue
 		}
+		cmds = append(cmds, line)
 	}
-	return out
+	if len(cmds) == 0 && text != "" {
+		cmds = append(cmds, strings.TrimSpace(text))
+	}
+	return cmds, notes
+}
+
+// ManualCommands returns one command per line for UI copy-paste.
+func ManualCommands(cfg Config) []string {
+	cmds, _ := ManualCommandsAndNotes(cfg)
+	return cmds
 }
 
 // ThirdPartyFirewallNote is platform-specific extra guidance (AV suites, etc.).

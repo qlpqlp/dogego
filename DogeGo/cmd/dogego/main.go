@@ -294,6 +294,30 @@ func runNodeMode(args []string, defaultNodeMode string) {
 		merged = config.FromFile(saved)
 		if wantNoTLS {
 			config.ApplyNoTLSMerged(&merged)
+			config.DisableLocalTLS(&saved)
+		}
+		// Wizard JSON defaults to localhost:2013. Re-apply CLI listen flags so DogeBox
+		// (and any -webui beyond loopback) keeps the dashboard reachable after setup.
+		confDirty := wantNoTLS
+		if visited["webui"] {
+			merged.WebUI = strings.TrimSpace(*webui)
+			saved.WebUI = merged.WebUI
+			confDirty = true
+		}
+		if visited["nobrowser"] {
+			merged.NoBrowser = *nobrowser
+			saved.NoBrowser = merged.NoBrowser
+			confDirty = true
+		}
+		if visited["tray"] {
+			merged.Tray = *tray
+			saved.Tray = config.TrayPtr(merged.Tray)
+			confDirty = true
+		}
+		if confDirty {
+			if err := config.Save(savePath, saved); err != nil {
+				fmt.Fprintf(os.Stderr, "DogeGo: warning: could not refresh conf after setup: %v\n", err)
+			}
 		}
 		skipBrowserThisStart = true
 	}

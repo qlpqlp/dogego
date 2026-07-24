@@ -8,6 +8,7 @@ package node
 
 import (
 	"dogego/applog"
+	"dogego/bloom"
 	"dogego/consensus"
 	"dogego/mempool"
 	"dogego/store"
@@ -15,14 +16,26 @@ import (
 	"fmt"
 )
 
-// RelayTxToPeer advertises a tx via inv(MSG_TX) when it meets the peer's feefilter (Core inv relay).
+// RelayTxToPeer advertises a tx via inv(MSG_TX) when it meets the peer's feefilter (Core inv relay)
+// and optional BIP37 bloom / relaytxes constraints.
 func RelayTxToPeer(mw *MsgWriter, raw []byte, peerFeeFilter uint64, pool *mempool.Pool, txIx *store.TxIndex, rawBlocks *store.RawBlockStore) error {
+	return RelayTxToPeerBloom(mw, raw, peerFeeFilter, nil, true, pool, txIx, rawBlocks)
+}
+
+// RelayTxToPeerBloom is RelayTxToPeer with BIP37 bloom + fRelay gating.
+func RelayTxToPeerBloom(mw *MsgWriter, raw []byte, peerFeeFilter uint64, f *bloom.Filter, relayTxes bool, pool *mempool.Pool, txIx *store.TxIndex, rawBlocks *store.RawBlockStore) error {
 	if mw == nil || len(raw) == 0 {
+		return nil
+	}
+	if !relayTxes {
 		return nil
 	}
 	tx, err := wire.DeserializeTx(raw)
 	if err != nil {
 		return err
+	}
+	if f != nil && !f.IsEmpty() && !bloom.MatchRelevantTx(f, tx) {
+		return nil
 	}
 	view := consensus.AdmissionPrevOutView(pool, txIx, rawBlocks)
 	rate, ok := consensus.TxFeeRateKoinuPerKB(tx, raw, view)

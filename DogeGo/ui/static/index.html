@@ -195,10 +195,14 @@
             <span id="ov-storage-alert-text"></span>
           </div>
           <div id="ov-firewall-alert" class="alert warn" role="alert" hidden aria-live="polite">
-            <strong data-i18n="pages.overview.firewallWarn">Firewall - action needed</strong>
+            <div class="alert-head" style="display:flex;align-items:flex-start;justify-content:space-between;gap:0.75rem;flex-wrap:wrap">
+              <strong data-i18n="pages.overview.firewallWarn">Firewall - action needed</strong>
+              <button type="button" class="btn btn-sm btn-ghost" id="ov-firewall-dismiss" data-i18n="pages.overview.firewallDismiss">Dismiss</button>
+            </div>
             <p id="ov-firewall-alert-text"></p>
-            <p class="muted" data-i18n="pages.overview.firewallCopy">Copy into an elevated Command Prompt or PowerShell (Administrator):</p>
+            <p class="muted" id="ov-firewall-alert-copy" data-i18n="pages.overview.firewallCopy">Copy the OS-specific commands below into a terminal with admin rights:</p>
             <pre id="ov-firewall-alert-cmds" class="pre-out firewall-cmds"></pre>
+            <p class="muted" id="ov-firewall-alert-notes" hidden></p>
           </div>
         </div>
 

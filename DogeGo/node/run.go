@@ -368,7 +368,7 @@ func Run(ctx context.Context, cfg Config) error {
 			}
 		}
 	}
-	localServices := chain.EffectiveP2PServices(p, filterIx != nil, cfg.DogeGoRelayCGNAT.AdvertiseServiceBit())
+	localServices := chain.EffectiveP2PServices(p, filterIx != nil, cfg.DogeGoRelayCGNAT.AdvertiseServiceBit(), cfg.FullNode)
 	var dgrMgr *dgr.Manager
 	var dgrAdvertiseP2P string
 	var disk *wallet.Disk
@@ -387,6 +387,13 @@ func Run(ctx context.Context, cfg Config) error {
 			}
 		}
 		runWalletAutoLock(ctx, disk)
+	}
+	var spvBloom *SPVBloomClient
+	if !cfg.FullNode && disk != nil {
+		spvBloom = NewSPVBloomClient(disk, p, j)
+		if spvBloom.Active() {
+			applog.Line("spv", "BIP37 wallet bloom filter ready (filtered-block sync against NODE_BLOOM peers)")
+		}
 	}
 	peerSlot := "Starting"
 	if cfg.Peer != "" {
@@ -1440,7 +1447,11 @@ func Run(ctx context.Context, cfg Config) error {
 		})
 	}
 	if !cfg.FullNode {
-		applog.Line("ui", "SPV (headers-only) mode: raw block store disabled; getblock/inv block bodies unavailable")
+		if spvBloom != nil && spvBloom.Active() {
+			applog.Line("ui", "SPV mode: headers + BIP37 filtered blocks (wallet bloom); raw block store disabled")
+		} else {
+			applog.Line("ui", "SPV (headers-only) mode: raw block store disabled; enable wallet for BIP37 bloom sync")
+		}
 	}
 	if p.Net == chain.MainnetDogecoin {
 		if err := consensus.VerifyLegacySubsidyRNG(); err != nil {
@@ -1589,6 +1600,7 @@ func Run(ctx context.Context, cfg Config) error {
 				if peerMgr == nil && blockStore != nil {
 					WireSoloPrimaryBlockPeerStats(blockStore, connectedAddr, func() { primaryLastBlock = time.Now() })
 				}
+				MaybePushSPVBloom(spvBloom, mw, peerFromHandshake)
 				if cfg.FullNode && rbStore != nil {
 					primaryExclude.Set(connectedAddr)
 					if assistCandidates == nil {
@@ -1750,6 +1762,7 @@ func Run(ctx context.Context, cfg Config) error {
 							}
 						}
 						applog.Line("net", fmt.Sprintf("using outbound peer %s for primary block fetch (headers on %s; want height %d)", primaryPeer.addr, headerPeer.addr, wantBlocks))
+						MaybePushSPVBloom(spvBloom, mw, peerFromHandshake)
 					} else {
 						for i := 1; i < len(probed); i++ {
 							closeHeaderSyncPeer(probed[i])
@@ -2919,6 +2932,7 @@ func Run(ctx context.Context, cfg Config) error {
 				}
 			}
 			NotifyRPCTip(j, rbStore, utxoCache, tipWait)
+			MaybePushSPVBloom(spvBloom, mw, peerFromHandshake)
 			applog.Line("headers", "background header sync completed - primary peer attached")
 			if cfg.FullNode && rbStore != nil && blockStore != nil {
 				if assistCandidates != nil {
@@ -3015,6 +3029,7 @@ func Run(ctx context.Context, cfg Config) error {
 						peerMgr.BroadcastFeeFilter(pool)
 					}
 					NotifyRPCTip(j, rbStore, utxoCache, tipWait)
+					MaybePushSPVBloom(spvBloom, mw, peerFromHandshake)
 					applog.Line("net", "left solo founder mode: connected to "+connectedAddr)
 				}
 			}
@@ -3281,6 +3296,7 @@ func Run(ctx context.Context, cfg Config) error {
 					peerSlot = res.Addr
 					primaryExclude.Set(res.Addr)
 					maybeNegotiateExtensions(conn, p.Magic, connectedAddr, extMgr, mw)
+					MaybePushSPVBloom(spvBloom, mw, peerFromHandshake)
 					if assistCandidates != nil {
 						RefreshBlockAssistPool(assistCandidates, disc, peerMgr, blockPeerScorer, blockStore, addedNodes.List())
 					}
@@ -3347,6 +3363,14 @@ func Run(ctx context.Context, cfg Config) error {
 				primaryPing.notePong(pl)
 			}
 		case "tx":
+			if spvBloom != nil && spvBloom.Active() {
+				if err := spvBloom.HandleMatchedTx(pl); err != nil {
+					applog.Line("spv", "matched tx ingest: "+err.Error())
+				}
+				if !cfg.FullNode {
+					break
+				}
+			}
 			if cfg.AllowUnverifiedMempool {
 				if err := pool.Add(pl); err != nil {
 					applog.Line("mempool", "P2P tx not stored: "+err.Error())
@@ -3377,7 +3401,13 @@ func Run(ctx context.Context, cfg Config) error {
 			applog.Line("mempool", fmt.Sprintf("P2P tx accepted (%d bytes)", len(pl)))
 			FanInViaDGR(dgrMgr, "tx", pl)
 		case "inv":
-			if blockStore == nil || !BodiesBehindHeaders(blockStore) {
+			if !cfg.FullNode && spvBloom != nil && spvBloom.Active() {
+				if entries, err := wire.DecodeInvPayload(pl); err == nil {
+					if err := spvBloom.RequestFilteredBlocks(mw, entries); err != nil {
+						applog.Line("spv", "filtered getdata: "+err.Error())
+					}
+				}
+			} else if blockStore == nil || !BodiesBehindHeaders(blockStore) {
 				HandleInvBlockFetch(ctx, mw, p, blockStore, pl)
 			}
 			if !cfg.AllowUnverifiedMempool {
@@ -3409,6 +3439,15 @@ func Run(ctx context.Context, cfg Config) error {
 				HandleBroadcastBlock(mw, blockStore, connectedAddr, misbehavior, pl)
 				RelayStoredBlock(blockStore, pl, connectedAddr)
 				FanInViaDGR(dgrMgr, "block", pl)
+			}
+		case "merkleblock":
+			if spvBloom != nil && spvBloom.Active() {
+				if _, err := spvBloom.HandleMerkleBlock(pl); err != nil {
+					applog.Line("spv", "merkleblock: "+err.Error())
+					if connectedAddr != "" {
+						misbehavior.Note(connectedAddr, misbehaviorReject, "bad-merkleblock")
+					}
+				}
 			}
 		case "addr":
 			addrs, err := wire.DecodeAddrPayload(pl)
@@ -3536,11 +3575,24 @@ func Run(ctx context.Context, cfg Config) error {
 			}
 		case "getdata":
 			serve := GetDataServeEnv{Raw: rbStore, Pool: pool, TxIx: txIx}
+			if peerMgr != nil {
+				serve.Bloom = peerMgr.PeerBloom(connectedAddr)
+			}
 			if serve.Raw != nil || serve.Pool != nil || serve.TxIx != nil {
 				if err := HandleInboundGetData(ctx, mw, serve, pl); err != nil {
 					applog.Line("net", "getdata serve: "+err.Error())
 				}
 			}
+		case "filterload":
+			if err := HandleFilterLoad(peerMgr, connectedAddr, pl, misbehavior); err != nil {
+				applog.Line("net", "filterload: "+err.Error())
+			}
+		case "filteradd":
+			if err := HandleFilterAdd(peerMgr, connectedAddr, pl, misbehavior); err != nil {
+				applog.Line("net", "filteradd: "+err.Error())
+			}
+		case "filterclear":
+			HandleFilterClear(peerMgr, connectedAddr)
 		case "getheaders":
 			if j != nil {
 				if err := HandleInboundGetHeaders(ctx, mw, GetHeadersServeEnv{Journal: j, Aux: auxJ}, pl); err != nil {

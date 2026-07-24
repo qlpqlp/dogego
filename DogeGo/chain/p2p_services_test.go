@@ -10,20 +10,24 @@ import "testing"
 
 func TestEffectiveP2PServicesCompactFilters(t *testing.T) {
 	p := Params{NodeNetwork: NodeNetwork}
-	base := EffectiveP2PServices(p, false, false)
+	base := EffectiveP2PServices(p, false, false, false)
 	if base&ServiceCompactFilters != 0 {
 		t.Fatal("filters off")
 	}
-	with := EffectiveP2PServices(p, true, false)
+	with := EffectiveP2PServices(p, true, false, false)
 	if with&ServiceNetwork == 0 || with&ServiceCompactFilters == 0 {
 		t.Fatalf("services %x", with)
 	}
-	relay := EffectiveP2PServices(p, false, true)
+	relay := EffectiveP2PServices(p, false, true, false)
 	if relay&ServiceDogeGoRelayCGNAT == 0 {
 		t.Fatal("relay bit missing")
 	}
 	if !HasDogeGoRelayCGNAT(relay) {
 		t.Fatal("HasDogeGoRelayCGNAT")
+	}
+	bloom := EffectiveP2PServices(p, false, false, true)
+	if bloom&ServiceBloom == 0 {
+		t.Fatal("bloom bit missing")
 	}
 }
 

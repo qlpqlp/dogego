@@ -163,6 +163,7 @@ func writeFirewallScript(cfg Config) (string, error) {
 
 func manualPlatform(cfg Config) string {
 	var lines []string
+	lines = append(lines, "Windows — elevated Command Prompt or PowerShell (Run as administrator):")
 	if cfg.Inbound {
 		lines = append(lines, fmt.Sprintf(
 			`netsh advfirewall firewall add rule name="%s" dir=in action=allow protocol=TCP localport=%d profile=any enable=yes`,
@@ -173,7 +174,8 @@ func manualPlatform(cfg Config) string {
 			`netsh advfirewall firewall add rule name="%s" dir=out action=allow program="%s" profile=any enable=yes`,
 			ruleOutProg, cfg.ExePath))
 	}
-	return "Run in an elevated Command Prompt or PowerShell:\n  " + strings.Join(lines, "\n  ")
+	lines = append(lines, "# Also allow DogeGo in any third-party antivirus / firewall suite.")
+	return strings.Join(lines, "\n")
 }
 
 func bytesTrim(b []byte) string {

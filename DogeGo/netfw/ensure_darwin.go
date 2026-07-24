@@ -80,11 +80,15 @@ func allowInboundPort(port int) error {
 }
 
 func manualPlatform(cfg Config) string {
-	return "macOS (run in Terminal):\n" +
-		"  sudo " + socketFilterFW + " --add " + cfg.ExePath + "\n" +
-		"  sudo " + socketFilterFW + " --unblockapp " + cfg.ExePath + "\n" +
-		"  # System Settings → Network → Firewall → Options → allow incoming for DogeGo\n" +
-		"  # For inbound P2P on port " + itoa(cfg.Port) + ", ensure the firewall allows that port if you listen."
+	exe := cfg.ExePath
+	if exe == "" {
+		exe = "/path/to/dogego"
+	}
+	return "macOS — run in Terminal:\n" +
+		"sudo " + socketFilterFW + " --add " + exe + "\n" +
+		"sudo " + socketFilterFW + " --unblockapp " + exe + "\n" +
+		"# Or: System Settings → Network → Firewall → Options → allow incoming for DogeGo\n" +
+		"# For inbound listen on TCP " + itoa(cfg.Port) + ", allow that port if the Application Firewall is on."
 }
 
 func itoa(n int) string {
