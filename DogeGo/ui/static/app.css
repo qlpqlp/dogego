@@ -3618,7 +3618,19 @@ body.setup-wizard {
   margin-bottom: 6px;
 }
 .ext-dash-stat-label .material-icons-round { font-size: 16px; }
-.ext-dash-stat-value { font-size: 22px; font-weight: 700; line-height: 1.1; }
+.ext-dash-stat-value {
+  font-size: 22px;
+  font-weight: 700;
+  line-height: 1.2;
+  overflow-wrap: anywhere;
+  word-break: break-word;
+  max-width: 100%;
+}
+.ext-dash-stat-value.ext-dash-stat-value-long {
+  font-size: 13px;
+  font-weight: 600;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+}
 .ext-callout {
   display: flex;
   gap: 12px;

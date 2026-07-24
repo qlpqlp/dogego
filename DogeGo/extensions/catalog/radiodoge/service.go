@@ -502,9 +502,17 @@ func BuildUI(snap map[string]interface{}) map[string]interface{} {
 				"lead":  "Join WiFi SSID RadioDoge (AP 192.168.4.1) or keep SoftAP reachable from this host. Same HTTP API as Dogecoin Wallet RadioDoge support.",
 				"widgets": []map[string]interface{}{
 					{"type": "stats", "items": []map[string]interface{}{
-						{"label": "Base URL", "value": cfg.BaseURL, "icon": "link"},
 						{"label": "Confirmations", "value": fmt.Sprintf("%v", snap["confirmations"]), "icon": "verified"},
+						{"label": "Broadcasts", "value": fmt.Sprintf("%v", snap["broadcasts"]), "icon": "cell_tower"},
+						{"label": "Relays", "value": fmt.Sprintf("%v", snap["relays"]), "icon": "input"},
 					}},
+					{
+						"type":  "callout",
+						"tone":  "neutral",
+						"icon":  "link",
+						"title": "SoftAP base URL",
+						"body":  cfg.BaseURL,
+					},
 					{
 						"type":  "callout",
 						"tone":  "neutral",

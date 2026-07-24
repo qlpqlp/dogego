@@ -11926,8 +11926,9 @@
       lab.className = "ext-dash-stat-label";
       lab.innerHTML = "<span class=\"material-icons-round\" aria-hidden=\"true\">" + escapeHtml(item.icon || "insights") + "</span> " + escapeHtml(item.label || "");
       const val = document.createElement("div");
-      val.className = "ext-dash-stat-value";
-      val.textContent = item.value != null ? String(item.value) : "";
+      const text = item.value != null ? String(item.value) : "";
+      val.className = "ext-dash-stat-value" + (text.length > 12 ? " ext-dash-stat-value-long" : "");
+      val.textContent = text;
       card.append(lab, val);
       grid.appendChild(card);
     });
