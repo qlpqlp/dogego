@@ -11,8 +11,8 @@ package pqcrypto
 /*
 #cgo CFLAGS: -I${SRCDIR}/raccoon_g/native -I${SRCDIR}/raccoon_g/shims/include -I${SRCDIR}/raccoon_g/shims/src -Wall -Wno-unused-function
 #cgo LDFLAGS: -lgmp -lmpfr -lm
-# Prefer static libmpfr/libgmp on Windows so GitHub Release .exe runs without MinGW DLLs on PATH.
-# bcrypt stays dynamic (system DLL). zstd static covers Pebble CGO when enabled.
+// Prefer static libmpfr/libgmp on Windows so GitHub Release .exe runs without MinGW DLLs on PATH.
+// bcrypt stays dynamic (system DLL). zstd static covers Pebble CGO when enabled.
 #cgo windows LDFLAGS: -Wl,-Bstatic -lmpfr -lgmp -lzstd -Wl,-Bdynamic -lbcrypt -static-libgcc
 #include <stdlib.h>
 #include <stdint.h>
