@@ -40,9 +40,11 @@ GitHub Release asset ships real Raccoon-G with no end-user install steps.
 
 **Out-of-box releases:** CI **static-links** `libmpfr` / `libgmp` / `libzstd` on
 **Windows, Linux, and macOS**, then asserts those libraries are absent from
-`objdump` / `ldd` / `otool -L`. Dynamic MinGW / apt / Homebrew links would only
-work on the build agent — that caused the Windows `libmpfr-6.dll was not found`
-dialog for [v0.1.0](https://github.com/qlpqlp/dogego/releases).
+`objdump` / `ldd` / `otool -L`. On macOS, static `.a` files are copied into a
+private `-L` directory so the linker cannot prefer Homebrew `.dylib`s (cgo
+merges `#cgo LDFLAGS` with `CGO_LDFLAGS`). Dynamic MinGW / apt / Homebrew links
+would only work on the build agent — that caused the Windows `libmpfr-6.dll was
+not found` dialog for [v0.1.0](https://github.com/qlpqlp/dogego/releases).
 
 Workflows:
 

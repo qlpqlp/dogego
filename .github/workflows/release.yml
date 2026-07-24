@@ -124,9 +124,15 @@ jobs:
               exit 1
             fi
           done
+          # Private lib dir with ONLY .a files so -lmpfr/-lgmp/-lzstd cannot pick Homebrew .dylibs
+          # (cgo merges #cgo LDFLAGS with CGO_LDFLAGS; dylibs win if both are on the search path).
+          STATIC_LIBDIR="$(pwd)/dist/static-libs"
+          rm -rf "$STATIC_LIBDIR"
+          mkdir -p "$STATIC_LIBDIR"
+          cp "$MPFR/lib/libmpfr.a" "$GMP/lib/libgmp.a" "$ZSTD/lib/libzstd.a" "$STATIC_LIBDIR/"
           export CGO_CFLAGS="-I${GMP}/include -I${MPFR}/include -I${ZSTD}/include"
-          # Link static archives by path so the binary does not depend on Homebrew dylibs.
-          export CGO_LDFLAGS="${MPFR}/lib/libmpfr.a ${GMP}/lib/libgmp.a ${ZSTD}/lib/libzstd.a"
+          unset LIBRARY_PATH DYLD_LIBRARY_PATH PKG_CONFIG_PATH || true
+          export CGO_LDFLAGS="-L${STATIC_LIBDIR} -lmpfr -lgmp -lzstd"
           go build -tags raccoon_g -trimpath -ldflags="-s -w" -o "dist/${{ matrix.asset }}" ./cmd/dogego
           echo "Linked libraries:"
           otool -L "dist/${{ matrix.asset }}"

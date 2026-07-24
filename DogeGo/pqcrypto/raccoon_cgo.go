@@ -10,10 +10,12 @@ package pqcrypto
 
 /*
 #cgo CFLAGS: -I${SRCDIR}/raccoon_g/native -I${SRCDIR}/raccoon_g/shims/include -I${SRCDIR}/raccoon_g/shims/src -Wall -Wno-unused-function
-#cgo LDFLAGS: -lgmp -lmpfr -lm
-// Prefer static libmpfr/libgmp on Windows so GitHub Release .exe runs without MinGW DLLs on PATH.
-// bcrypt stays dynamic (system DLL). zstd static covers Pebble CGO when enabled.
+#cgo LDFLAGS: -lm
+#cgo linux LDFLAGS: -lgmp -lmpfr
+// Windows: static-link mpfr/gmp/zstd so Release .exe needs no MinGW DLLs. bcrypt stays dynamic.
 #cgo windows LDFLAGS: -Wl,-Bstatic -lmpfr -lgmp -lzstd -Wl,-Bdynamic -lbcrypt -static-libgcc
+// darwin: do not pass -lgmp/-lmpfr here (Homebrew would resolve to .dylib). Release CI and
+// build_raccoon.sh supply static .a paths or -L… -lgmp -lmpfr via CGO_LDFLAGS.
 #include <stdlib.h>
 #include <stdint.h>
 #include <string.h>

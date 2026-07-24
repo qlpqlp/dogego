@@ -98,8 +98,13 @@ jobs:
           for f in "$MPFR/lib/libmpfr.a" "$GMP/lib/libgmp.a" "$ZSTD/lib/libzstd.a"; do
             test -f "$f" || { echo "missing $f"; ls -la "$(dirname "$f")"; exit 1; }
           done
+          STATIC_LIBDIR="$(pwd)/.ci-static-libs"
+          rm -rf "$STATIC_LIBDIR"
+          mkdir -p "$STATIC_LIBDIR"
+          cp "$MPFR/lib/libmpfr.a" "$GMP/lib/libgmp.a" "$ZSTD/lib/libzstd.a" "$STATIC_LIBDIR/"
           export CGO_CFLAGS="-I${GMP}/include -I${MPFR}/include -I${ZSTD}/include"
-          export CGO_LDFLAGS="${MPFR}/lib/libmpfr.a ${GMP}/lib/libgmp.a ${ZSTD}/lib/libzstd.a"
+          unset LIBRARY_PATH DYLD_LIBRARY_PATH PKG_CONFIG_PATH || true
+          export CGO_LDFLAGS="-L${STATIC_LIBDIR} -lmpfr -lgmp -lzstd"
           go test -tags raccoon_g ./pqcrypto/ -run 'TestRaccoon|TestFalcon|TestDilithium' -count=1
           go test -tags raccoon_g ./consensus/ -run TestVerifyPQCarrierPairRaccoon -count=1
           go build -tags raccoon_g -o /tmp/dogego-raccoon ./cmd/dogego
