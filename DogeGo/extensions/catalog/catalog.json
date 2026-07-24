@@ -135,11 +135,11 @@
       "homepage": "https://github.com/dogecoinfoundation/radiodoge",
       "repository": "https://github.com/qlpqlp/dogego/tree/main/DogeGo/extensions/catalog/radiodoge",
       "download_url": "https://raw.githubusercontent.com/qlpqlp/dogego/main/DogeGo/extensions/catalog/radiodoge/dist/radiodoge.zip",
-      "sha256": "391d2c8777c2398ebdd488f72adc5553516f8d8bbfac6eb4f05f37714d5e5a67",
+      "sha256": "303cf4ef11afcc07d87a172919ea8955c4d63e09aaca02130bc7610999e4be37",
       "downloads": {
         "universal": {
           "download_url": "https://raw.githubusercontent.com/qlpqlp/dogego/main/DogeGo/extensions/catalog/radiodoge/dist/radiodoge-universal.zip",
-          "sha256": "391d2c8777c2398ebdd488f72adc5553516f8d8bbfac6eb4f05f37714d5e5a67"
+          "sha256": "303cf4ef11afcc07d87a172919ea8955c4d63e09aaca02130bc7610999e4be37"
         }
       },
       "dogego_min_version": "0.1.0",
