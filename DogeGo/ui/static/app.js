@@ -14750,6 +14750,27 @@
   });
   initBootOverlay();
   scheduleDashboardBannerStackSync();
+  (function initCodeReviewBanner() {
+    const LS_KEY = "dogego_code_review_banner_v1";
+    const banner = $("code-review-banner");
+    if (!banner) return;
+    try {
+      if (localStorage.getItem(LS_KEY) === "1") {
+        banner.hidden = true;
+        scheduleDashboardBannerStackSync();
+        return;
+      }
+    } catch (_) { /* */ }
+    banner.hidden = false;
+    scheduleDashboardBannerStackSync();
+    const dismiss = $("code-review-banner-dismiss");
+    if (!dismiss) return;
+    dismiss.addEventListener("click", () => {
+      try { localStorage.setItem(LS_KEY, "1"); } catch (_) { /* */ }
+      banner.hidden = true;
+      scheduleDashboardBannerStackSync();
+    });
+  })();
   if (location.protocol === "https:") void loadTLSStatus();
   $("dash-tls-cert-dismiss") && $("dash-tls-cert-dismiss").addEventListener("click", () => {
     try { localStorage.setItem("dogego_tls_cert_banner_dismissed", "1"); } catch (_) { /* */ }

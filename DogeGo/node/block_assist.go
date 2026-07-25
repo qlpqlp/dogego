@@ -32,6 +32,9 @@ const blockAssistPreFetchDrain = 350 * time.Millisecond
 // blockAssistSessionIdleRotate disconnects assist peers that never deliver blocks (claimBatch spin).
 const blockAssistSessionIdleRotate = 45 * time.Second
 
+// blockAssistNoPeerLogInterval rate-limits "no peer" lines when dial candidates are exhausted.
+const blockAssistNoPeerLogInterval = 30 * time.Second
+
 // StartBlockAssist launches background goroutines that download missing raw blocks over
 // dedicated outbound peers so the main session stays responsive for inv/headers/tx.
 // syncWorkerCount is total parallel lanes (assist + primary); assist lane id = workerID+1.
@@ -57,6 +60,7 @@ func StartBlockAssist(ctx context.Context, d net.Dialer, candidates *BlockAssist
 }
 
 func runBlockAssistWorker(ctx context.Context, d net.Dialer, pool *BlockAssistCandidates, primaryExcl *PrimaryExclude, workerID, nWorkers int, p chain.Params, userAgent string, localServices uint64, bs *BlockStoreCtx, raw *progressiveRawState, laneID, syncWorkerCount int, scorer *BlockPeerScorer, assistReg *AssistPeerRegistry, book *AddrBook) {
+	var lastNoPeerLog time.Time
 	for {
 		select {
 		case <-ctx.Done():
@@ -94,6 +98,9 @@ func runBlockAssistWorker(ctx context.Context, d net.Dialer, pool *BlockAssistCa
 			c, err := d.DialContext(ctx, "tcp", addr)
 			if err != nil {
 				lastErr = err
+				if p2p.ObserveDialError(addr, err) {
+					applog.Line("net", "IPv6 dials disabled (network unreachable); preferring IPv4 peers")
+				}
 				RecordOutboundHandshakeResult(book, addr, err)
 				scorer.NoteDialFailure(addr)
 				continue
@@ -135,7 +142,8 @@ func runBlockAssistWorker(ctx context.Context, d net.Dialer, pool *BlockAssistCa
 			break
 		}
 		if !connected {
-			if lastErr != nil {
+			if lastErr != nil && time.Since(lastNoPeerLog) >= blockAssistNoPeerLogInterval {
+				lastNoPeerLog = time.Now()
 				applog.Line("block", fmt.Sprintf("block-assist worker %d: no peer: %v", laneID-1, lastErr))
 			}
 			select {

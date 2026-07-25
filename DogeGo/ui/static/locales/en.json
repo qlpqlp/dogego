@@ -25,6 +25,7 @@
     "yes": "yes",
     "no": "no",
     "close": "Close",
+    "dismiss": "Dismiss",
     "cancel": "Cancel",
     "unlock": "Unlock"
   },
@@ -88,7 +89,9 @@
   },
   "dashboard": {
     "tlsCertTitle": "Local HTTPS",
-    "tlsCertHint": "If your browser shows a certificate warning, that is normal for DogeGo local HTTPS. Traffic is encrypted on this machine. Trust the DogeGo local CA in Settings → Interface to remove the warning, or run dogego tls trust-ca."
+    "tlsCertHint": "If your browser shows a certificate warning, that is normal for DogeGo local HTTPS. Traffic is encrypted on this machine. Trust the DogeGo local CA in Settings → Interface to remove the warning, or run dogego tls trust-ca.",
+    "codeReviewTitle": "Code under review",
+    "codeReviewBody": "DogeGo is beta; this codebase is being reviewed. Behavior may still change."
   },
   "wizard": {
     "title": "DogeGo - setup",

@@ -15,6 +15,7 @@ import (
 
 	"dogego/applog"
 	"dogego/chain"
+	"dogego/p2p"
 	"dogego/pow"
 	"dogego/store"
 	"dogego/wire"
@@ -130,6 +131,9 @@ func (pm *PeerMgr) syncForkProbeHeaders(ctx context.Context, addr string, p chai
 	RecordOutboundDialTry(book, addr)
 	c, err := pm.dialer.DialContext(ctx, "tcp", addr)
 	if err != nil {
+		if p2p.ObserveDialError(addr, err) {
+			applog.Line("net", "IPv6 dials disabled (network unreachable); preferring IPv4 peers")
+		}
 		RecordOutboundHandshakeResult(book, addr, err)
 		return nil, err
 	}

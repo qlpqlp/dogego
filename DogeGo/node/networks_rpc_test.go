@@ -6,9 +6,16 @@
 
 package node
 
-import "testing"
+import (
+	"errors"
+	"testing"
+
+	"dogego/p2p"
+)
 
 func TestBuildNetworksInfoIncludesOnion(t *testing.T) {
+	p2p.ResetIPv6DialGateForTest()
+	defer p2p.ResetIPv6DialGateForTest()
 	rows := BuildNetworksInfo(P2PModeSettings{Mode: P2PModeCGNAT})
 	if len(rows) < 3 {
 		t.Fatalf("len %d", len(rows))
@@ -19,5 +26,18 @@ func TestBuildNetworksInfoIncludesOnion(t *testing.T) {
 	}
 	if rows[2]["reachable"].(bool) {
 		t.Fatal("onion should not be reachable")
+	}
+	if !rows[1]["reachable"].(bool) {
+		t.Fatal("ipv6 should be reachable before dial gate")
+	}
+}
+
+func TestBuildNetworksInfoIPv6UnreachableAfterGate(t *testing.T) {
+	p2p.ResetIPv6DialGateForTest()
+	defer p2p.ResetIPv6DialGateForTest()
+	_ = p2p.ObserveDialError("[2001:db8::1]:44556", errors.New("connect: network is unreachable"))
+	rows := BuildNetworksInfo(P2PModeSettings{})
+	if rows[1]["reachable"].(bool) {
+		t.Fatal("ipv6 should be unreachable after gate")
 	}
 }

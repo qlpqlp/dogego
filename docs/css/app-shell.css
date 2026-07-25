@@ -314,15 +314,15 @@ body::before {
   flex: 1 1 auto;
   display: block;
   position: relative;
-  margin-top: var(--topbar-h);
-  min-height: calc(100dvh - var(--topbar-h));
+  margin-top: calc(var(--topbar-h) + var(--code-review-banner-h, 0px));
+  min-height: calc(100dvh - var(--topbar-h) - var(--code-review-banner-h, 0px));
   width: 100%;
   font-family: var(--shell-font);
 }
 
 .sidebar {
   position: fixed;
-  top: var(--topbar-h);
+  top: calc(var(--topbar-h) + var(--code-review-banner-h, 0px));
   left: 0;
   bottom: 0;
   width: var(--sidebar-w);
@@ -415,7 +415,7 @@ body::before {
 .site-main {
   margin-left: var(--sidebar-w);
   min-width: 0;
-  min-height: calc(100dvh - var(--topbar-h));
+  min-height: calc(100dvh - var(--topbar-h) - var(--code-review-banner-h, 0px));
   transition: margin-left 0.22s ease;
   font-family: var(--shell-font);
   font-size: 14px;

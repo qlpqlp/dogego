@@ -12,6 +12,7 @@ import (
 	"sync"
 
 	"dogego/applog"
+	"dogego/p2p"
 )
 
 // dgrTunnelDialState holds process-wide DGR P2P dial settings (phase 2 polish).
@@ -51,7 +52,13 @@ func DialP2POutbound(ctx context.Context, dialer net.Dialer, addr string) (net.C
 	dgrDial.mu.RUnlock()
 
 	tryTCP := func() (net.Conn, error) {
-		return dialer.DialContext(ctx, "tcp", addr)
+		c, err := dialer.DialContext(ctx, "tcp", addr)
+		if err != nil {
+			if p2p.ObserveDialError(addr, err) {
+				applog.Line("net", "IPv6 dials disabled (network unreachable); preferring IPv4 peers")
+			}
+		}
+		return c, err
 	}
 	tryDGR := func() (net.Conn, error) {
 		if relay == nil || active == nil || !active() {

@@ -14,6 +14,7 @@ import (
 	"time"
 
 	"dogego/chain"
+	"dogego/p2p"
 	"dogego/wire"
 )
 
@@ -540,6 +541,9 @@ func (b *AddrBook) PickBest(skip map[string]struct{}, primary string, scorer *Bl
 		if addr == "" || addr == primary {
 			continue
 		}
+		if p2p.IPv6DialsDisabled() && p2p.HostPortIsIPv6(addr) {
+			continue
+		}
 		if _, busy := skip[addr]; busy {
 			continue
 		}
@@ -578,6 +582,9 @@ func (b *AddrBook) pickBestLockedFiltered(skip map[string]struct{}, primary stri
 	hist := b.groupHistogramLocked()
 	for addr, rec := range b.by {
 		if addr == "" || addr == primary {
+			continue
+		}
+		if p2p.IPv6DialsDisabled() && p2p.HostPortIsIPv6(addr) {
 			continue
 		}
 		if _, busy := skip[addr]; busy {

@@ -1,5 +1,8 @@
 # DogeGo
 
+> [!NOTE]
+> **Code under review** — DogeGo is beta. This codebase is being reviewed; APIs and behavior may still change. Please test and [report issues](https://github.com/qlpqlp/dogego/issues/new).
+
 <p align="center">
   <img src="docs/assets/dogecard.png" alt="DogeGo web dashboard" width="920" />
 </p>

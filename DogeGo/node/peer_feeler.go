@@ -10,6 +10,7 @@ import (
 	"context"
 
 	"dogego/applog"
+	"dogego/p2p"
 )
 
 // probeFeeler dials one address from the pool to verify reachability without keeping a relay slot (addrman feeler-lite).
@@ -30,6 +31,9 @@ func (pm *PeerMgr) probeFeeler(ctx context.Context) {
 	RecordOutboundDialTry(book, addr)
 	c, err := pm.dialer.DialContext(ctx, "tcp", addr)
 	if err != nil {
+		if p2p.ObserveDialError(addr, err) {
+			applog.Line("net", "IPv6 dials disabled (network unreachable); preferring IPv4 peers")
+		}
 		RecordOutboundHandshakeResult(book, addr, err)
 		if pm.blockScorer != nil {
 			pm.blockScorer.NoteDialFailure(addr)

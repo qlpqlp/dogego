@@ -9,6 +9,11 @@
   },
   "skip": "Skip to content",
   "beta": "Beta",
+  "reviewBanner": {
+    "title": "Code under review",
+    "body": "DogeGo is beta; this codebase is being reviewed. Behavior may still change.",
+    "dismissAria": "Dismiss"
+  },
   "nav": {
     "home": "DogeGo home",
     "openMenu": "Open menu",

@@ -6174,8 +6174,29 @@ body.boot-loading { overflow: hidden; }
 .update-banner {
   margin: 0;
   padding: 10px 16px;
-  background: linear-gradient(90deg, rgba(196, 149, 42, 0.18), rgba(196, 149, 42, 0.08));
+  background: #fff;
   border-bottom: 1px solid rgba(196, 149, 42, 0.35);
+}
+.code-review-banner {
+  background: var(--surface-2);
+  border-bottom-color: var(--border);
+  padding: 8px 16px;
+}
+.code-review-banner-inner {
+  align-items: center;
+}
+.code-review-banner-icon {
+  flex-shrink: 0;
+  font-size: 1.35rem !important;
+  color: var(--accent-dim);
+}
+.code-review-banner .update-banner-text p {
+  margin: 2px 0 0;
+  font-size: 0.85rem;
+  color: var(--muted);
+}
+.code-review-banner .update-banner-text strong {
+  color: var(--text);
 }
 .dash-tls-cert-banner {
   background: linear-gradient(90deg, rgba(45, 138, 78, 0.16), rgba(45, 138, 78, 0.07));

@@ -58,6 +58,19 @@
 <body class="sidebar-collapsed">
   <a class="skip-link" href="#main" data-i18n="skip">Skip to content</a>
 
+  <aside id="code-review-banner" class="code-review-banner" role="status" hidden>
+    <div class="code-review-banner-inner">
+      <span class="material-icons-round code-review-banner-icon" aria-hidden="true">fact_check</span>
+      <p class="code-review-banner-text">
+        <strong data-i18n="reviewBanner.title">Code under review</strong>
+        <span data-i18n="reviewBanner.body">DogeGo is beta; this codebase is being reviewed. Behavior may still change.</span>
+      </p>
+      <button type="button" class="code-review-banner-dismiss" id="code-review-banner-dismiss" data-i18n-aria="reviewBanner.dismissAria" aria-label="Dismiss">
+        <span class="material-icons-round" aria-hidden="true">close</span>
+      </button>
+    </div>
+  </aside>
+
   <header class="topbar" id="top">
     <a class="topbar-home" href="#top" data-i18n-aria="nav.home">
       <img src="assets/dogecoin.svg" alt="" width="28" height="28">

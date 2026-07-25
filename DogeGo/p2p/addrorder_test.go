@@ -9,6 +9,8 @@ package p2p
 import "testing"
 
 func TestPreferIPv4First(t *testing.T) {
+	ResetIPv6DialGateForTest()
+	defer ResetIPv6DialGateForTest()
 	in := []string{"[2001:db8::1]:22556", "1.2.3.4:22556", "[::1]:22556", "5.6.7.8:22556"}
 	got := PreferIPv4First(in)
 	if !HostPortIsIPv4(got[0]) || !HostPortIsIPv4(got[1]) {

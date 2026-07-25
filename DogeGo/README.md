@@ -1,5 +1,8 @@
 # DogeGo
 
+> [!NOTE]
+> **Code under review** — DogeGo is beta. This codebase is being reviewed; APIs and behavior may still change. Please test and [report issues](https://github.com/qlpqlp/dogego/issues/new).
+
 Much Faster Full Dogecoin Node - beta Go implementation with mainnet IBD, reboot testnet, loopback web UI, and Core-shaped JSON-RPC.
 
 **Canonical repository:** [github.com/qlpqlp/dogego](https://github.com/qlpqlp/dogego) (app lives in this `DogeGo/` directory; website at [dogego.org](https://dogego.org)). DogeGo moved here from the former `dogecoin/DogeGo` path in the [Dogecoin Core](https://github.com/dogecoin/dogecoin) tree.

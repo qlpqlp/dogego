@@ -262,4 +262,33 @@
       bindCodeCopyButtons();
     }, 0);
   });
+
+  (function initCodeReviewBanner() {
+    var LS_KEY = "dogego_code_review_banner_v1";
+    var banner = document.getElementById("code-review-banner");
+    var dismissBtn = document.getElementById("code-review-banner-dismiss");
+    if (!banner) return;
+    function show() {
+      banner.hidden = false;
+      document.body.classList.add("has-code-review-banner");
+    }
+    function hide() {
+      banner.hidden = true;
+      document.body.classList.remove("has-code-review-banner");
+    }
+    try {
+      if (localStorage.getItem(LS_KEY) === "1") {
+        hide();
+        return;
+      }
+    } catch (_) { /* */ }
+    show();
+    if (!dismissBtn) return;
+    dismissBtn.addEventListener("click", function () {
+      try {
+        localStorage.setItem(LS_KEY, "1");
+      } catch (_) { /* */ }
+      hide();
+    });
+  })();
 })();

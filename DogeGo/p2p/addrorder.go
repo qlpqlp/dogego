@@ -23,8 +23,10 @@ func HostPortIsIPv4(hostport string) bool {
 }
 
 // PreferIPv4First returns addrs with IPv4 endpoints before IPv6, preserving order within each group.
-// Core operators on Windows often see unreachable IPv6 routes; try IPv4 first without dropping v6.
+// Core operators on Windows/containers often see unreachable IPv6 routes; try IPv4 first. When
+// ObserveDialError has disabled IPv6 dials, IPv6 endpoints are dropped entirely.
 func PreferIPv4First(addrs []string) []string {
+	addrs = FilterDialAddrs(addrs)
 	if len(addrs) < 2 {
 		return addrs
 	}
@@ -47,6 +49,7 @@ func PreferIPv4First(addrs []string) []string {
 
 // PreferIPv4FirstShuffle shuffles within IPv4 and IPv6 groups separately, then concatenates (v4 first).
 func PreferIPv4FirstShuffle(addrs []string) []string {
+	addrs = FilterDialAddrs(addrs)
 	if len(addrs) < 2 {
 		return addrs
 	}

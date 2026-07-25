@@ -75,6 +75,88 @@ code {
   color: var(--accent-dim);
 }
 
+/* Slim dismissible notice: codebase under review (localStorage dogego_code_review_banner_v1). */
+:root {
+  --code-review-banner-h: 0px;
+}
+body.has-code-review-banner {
+  --code-review-banner-h: 42px;
+}
+.code-review-banner {
+  position: fixed;
+  top: var(--topbar-h, 52px);
+  left: 0;
+  right: 0;
+  z-index: 290;
+  margin: 0;
+  padding: 0;
+  background: var(--surface-2);
+  border-bottom: 1px solid var(--border);
+  color: var(--text);
+}
+.code-review-banner[hidden] {
+  display: none !important;
+}
+.code-review-banner-inner {
+  display: flex;
+  align-items: center;
+  gap: 10px 14px;
+  max-width: 1120px;
+  margin: 0 auto;
+  padding: 7px 16px;
+  min-height: var(--code-review-banner-h);
+}
+.code-review-banner-icon {
+  flex-shrink: 0;
+  font-size: 1.2rem !important;
+  color: var(--accent-dim);
+}
+.code-review-banner-text {
+  flex: 1;
+  min-width: 0;
+  margin: 0;
+  font-size: 0.84rem;
+  line-height: 1.35;
+  color: var(--text-muted);
+}
+.code-review-banner-text strong {
+  display: inline;
+  color: var(--text);
+  font-weight: 600;
+  margin-right: 0.35em;
+}
+@media (max-width: 640px) {
+  body.has-code-review-banner {
+    --code-review-banner-h: 52px;
+  }
+  .code-review-banner-text strong {
+    display: block;
+    margin: 0 0 2px;
+  }
+}
+.code-review-banner-dismiss {
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  margin: 0;
+  padding: 0;
+  border: none;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--text-muted);
+  cursor: pointer;
+}
+.code-review-banner-dismiss:hover {
+  background: var(--surface);
+  color: var(--text);
+}
+.code-review-banner-dismiss .material-icons-round {
+  font-size: 1.15rem;
+}
+
 .skip-link {
   position: absolute;
   top: -100%;

@@ -57,6 +57,19 @@
   </header>
 
   <div id="dashboard-banner-stack" class="dashboard-banner-stack" aria-live="polite">
+  <div id="code-review-banner" class="update-banner code-review-banner" hidden role="status">
+    <div class="update-banner-inner code-review-banner-inner">
+      <span class="material-icons-round code-review-banner-icon" aria-hidden="true">fact_check</span>
+      <div class="update-banner-text">
+        <strong data-i18n="dashboard.codeReviewTitle">Code under review</strong>
+        <p data-i18n="dashboard.codeReviewBody">DogeGo is beta; this codebase is being reviewed. Behavior may still change.</p>
+      </div>
+      <div class="update-banner-actions">
+        <button type="button" class="btn btn-sm btn-ghost" id="code-review-banner-dismiss" data-i18n="common.dismiss">Dismiss</button>
+      </div>
+    </div>
+  </div>
+
   <div id="update-banner" class="update-banner" hidden role="alert">
     <div class="update-banner-inner">
       <div class="update-banner-text">
