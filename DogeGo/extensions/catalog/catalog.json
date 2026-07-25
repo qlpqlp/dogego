@@ -12,7 +12,7 @@
       "homepage": "https://github.com/qlpqlp/dogego",
       "repository": "https://github.com/qlpqlp/dogego/tree/main/DogeGo/extensions/catalog/doginals",
       "download_url": "https://raw.githubusercontent.com/qlpqlp/dogego/main/DogeGo/extensions/catalog/doginals/dist/doginals.zip",
-      "sha256": "69e26c9f0823f280e6e173d91467232824324f6c92226c1ada90d77241cd4208",
+      "sha256": "05dc1107bbcefee8fb70737bfb27dd356fac38504a2a64bea78859c12595259f",
       "downloads": {
         "universal": {
           "download_url": "https://raw.githubusercontent.com/qlpqlp/dogego/main/DogeGo/extensions/catalog/doginals/dist/doginals-universal.zip",
@@ -75,7 +75,7 @@
         "ui_panel",
         "research_bbpow"
       ],
-      "sha256": "95f8cfa616dcfe5d7bc1d062a2c2bbb775b0e2b8f7fd6e259515d1f3513f2cdc",
+      "sha256": "66504d4957bee471098b0ac45f8ff7cc8fbcd72209f69b2df3cb4a49dee475a4",
       "download_url": "https://raw.githubusercontent.com/qlpqlp/dogego/main/DogeGo/extensions/catalog/bbpow/dist/bbpow.zip",
       "downloads": {
         "universal": {
@@ -93,11 +93,11 @@
       "homepage": "https://github.com/qlpqlp/dogego",
       "repository": "https://github.com/qlpqlp/dogego/tree/main/DogeGo/extensions/catalog/zkl2",
       "download_url": "https://raw.githubusercontent.com/qlpqlp/dogego/main/DogeGo/extensions/catalog/zkl2/dist/zkl2.zip",
-      "sha256": "0fb8d566adfe4eeb1bd4f2cec62c1788dbb638fc60c85d686df8c58ce8742476",
+      "sha256": "4cef54f399ed7b55ae0c206dedcdf5a11e5fead86ea7b371974b6b530b96217f",
       "downloads": {
         "universal": {
           "download_url": "https://raw.githubusercontent.com/qlpqlp/dogego/main/DogeGo/extensions/catalog/zkl2/dist/zkl2-universal.zip",
-          "sha256": "0fb8d566adfe4eeb1bd4f2cec62c1788dbb638fc60c85d686df8c58ce8742476"
+          "sha256": "4cef54f399ed7b55ae0c206dedcdf5a11e5fead86ea7b371974b6b530b96217f"
         }
       },
       "dogego_min_version": "0.1.0",
@@ -135,11 +135,11 @@
       "homepage": "https://github.com/dogecoinfoundation/radiodoge",
       "repository": "https://github.com/qlpqlp/dogego/tree/main/DogeGo/extensions/catalog/radiodoge",
       "download_url": "https://raw.githubusercontent.com/qlpqlp/dogego/main/DogeGo/extensions/catalog/radiodoge/dist/radiodoge.zip",
-      "sha256": "303cf4ef11afcc07d87a172919ea8955c4d63e09aaca02130bc7610999e4be37",
+      "sha256": "7cb71e1b975d0d116c6a00f3789798f50816ed0067d74f7801b3bd423bd3d41f",
       "downloads": {
         "universal": {
           "download_url": "https://raw.githubusercontent.com/qlpqlp/dogego/main/DogeGo/extensions/catalog/radiodoge/dist/radiodoge-universal.zip",
-          "sha256": "303cf4ef11afcc07d87a172919ea8955c4d63e09aaca02130bc7610999e4be37"
+          "sha256": "7cb71e1b975d0d116c6a00f3789798f50816ed0067d74f7801b3bd423bd3d41f"
         }
       },
       "dogego_min_version": "0.1.0",
@@ -174,7 +174,7 @@
       "downloads": {
         "universal": {
           "download_url": "https://raw.githubusercontent.com/qlpqlp/dogego/main/DogeGo/extensions/catalog/example-go/dist/hello-universal.zip",
-          "sha256": "3728aa1d05f6658fef0a368b1c0f114810a32ae2951afbc5a27deac31e06f0f9"
+          "sha256": "6df733cea7e64a03d6d50f33ab0fb8e5bf8af394fa3ddb2a4803523530e5f62b"
         }
       },
       "dogego_min_version": "0.1.0",
