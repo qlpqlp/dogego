@@ -736,14 +736,14 @@ func Run(ctx context.Context, cfg Config) error {
 		p2pSnapForDashboard := func() map[string]any {
 			p2pUICacheMu.Lock()
 			if time.Since(p2pUICachedAt) < 750*time.Millisecond && p2pUICached != nil {
-				s := p2pUICached
+				s := cloneStringAnyMap(p2pUICached)
 				p2pUICacheMu.Unlock()
 				return s
 			}
 			p2pUICacheMu.Unlock()
 			s := p2pSnap()
 			p2pUICacheMu.Lock()
-			p2pUICached = s
+			p2pUICached = cloneStringAnyMap(s)
 			p2pUICachedAt = time.Now()
 			p2pUICacheMu.Unlock()
 			return s

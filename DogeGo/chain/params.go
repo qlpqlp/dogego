@@ -63,13 +63,10 @@ func ParamsFor(net Network) (Params, error) {
 		fp := make([]string, len(TestnetFixedSeedAddrs))
 		copy(fp, TestnetFixedSeedAddrs)
 		return Params{
-			Net:   RebootTestnet,
-			Magic: Magic,
-			Port:  Port,
-			// seed.dogego.org is first so new nodes can discover the DogeGo reboot testnet
-			// quickly (DogeBox running a public DogeGo full node). Core ships no DNS seeds
-			// for this chain; fixed peers from chainparamsseeds.h still follow after DNS.
-			DNSSeeds:             []string{"seed.dogego.org"},
+			Net:                  RebootTestnet,
+			Magic:                Magic,
+			Port:                 Port,
+			DNSSeeds:             nil,
 			FixedPeers:           fp,
 			GenesisVer:           GenesisVer,
 			GenesisTime:          GenesisTime,

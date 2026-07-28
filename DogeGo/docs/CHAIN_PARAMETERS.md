@@ -49,8 +49,8 @@ Default when unset: **`testnet`** (`config/merge.go`, `config/validate.go`, CLI)
 |---|---------|----------------|
 | P2P magic | `c0 c0 c0 c0` | `fd d4 dc e1` |
 | P2P port | **22556** | **44556** |
-| DNS seeds | `seed.multidoge.org`, `seed2.multidoge.org` | **`seed.dogego.org` first** (DogeGo helper; Core ships none), then any `dnsseed` from config |
-| Fixed seeds | `mainnet_seeds.go` (~250+) | `testnet_seeds.go` (33 Core `pnSeed6_test` peers, after DNS) |
+| DNS seeds | `seed.multidoge.org`, `seed2.multidoge.org` | none (Core also empty) |
+| Fixed seeds | `mainnet_seeds.go` (~250+) | `testnet_seeds.go` (33) |
 | Genesis block hash | `1a91e3dace36…` | `d5d619f8be02…` |
 | P2PKH prefix | `D` (0x1e) | `T` (0x41) |
 | `RelaxedPoW` | `false` | `false` (real scrypt PoW; same as Core reboot testnet) |
@@ -88,7 +88,7 @@ Schema: `config/conf.go`. Merge: `config/merge.go`. Wired in `node/run.go`.
 | | Mainnet | Testnet | Reboot testnet |
 |---|---------|---------|----------------|
 | JSON-RPC default | `127.0.0.1:22557` | `127.0.0.1:44555` | `127.0.0.1:44556` |
-| Web UI default | `localhost:2013` | same | same |
+| Web UI default | `127.0.0.1:2013` | same | same |
 
 `config/rpc_defaults.go` - chosen so DogeGo can run beside Core on `:22555` / `:22556`.
 
@@ -99,16 +99,6 @@ Schema: `config/conf.go`. Merge: `config/merge.go`. Wired in `node/run.go`.
 | `p2p/discover.go` | DNS lookup then fixed seeds → candidate `host:port` list |
 | `p2p/addrorder.go` | IPv4-first shuffle |
 | `node/run.go` | Applies config DNS merge, starts discovery, handshake uses `Params.Magic` / `ProtocolVersion` |
-
-### Reboot testnet helper DNS seed (`seed.dogego.org`)
-
-Dogecoin Core ships **no** DNS seeds for reboot testnet. DogeGo sets **`seed.dogego.org` first** in `Params.DNSSeeds` so new nodes can discover peers quickly. That hostname points at a **DogeBox** running a public **DogeGo reboot-testnet full node** (bootstrap helper only). Discovery order:
-
-1. **`seed.dogego.org`** (built-in, first)
-2. Any extra `"dnsseed"` hostnames from `dogecoinconf.json` (appended, deduped)
-3. Core **fixed seeds** in `chain/testnet_seeds.go` (`pnSeed6_test`)
-
-Disable DNS discovery with `"dnsseed_lookup": false` (Core `-dnsseed=0`). Optional founder DNS: still use `"dnsseed": ["your.seed.example"]` - it runs after `seed.dogego.org`.
 
 ---
 

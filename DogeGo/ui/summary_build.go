@@ -433,6 +433,7 @@ func BuildSummaryMap(cfg StartConfig) (map[string]any, error) {
 			}
 		}
 		if act, ok := p2pSnap["dogego_sync_activity"].(map[string]any); ok && act != nil {
+			act = cloneStringAnyMap(act)
 			patchSyncActivityForHeaderTip(act, tip, peerStartHeight, contiguousH, chainActive, blocksBehind, blocksPerMin, summaryLowestMissing, inFlight, bodyIBDHeaderPaused)
 			summary["dogego_sync_activity"] = act
 		} else if act, ok := p2pSnap["dogego_sync_activity"]; ok && act != nil {
@@ -598,7 +599,9 @@ func applyBodyIBDPauseOperatorFields(summary map[string]any, tip, chainActive, c
 		} else if v, ok := summary["in_flight_batches"].(float64); ok {
 			inFlight = int(v)
 		}
+		act = cloneStringAnyMap(act)
 		patchSyncActivityForHeaderTip(act, tip, peerStartHeight, contiguousH, chainActive, blocksBehind, blocksPerMin, lowestMissing, inFlight, true)
+		summary["dogego_sync_activity"] = act
 	}
 	health, syncOK := rpc.SyncHealthAssessment(syncPhase, tip, chainActive, blocksBehind, blocksPerMin, summaryLastStored, headerRecovery, false)
 	summary["dogego_sync_health"] = health

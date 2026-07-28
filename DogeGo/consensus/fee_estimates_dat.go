@@ -79,6 +79,7 @@ func (h *FeeHistory) SaveCoreFeeEstimatesDat(path string) error {
 		return nil
 	}
 	h.mu.Lock()
+	defer h.mu.Unlock()
 	stats := h.confirmStats
 	var best int32
 	if stats != nil {
@@ -88,7 +89,6 @@ func (h *FeeHistory) SaveCoreFeeEstimatesDat(path string) error {
 			best = int32(stats.bestSeenHeight)
 		}
 	}
-	h.mu.Unlock()
 	return WriteCoreFeeEstimatesDat(path, best, stats)
 }
 

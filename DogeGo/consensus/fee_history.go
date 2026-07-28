@@ -367,8 +367,8 @@ func (h *FeeHistory) EstimatePerKBFromConfirmStats(nblocks int, conservative boo
 		return 0
 	}
 	h.mu.Lock()
+	defer h.mu.Unlock()
 	stats := h.confirmStats
-	h.mu.Unlock()
 	if stats == nil {
 		return 0
 	}
@@ -385,8 +385,8 @@ func (h *FeeHistory) ConfirmStatsBucketMarket() map[string]map[string]interface{
 		return nil
 	}
 	h.mu.Lock()
+	defer h.mu.Unlock()
 	stats := h.confirmStats
-	h.mu.Unlock()
 	if stats == nil {
 		return nil
 	}

@@ -37,6 +37,8 @@ func scriptKeyFromH160(h160 [20]byte) string {
 }
 
 func (c *auxBlockCache) onTipChange(tipHash string) {
+	c.mu.Lock()
+	defer c.mu.Unlock()
 	if c.prevTipHash != "" && c.prevTipHash != tipHash {
 		c.resetLocked()
 	}
