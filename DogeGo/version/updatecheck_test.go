@@ -13,6 +13,7 @@ import (
 	"net/http/httptest"
 	"os"
 	"path/filepath"
+	"strings"
 	"testing"
 )
 
@@ -70,12 +71,15 @@ func TestUpdateCheckerDismissAndNotify(t *testing.T) {
 
 func TestFetchLatestReleasePicksHighest(t *testing.T) {
 	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		switch r.URL.Path {
-		case "/repos/qlpqlp/dogego/releases/latest":
-			_ = json.NewEncoder(w).Encode(ghRelease{TagName: "v0.1.0", HTMLURL: "https://github.com/qlpqlp/dogego/releases/tag/v0.1.0"})
-		case "/repos/dogeorg/dogego/releases/latest":
-			_ = json.NewEncoder(w).Encode(ghRelease{TagName: "v0.2.0", HTMLURL: "https://github.com/dogeorg/dogego/releases/tag/v0.2.0"})
-		case "/repos/dogecoinfoundation/dogego/releases/latest":
+		switch {
+		case strings.HasPrefix(r.URL.Path, "/repos/qlpqlp/dogego/releases"):
+			_ = json.NewEncoder(w).Encode([]ghRelease{{TagName: "v0.1.0", HTMLURL: "https://github.com/qlpqlp/dogego/releases/tag/v0.1.0"}})
+		case strings.HasPrefix(r.URL.Path, "/repos/dogeorg/dogego/releases"):
+			_ = json.NewEncoder(w).Encode([]ghRelease{
+				{TagName: "v0.1.5-beta", HTMLURL: "https://github.com/dogeorg/dogego/releases/tag/v0.1.5-beta", Prerelease: true},
+				{TagName: "v0.2.0", HTMLURL: "https://github.com/dogeorg/dogego/releases/tag/v0.2.0"},
+			})
+		case strings.HasPrefix(r.URL.Path, "/repos/dogecoinfoundation/dogego/releases"):
 			http.NotFound(w, r)
 		default:
 			http.NotFound(w, r)
@@ -131,14 +135,14 @@ func TestPickReleaseChecksumURL(t *testing.T) {
 
 func TestUpdateCheckerRefreshUsesMock(t *testing.T) {
 	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		_ = json.NewEncoder(w).Encode(ghRelease{
+		_ = json.NewEncoder(w).Encode([]ghRelease{{
 			TagName: "v99.0.0",
 			HTMLURL: "https://github.com/qlpqlp/dogego/releases/tag/v99.0.0",
 			Assets: []struct {
 				Name               string `json:"name"`
 				BrowserDownloadURL string `json:"browser_download_url"`
 			}{{Name: "dogego-linux-amd64.tar.gz", BrowserDownloadURL: "https://example.com/bin"}},
-		})
+		}})
 	}))
 	defer srv.Close()
 

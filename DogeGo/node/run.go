@@ -1152,23 +1152,19 @@ func Run(ctx context.Context, cfg Config) error {
 	startIBDConnectWorkers(ctx, blockStore, utxoCache, utxoQuarantinedOnStartup)
 	autoFilterRepair := autoRecoverFilterRepairFn(j, chainRoot, filterIx, txIx, rbStore)
 	if needsUncleanRepair {
-		applog.Line("recovery", "previous run did not shut down cleanly; running synchronous repair pass")
+		applog.Line("recovery", "previous run did not shut down cleanly; repairing in background (node stays usable)")
+	}
+	go func() {
 		if rewound, err := autoRecoverSweep(chainRoot, j, auxJ, p, blockStore, autoFilterRepair); err != nil {
-			applog.Line("recovery", "unclean-shutdown repair: "+err.Error())
+			applog.Line("recovery", "startup repair: "+err.Error())
 		} else if rewound {
 			rawFill.ResetAfterChainTruncate(blockStore)
 			headerCatchUpPending.Store(true)
 		}
-	} else {
-		go func() {
-			if rewound, _ := autoRecoverSweep(chainRoot, j, auxJ, p, blockStore, autoFilterRepair); rewound {
-				rawFill.ResetAfterChainTruncate(blockStore)
-				headerCatchUpPending.Store(true)
-			}
-		}()
-	}
-	// Mark while running so a crash or force-exit leaves a marker for next-start repair.
+	}()
+	// Mark while running so a crash or force-kill leaves a marker for next-start repair.
 	MarkUncleanShutdown(chainRoot)
+	RegisterIntentionalStopClearDir(chainRoot)
 	clearUncleanOnExit = true
 	blockStore.FeeHistory = feeHistory
 	blockStore.FeeHistoryPath = feeHistoryPath

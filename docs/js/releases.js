@@ -10,8 +10,8 @@
 
   var PLATFORM_ASSETS = [
     { id: "windows", os: ["win"], arch: ["x64", "amd64"], asset: "dogego-windows-amd64.exe", labelKey: "download.platforms.windows.name" },
-    { id: "macos-intel", os: ["mac"], arch: ["x64", "amd64"], asset: "dogego-darwin-amd64", labelKey: "download.platforms.macos.name", sub: "Intel" },
-    { id: "macos-arm", os: ["mac"], arch: ["arm64"], asset: "dogego-darwin-arm64", labelKey: "download.platforms.macos.name", sub: "Apple Silicon" },
+    { id: "macos-intel", os: ["mac"], arch: ["x64", "amd64"], asset: "dogego-darwin-amd64", labelKey: "download.platforms.macosIntel.name" },
+    { id: "macos-arm", os: ["mac"], arch: ["arm64"], asset: "dogego-darwin-arm64", labelKey: "download.platforms.macosArm.name" },
     { id: "linux", os: ["linux"], arch: ["x64", "amd64", "arm64", "arm", "x86"], asset: "dogego-linux-amd64", labelKey: "download.platforms.linux.name" }
   ];
 
@@ -114,30 +114,80 @@
     return "";
   }
 
-  function fetchLatestRelease(owner, repo) {
-    var url = "https://api.github.com/repos/" + encodeURIComponent(owner) + "/" + encodeURIComponent(repo) + "/releases/latest";
-    return fetch(url, {
-      headers: {
-        Accept: "application/vnd.github+json",
-        "User-Agent": "DogeGo-Website-Release-Check"
+  function mapRelease(rel, owner, repo) {
+    if (!rel || !rel.tag_name) return null;
+    return {
+      tag: rel.tag_name,
+      version: normalizeSemver(rel.tag_name),
+      name: rel.name || rel.tag_name,
+      body: typeof rel.body === "string" ? rel.body : "",
+      htmlUrl: rel.html_url,
+      source: "https://github.com/" + owner + "/" + repo,
+      sourceLabel: owner + "/" + repo,
+      assets: rel.assets || [],
+      publishedAt: rel.published_at || "",
+      prerelease: !!rel.prerelease
+    };
+  }
+
+  function pickBestFromList(list, owner, repo) {
+    var best = null;
+    (list || []).forEach(function (rel) {
+      if (!rel || rel.draft || !rel.tag_name) return;
+      var mapped = mapRelease(rel, owner, repo);
+      if (!mapped || !mapped.version) return;
+      if (!best) {
+        best = mapped;
+        return;
       }
-    }).then(function (resp) {
+      var cmp = semverCompare(mapped.version, best.version);
+      if (cmp > 0) {
+        best = mapped;
+        return;
+      }
+      // Same base semver: prefer newer publish time; if tied, prefer stable over prerelease.
+      if (cmp === 0) {
+        if (mapped.publishedAt && best.publishedAt && mapped.publishedAt > best.publishedAt) {
+          best = mapped;
+        } else if (mapped.publishedAt === best.publishedAt && best.prerelease && !mapped.prerelease) {
+          best = mapped;
+        }
+      }
+    });
+    return best;
+  }
+
+  function fetchLatestRelease(owner, repo) {
+    var listUrl = "https://api.github.com/repos/" + encodeURIComponent(owner) + "/" + encodeURIComponent(repo) + "/releases?per_page=30";
+    var latestUrl = "https://api.github.com/repos/" + encodeURIComponent(owner) + "/" + encodeURIComponent(repo) + "/releases/latest";
+    var headers = {
+      Accept: "application/vnd.github+json",
+      "User-Agent": "DogeGo-Website-Release-Check"
+    };
+    return fetch(listUrl, { headers: headers }).then(function (resp) {
       if (resp.status === 404) return null;
-      if (!resp.ok) throw new Error(owner + "/" + repo + ": HTTP " + resp.status);
-      return resp.json();
-    }).then(function (rel) {
-      if (!rel || !rel.tag_name) return null;
-      return {
-        tag: rel.tag_name,
-        version: normalizeSemver(rel.tag_name),
-        name: rel.name || rel.tag_name,
-        body: typeof rel.body === "string" ? rel.body : "",
-        htmlUrl: rel.html_url,
-        source: "https://github.com/" + owner + "/" + repo,
-        sourceLabel: owner + "/" + repo,
-        assets: rel.assets || [],
-        publishedAt: rel.published_at || ""
-      };
+      if (resp.ok) {
+        return resp.json().then(function (list) {
+          var best = pickBestFromList(list, owner, repo);
+          if (best) return best;
+          // Empty list or no usable tags: try /latest as a last resort.
+          return fetch(latestUrl, { headers: headers }).then(function (latestResp) {
+            if (latestResp.status === 404) return null;
+            if (!latestResp.ok) return null;
+            return latestResp.json().then(function (rel) {
+              return mapRelease(rel, owner, repo);
+            });
+          });
+        });
+      }
+      // Fall back to /latest (stable only) if the list endpoint fails.
+      return fetch(latestUrl, { headers: headers }).then(function (latestResp) {
+        if (latestResp.status === 404) return null;
+        if (!latestResp.ok) throw new Error(owner + "/" + repo + ": HTTP " + latestResp.status);
+        return latestResp.json().then(function (rel) {
+          return mapRelease(rel, owner, repo);
+        });
+      });
     });
   }
 
@@ -152,7 +202,22 @@
       var best = null;
       results.forEach(function (r) {
         if (!r || r.error || !r.tag) return;
-        if (!best || semverCompare(r.version, best.version) > 0) best = r;
+        if (!best) {
+          best = r;
+          return;
+        }
+        var cmp = semverCompare(r.version, best.version);
+        if (cmp > 0) {
+          best = r;
+          return;
+        }
+        if (cmp === 0) {
+          if (r.publishedAt && best.publishedAt && r.publishedAt > best.publishedAt) {
+            best = r;
+          } else if (r.publishedAt === best.publishedAt && best.prerelease && !r.prerelease) {
+            best = r;
+          }
+        }
       });
       return { release: best, sourcesChecked: sourcesChecked };
     });
@@ -166,7 +231,7 @@
       var checksum = findChecksumUrl(release.assets, spec.asset);
       rows.push({
         id: spec.id,
-        label: t(spec.labelKey) + (spec.sub ? " (" + spec.sub + ")" : ""),
+        label: t(spec.labelKey),
         fileName: asset.name,
         url: asset.browser_download_url,
         checksumUrl: checksum
@@ -193,7 +258,9 @@
     var topbar = document.getElementById("topbar-version");
     if (topbar) {
       topbar.textContent = display;
-      topbar.title = rel && rel.tag ? "Latest release on GitHub" : "DogeGo version";
+      topbar.title = rel && rel.tag
+        ? (rel.prerelease ? "Latest pre-release on GitHub" : "Latest release on GitHub")
+        : "DogeGo version";
     }
     var demoVer = document.querySelector(".demo-topbar-ver");
     if (demoVer) demoVer.textContent = display;
@@ -404,10 +471,20 @@
 
     if (banner) banner.setAttribute("data-state", "ready");
     if (bannerIcon) bannerIcon.textContent = "rocket_launch";
-    setText(bannerTitle, t("download.readyTitle", { version: tagDisplay }));
+    setText(
+      bannerTitle,
+      rel.prerelease
+        ? t("download.readyTitlePrerelease", { version: tagDisplay })
+        : t("download.readyTitle", { version: tagDisplay })
+    );
     if (bannerMeta) {
       bannerMeta.hidden = false;
-      setHtml(bannerMeta, t("download.readyBody", { source: rel.sourceLabel }));
+      setHtml(
+        bannerMeta,
+        rel.prerelease
+          ? t("download.readyBodyPrerelease", { source: rel.sourceLabel })
+          : t("download.readyBody", { source: rel.sourceLabel })
+      );
     }
     if (rel.body && String(rel.body).trim()) {
       setHtml(bannerBody, renderReleaseMarkdown(rel.body));
@@ -438,7 +515,11 @@
           : t("hero.download");
       }
     }
-    setHeroReleaseNote(t("download.readyHeroNote", { source: rel.sourceLabel }));
+    setHeroReleaseNote(
+      rel.prerelease
+        ? t("download.readyHeroNotePrerelease", { source: rel.sourceLabel })
+        : t("download.readyHeroNote", { source: rel.sourceLabel })
+    );
     updateVersionDisplay(rel);
 
     if (assetsWrap && assetsList) {
@@ -477,12 +558,7 @@
         var pid = card.getAttribute("data-platform");
         var link = card.querySelector(".platform-link");
         if (!link) return;
-        var match = rows.filter(function (r) {
-          if (pid === "windows") return r.id === "windows";
-          if (pid === "macos") return r.id === "macos-intel" || r.id === "macos-arm";
-          if (pid === "linux") return r.id === "linux";
-          return false;
-        });
+        var match = rows.filter(function (r) { return r.id === pid; });
         if (match.length) {
           link.textContent = t("download.downloadLink");
           link.href = match[0].url;

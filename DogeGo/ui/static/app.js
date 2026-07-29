@@ -2327,35 +2327,40 @@
     const rel = $("st-update-release");
     const dl = $("st-update-download");
     const applyBtn = $("st-update-apply");
+    const forceBtn = $("st-update-force");
     const dismiss = $("st-update-dismiss");
     if (!status) return;
     const cur = (s && s.dogego_update_current) || (s && s.dogego_version) || "";
     const latest = s && s.dogego_update_latest;
+    const latestTag = (s && s.dogego_update_latest_tag) || latest;
     const avail = s && s.dogego_update_available === true && s.dogego_update_dismissed !== true;
+    const installable = s && s.dogego_update_installable === true;
+    const prerelease = s && s.dogego_update_prerelease === true;
     const direct = s && s.dogego_update_direct_available && s.dogego_update_download_url;
     const relHref = updateReleaseHref(s);
     if (s && s.dogego_update_check_error) {
       status.textContent = "Running " + (cur || "?") + ". Update check error: " + s.dogego_update_check_error;
     } else if (avail && latest) {
-      status.textContent = "Running " + cur + ". Update available: " + latest + ".";
+      status.textContent = "Running " + cur + ". Update available: " + (latestTag || latest) + (prerelease ? " (pre-release)" : "") + ".";
     } else {
-      status.textContent = "Running " + (cur || "?") + (latest ? " (latest on GitHub: " + latest + ")" : ". Up to date on GitHub.");
+      status.textContent = "Running " + (cur || "?") + (latestTag ? " (GitHub: " + latestTag + (prerelease ? ", pre-release" : "") + ")" : ". No newer GitHub release.") + ".";
     }
     if (detail) {
       let text = "";
       if (s && s.dogego_update_checked_at) text += "Last checked " + s.dogego_update_checked_at + ". ";
-      if (avail && s && s.dogego_update_checksum_sha256) text += "Release SHA256 " + s.dogego_update_checksum_sha256 + ". ";
+      if ((avail || installable) && s && s.dogego_update_checksum_sha256) text += "Release SHA256 " + s.dogego_update_checksum_sha256 + ". ";
       if (avail && s && s.dogego_update_instructions) text += s.dogego_update_instructions;
       detail.textContent = text.trim();
       detail.hidden = !text.trim();
     }
     if (rel) {
-      rel.hidden = !(avail && relHref);
+      rel.hidden = !relHref;
       if (relHref) rel.href = relHref;
     }
-    if (dl) dl.hidden = true;
+    if (dl) dl.hidden = !direct;
     if (applyBtn) applyBtn.hidden = !(avail && direct);
-    if (dismiss) dismiss.hidden = true;
+    if (forceBtn) forceBtn.hidden = !installable;
+    if (dismiss) dismiss.hidden = !avail;
   }
 
   async function settingsUpdateAction(path, btn) {
@@ -2363,9 +2368,11 @@
     const detail = $("st-update-detail");
     try {
       const r = await fetch(path, { method: "POST", credentials: "same-origin" });
-      const body = await r.json().catch(() => ({}));
-      if (!r.ok) throw new Error(body.error || body.message || ("HTTP " + r.status));
-      if (path === "/api/update/apply") {
+      const raw = await r.text();
+      let body = {};
+      try { body = raw ? JSON.parse(raw) : {}; } catch (_) { body = { error: raw }; }
+      if (!r.ok) throw new Error(body.error || body.message || raw || ("HTTP " + r.status));
+      if (path.indexOf("/api/update/apply") === 0) {
         if (detail) detail.textContent = body.note || "Restarting…";
         return;
       }
@@ -2373,7 +2380,7 @@
       if (body.path && detail) detail.textContent = "Downloaded to " + body.path + (body.sha256 ? " SHA256 " + body.sha256 : "") + ".";
       await refresh();
     } catch (e) {
-      if (detail) detail.textContent = String(e);
+      if (detail) detail.textContent = String(e && e.message ? e.message : e);
     } finally {
       if (btn) btn.disabled = false;
     }
@@ -14565,8 +14572,10 @@
     if (btn) btn.disabled = true;
     try {
       const r = await fetch("/api/update/download", { method: "POST", credentials: "same-origin" });
-      const body = await r.json().catch(() => ({}));
-      if (!r.ok) throw new Error(body.error || ("HTTP " + r.status));
+      const raw = await r.text();
+      let body = {};
+      try { body = raw ? JSON.parse(raw) : {}; } catch (_) { body = { error: raw }; }
+      if (!r.ok) throw new Error(body.error || raw || ("HTTP " + r.status));
       const detail = $("update-banner-detail");
       if (detail) {
         let text = "Downloaded to " + (body.path || "updates folder") + ". ";
@@ -14576,7 +14585,7 @@
       }
     } catch (e) {
       const detail = $("update-banner-detail");
-      if (detail) detail.textContent = String(e);
+      if (detail) detail.textContent = String(e && e.message ? e.message : e);
     } finally {
       if (btn) btn.disabled = false;
     }
@@ -14588,8 +14597,10 @@
     if (detail) detail.textContent = "Installing update. The node will restart…";
     try {
       const r = await fetch("/api/update/apply", { method: "POST", credentials: "same-origin" });
-      const body = await r.json().catch(() => ({}));
-      if (!r.ok) throw new Error(body.error || body.message || ("HTTP " + r.status));
+      const raw = await r.text();
+      let body = {};
+      try { body = raw ? JSON.parse(raw) : {}; } catch (_) { body = { error: raw }; }
+      if (!r.ok) throw new Error(body.error || body.message || raw || ("HTTP " + r.status));
       if (detail) detail.textContent = body.note || "Restarting into the new version…";
       let tries = 0;
       const poll = setInterval(async () => {
@@ -14604,7 +14615,7 @@
         if (tries > 120) clearInterval(poll);
       }, 1000);
     } catch (e) {
-      if (detail) detail.textContent = String(e);
+      if (detail) detail.textContent = String(e && e.message ? e.message : e);
       if (btn) btn.disabled = false;
     }
   });
@@ -14742,6 +14753,7 @@
   $("st-update-check") && $("st-update-check").addEventListener("click", () => settingsUpdateAction("/api/update/check", $("st-update-check")));
   $("st-update-download") && $("st-update-download").addEventListener("click", () => settingsUpdateAction("/api/update/download", $("st-update-download")));
   $("st-update-apply") && $("st-update-apply").addEventListener("click", () => settingsUpdateAction("/api/update/apply", $("st-update-apply")));
+  $("st-update-force") && $("st-update-force").addEventListener("click", () => settingsUpdateAction("/api/update/apply?force=1", $("st-update-force")));
   $("st-update-dismiss") && $("st-update-dismiss").addEventListener("click", async () => {
     try {
       await fetch("/api/update/dismiss", { method: "POST", credentials: "same-origin" });

@@ -2342,16 +2342,18 @@
             </div>
             <div class="subpanel settings-card" data-st-panel="updates" role="tabpanel" hidden>
               <h2 data-i18n="settings.updatesTitle">Software updates</h2>
-              <p class="field-hint" data-i18n="settings.updatesHint">Checks <a href="https://github.com/qlpqlp/dogego/releases" target="_blank" rel="noopener noreferrer">GitHub Releases</a> daily. Disable with <code>DOGEGO_NO_UPDATE_CHECK=1</code>.</p>
+	<p class="field-hint" data-i18n="settings.updatesHint">Checks <a href="https://github.com/qlpqlp/dogego/releases" target="_blank" rel="noopener noreferrer">GitHub Releases</a> daily (including pre-releases). Disable with <code>DOGEGO_NO_UPDATE_CHECK=1</code>.</p>
               <p class="label" id="st-update-status" aria-live="polite">Checking update status…</p>
               <div class="settings-actions settings-update-actions" id="st-update-actions">
                 <button type="button" class="btn btn-ghost btn-sm" id="st-update-check">Check now</button>
                 <a class="btn btn-ghost btn-sm" id="st-update-release" href="#" target="_blank" rel="noopener noreferrer" hidden>Release notes</a>
                 <button type="button" class="btn btn-primary btn-sm" id="st-update-apply" hidden>Install update</button>
+                <button type="button" class="btn btn-ghost btn-sm" id="st-update-force" hidden>Force reinstall</button>
                 <button type="button" class="btn btn-ghost btn-sm" id="st-update-download" hidden>Download binary</button>
                 <button type="button" class="btn btn-ghost btn-sm" id="st-update-dismiss" hidden>Dismiss notice</button>
               </div>
               <p class="field-hint" id="st-update-detail" aria-live="polite"></p>
+              <p class="field-hint">Install/Force spawn a helper process that stops this node, replaces the binary on Windows/macOS/Linux, and restarts DogeGo. Force reinstall works for the same version or a GitHub pre-release when a matching platform asset exists.</p>
             </div>
             <div class="subpanel settings-card" data-st-panel="tools" role="tabpanel" hidden>
               <h2 data-i18n="settings.toolsTitle">Node tools &amp; RPC actions</h2>

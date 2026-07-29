@@ -50,13 +50,13 @@ func filterRestartArgs(args []string) []string {
 	out := make([]string, 0, len(args))
 	for i := 0; i < len(args); i++ {
 		arg := args[i]
-		if arg == restartWaitPIDFlag {
+		if arg == restartWaitPIDFlag || arg == replaceTargetFlag {
 			if i+1 < len(args) {
 				i++
 			}
 			continue
 		}
-		if strings.HasPrefix(arg, restartWaitPIDFlag+"=") {
+		if strings.HasPrefix(arg, restartWaitPIDFlag+"=") || strings.HasPrefix(arg, replaceTargetFlag+"=") {
 			continue
 		}
 		out = append(out, arg)

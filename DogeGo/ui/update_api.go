@@ -9,29 +9,51 @@ package ui
 import (
 	"encoding/json"
 	"net/http"
+	"strings"
 
 	"dogego/version"
 )
 
+func writeUpdateAPIError(w http.ResponseWriter, status int, msg string) {
+	w.Header().Set("Content-Type", "application/json; charset=utf-8")
+	w.WriteHeader(status)
+	_ = json.NewEncoder(w).Encode(map[string]any{"ok": false, "error": msg})
+}
+
+func updateRequestForce(r *http.Request) bool {
+	if r == nil {
+		return false
+	}
+	q := strings.TrimSpace(strings.ToLower(r.URL.Query().Get("force")))
+	if q == "1" || q == "true" || q == "yes" {
+		return true
+	}
+	var body struct {
+		Force bool `json:"force"`
+	}
+	_ = json.NewDecoder(r.Body).Decode(&body)
+	return body.Force
+}
+
 func registerUpdateRoutes(mux *http.ServeMux, cfg StartConfig) {
 	mux.HandleFunc("/api/update/status", func(w http.ResponseWriter, r *http.Request) {
 		if r.Method != http.MethodGet {
-			http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
+			writeUpdateAPIError(w, http.StatusMethodNotAllowed, "method not allowed")
 			return
 		}
 		writeUpdateJSON(w, cfg)
 	})
 	mux.HandleFunc("/api/update/check", func(w http.ResponseWriter, r *http.Request) {
 		if r.Method != http.MethodPost {
-			http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
+			writeUpdateAPIError(w, http.StatusMethodNotAllowed, "method not allowed")
 			return
 		}
 		if !isLoopback(r) {
-			http.Error(w, "forbidden", http.StatusForbidden)
+			writeUpdateAPIError(w, http.StatusForbidden, "forbidden")
 			return
 		}
 		if cfg.UpdateChecker == nil {
-			http.Error(w, "update checker not available", http.StatusServiceUnavailable)
+			writeUpdateAPIError(w, http.StatusServiceUnavailable, "update checker not available")
 			return
 		}
 		cfg.UpdateChecker.RefreshNow(r.Context())
@@ -39,19 +61,19 @@ func registerUpdateRoutes(mux *http.ServeMux, cfg StartConfig) {
 	})
 	mux.HandleFunc("/api/update/dismiss", func(w http.ResponseWriter, r *http.Request) {
 		if r.Method != http.MethodPost {
-			http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
+			writeUpdateAPIError(w, http.StatusMethodNotAllowed, "method not allowed")
 			return
 		}
 		if !isLoopback(r) {
-			http.Error(w, "forbidden", http.StatusForbidden)
+			writeUpdateAPIError(w, http.StatusForbidden, "forbidden")
 			return
 		}
 		if cfg.UpdateChecker == nil {
-			http.Error(w, "update checker not available", http.StatusServiceUnavailable)
+			writeUpdateAPIError(w, http.StatusServiceUnavailable, "update checker not available")
 			return
 		}
 		if err := cfg.UpdateChecker.Dismiss(); err != nil {
-			http.Error(w, err.Error(), http.StatusBadRequest)
+			writeUpdateAPIError(w, http.StatusBadRequest, err.Error())
 			return
 		}
 		w.Header().Set("Content-Type", "application/json; charset=utf-8")
@@ -59,25 +81,25 @@ func registerUpdateRoutes(mux *http.ServeMux, cfg StartConfig) {
 	})
 	mux.HandleFunc("/api/update/download", func(w http.ResponseWriter, r *http.Request) {
 		if r.Method != http.MethodPost {
-			http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
+			writeUpdateAPIError(w, http.StatusMethodNotAllowed, "method not allowed")
 			return
 		}
 		if !isLoopback(r) {
-			http.Error(w, "forbidden", http.StatusForbidden)
+			writeUpdateAPIError(w, http.StatusForbidden, "forbidden")
 			return
 		}
 		if cfg.UpdateChecker == nil {
-			http.Error(w, "update checker not available", http.StatusServiceUnavailable)
+			writeUpdateAPIError(w, http.StatusServiceUnavailable, "update checker not available")
 			return
 		}
 		st := cfg.UpdateChecker.Status()
 		if st.DownloadURL == "" {
-			http.Error(w, "no direct download asset for this platform", http.StatusBadRequest)
+			writeUpdateAPIError(w, http.StatusBadRequest, "no direct download asset for this platform (need GOOS+GOARCH match in the release asset name)")
 			return
 		}
 		res, err := cfg.UpdateChecker.DownloadReleaseAssetVerified(cfg.BaseDataDir)
 		if err != nil {
-			http.Error(w, err.Error(), http.StatusInternalServerError)
+			writeUpdateAPIError(w, http.StatusInternalServerError, err.Error())
 			return
 		}
 		note := "Stop DogeGo, replace your binary with the downloaded file, then restart."
@@ -98,53 +120,64 @@ func registerUpdateRoutes(mux *http.ServeMux, cfg StartConfig) {
 	})
 	mux.HandleFunc("/api/update/apply", func(w http.ResponseWriter, r *http.Request) {
 		if r.Method != http.MethodPost {
-			http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
+			writeUpdateAPIError(w, http.StatusMethodNotAllowed, "method not allowed")
 			return
 		}
 		if !isLoopback(r) {
-			http.Error(w, "forbidden", http.StatusForbidden)
+			writeUpdateAPIError(w, http.StatusForbidden, "forbidden")
 			return
 		}
 		if cfg.UpdateChecker == nil {
-			http.Error(w, "update checker not available", http.StatusServiceUnavailable)
+			writeUpdateAPIError(w, http.StatusServiceUnavailable, "update checker not available")
 			return
 		}
 		if cfg.ApplyUpdate == nil {
-			http.Error(w, "apply update not available", http.StatusServiceUnavailable)
+			writeUpdateAPIError(w, http.StatusServiceUnavailable, "apply update not available")
 			return
 		}
+		force := updateRequestForce(r)
 		st := cfg.UpdateChecker.Status()
-		if !st.Available || st.DownloadURL == "" {
-			http.Error(w, "no update available for this platform", http.StatusBadRequest)
+		canInstall := st.Installable || (st.DownloadURL != "" && st.LatestVersion != "")
+		if !canInstall {
+			writeUpdateAPIError(w, http.StatusBadRequest, "no installable release asset for this platform")
+			return
+		}
+		if !force && !st.Available {
+			writeUpdateAPIError(w, http.StatusBadRequest, "no newer update available (use Force reinstall to install the GitHub release/pre-release for this platform)")
 			return
 		}
 		path, err := version.LatestDownloadedAsset(cfg.BaseDataDir, st.LatestVersion)
 		if err != nil {
 			res, dlErr := cfg.UpdateChecker.DownloadReleaseAssetVerified(cfg.BaseDataDir)
 			if dlErr != nil {
-				http.Error(w, dlErr.Error(), http.StatusInternalServerError)
+				writeUpdateAPIError(w, http.StatusInternalServerError, dlErr.Error())
 				return
 			}
 			path = res.Path
 			if st.ChecksumURL != "" && !res.ChecksumVerify {
-				http.Error(w, "release checksum required before apply", http.StatusBadRequest)
+				writeUpdateAPIError(w, http.StatusBadRequest, "release checksum required before apply")
 				return
 			}
 		} else if st.ChecksumURL != "" || st.ChecksumSHA256 != "" {
 			if _, err := cfg.UpdateChecker.VerifyDownloadedAsset(path); err != nil {
-				http.Error(w, err.Error(), http.StatusBadRequest)
+				writeUpdateAPIError(w, http.StatusBadRequest, err.Error())
 				return
 			}
 		}
 		if err := cfg.ApplyUpdate(path); err != nil {
-			http.Error(w, err.Error(), http.StatusInternalServerError)
+			writeUpdateAPIError(w, http.StatusInternalServerError, err.Error())
 			return
+		}
+		note := "Update helper starting: it will stop this process, replace the install binary, and restart DogeGo."
+		if force && !st.Available {
+			note = "Force reinstall starting for " + st.LatestTag + ". The node will restart shortly."
 		}
 		w.Header().Set("Content-Type", "application/json; charset=utf-8")
 		_ = json.NewEncoder(w).Encode(map[string]any{
-			"ok":   true,
-			"path": path,
-			"note": "Update process starting. The node will restart shortly.",
+			"ok":    true,
+			"path":  path,
+			"force": force,
+			"note":  note,
 		})
 	})
 }

@@ -31,9 +31,11 @@ const (
 type UpdateStatus struct {
 	CheckedAt         time.Time `json:"checked_at"`
 	Available         bool      `json:"available"`
+	Installable       bool      `json:"installable"` // platform asset present (newer or same for force reinstall)
 	CurrentVersion    string    `json:"current_version"`
 	LatestVersion     string    `json:"latest_version,omitempty"`
 	LatestTag         string    `json:"latest_tag,omitempty"`
+	Prerelease        bool      `json:"prerelease,omitempty"`
 	Source            string    `json:"source,omitempty"`
 	ReleaseURL        string    `json:"release_url,omitempty"`
 	DownloadURL       string    `json:"download_url,omitempty"`
@@ -64,9 +66,11 @@ type updateCheckState struct {
 }
 
 type ghRelease struct {
-	TagName string `json:"tag_name"`
-	HTMLURL string `json:"html_url"`
-	Assets  []struct {
+	TagName    string `json:"tag_name"`
+	HTMLURL    string `json:"html_url"`
+	Draft      bool   `json:"draft"`
+	Prerelease bool   `json:"prerelease"`
+	Assets     []struct {
 		Name               string `json:"name"`
 		BrowserDownloadURL string `json:"browser_download_url"`
 	} `json:"assets"`
@@ -214,11 +218,13 @@ func (c *UpdateChecker) PrintNotice(w io.Writer) {
 func (c *UpdateChecker) SummaryFields() map[string]any {
 	st := c.Status()
 	out := map[string]any{
-		"dogego_update_available":          st.Available,
-		"dogego_update_current":            st.CurrentVersion,
-		"dogego_update_build_cmd":          st.BuildCommand,
-		"dogego_update_dismissed":          st.Dismissed,
-		"dogego_update_direct_available":   st.DirectUpdate,
+		"dogego_update_available":        st.Available,
+		"dogego_update_installable":      st.Installable,
+		"dogego_update_prerelease":       st.Prerelease,
+		"dogego_update_current":          st.CurrentVersion,
+		"dogego_update_build_cmd":        st.BuildCommand,
+		"dogego_update_dismissed":        st.Dismissed,
+		"dogego_update_direct_available": st.DirectUpdate,
 		"dogego_update_check_interval_h": int(updateCheckInterval / time.Hour),
 	}
 	if st.LatestVersion != "" {
@@ -355,6 +361,7 @@ func (c *UpdateChecker) refresh(ctx context.Context) {
 	c.status.CheckError = ""
 	c.status.LatestVersion = normalizeSemver(best.TagName)
 	c.status.LatestTag = strings.TrimSpace(best.TagName)
+	c.status.Prerelease = best.Prerelease
 	c.status.Source = best.Source
 	c.status.ReleaseURL = best.ReleaseURL
 	c.status.DownloadURL = best.AssetURL
@@ -375,6 +382,7 @@ func (c *UpdateChecker) refresh(ctx context.Context) {
 
 func (c *UpdateChecker) recomputeAvailableLocked() {
 	cur := normalizeSemver(ClientVersion)
+	c.status.Installable = c.status.LatestVersion != "" && c.status.DownloadURL != ""
 	c.status.Available = c.status.LatestVersion != "" && SemverCompare(c.status.LatestVersion, cur) > 0
 	if !c.status.Available {
 		c.status.Dismissed = false
@@ -386,13 +394,14 @@ func (c *UpdateChecker) recomputeAvailableLocked() {
 }
 
 type releaseCandidate struct {
-	TagName         string
-	Source          string
-	ReleaseURL      string
-	AssetURL        string
-	AssetName       string
-	ChecksumURL     string
-	ChecksumSHA256  string
+	TagName        string
+	Source         string
+	ReleaseURL     string
+	AssetURL       string
+	AssetName      string
+	ChecksumURL    string
+	ChecksumSHA256 string
+	Prerelease     bool
 }
 
 func fetchLatestRelease(ctx context.Context, client *http.Client) (releaseCandidate, []string, error) {
@@ -402,7 +411,7 @@ func fetchLatestRelease(ctx context.Context, client *http.Client) (releaseCandid
 	for _, src := range enabledUpdateSources() {
 		label := src.Owner + "/" + src.Repo
 		sources = append(sources, label)
-		rel, err := fetchGitHubLatestRelease(ctx, client, src.Owner, src.Repo)
+		rel, err := fetchGitHubBestRelease(ctx, client, src.Owner, src.Repo)
 		if err != nil {
 			lastErr = err
 			continue
@@ -415,6 +424,7 @@ func fetchLatestRelease(ctx context.Context, client *http.Client) (releaseCandid
 			TagName:    rel.TagName,
 			Source:     "https://github.com/" + label,
 			ReleaseURL: rel.HTMLURL,
+			Prerelease: rel.Prerelease,
 		}
 		assetName, assetURL := pickReleaseAsset(rel)
 		candidate.AssetName = assetName
@@ -431,6 +441,47 @@ func fetchLatestRelease(ctx context.Context, client *http.Client) (releaseCandid
 		return releaseCandidate{}, sources, fmt.Errorf("no releases found on configured GitHub sources")
 	}
 	return best, sources, nil
+}
+
+func fetchGitHubBestRelease(ctx context.Context, client *http.Client, owner, repo string) (ghRelease, error) {
+	listURL := fmt.Sprintf("https://api.github.com/repos/%s/%s/releases?per_page=30", owner, repo)
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, listURL, nil)
+	if err != nil {
+		return ghRelease{}, err
+	}
+	req.Header.Set("Accept", "application/vnd.github+json")
+	req.Header.Set("User-Agent", HTTPUserAgent())
+	resp, err := client.Do(req)
+	if err != nil {
+		return ghRelease{}, err
+	}
+	defer resp.Body.Close()
+	if resp.StatusCode == http.StatusOK {
+		var list []ghRelease
+		if err := json.NewDecoder(resp.Body).Decode(&list); err != nil {
+			return ghRelease{}, err
+		}
+		var best ghRelease
+		for _, rel := range list {
+			if rel.Draft || strings.TrimSpace(rel.TagName) == "" {
+				continue
+			}
+			ver := normalizeSemver(rel.TagName)
+			if ver == "" {
+				continue
+			}
+			if best.TagName == "" || SemverCompare(ver, normalizeSemver(best.TagName)) > 0 {
+				best = rel
+			}
+		}
+		if best.TagName != "" {
+			return best, nil
+		}
+	} else if resp.StatusCode != http.StatusNotFound {
+		body, _ := io.ReadAll(io.LimitReader(resp.Body, 512))
+		return ghRelease{}, fmt.Errorf("%s/%s: HTTP %d %s", owner, repo, resp.StatusCode, strings.TrimSpace(string(body)))
+	}
+	return fetchGitHubLatestRelease(ctx, client, owner, repo)
 }
 
 func fetchGitHubLatestRelease(ctx context.Context, client *http.Client, owner, repo string) (ghRelease, error) {
@@ -466,27 +517,45 @@ func fetchGitHubLatestRelease(ctx context.Context, client *http.Client, owner, r
 func pickReleaseAsset(rel ghRelease) (name, url string) {
 	goos := runtime.GOOS
 	goarch := runtime.GOARCH
+	archAliases := []string{goarch}
 	if goarch == "amd64" {
-		goarch = "x86_64"
+		archAliases = append(archAliases, "x86_64", "x64")
 	}
-	var fallbackName, fallbackURL string
+	if goarch == "arm64" {
+		archAliases = append(archAliases, "aarch64")
+	}
+	osAliases := []string{goos}
+	if goos == "darwin" {
+		osAliases = append(osAliases, "macos", "osx")
+	}
 	for _, a := range rel.Assets {
 		aname := strings.TrimSpace(a.Name)
 		lname := strings.ToLower(aname)
 		if a.BrowserDownloadURL == "" || !strings.Contains(lname, "dogego") {
 			continue
 		}
-		if strings.Contains(lname, ".sha256") {
+		if strings.Contains(lname, ".sha256") || strings.HasSuffix(lname, ".txt") {
 			continue
 		}
-		if strings.Contains(lname, goos) || strings.Contains(lname, goarch) {
+		hasOS := false
+		for _, alias := range osAliases {
+			if strings.Contains(lname, alias) {
+				hasOS = true
+				break
+			}
+		}
+		hasArch := false
+		for _, alias := range archAliases {
+			if strings.Contains(lname, alias) {
+				hasArch = true
+				break
+			}
+		}
+		if hasOS && hasArch {
 			return aname, a.BrowserDownloadURL
 		}
-		if fallbackURL == "" {
-			fallbackName, fallbackURL = aname, a.BrowserDownloadURL
-		}
 	}
-	return fallbackName, fallbackURL
+	return "", ""
 }
 
 func pickReleaseChecksumURL(rel ghRelease, assetName string) string {
@@ -579,12 +648,14 @@ func CheckUpdateOnce(ctx context.Context) UpdateStatus {
 	}
 	st.LatestVersion = normalizeSemver(best.TagName)
 	st.LatestTag = best.TagName
+	st.Prerelease = best.Prerelease
 	st.Source = best.Source
 	st.ReleaseURL = best.ReleaseURL
 	st.DownloadURL = best.AssetURL
 	st.ChecksumURL = best.ChecksumURL
 	st.ChecksumSHA256 = best.ChecksumSHA256
 	st.DirectUpdate = best.AssetURL != ""
+	st.Installable = st.LatestVersion != "" && st.DownloadURL != ""
 	st.Instructions = buildUpdateInstructions(best)
 	st.Available = st.LatestVersion != "" && SemverCompare(st.LatestVersion, normalizeSemver(ClientVersion)) > 0
 	return st

@@ -1759,6 +1759,12 @@ body.site-sidebar-open {
   margin-bottom: 2rem;
 }
 
+@media (min-width: 900px) {
+  .platform-grid {
+    grid-template-columns: repeat(4, 1fr);
+  }
+}
+
 .platform-card {
   background: var(--bg-card);
   border: 1px solid var(--border);

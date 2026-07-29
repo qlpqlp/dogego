@@ -12,6 +12,7 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
+	"time"
 )
 
 const replaceTargetFlag = "-replacetarget"
@@ -54,6 +55,20 @@ func replaceExecutable(src, dst string) error {
 	if strings.EqualFold(srcAbs, dstAbs) {
 		return nil
 	}
+	var lastErr error
+	for attempt := 0; attempt < 8; attempt++ {
+		if attempt > 0 {
+			time.Sleep(time.Duration(attempt) * 400 * time.Millisecond)
+		}
+		lastErr = replaceExecutableOnce(srcAbs, dstAbs)
+		if lastErr == nil {
+			return nil
+		}
+	}
+	return lastErr
+}
+
+func replaceExecutableOnce(srcAbs, dstAbs string) error {
 	backup := dstAbs + ".bak"
 	_ = os.Remove(backup)
 	if _, err := os.Stat(dstAbs); err == nil {

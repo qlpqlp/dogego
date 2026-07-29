@@ -1131,7 +1131,7 @@
       <div class="container">
         <header class="section-header">
           <h2 id="download-title" data-i18n="download.title">Download DogeGo</h2>
-          <p data-i18n="download.lead">Pre-built binaries are published on GitHub Releases when tagged. This page checks the same repos as the running node.</p>
+          <p data-i18n="download.lead">Pre-built binaries are published on GitHub Releases when tagged (including pre-releases). This page checks the same repos as the running node.</p>
         </header>
 
         <div class="soon-banner" id="release-banner" data-state="loading">
@@ -1139,7 +1139,7 @@
           <div class="release-banner-text">
             <strong id="release-banner-title" data-i18n="download.checkingTitle">Checking GitHub Releases…</strong>
             <p id="release-banner-meta" class="release-banner-meta" hidden></p>
-            <div id="release-banner-body" class="release-banner-body" data-i18n="download.checkingBody">Querying qlpqlp/dogego, dogeorg/dogego, and dogecoinfoundation/dogego for the latest semver tag.</div>
+            <div id="release-banner-body" class="release-banner-body" data-i18n="download.checkingBody">Querying qlpqlp/dogego, dogeorg/dogego, and dogecoinfoundation/dogego for the newest release or pre-release tag.</div>
             <button type="button" id="release-notes-toggle" class="release-notes-toggle" hidden data-i18n="download.showMore">Show more</button>
           </div>
           <a href="https://github.com/qlpqlp/dogego/releases" class="btn btn-primary" id="release-banner-action" rel="noopener noreferrer" target="_blank" hidden data-i18n="download.getReleases">View release notes</a>
@@ -1157,10 +1157,16 @@
             <p class="platform-arch" data-i18n="download.platforms.windows.arch">amd64</p>
             <a href="#download" class="platform-link" data-i18n="download.soonLink">Available soon</a>
           </article>
-          <article class="platform-card platform-soon" data-platform="macos">
+          <article class="platform-card platform-soon" data-platform="macos-intel">
             <span class="material-icons-round platform-icon" aria-hidden="true">laptop_mac</span>
-            <h3 data-i18n="download.platforms.macos.name">macOS</h3>
-            <p class="platform-arch" data-i18n="download.platforms.macos.arch">amd64 · arm64 (Apple Silicon)</p>
+            <h3 data-i18n="download.platforms.macosIntel.name">macOS (Intel)</h3>
+            <p class="platform-arch" data-i18n="download.platforms.macosIntel.arch">amd64</p>
+            <a href="#download" class="platform-link" data-i18n="download.soonLink">Available soon</a>
+          </article>
+          <article class="platform-card platform-soon" data-platform="macos-arm">
+            <span class="material-icons-round platform-icon" aria-hidden="true">laptop_mac</span>
+            <h3 data-i18n="download.platforms.macosArm.name">macOS (Apple Silicon)</h3>
+            <p class="platform-arch" data-i18n="download.platforms.macosArm.arch">arm64</p>
             <a href="#download" class="platform-link" data-i18n="download.soonLink">Available soon</a>
           </article>
           <article class="platform-card platform-soon" data-platform="linux">

@@ -652,17 +652,20 @@
   },
   "download": {
     "title": "Download DogeGo",
-    "lead": "Pre-built binaries are published on GitHub Releases when tagged. This page checks the same repos as the running node.",
+    "lead": "Pre-built binaries are published on GitHub Releases when tagged (including pre-releases). This page checks the same repos as the running node.",
     "checkingTitle": "Checking GitHub Releases…",
-    "checkingBody": "Querying qlpqlp/dogego, dogeorg/dogego, and dogecoinfoundation/dogego for the latest semver tag.",
+    "checkingBody": "Querying qlpqlp/dogego, dogeorg/dogego, and dogecoinfoundation/dogego for the newest release or pre-release tag.",
     "soonTitle": "Pre-built binaries - available soon",
     "soonBody": "No GitHub Release has been published yet on the configured repos. Build from source below, or watch <a href=\"https://github.com/qlpqlp/dogego\" rel=\"noopener noreferrer\" target=\"_blank\">github.com/qlpqlp/dogego</a> for the first tagged release.",
     "soonCta": "Build from source",
     "soonLink": "Available soon",
     "soonHeroNote": "No release published yet - build from source or check back soon.",
     "readyTitle": "Latest release {version}",
+    "readyTitlePrerelease": "Latest pre-release {version}",
     "readyBody": "Newest semver from GitHub Releases (<strong>{source}</strong>).",
+    "readyBodyPrerelease": "Newest pre-release from GitHub Releases (<strong>{source}</strong>).",
     "readyHeroNote": "Latest on {source}",
+    "readyHeroNotePrerelease": "Latest pre-release on {source}",
     "heroCta": "Download {version}",
     "showMore": "Show more",
     "showLess": "Show less",
@@ -674,9 +677,13 @@
         "name": "Windows",
         "arch": "amd64"
       },
-      "macos": {
-        "name": "macOS",
-        "arch": "amd64 · arm64 (Apple Silicon)"
+      "macosIntel": {
+        "name": "macOS (Intel)",
+        "arch": "amd64"
+      },
+      "macosArm": {
+        "name": "macOS (Apple Silicon)",
+        "arch": "arm64"
       },
       "linux": {
         "name": "Linux",
