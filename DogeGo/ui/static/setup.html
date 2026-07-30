@@ -1582,6 +1582,26 @@
         return scheme + "://" + webui + "/";
       }
 
+      /** Prefer the URL bar host that opened the wizard (DogeBox reverse proxy) over bind IPs. */
+      function resolvePostSetupDashboardURL(serverUrl) {
+        const origin = (window.location && window.location.origin) || "";
+        if (!origin || origin === "null") {
+          return (serverUrl || dashboardURL()).replace(/\/?$/, "/");
+        }
+        const originRoot = origin.replace(/\/?$/, "/");
+        if (!serverUrl) return originRoot;
+        try {
+          const want = new URL(serverUrl, origin);
+          const here = new URL(originRoot);
+          if (String(want.hostname || "").toLowerCase() === String(here.hostname || "").toLowerCase()) {
+            return want.href.replace(/\/?$/, "/");
+          }
+          return originRoot;
+        } catch (_) {
+          return originRoot;
+        }
+      }
+
       function setSetupLoadingText(text) {
         const el = $("setup-loading-text");
         if (el && text) el.textContent = text;
@@ -1783,7 +1803,7 @@
           try {
             localStorage.setItem("dogego_ui_simple", "0");
           } catch (_) {}
-          const dash = (data.dashboard_url || dashboardURL()).replace(/\/?$/, "/");
+          const dash = resolvePostSetupDashboardURL(data.dashboard_url || dashboardURL());
           if ($("nowebui").checked) {
             hideSetupLoading();
             showMsg("Saved. Node is starting ... watch the terminal (web UI disabled).", "ok");

@@ -60,6 +60,18 @@ func TraySupported() bool {
 	return platformTraySupported()
 }
 
+// TrayRequiresMainThread reports whether StartTray must run on the process main
+// OS thread (macOS AppKit). When true, callers should run the node in a goroutine
+// and call StartTray from main after LockOSThread in init.
+func TrayRequiresMainThread() bool {
+	return platformTrayRequiresMainThread()
+}
+
+// QuitTray asks the native tray loop to exit (safe from any goroutine).
+func QuitTray() {
+	platformQuitTray()
+}
+
 // StartTray runs the system tray event loop (blocks until Quit).
 func StartTray(cfg TrayConfig) error {
 	if !TraySupported() {

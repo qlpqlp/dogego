@@ -402,6 +402,7 @@ func runNodeMode(args []string, defaultNodeMode string) {
 	if !merged.NoWebUI && desktop.InteractiveSession() {
 		startConsoleHideRetry()
 	}
+	var runTrayOnMain func()
 	if merged.Tray && desktop.TraySupported() {
 		setTrayMinimizeOnClose(true)
 		startTrayMinimizeWatcher()
@@ -415,111 +416,119 @@ func runNodeMode(args []string, defaultNodeMode string) {
 		if len(peerLinks) > 0 {
 			quitLabel = "Shutdown all nodes"
 		}
-		go func() {
-			netLabel := desktop.TrayNetworkLabel(merged.Network)
-			_ = desktop.StartTray(desktop.TrayConfig{
-				Title:        "DogeGo " + netLabel,
-				Tooltip:      desktop.TrayBaseTooltip(netLabel),
-				Version:      trayVer,
-				Network:      merged.Network,
-				DashboardURL: dashURL,
-				PeerLinks:    peerLinks,
-				QuitLabel:    quitLabel,
-				OnOpen: func() {
-					if dashURL != "" {
-						desktop.OpenURLForce(dashURL)
-						return
+		trayCfg := desktop.TrayConfig{
+			Title:        "DogeGo " + desktop.TrayNetworkLabel(merged.Network),
+			Tooltip:      desktop.TrayBaseTooltip(desktop.TrayNetworkLabel(merged.Network)),
+			Version:      trayVer,
+			Network:      merged.Network,
+			DashboardURL: dashURL,
+			PeerLinks:    peerLinks,
+			QuitLabel:    quitLabel,
+			OnOpen: func() {
+				if dashURL != "" {
+					desktop.OpenURLForce(dashURL)
+					return
+				}
+				_ = desktop.OpenDashboard(trayConf)
+			},
+			OnOpenConsole: func() {
+				desktop.OpenDashboardTab(dashURL, "console")
+			},
+			OnOpenLogs: func() {
+				desktop.OpenDashboardTab(dashURL, "console")
+			},
+			OnShutdown: func() {
+				fmt.Fprintln(os.Stderr, "DogeGo: tray shutdown")
+				// Cancel local node immediately so quit is responsive; peer shutdown runs in parallel.
+				if trayStop != nil {
+					trayStop()
+				}
+				if dataDir != "" {
+					go launch.ShutdownDualPeers(dataDir, merged.Network)
+				}
+			},
+			OnCheckUpdates: func() {
+				if updateChecker != nil {
+					updateChecker.RefreshNow(context.Background())
+				}
+			},
+			OnDownloadUpdate: func() (string, error) {
+				if updateChecker == nil {
+					return "", fmt.Errorf("update checker unavailable")
+				}
+				res, err := updateChecker.DownloadReleaseAssetVerified(dataDir)
+				if err != nil {
+					return "", err
+				}
+				return res.Path, nil
+			},
+			OnApplyUpdate: func() error {
+				if updateChecker == nil {
+					return fmt.Errorf("update checker unavailable")
+				}
+				st := updateChecker.Status()
+				path, err := version.LatestDownloadedAsset(dataDir, st.LatestVersion)
+				if err != nil {
+					res, dlErr := updateChecker.DownloadReleaseAssetVerified(dataDir)
+					if dlErr != nil {
+						return dlErr
 					}
-					_ = desktop.OpenDashboard(trayConf)
-				},
-				OnOpenConsole: func() {
-					desktop.OpenDashboardTab(dashURL, "console")
-				},
-				OnOpenLogs: func() {
-					desktop.OpenDashboardTab(dashURL, "console")
-				},
-				OnShutdown: func() {
-					fmt.Fprintln(os.Stderr, "DogeGo: tray shutdown")
-					// Cancel local node immediately so quit is responsive; peer shutdown runs in parallel.
-					if trayStop != nil {
-						trayStop()
+					path = res.Path
+				} else if st.ChecksumURL != "" || st.ChecksumSHA256 != "" {
+					if _, err := updateChecker.VerifyDownloadedAsset(path); err != nil {
+						return err
 					}
-					if dataDir != "" {
-						go launch.ShutdownDualPeers(dataDir, merged.Network)
-					}
-				},
-				OnCheckUpdates: func() {
-					if updateChecker != nil {
-						updateChecker.RefreshNow(context.Background())
-					}
-				},
-				OnDownloadUpdate: func() (string, error) {
-					if updateChecker == nil {
-						return "", fmt.Errorf("update checker unavailable")
-					}
-					res, err := updateChecker.DownloadReleaseAssetVerified(dataDir)
-					if err != nil {
-						return "", err
-					}
-					return res.Path, nil
-				},
-				OnApplyUpdate: func() error {
-					if updateChecker == nil {
-						return fmt.Errorf("update checker unavailable")
-					}
-					st := updateChecker.Status()
-					path, err := version.LatestDownloadedAsset(dataDir, st.LatestVersion)
-					if err != nil {
-						res, dlErr := updateChecker.DownloadReleaseAssetVerified(dataDir)
-						if dlErr != nil {
-							return dlErr
-						}
-						path = res.Path
-					} else if st.ChecksumURL != "" || st.ChecksumSHA256 != "" {
-						if _, err := updateChecker.VerifyDownloadedAsset(path); err != nil {
-							return err
-						}
-					}
-					return applyUpdateFn(path)
-				},
-				OnOpenRelease: func() {
-					if updateChecker == nil {
-						return
-					}
-					if u := updateChecker.Status().ReleaseURL; u != "" {
-						desktop.OpenURLLog(u)
-					}
-				},
-				OnDismissUpdate: func() error {
-					if updateChecker == nil {
-						return fmt.Errorf("update checker unavailable")
-					}
-					return updateChecker.Dismiss()
-				},
-				UpdateStatus: func() desktop.TrayUpdateInfo {
-					if updateChecker == nil {
-						return desktop.TrayUpdateInfo{Current: trayVer}
-					}
-					st := updateChecker.Status()
-					return desktop.TrayUpdateInfo{
-						Available:      st.Available,
-						Dismissed:      st.Dismissed,
-						Current:        st.CurrentVersion,
-						Latest:         st.LatestVersion,
-						ReleaseURL:     st.ReleaseURL,
-						DownloadURL:    st.DownloadURL,
-						DirectDownload: st.DirectUpdate,
-						CheckError:     st.CheckError,
-					}
-				},
-			})
-		}()
-		fmt.Fprintln(os.Stderr, "DogeGo: system tray enabled (dashboard, console, logs, updates)")
+				}
+				return applyUpdateFn(path)
+			},
+			OnOpenRelease: func() {
+				if updateChecker == nil {
+					return
+				}
+				if u := updateChecker.Status().ReleaseURL; u != "" {
+					desktop.OpenURLLog(u)
+				}
+			},
+			OnDismissUpdate: func() error {
+				if updateChecker == nil {
+					return fmt.Errorf("update checker unavailable")
+				}
+				return updateChecker.Dismiss()
+			},
+			UpdateStatus: func() desktop.TrayUpdateInfo {
+				if updateChecker == nil {
+					return desktop.TrayUpdateInfo{Current: trayVer}
+				}
+				st := updateChecker.Status()
+				return desktop.TrayUpdateInfo{
+					Available:      st.Available,
+					Dismissed:      st.Dismissed,
+					Current:        st.CurrentVersion,
+					Latest:         st.LatestVersion,
+					ReleaseURL:     st.ReleaseURL,
+					DownloadURL:    st.DownloadURL,
+					DirectDownload: st.DirectUpdate,
+					CheckError:     st.CheckError,
+				}
+			},
+		}
+		if desktop.TrayRequiresMainThread() {
+			// macOS: AppKit tray loop owns main; node runs in a background goroutine.
+			runTrayOnMain = func() {
+				fmt.Fprintln(os.Stderr, "DogeGo: system tray enabled (dashboard, console, logs, updates)")
+				_ = desktop.StartTray(trayCfg)
+			}
+		} else {
+			go func() {
+				_ = desktop.StartTray(trayCfg)
+			}()
+			fmt.Fprintln(os.Stderr, "DogeGo: system tray enabled (dashboard, console, logs, updates)")
+		}
 	} else if merged.Tray {
 		fmt.Fprintln(os.Stderr, "DogeGo: system tray is not supported on this platform")
 	}
 	trayOn := merged.Tray
-	err = node.Run(ctx, node.Config{
+	nodeCfg := node.Config{
 		Network:                nid,
 		DataDir:                merged.DataDir,
 		Peer:                   merged.Peer,
@@ -592,7 +601,19 @@ func runNodeMode(args []string, defaultNodeMode string) {
 				launch.StartDualPeersOnce(merged.DataDir, merged.Network, trayOn)
 			}
 		},
-	})
+	}
+	if runTrayOnMain != nil {
+		nodeErr := make(chan error, 1)
+		go func() {
+			nodeErr <- node.Run(ctx, nodeCfg)
+			desktop.QuitTray()
+		}()
+		runTrayOnMain()
+		stop()
+		err = <-nodeErr
+	} else {
+		err = node.Run(ctx, nodeCfg)
+	}
 	if err != nil && err != context.Canceled {
 		fmt.Fprintln(os.Stderr, err)
 		os.Exit(1)

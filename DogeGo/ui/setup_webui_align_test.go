@@ -6,7 +6,12 @@
 
 package ui
 
-import "testing"
+import (
+	"net/http"
+	"testing"
+
+	"dogego/config"
+)
 
 func TestAlignWebUIWithListen(t *testing.T) {
 	got := alignWebUIWithListen("10.69.0.25:2013", "localhost:2013")
@@ -28,5 +33,44 @@ func TestAlignWebUIWithListen(t *testing.T) {
 	got = alignWebUIWithListen("0.0.0.0:2013", "localhost:2013")
 	if got != "0.0.0.0:2013" {
 		t.Fatalf("all-interfaces listen should replace loopback webui, got %q", got)
+	}
+}
+
+func TestSetupDashboardURLForBrowserDogeboxProxy(t *testing.T) {
+	f := config.File{WebUI: "10.69.0.28:2013"}
+	req, err := http.NewRequest(http.MethodPost, "http://10.69.0.28:2013/api/setup", nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	req.Header.Set("Origin", "http://dogebox:10002")
+	got := setupDashboardURLForBrowser(req, f)
+	if got != "http://dogebox:10002/" {
+		t.Fatalf("DogeBox proxy origin should win over pup bind, got %q", got)
+	}
+}
+
+func TestSetupDashboardURLForBrowserSameHostKeepsPort(t *testing.T) {
+	f := config.File{WebUI: "localhost:9999"}
+	req, err := http.NewRequest(http.MethodPost, "http://localhost:2013/api/setup", nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	req.Header.Set("Origin", "http://localhost:2013")
+	got := setupDashboardURLForBrowser(req, f)
+	if got != "http://localhost:9999/" {
+		t.Fatalf("same hostname should keep configured webui port, got %q", got)
+	}
+}
+
+func TestSetupDashboardURLForBrowserRefererFallback(t *testing.T) {
+	f := config.File{WebUI: "10.69.0.28:2013"}
+	req, err := http.NewRequest(http.MethodPost, "http://10.69.0.28:2013/api/setup", nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	req.Header.Set("Referer", "http://dogebox:10002/")
+	got := setupDashboardURLForBrowser(req, f)
+	if got != "http://dogebox:10002/" {
+		t.Fatalf("Referer host should win when Origin missing, got %q", got)
 	}
 }

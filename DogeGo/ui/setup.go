@@ -13,6 +13,7 @@ import (
 	"io/fs"
 	"net"
 	"net/http"
+	"net/url"
 	"os"
 	"strings"
 	"sync"
@@ -40,6 +41,58 @@ func setupDashboardURL(f config.File) string {
 		return webui + "/"
 	}
 	return scheme + "://" + webui + "/"
+}
+
+// setupDashboardURLForBrowser returns the URL the operator's browser should open after
+// the wizard. When the node binds a private pup IP (DogeBox) but the wizard was opened
+// through a reverse-proxy hostname (e.g. http://dogebox:10002), prefer that Origin so
+// the tab does not navigate to an unreachable 10.69.x.x bind address.
+func setupDashboardURLForBrowser(r *http.Request, f config.File) string {
+	fallback := setupDashboardURL(f)
+	if r == nil {
+		return fallback
+	}
+	origin := strings.TrimSpace(r.Header.Get("Origin"))
+	if origin == "" {
+		if ref := strings.TrimSpace(r.Referer()); ref != "" {
+			if u, err := url.Parse(ref); err == nil && u.Scheme != "" && u.Host != "" {
+				origin = u.Scheme + "://" + u.Host
+			}
+		}
+	}
+	if origin == "" {
+		return fallback
+	}
+	origin = strings.TrimSuffix(origin, "/")
+	fbHost := hostnameFromURLOrListen(fallback)
+	orHost := hostnameFromURLOrListen(origin)
+	if fbHost == "" || orHost == "" || strings.EqualFold(fbHost, orHost) {
+		return fallback
+	}
+	return origin + "/"
+}
+
+func hostnameFromURLOrListen(s string) string {
+	s = strings.TrimSpace(s)
+	if s == "" {
+		return ""
+	}
+	if strings.Contains(s, "://") {
+		u, err := url.Parse(s)
+		if err != nil {
+			return ""
+		}
+		host := u.Hostname()
+		if host != "" {
+			return strings.ToLower(host)
+		}
+		return ""
+	}
+	host, _, err := net.SplitHostPort(s)
+	if err != nil {
+		host = s
+	}
+	return strings.ToLower(strings.Trim(host, "[]"))
 }
 
 // alignWebUIWithListen keeps a non-loopback wizard listen address in dogecoinconf.json.
@@ -325,7 +378,7 @@ func RunSetupWizard(ctx context.Context, listenAddr string, seed config.File, sa
 			resp["autostart_warning"] = autostartWarn
 		}
 		if !primary.NoWebUI && strings.TrimSpace(primary.WebUI) != "" {
-			resp["dashboard_url"] = setupDashboardURL(primary)
+			resp["dashboard_url"] = setupDashboardURLForBrowser(r, primary)
 		}
 		if req.DualInstance {
 			resp["peer_instances"] = instancesForAPI(primary.DataDir, primary.Network)
