@@ -40,9 +40,9 @@ func CheckTransaction(tx *wire.Tx, checkDuplicateInputs bool) error {
 		if len(o.PkScript) == 0 {
 			return fmt.Errorf("bad-txns-vout-empty-scriptpubkey")
 		}
-		if IsUnspendableScript(o.PkScript) && o.Value != 0 {
-			return fmt.Errorf("bad-txns-unspendable-output")
-		}
+		// Core CheckTransaction does not reject OP_RETURN / unspendable outputs with
+		// non-zero value (coins may be burned on-chain). Non-zero OP_RETURN is mempool
+		// policy only (IsStandardTx → non-zero-op-return).
 		if o.Value < 0 {
 			return fmt.Errorf("bad-txns-vout-negative")
 		}

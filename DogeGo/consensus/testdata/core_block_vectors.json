@@ -252,16 +252,16 @@
     "want_error_substr": "witness"
   },
   {
-    "name": "check_bad_unspendable_output",
+    "name": "check_allows_unspendable_output_with_value",
     "kind": "check_block_payload",
     "network": "reboottestnet",
     "height": 1,
     "chain_tip_height": 0,
     "source": "minimal",
     "hex": "",
-    "mutation": "bad_unspendable_output",
-    "want_accept": false,
-    "want_error_substr": "unspendable"
+    "mutation": "unspendable_output_with_value",
+    "want_accept": true,
+    "want_error_substr": ""
   },
   {
     "name": "check_bad_vout_script_toolarge",

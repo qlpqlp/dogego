@@ -783,7 +783,7 @@ func catalogCoreBlockVectors() ([]coreBlockVector, error) {
 		{"bad_vout_toolarge", "bad_vout_toolarge", "toolarge", false},
 		{"bad_txouttotal_toolarge", "bad_txouttotal_toolarge", "toolarge", false},
 		{"bad_witness", "bad_witness", "witness", false},
-		{"bad_unspendable_output", "bad_unspendable_output", "unspendable", false},
+		{"unspendable_output_with_value", "unspendable_output_with_value", "", true},
 		{"bad_vout_script_toolarge", "bad_vout_script_toolarge", "bad-blk-oversize", false},
 		{"bad_tx_oversize", "bad_tx_oversize", "oversize", false},
 		{"oversize_coinbase", "oversize_coinbase", "bad-blk-oversize", false},

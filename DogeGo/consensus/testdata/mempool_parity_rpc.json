@@ -37,9 +37,9 @@
   {
     "name": "op_return_nonzero_reject",
     "template": "op_return_nonzero_reject",
-    "hex": "01000000011527ed66af3ee290e4731b63c267a1093822ea9aebc90ae53a6ad0c0bedf816c0000000000ffffffff010100000000000000066a04deadbeef00000000",
+    "hex": "01000000011527ed66af3ee290e4731b63c267a1093822ea9aebc90ae53a6ad0c0bedf816c000000004000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000ffffffff010100000000000000066a04deadbeef00000000",
     "want_accept": false,
-    "want_reject_reason": "bad-txns-unspendable-output"
+    "want_reject_reason": "non-zero-op-return"
   },
   {
     "name": "vout_empty",
@@ -100,9 +100,9 @@
   {
     "name": "unspendable_output",
     "template": "unspendable_output",
-    "hex": "0100000001e0727c99161fc7ba0f83c7fcda3bd825e67debe18d1147ddab0681322150cb8b0000000000ffffffff010100000000000000066a04cafebabe00000000",
+    "hex": "0100000001e0727c99161fc7ba0f83c7fcda3bd825e67debe18d1147ddab0681322150cb8b000000004000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000ffffffff010100000000000000066a04cafebabe00000000",
     "want_accept": false,
-    "want_reject_reason": "bad-txns-unspendable-output"
+    "want_reject_reason": "non-zero-op-return"
   },
   {
     "name": "op_return_zero",
@@ -115,7 +115,7 @@
     "template": "pq_commitment_nonzero_reject",
     "hex": "01000000010da6928b64c4e2bf1d72632d3995fd8d2cf611b89709a683c6d7abc4862c47f20000000000ffffffff010100000000000000266a24464c4331000000000000000000000000000000000000000000000000000000000000000000000000",
     "want_accept": false,
-    "want_reject_reason": "bad-txns-unspendable-output"
+    "want_reject_reason": "non-zero-op-return"
   },
   {
     "name": "multi_op_return",

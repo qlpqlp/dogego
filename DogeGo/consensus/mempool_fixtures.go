@@ -908,6 +908,8 @@ func buildOpReturnNonZeroRejectFixture() (MempoolDifferentialFixture, error) {
 			PrevHash: funding.TxHash(),
 			PrevIdx:  0,
 			Sequence: 0xffffffff,
+			// Pad past MIN_STANDARD_TX_NONWITNESS_SIZE so policy hits non-zero-op-return.
+			Script: bytes.Repeat([]byte{0x00}, 64),
 		}},
 		Vout: []wire.TxOut{{Value: 1, PkScript: []byte{0x6a, 0x04, 0xde, 0xad, 0xbe, 0xef}}},
 	}
@@ -944,6 +946,7 @@ func buildUnspendableOutputRejectFixture() (MempoolDifferentialFixture, error) {
 			PrevHash: funding.TxHash(),
 			PrevIdx:  0,
 			Sequence: 0xffffffff,
+			Script:   bytes.Repeat([]byte{0x00}, 64),
 		}},
 		Vout: []wire.TxOut{{Value: 1, PkScript: []byte{0x6a, 0x04, 0xca, 0xfe, 0xba, 0xbe}}},
 	}

@@ -12,7 +12,9 @@ import (
 	"dogego/wire"
 )
 
-func TestCheckTransactionRejectsUnspendableWithValue(t *testing.T) {
+func TestCheckTransactionAllowsUnspendableWithValue(t *testing.T) {
+	// Dogecoin Core CheckTransaction accepts OP_RETURN with value (burn). DogeGo must
+	// match so mainnet blocks such as height 470683 connect.
 	tx := &wire.Tx{
 		Version: 1,
 		Vin:     []wire.TxIn{{PrevHash: [32]byte{1}, PrevIdx: 0, Sequence: 0xffffffff}},
@@ -21,7 +23,7 @@ func TestCheckTransactionRejectsUnspendableWithValue(t *testing.T) {
 			PkScript: []byte{0x6a, 0x04, 0xde, 0xad, 0xbe, 0xef},
 		}},
 	}
-	if err := CheckTransaction(tx, false); err == nil {
-		t.Fatal("expected unspendable output error")
+	if err := CheckTransaction(tx, false); err != nil {
+		t.Fatalf("Core allows unspendable-with-value at consensus: %v", err)
 	}
 }

@@ -329,7 +329,7 @@ func applyBlockMutation(raw []byte, mutation string) ([]byte, error) {
 		pb.Txs = append([]*wire.Tx{pb.Txs[0]}, tx)
 		pb.Header.MerkleRoot = wire.BlockMerkleRoot(pb.Txs)
 		return serializeParsedBlock(pb)
-	case "bad_unspendable_output":
+	case "unspendable_output_with_value":
 		pb, err := wire.ParseBlock(raw)
 		if err != nil {
 			return nil, err

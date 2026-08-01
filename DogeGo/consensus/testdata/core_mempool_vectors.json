@@ -87,7 +87,7 @@
     "name": "op_return_nonzero_reject",
     "template": "op_return_nonzero_reject",
     "want_accept": false,
-    "want_reject_reason": "bad-txns-unspendable-output"
+    "want_reject_reason": "non-zero-op-return"
   },
   {
     "name": "package_ancestor_limit",
@@ -201,7 +201,7 @@
     "name": "unspendable_output",
     "template": "unspendable_output",
     "want_accept": false,
-    "want_reject_reason": "bad-txns-unspendable-output"
+    "want_reject_reason": "non-zero-op-return"
   },
   {
     "name": "op_return_zero",
@@ -219,7 +219,7 @@
     "name": "pq_commitment_nonzero_reject",
     "template": "pq_commitment_nonzero_reject",
     "want_accept": false,
-    "want_reject_reason": "bad-txns-unspendable-output"
+    "want_reject_reason": "non-zero-op-return"
   },
   {
     "name": "pq_carrier_p2sh_accept",
