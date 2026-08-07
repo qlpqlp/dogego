@@ -371,7 +371,7 @@ func syncActivityTasks(in SyncActivityInput, recPass int, recDetail string, recS
 		}
 		tasks = append(tasks, map[string]string{"name": "header_sync", "state": "running", "detail": d})
 	} else if in.BodyIBDHeaderPaused {
-		tasks = append(tasks, map[string]string{"name": "header_sync", "state": "paused", "detail": "header getheaders deferred while block bodies catch up (Core-style forward IBD)"})
+		tasks = append(tasks, map[string]string{"name": "header_sync", "state": "paused", "detail": "header getheaders deferred while block bodies catch up (after assumevalid height on tip)"})
 	} else if in.HeaderCatchUpPending && in.DedicatedHeaderRunning {
 		tasks = append(tasks, map[string]string{"name": "header_sync", "state": "standby", "detail": "dedicated peer owns headers; background sync only if stalled"})
 	} else if in.HeaderCatchUpPending {

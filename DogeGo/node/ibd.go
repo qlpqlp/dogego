@@ -7,7 +7,10 @@
 package node
 
 import (
+	"strings"
+
 	"dogego/chain"
+	"dogego/consensus"
 	"dogego/store"
 	"dogego/wire"
 )
@@ -61,6 +64,8 @@ func ShouldDeferTxIndexOnPut(bs *BlockStoreCtx) bool {
 }
 
 // ShouldPauseHeaderCatchUpForBodyIBD reports Core-style pausing of getheaders while deep forward block IBD runs.
+// Headers keep advancing until the assumevalid height is on the local tip (mainnet default 5,050,000) so
+// script-skip can unlock; only then may getheaders yield to body download when bodies lag far behind.
 func ShouldPauseHeaderCatchUpForBodyIBD(bs *BlockStoreCtx, peerStart int32) bool {
 	if bs == nil || bs.Journal == nil || !BodiesBehindHeaders(bs) {
 		return false
@@ -74,10 +79,35 @@ func ShouldPauseHeaderCatchUpForBodyIBD(bs *BlockStoreCtx, peerStart int32) bool
 	if cont < 0 {
 		gap = tip + 1
 	}
-	if gap > 50_000 && tip >= 500_000 {
+	minTip := headerBodyIBDPauseMinTip(bs)
+	if gap > 50_000 && tip >= minTip {
 		return true
 	}
 	return ShouldDeferHeaderSyncWhileBodiesLag(tip, peerStart, true)
+}
+
+// headerBodyIBDPauseMinTip is the header tip height required before deep body IBD may pause getheaders.
+// With assumevalid configured, keep headers moving until that height (or resolution) so ConnectBlock can
+// skip scripts on buried history - matching Core IBD where AV unlocks after headers include the hash.
+func headerBodyIBDPauseMinTip(bs *BlockStoreCtx) int64 {
+	const legacyMinTip int64 = 500_000
+	if bs == nil || bs.AssumeValid == nil {
+		return legacyMinTip
+	}
+	av := bs.AssumeValid
+	hex := strings.TrimSpace(av.HashHex())
+	if hex == "" {
+		// verify-all / disabled assumevalid: legacy pause once headers are far ahead
+		return legacyMinTip
+	}
+	if h := av.Height(); h >= 0 {
+		return h
+	}
+	if defH := consensus.AssumeValidHeightForHash(hex); defH > 0 {
+		return defH
+	}
+	// Custom unresolved hash: do not pause on the old 500k rule; keep pulling headers until resolved.
+	return int64(^uint64(0) >> 1) // MaxInt64
 }
 
 // ShouldRunHeaderAdvanceWatchdog is false while body IBD owns the sync pipeline (headers already far ahead).

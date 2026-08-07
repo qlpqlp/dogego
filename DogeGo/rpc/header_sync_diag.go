@@ -9,6 +9,8 @@ package rpc
 import (
 	"fmt"
 	"strings"
+
+	"dogego/consensus"
 )
 
 // HeaderSyncDiagnostics returns operator fields for header/body lag and stale tip time (Core IBD hints).
@@ -27,8 +29,17 @@ func HeaderSyncDiagnostics(j HeaderJournal, headers, blocks int64, paths *DataPa
 				if bodyPct > 100 {
 					bodyPct = 100
 				}
-				note = fmt.Sprintf("header tip at %d; downloading block bodies (chainActive %d, ~%.2f%% of header height). Header getheaders paused until bodies catch up - normal on mainnet IBD", headers, blocks, bodyPct)
-				out["dogego_body_ibd_header_paused"] = true
+				// Deep body IBD may pause getheaders only after assumevalid height is on tip (mainnet 5.05M).
+				avMin := consensus.DefaultAssumeValidHeight("mainnet")
+				if avMin <= 0 {
+					avMin = 500_000
+				}
+				if headers >= avMin {
+					note = fmt.Sprintf("header tip at %d; downloading block bodies (chainActive %d, ~%.2f%% of header height). Header getheaders paused until bodies catch up - normal on mainnet IBD", headers, blocks, bodyPct)
+					out["dogego_body_ibd_header_paused"] = true
+				} else {
+					note = fmt.Sprintf("header tip at %d; downloading block bodies (chainActive %d, ~%.2f%% of header height). Headers keep syncing toward assumevalid height %d so script-skip can unlock", headers, blocks, bodyPct, avMin)
+				}
 			}
 			out["dogego_body_sync_note"] = note
 		}

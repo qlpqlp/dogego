@@ -322,7 +322,7 @@ Leave **`dogego.exe`** running. Log progress and review weekly:
 
 **Body IBD pump (current builds):** proactive `getdata` every **~1.5s** on primary, relay, and block-assist lanes (not only P2P read idle). Stall recovery runs whenever bodies lag headers; body-only phase uses a **90s** refresh window when connect has caught up. Watch logs for `progressive getdata heights …` every 1-2s and `Body IBD pump:` lines from `ibd_monitor.ps1`.
 
-**Header sync resume:** while bodies lag headers by **>50k** (headers at **534k**, bodies below **~484k**), getheaders is paused (`dogego_body_ibd_header_paused=true`). When contiguous bodies enter that window, DogeGo logs `body IBD pause lifted … resuming header catch-up` and background header sync continues toward the network tip (~6.2M).
+**Header sync resume:** while assumevalid is configured (mainnet default height **5,050,000**), getheaders keeps running until that height is on the local tip so script-skip can unlock. Only after that (and when bodies still lag headers by **>50k**) may getheaders pause (`dogego_body_ibd_header_paused=true`) in favor of body download. With `"assumevalid": "0"` the older 500k pause threshold still applies. When contiguous bodies catch up enough, DogeGo logs `body IBD pause lifted … resuming header catch-up` toward the network tip.
 
 Certification bundle (offline tests + live probes):
 

@@ -59,14 +59,21 @@ func TestHeaderSyncDiagnosticsPostAuxEraStallFlag(t *testing.T) {
 func TestHeaderSyncDiagnosticsLargeBodyIBDGap(t *testing.T) {
 	h := make([]byte, 80)
 	binary.LittleEndian.PutUint32(h[68:72], uint32(time.Now().Unix()))
+	// Below assumevalid height: headers keep syncing (not paused).
 	j := &memJournal{tip: 534_000, best: "b", gen: "g", count: 534_001, hdrs: repeatHdr(h, 534_001)}
 	d := HeaderSyncDiagnostics(j, 534_000, 5966, nil)
-	if d["dogego_body_ibd_header_paused"] != true {
-		t.Fatalf("paused flag %#v", d["dogego_body_ibd_header_paused"])
+	if d["dogego_body_ibd_header_paused"] == true {
+		t.Fatalf("headers below assumevalid must not report pause, got %#v", d["dogego_body_ibd_header_paused"])
 	}
 	note, ok := d["dogego_body_sync_note"].(string)
-	if !ok || !strings.Contains(note, "534000") || !strings.Contains(note, "paused") {
+	if !ok || !strings.Contains(note, "534000") || !strings.Contains(note, "assumevalid") {
 		t.Fatalf("note %q", note)
+	}
+	// At/after assumevalid height with large body gap: pause flag may show.
+	j2 := &memJournal{tip: 5_100_000, best: "b", gen: "g", count: 100, hdrs: repeatHdr(h, 100)}
+	d2 := HeaderSyncDiagnostics(j2, 5_100_000, 5966, nil)
+	if d2["dogego_body_ibd_header_paused"] != true {
+		t.Fatalf("paused flag %#v", d2["dogego_body_ibd_header_paused"])
 	}
 }
 

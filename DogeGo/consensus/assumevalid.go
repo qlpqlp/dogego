@@ -30,6 +30,28 @@ func DefaultAssumeValidHex(network string) string {
 	}
 }
 
+// DefaultAssumeValidHeight returns the chain height of DefaultAssumeValidHex when known (0 = none).
+func DefaultAssumeValidHeight(network string) int64 {
+	switch strings.ToLower(strings.TrimSpace(network)) {
+	case "mainnet", "":
+		return 5_050_000
+	default:
+		return 0
+	}
+}
+
+// AssumeValidHeightForHash returns the known height for a default assumevalid hash (0 = unknown).
+func AssumeValidHeightForHash(hashHex string) int64 {
+	hashHex = strings.TrimSpace(strings.ToLower(hashHex))
+	if hashHex == "" {
+		return 0
+	}
+	if hashHex == strings.ToLower(DefaultAssumeValidHex("mainnet")) {
+		return DefaultAssumeValidHeight("mainnet")
+	}
+	return 0
+}
+
 // AssumeValid tracks Core -assumevalid: skip ECDSA/script verification on buried blocks in the best chain.
 type AssumeValid struct {
 	mu         sync.RWMutex

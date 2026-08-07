@@ -11,6 +11,7 @@ import (
 	"testing"
 
 	"dogego/chain"
+	"dogego/consensus"
 	"dogego/pow"
 	"dogego/store"
 	"dogego/wire"
@@ -357,6 +358,7 @@ func TestShouldPauseHeaderCatchUpForBodyIBD(t *testing.T) {
 	}
 	bs := NewBlockStoreCtx(j, nil, p, rs, nil, nil)
 	bs.SeedContiguousTip(10_005)
+	// No AssumeValid wired: legacy 500k pause still applies.
 	if !ShouldPauseHeaderCatchUpForBodyIBD(bs, 6_000_000) {
 		t.Fatal("deep body IBD should pause header catch-up")
 	}
@@ -368,6 +370,50 @@ func TestShouldPauseHeaderCatchUpForBodyIBD(t *testing.T) {
 	}
 	if ShouldRunHeaderAdvanceWatchdog(j, bs, 6_000_000) {
 		t.Fatal("watchdog should not run during deep body IBD")
+	}
+}
+
+func TestShouldPauseHeaderCatchUpForBodyIBDWaitsForAssumeValid(t *testing.T) {
+	p, err := chain.ParamsFor(chain.MainnetDogecoin)
+	if err != nil {
+		t.Fatal(err)
+	}
+	g80, err := pow.Header80FromParams(p)
+	if err != nil {
+		t.Fatal(err)
+	}
+	dir := t.TempDir()
+	j, err := store.OpenHeaderChain(dir, g80[:])
+	if err != nil {
+		t.Fatal(err)
+	}
+	appendFakeHeaderChain(t, j, g80[:], 534_000)
+	rs, err := store.OpenRawBlockStore(dir)
+	if err != nil {
+		t.Fatal(err)
+	}
+	bs := NewBlockStoreCtx(j, nil, p, rs, nil, nil)
+	bs.SeedContiguousTip(10_005)
+	bs.AssumeValid = consensus.NewAssumeValid("mainnet", "")
+	if ShouldPauseHeaderCatchUpForBodyIBD(bs, 0) {
+		t.Fatal("with default assumevalid unresolved, tip 534k must keep downloading headers toward 5.05M")
+	}
+	if got := headerBodyIBDPauseMinTip(bs); got != 5_050_000 {
+		t.Fatalf("pause min tip=%d want 5050000", got)
+	}
+	// Pinning AV does not unlock pause early — local tip must still reach that height.
+	bs.AssumeValid.PinResolvedHeight(5_050_000)
+	if ShouldPauseHeaderCatchUpForBodyIBD(bs, 0) {
+		t.Fatal("resolved assumevalid still requires tip >= AV height before pausing headers")
+	}
+	// Tip past a resolved AV height with a large body gap may pause getheaders.
+	bs.AssumeValid = consensus.NewAssumeValid("mainnet", "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa")
+	bs.AssumeValid.PinResolvedHeight(400_000)
+	if got := headerBodyIBDPauseMinTip(bs); got != 400_000 {
+		t.Fatalf("pause min tip=%d want 400000", got)
+	}
+	if !ShouldPauseHeaderCatchUpForBodyIBD(bs, 0) {
+		t.Fatal("after tip passes assumevalid height, deep body IBD may pause header catch-up")
 	}
 }
 
