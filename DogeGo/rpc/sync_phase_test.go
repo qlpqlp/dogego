@@ -25,9 +25,24 @@ func TestEffectiveIBDDisplayProgress_headersFirst(t *testing.T) {
 }
 
 func TestEffectiveIBDDisplayProgress_bodyWhenHeadersFarAhead(t *testing.T) {
-	want := BodyVerificationProgress(534_000, 616)
-	p := EffectiveIBDDisplayProgress(534_000, 616, 6_000_000, true)
+	// Below assumevalid (~5.05M), prefer header progress so UI does not treat body IBD as owning the pipeline.
+	pEarly := EffectiveIBDDisplayProgress(534_000, 616, 6_000_000, true)
+	wantHdr := HeaderIBDProgress(534_000, 6_000_000)
+	if pEarly != wantHdr {
+		t.Fatalf("below assumevalid got %v want header progress %v", pEarly, wantHdr)
+	}
+	want := BodyVerificationProgress(5_100_000, 616)
+	p := EffectiveIBDDisplayProgress(5_100_000, 616, 6_000_000, true)
 	if p != want {
-		t.Fatalf("got %v want body progress %v (not header %% during deep body IBD)", p, want)
+		t.Fatalf("got %v want body progress %v (not header %% during deep body IBD past assumevalid)", p, want)
+	}
+}
+
+func TestBodyIBDOwnsPipelineWaitsForAssumeValid(t *testing.T) {
+	if BodyIBDOwnsPipeline(534_000, 616) {
+		t.Fatal("below assumevalid height must not own pipeline")
+	}
+	if !BodyIBDOwnsPipeline(5_100_000, 616) {
+		t.Fatal("past assumevalid with large body gap should own pipeline")
 	}
 }

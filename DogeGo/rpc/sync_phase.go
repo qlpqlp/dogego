@@ -6,7 +6,11 @@
 
 package rpc
 
-import "strings"
+import (
+	"strings"
+
+	"dogego/consensus"
+)
 
 // DogeGoSyncPhase classifies operator-visible sync state (Core-style: headers vs chainActive vs bodies).
 func DogeGoSyncPhase(nodeMode string, headers, chainActive, contiguousRaw int64, genesisMissing bool) string {
@@ -48,8 +52,14 @@ func HeaderIBDProgress(localTip, peerStartHeight int64) float64 {
 
 // BodyIBDOwnsPipeline mirrors node.ShouldPauseHeaderCatchUpForBodyIBD thresholds for RPC/UI
 // without importing the node package (Core: block download owns IBD once headers are far ahead).
+// With default mainnet assumevalid, do not claim body ownership until tip reaches that height
+// (~5.05M) so UI/RPC do not fake a getheaders pause while headers still need to unlock script-skip.
 func BodyIBDOwnsPipeline(headerTip, contiguousRaw int64) bool {
-	if headerTip < 500_000 || contiguousRaw < 0 {
+	minTip := consensus.DefaultAssumeValidHeight("mainnet")
+	if minTip <= 0 {
+		minTip = 500_000
+	}
+	if headerTip < minTip || contiguousRaw < 0 {
 		return false
 	}
 	return headerTip-contiguousRaw > 50_000
