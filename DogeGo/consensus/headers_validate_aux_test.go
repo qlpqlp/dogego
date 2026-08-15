@@ -78,17 +78,18 @@ func minimalAuxPow(parentVer uint32) *wire.AuxPow {
 	return a
 }
 
-func TestCheckAuxPowRejectsParentTimestampAheadOfChild(t *testing.T) {
+func TestCheckAuxPowAllowsParentTimestampAheadOfChild(t *testing.T) {
+	// Core CAuxPow::check does not compare parent nTime to the child; mainnet skew can be hours.
 	dc := LookupConsensus(chain.MainnetDogecoin, 2_000_000)
 	a := minimalAuxPow(2)
 	auxParentHeaderBaseline(a)
 	child := auxChildHeader80()
 	binary.LittleEndian.PutUint32(child[68:72], 1_600_000_000)
-	binary.LittleEndian.PutUint32(a.ParentHeader80[68:72], 1_600_000_000+7201)
+	binary.LittleEndian.PutUint32(a.ParentHeader80[68:72], 1_600_000_000+13*3600)
 	wireAuxPowCoinbaseScript(a, child)
 	err := checkAuxPow(child, a, dc)
-	if err == nil || !contains(err.Error(), "timestamp too far ahead") {
-		t.Fatalf("err=%v", err)
+	if err != nil && contains(err.Error(), "timestamp too far ahead") {
+		t.Fatalf("must not reject parent-ahead-of-child nTime (Core parity): %v", err)
 	}
 }
 

@@ -178,10 +178,8 @@ func checkAuxPow(child80 []byte, a *wire.AuxPow, dc DogeConsensus) error {
 	if parentTime == 0 {
 		return fmt.Errorf("aux parent has zero timestamp")
 	}
-	childTime := binary.LittleEndian.Uint32(child80[68:72])
-	if childTime != 0 && parentTime > childTime+7200 {
-		return fmt.Errorf("aux parent timestamp too far ahead of child")
-	}
+	// Core CAuxPow::check does not compare parent nTime to the child header (mainnet has
+	// merge-mined parents hours ahead of the Dogecoin child; e.g. height 534655 ~13h).
 	// Core CAuxPow::check: reject only when the parent header encodes our chain ID (0x62).
 	// Parent may use any other chain ID (e.g. Litecoin or other merge-mining parents).
 	if dc.StrictChainID && chainIDFromVersion(pverLE) == dc.AuxpowChainID {

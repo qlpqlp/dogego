@@ -304,7 +304,7 @@ Smoke on a dev machine (no PS1 Core gate): `dogego cert weekly-live -skip-script
 - [x] **MVP:** AuxPoW rejects parent **prev hash** or **block id** equal to child block hash (`checkAuxPow`)
 - [x] **MVP:** AuxPoW validates parent header **scrypt PoW** against **child `nBits`** (`checkAuxPow`; Core `CheckAuxPowProofOfWork`)
 - [x] **MVP:** AuxPoW parent chain id - Core `CAuxPow::check`: reject parent only when chain id equals Dogecoin `0x62` (not “must be zero”; `checkAuxPow`)
-- [x] **MVP:** AuxPoW rejects **parent timestamp** more than 2h ahead of child header (`checkAuxPow`)
+- [x] **MVP:** AuxPoW matches Core `CAuxPow::check` (no parent-vs-child nTime skew; mainnet parents can be hours ahead) (`checkAuxPow`)
 - [x] **MVP:** AuxPoW validation aligned with Core `CheckAuxPowProofOfWork` + `CAuxPow::check` (parent PoW vs child `nBits`, merge-mining script layout, chain index)
 - [x] **Core parity (AuxPoW parent):** embedded parent header + coinbase + merkle branches only - **matches Dogecoin Core** (`CAuxPow::check`, `CheckAuxPowProofOfWork`). **No separate Litecoin chain sync** on Core or DogeGo; optional future parent-chain archive would exceed Core scope.
 - [x] **MVP:** AuxPoW parent coinbase **`CheckTransaction`** in `checkAuxPow` (Core-shaped structural validation)
