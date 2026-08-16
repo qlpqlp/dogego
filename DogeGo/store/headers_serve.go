@@ -54,6 +54,11 @@ func FindLocatorForkHeight(j *HeaderJournal, locator [][32]byte) (int64, error) 
 	return 0, nil
 }
 
+// locatorMatchScanCap limits tip→genesis work when answering getheaders during IBD.
+// Same-chain peers behind us match within this window; genesis-only locators return 0
+// without hashing the entire journal (was freezing header download under inbound load).
+const locatorMatchScanCap int64 = 100_000
+
 // highestLocatorMatch walks tip→0 and returns the highest height whose hash is in want.
 func (j *HeaderJournal) highestLocatorMatch(tip int64, want map[[32]byte]struct{}) (int64, bool, error) {
 	if tip < 0 || len(want) == 0 {
@@ -62,7 +67,11 @@ func (j *HeaderJournal) highestLocatorMatch(tip int64, want map[[32]byte]struct{
 	if j.seg != nil {
 		return j.seg.highestLocatorMatch(tip, want)
 	}
-	for h := tip; h >= 0; h-- {
+	floor := tip - locatorMatchScanCap
+	if floor < 0 {
+		floor = 0
+	}
+	for h := tip; h >= floor; h-- {
 		hdr, err := j.ReadHeaderAt(h)
 		if err != nil {
 			return 0, false, err
@@ -79,12 +88,19 @@ func (l *headerSegmentLayout) highestLocatorMatch(tip int64, want map[[32]byte]s
 		return 0, false, nil
 	}
 	segSize := int64(HeaderSegmentSize)
+	floor := tip - locatorMatchScanCap
+	if floor < 0 {
+		floor = 0
+	}
 	segStart := (tip / segSize) * segSize
 	for segStart >= 0 {
+		if segStart+segSize <= floor {
+			break
+		}
 		b, err := os.ReadFile(l.segmentPath(segStart))
 		if err != nil {
 			if os.IsNotExist(err) {
-				if segStart == 0 {
+				if segStart == 0 || segStart < floor {
 					break
 				}
 				segStart -= segSize
@@ -92,12 +108,15 @@ func (l *headerSegmentLayout) highestLocatorMatch(tip int64, want map[[32]byte]s
 			}
 			return 0, false, err
 		}
-		// Walk this segment high→low so the first hit is the highest height.
 		maxH := segStart + int64(len(b)/80) - 1
 		if maxH > tip {
 			maxH = tip
 		}
-		for h := maxH; h >= segStart; h-- {
+		minH := segStart
+		if minH < floor {
+			minH = floor
+		}
+		for h := maxH; h >= minH; h-- {
 			off := int((h - segStart) * 80)
 			if off+80 > len(b) {
 				continue
@@ -106,7 +125,7 @@ func (l *headerSegmentLayout) highestLocatorMatch(tip int64, want map[[32]byte]s
 				return h, true, nil
 			}
 		}
-		if segStart == 0 {
+		if segStart == 0 || segStart <= floor {
 			break
 		}
 		segStart -= segSize

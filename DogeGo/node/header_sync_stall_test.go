@@ -29,12 +29,25 @@ func TestHeaderSyncStallLimit_earlyIBDAncientTipTimeNotMultiHour(t *testing.T) {
 	}
 }
 
-func TestHeadersSyncTimeoutFromCore_staleTip(t *testing.T) {
+func TestHeaderSyncStallLimit_past1MStillShortUntilAssumeValid(t *testing.T) {
+	now := int64(1_700_000_000)
+	tipTime := now - 400*24*3600
+	d := headerSyncStallLimit(1_055_840, 6_300_000, false, tipTime, now)
+	if d != headerSyncStallEarlyIBD {
+		t.Fatalf("past 1M but before assumevalid with peer far ahead: want %v got %v", headerSyncStallEarlyIBD, d)
+	}
+	d2 := headerSyncStallLimit(1_055_840, 1_055_840, false, tipTime, now)
+	if d2 != headerSyncStallDefault {
+		t.Fatalf("past 1M ancient tip without far peer: want %v got %v", headerSyncStallDefault, d2)
+	}
+}
+
+func TestHeaderSyncStallLimit_recentTipMayUseCoreWindow(t *testing.T) {
 	now := int64(1_700_000_000)
 	tipTime := now - 48*3600
-	d := headersSyncTimeoutFromCore(tipTime, now, 60)
+	d := headerSyncStallLimit(5_100_000, 5_100_000, false, tipTime, now)
 	if d < 15*time.Minute {
-		t.Fatalf("stale tip timeout %v want >= 15m", d)
+		t.Fatalf("recent tip past assumevalid may use Core window, got %v", d)
 	}
 }
 

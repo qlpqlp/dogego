@@ -21,7 +21,9 @@ func RecentHeaderSyncProgress(within time.Duration) bool {
 	if lastAt.IsZero() {
 		return false
 	}
-	if lastKind != "headers" && lastKind != "recovery" {
+	// Only real header appends count. Recovery pass chatter must not look like progress or the
+	// watchdog / background defer logic will sit forever while tip is frozen.
+	if lastKind != "headers" {
 		return false
 	}
 	return time.Since(lastAt) < within

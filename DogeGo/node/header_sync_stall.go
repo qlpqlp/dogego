@@ -24,6 +24,9 @@ const (
 	headerAdvanceWatchInterval  = 40 * time.Second
 	headerTopUpDuringIBD        = 45 * time.Second
 	headerSyncBackgroundInitial = 5 * time.Second
+	// headerIBDShortStallThrough keeps short peer-rotate timeouts until mainnet assumevalid
+	// height. Past 1M, header nTime is still ancient; Core's 24h formula would allow ~2h hangs.
+	headerIBDShortStallThrough = 5_050_000
 )
 
 // Core net_processing.h HEADERS_DOWNLOAD_TIMEOUT_* (microseconds).
@@ -69,18 +72,16 @@ func headerTipBlockTimeUnix(j *store.HeaderJournal, tip int64) int64 {
 
 // headerSyncStallLimit is how long we wait on one TCP link without a headers message before rotating peers.
 func headerSyncStallLimit(localTip int64, peerStart int32, bodiesBehind bool, headerTipTime, nowUnix int64) time.Duration {
-	if localTip < 1_000_000 && peerStart > 0 && int64(peerStart) > localTip+headerCatchUpPeerLead {
+	farBehindPeer := peerStart > 0 && int64(peerStart) > localTip+headerCatchUpPeerLead
+	if farBehindPeer && (localTip < headerIBDShortStallThrough || bodiesBehind) {
 		return headerSyncStallEarlyIBD
 	}
-	if bodiesBehind && peerStart > 0 && int64(peerStart) > localTip+headerCatchUpPeerLead {
-		return headerSyncStallEarlyIBD
-	}
-	// Early IBD: header block times are ancient by definition; Core's 24h+ formula would allow
-	// multi-hour stalls on a link that should rotate in under a minute (background recovery uses 45s).
-	if localTip < 1_000_000 {
+	// Until assumevalid height (or tip time is actually recent), header nTime is years old.
+	// Core's 24h+ stall formula would allow up to 2h on a dead link and freeze IBD past 1M.
+	if localTip < headerIBDShortStallThrough {
 		return headerSyncStallDefault
 	}
-	if headerTipTime > 0 && nowUnix > 0 {
+	if headerTipTime > 0 && nowUnix > 0 && nowUnix-headerTipTime < 24*60*60 {
 		if core := headersSyncTimeoutFromCore(headerTipTime, nowUnix, 60); core > headerSyncStallDefault {
 			return core
 		}
@@ -156,7 +157,7 @@ func StartHeaderAdvanceWatchdog(ctx context.Context, net chain.Network, j *store
 					continue
 				}
 				if ShouldDeferBackgroundHeaderSync() {
-					lastAdvance = time.Now()
+					// Dedicated link still owns headers; do not treat that as tip progress.
 					continue
 				}
 				if logNow, _ := RecordWatchdogHeaderStall(tip, peerH); logNow {
