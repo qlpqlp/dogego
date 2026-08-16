@@ -289,7 +289,7 @@ Smoke on a dev machine (no PS1 Core gate): `dogego cert weekly-live -skip-script
 - [x] **MVP:** P2P **BIP61 reject on mempool policy failure** - insufficient fee / invalid / non-standard (+ misbehavior for invalid); orphans and duplicate spends silent (`HandleInboundTxAdmissionFailure`, primary + relay + **inv→getdata** tx fetch)
 - [x] **MVP:** `CTransaction` wire read/write + BIP141 **size / vsize / weight** in RPC (`wire/txsize.go`, `txToRPCJSON`, mempool vsize); witness **stacks decoded** but **rejected** at mempool/P2P (Dogecoin has no segwit)
 - [x] **MVP:** AuxPoW wire decode/encode, `headers_aux.bin`, block parse, serve `getheaders`, validation, mining RPC (`wire/auxpow*.go`, `store/header_aux*.go`, `rpc/auxpow_*.go`)
-- [x] **MVP:** AuxPoW parent checks - parent must not be auxpow; parent coinbase single null prevout; merkle branch caps (`checkAuxPow` in `consensus/headers_validate.go`; Core `CAuxPow::check` does not require `CMerkleTx::hashBlock` == parent hash)
+- [x] **MVP:** AuxPoW parent checks match Core `CAuxPow::check` (strict chain id, coinbase null prevout, merkle caps; parent may carry VERSION_AUXPOW) (`checkAuxPow`)
 - [x] **Core parity:** **legacy coinbase subsidy** - `GetDogecoinBlockSubsidy` pre-145k RNG matches Core (`generateMTRandom` + Boost `uniform_int` division, not `%`; `consensus/mt19937.go`, `subsidy_legacy_vectors_test.go`)
 - [x] **MVP:** AuxPoW **chain index range** + parent coinbase size cap + parent **nBits** non-zero (`checkAuxPow`)
 - [x] **MVP:** AuxPoW parent **merkle root** non-zero; duplicate orphan txid ignored; `ComputeBlockVersion` for GBT / `createauxblock` (`consensus/versionbits.go`)

@@ -167,9 +167,8 @@ func checkAuxPow(child80 []byte, a *wire.AuxPow, dc DogeConsensus) error {
 	if pverLE == 0 {
 		return fmt.Errorf("aux parent has zero version")
 	}
-	if isAuxpowVersionU(pverLE) {
-		return fmt.Errorf("aux parent must not be auxpow block")
-	}
+	// Core CAuxPow::check does not require the parent header to clear VERSION_AUXPOW.
+	// Mainnet has valid merge-mined parents with that bit set (e.g. height 2579219).
 	var zero32 [32]byte
 	if bytes.Equal(a.ParentHeader80[4:36], zero32[:]) {
 		return fmt.Errorf("aux parent has zero prev block hash")

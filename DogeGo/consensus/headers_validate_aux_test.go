@@ -107,13 +107,17 @@ func TestCheckAuxPowRejectsZeroParentPrevHash(t *testing.T) {
 	}
 }
 
-func TestCheckAuxPowRejectsParentAuxpow(t *testing.T) {
+func TestCheckAuxPowAllowsParentAuxpowVersionBit(t *testing.T) {
+	// Core does not reject parent headers with VERSION_AUXPOW set.
 	dc := LookupConsensus(chain.MainnetDogecoin, 2_000_000)
-	a := minimalAuxPow(0x00000102)
-	binary.LittleEndian.PutUint32(a.ParentHeader80[0:4], 0x100) // parent must not be auxpow
-	err := checkAuxPow(auxChildHeader80(), a, dc)
-	if err == nil {
-		t.Fatal("expected error")
+	a := minimalAuxPow(0x20000100)
+	auxParentHeaderBaseline(a)
+	binary.LittleEndian.PutUint32(a.ParentHeader80[0:4], 0x20000100)
+	child := auxChildHeader80()
+	wireAuxPowCoinbaseScript(a, child)
+	err := checkAuxPow(child, a, dc)
+	if err != nil && contains(err.Error(), "must not be auxpow") {
+		t.Fatalf("parent auxpow version bit must match Core (accept): %v", err)
 	}
 }
 
