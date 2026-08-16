@@ -126,6 +126,29 @@ func ForceRestartHeaderSyncBackgroundRecovery() bool {
 	return true
 }
 
+// RestartHeaderSyncBackgroundRecoverySoon cancels a stuck pass (if any) then re-arms recovery,
+// retrying Start until the old goroutine has exited. Fixes the race where AfterFunc(2s) fired
+// while headerSyncBGRecoveryRunning was still 1, so auto-fix never restarted.
+func RestartHeaderSyncBackgroundRecoverySoon(start func() bool) {
+	if start == nil {
+		return
+	}
+	_ = ForceRestartHeaderSyncBackgroundRecovery()
+	go func() {
+		deadline := time.Now().Add(30 * time.Second)
+		for time.Now().Before(deadline) {
+			if headerSyncBGRecoveryRunning.Load() == 0 {
+				if start() {
+					return
+				}
+			}
+			time.Sleep(200 * time.Millisecond)
+		}
+		// Last attempt even if the old flag is wedged-clear is impossible; StartOnce is a no-op then.
+		_ = start()
+	}()
+}
+
 func runHeaderSyncBackgroundRecovery(env HeaderSyncRecoveryEnv) error {
 	wait := headerSyncBackgroundInitial
 	pass := 0

@@ -1920,10 +1920,12 @@ func Run(ctx context.Context, cfg Config) error {
 			}
 			if shouldForceRestart && ForceRestartHeaderSyncBackgroundRecovery() {
 				applog.Line("headers", "background header sync appears stuck; forcing restart and peer reprobe (Core-style rotation)")
-				time.AfterFunc(2*time.Second, func() {
-					if headerCatchUpPending.Load() {
-						startHeaderBackgroundRecovery()
+				ClearHeaderRecoveryRuntime()
+				RestartHeaderSyncBackgroundRecoverySoon(func() bool {
+					if !headerCatchUpPending.Load() {
+						return true
 					}
+					return startHeaderBackgroundRecovery()
 				})
 			}
 		}

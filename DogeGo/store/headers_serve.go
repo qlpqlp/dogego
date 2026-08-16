@@ -8,6 +8,7 @@ package store
 
 import (
 	"fmt"
+	"os"
 
 	"dogego/pow"
 	"dogego/wire"
@@ -18,20 +19,99 @@ const MaxHeadersPerMessage = 2000
 
 // FindLocatorForkHeight returns the highest journal height matching any locator hash (newest-first order).
 // If none match, returns genesis height 0.
+//
+// One tip→genesis pass against the locator set (segment-sized reads). The old per-hash
+// HeightByBlockHashLE loop was O(tip×locator) and wedged IBD when peers asked getheaders
+// with locators that only matched genesis (common during early peer IBD).
 func FindLocatorForkHeight(j *HeaderJournal, locator [][32]byte) (int64, error) {
 	if j == nil {
 		return 0, fmt.Errorf("nil journal")
 	}
-	for _, h := range locator {
-		height, err := j.HeightByBlockHashLE(h)
-		if err == nil {
-			return height, nil
-		}
+	if len(locator) == 0 {
+		return 0, nil
 	}
-	if _, err := j.Count(); err != nil {
+	tip, err := j.TipHeight()
+	if err != nil {
 		return 0, err
 	}
+	if tip < 0 {
+		return 0, nil
+	}
+	want := make(map[[32]byte]struct{}, len(locator))
+	for _, h := range locator {
+		want[h] = struct{}{}
+	}
+	if tipHash, err := j.LastTipHash(); err == nil {
+		if _, ok := want[tipHash]; ok {
+			return tip, nil
+		}
+	}
+	if h, ok, err := j.highestLocatorMatch(tip, want); err != nil {
+		return 0, err
+	} else if ok {
+		return h, nil
+	}
 	return 0, nil
+}
+
+// highestLocatorMatch walks tip→0 and returns the highest height whose hash is in want.
+func (j *HeaderJournal) highestLocatorMatch(tip int64, want map[[32]byte]struct{}) (int64, bool, error) {
+	if tip < 0 || len(want) == 0 {
+		return 0, false, nil
+	}
+	if j.seg != nil {
+		return j.seg.highestLocatorMatch(tip, want)
+	}
+	for h := tip; h >= 0; h-- {
+		hdr, err := j.ReadHeaderAt(h)
+		if err != nil {
+			return 0, false, err
+		}
+		if _, ok := want[pow.BlockHashLE(hdr)]; ok {
+			return h, true, nil
+		}
+	}
+	return 0, false, nil
+}
+
+func (l *headerSegmentLayout) highestLocatorMatch(tip int64, want map[[32]byte]struct{}) (int64, bool, error) {
+	if tip < 0 || len(want) == 0 {
+		return 0, false, nil
+	}
+	segSize := int64(HeaderSegmentSize)
+	segStart := (tip / segSize) * segSize
+	for segStart >= 0 {
+		b, err := os.ReadFile(l.segmentPath(segStart))
+		if err != nil {
+			if os.IsNotExist(err) {
+				if segStart == 0 {
+					break
+				}
+				segStart -= segSize
+				continue
+			}
+			return 0, false, err
+		}
+		// Walk this segment high→low so the first hit is the highest height.
+		maxH := segStart + int64(len(b)/80) - 1
+		if maxH > tip {
+			maxH = tip
+		}
+		for h := maxH; h >= segStart; h-- {
+			off := int((h - segStart) * 80)
+			if off+80 > len(b) {
+				continue
+			}
+			if _, ok := want[pow.BlockHashLE(b[off:off+80])]; ok {
+				return h, true, nil
+			}
+		}
+		if segStart == 0 {
+			break
+		}
+		segStart -= segSize
+	}
+	return 0, false, nil
 }
 
 // HeadersAfterFork builds up to maxHeaders entries after forkHeight (exclusive), stopping before hashStop.

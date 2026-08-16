@@ -468,40 +468,14 @@ func (j *HeaderJournal) ReadHeaderAt(height int64) ([]byte, error) {
 }
 
 // BuildBlockLocator returns a Bitcoin-style block locator (newest first), up to max entries (max 101).
+// Uses TipHeight + ReadHeaderAt only (no full-journal ReadAll) so IBD getheaders stays responsive
+// once the header tip is hundreds of thousands high.
 func (j *HeaderJournal) BuildBlockLocator(max int) ([][32]byte, error) {
-	if max < 1 || max > 101 {
-		max = 101
-	}
-	all, err := j.ReadAll()
+	tip, err := j.TipHeight()
 	if err != nil {
 		return nil, err
 	}
-	n := len(all)
-	if n == 0 {
-		return nil, fmt.Errorf("empty chain")
-	}
-	curH := int64(n - 1)
-	step := 1
-	var out [][32]byte
-	for len(out) < max {
-		buf := all[curH]
-		h := pow.BlockHashLE(buf)
-		out = append(out, h)
-		if curH == 0 {
-			break
-		}
-		nHeight := curH - int64(step)
-		if nHeight < 0 {
-			nHeight = 0
-		}
-		for curH > nHeight {
-			curH--
-		}
-		if len(out) > 10 {
-			step *= 2
-		}
-	}
-	return out, nil
+	return j.BuildBlockLocatorFromHeight(tip, max)
 }
 
 // BuildBlockLocatorFromHeight returns a block locator from fromHeight down toward genesis (newest first).
@@ -513,40 +487,32 @@ func (j *HeaderJournal) BuildBlockLocatorFromHeight(fromHeight int64, max int) (
 	if err != nil {
 		return nil, err
 	}
+	if tipH < 0 {
+		return nil, fmt.Errorf("empty chain")
+	}
 	if fromHeight > tipH {
 		fromHeight = tipH
 	}
 	if fromHeight < 0 {
 		fromHeight = 0
 	}
-	all, err := j.ReadAll()
-	if err != nil {
-		return nil, err
-	}
-	n := len(all)
-	if n == 0 {
-		return nil, fmt.Errorf("empty chain")
-	}
 	curH := fromHeight
 	step := int64(1)
 	var out [][32]byte
 	for len(out) < max {
-		if curH >= int64(n) {
-			return nil, fmt.Errorf("locator height %d out of range (count %d)", curH, n)
+		buf, err := j.ReadHeaderAt(curH)
+		if err != nil {
+			return nil, err
 		}
-		buf := all[curH]
-		h := pow.BlockHashLE(buf)
-		out = append(out, h)
+		out = append(out, pow.BlockHashLE(buf))
 		if curH == 0 {
 			break
 		}
-		nHeight := curH - step
-		if nHeight < 0 {
-			nHeight = 0
+		next := curH - step
+		if next < 0 {
+			next = 0
 		}
-		for curH > nHeight {
-			curH--
-		}
+		curH = next
 		if len(out) > 10 {
 			step *= 2
 		}

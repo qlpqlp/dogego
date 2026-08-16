@@ -151,24 +151,38 @@ func (l *headerSegmentLayout) heightByHashLEThrough(tip int64, hashLE [32]byte) 
 		return -1, fmt.Errorf("block hash not in header journal")
 	}
 	segSize := int64(HeaderSegmentSize)
-	for segStart := int64(0); segStart <= tip; segStart += segSize {
+	// Tip→genesis: locators and tip lookups hit near the end of the chain first.
+	segStart := (tip / segSize) * segSize
+	for segStart >= 0 {
 		path := l.segmentPath(segStart)
 		b, err := os.ReadFile(path)
 		if err != nil {
 			if os.IsNotExist(err) {
+				if segStart == 0 {
+					break
+				}
+				segStart -= segSize
 				continue
 			}
 			return -1, err
 		}
-		for i := 0; i+80 <= len(b); i += 80 {
-			h := segStart + int64(i/80)
-			if h > tip {
-				break
+		maxH := segStart + int64(len(b)/80) - 1
+		if maxH > tip {
+			maxH = tip
+		}
+		for h := maxH; h >= segStart; h-- {
+			off := int((h - segStart) * 80)
+			if off+80 > len(b) {
+				continue
 			}
-			if pow.BlockHashLE(b[i:i+80]) == hashLE {
+			if pow.BlockHashLE(b[off:off+80]) == hashLE {
 				return h, nil
 			}
 		}
+		if segStart == 0 {
+			break
+		}
+		segStart -= segSize
 	}
 	return -1, fmt.Errorf("block hash not in header journal")
 }

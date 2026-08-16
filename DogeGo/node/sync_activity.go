@@ -134,6 +134,16 @@ func NoteHeaderRecoveryKickSuppressed() {
 	syncActivity.mu.Unlock()
 }
 
+// ClearHeaderRecoveryRuntime resets pass timers after a forced recovery restart.
+func ClearHeaderRecoveryRuntime() {
+	syncActivity.mu.Lock()
+	syncActivity.headerRecoverySince = time.Time{}
+	syncActivity.headerRecoveryPass = 0
+	syncActivity.headerRecoveryDetail = ""
+	syncActivity.recoveryKickSuppressed = 0
+	syncActivity.mu.Unlock()
+}
+
 // NoteDedicatedHeaderSync updates dedicated header peer status.
 func NoteDedicatedHeaderSync(addr, detail string) {
 	syncActivity.mu.Lock()
