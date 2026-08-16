@@ -193,9 +193,8 @@ func checkAuxPow(child80 []byte, a *wire.AuxPow, dc DogeConsensus) error {
 	if !IsCoinbaseTx(a.Coinbase) {
 		return fmt.Errorf("aux parent coinbase is not coinbase")
 	}
-	if err := CheckTransaction(a.Coinbase, true); err != nil {
-		return fmt.Errorf("aux parent coinbase invalid: %w", err)
-	}
+	// Core CAuxPow::check does not run CheckTransaction on the parent coinbase.
+	// Parent scriptSig can exceed Dogecoin's 100-byte bad-cb-length (e.g. height ~3668508 = 101 bytes).
 	// Core CAuxPow::check does not compare CMerkleTx::hashBlock to parentBlock.GetHash(); merkle
 	// branches + coinbase script prove inclusion. Some valid mainnet aux headers carry a stale
 	// hashBlock on the wire while still passing Core validation.

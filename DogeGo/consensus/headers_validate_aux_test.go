@@ -188,14 +188,25 @@ func TestCheckAuxPowRejectsChainIndexOutOfRange(t *testing.T) {
 	}
 }
 
-func TestCheckAuxPowRejectsInvalidParentCoinbaseTx(t *testing.T) {
+func TestCheckAuxPowAllowsParentCoinbaseScriptOver100(t *testing.T) {
+	// Core does not apply Dogecoin bad-cb-length to the aux parent coinbase.
 	dc := LookupConsensus(chain.MainnetDogecoin, 2_000_000)
-	a := minimalAuxPow(2) // non-aux parent version
+	a := minimalAuxPow(2)
 	auxParentHeaderBaseline(a)
-	a.Coinbase.Vin[0].Script = []byte{0x01} // bad-cb-length (< 2 bytes)
-	err := checkAuxPow(auxChildHeader80(), a, dc)
-	if err == nil || !contains(err.Error(), "aux parent coinbase invalid") {
-		t.Fatalf("err=%v", err)
+	child := auxChildHeader80()
+	wireAuxPowCoinbaseScript(a, child)
+	long := make([]byte, 101)
+	copy(long, a.Coinbase.Vin[0].Script)
+	for i := len(a.Coinbase.Vin[0].Script); i < len(long); i++ {
+		long[i] = 0x00
+	}
+	a.Coinbase.Vin[0].Script = long
+	txh := a.Coinbase.TxHash()
+	copy(a.ParentHeader80[36:68], txh[:])
+	a.HashBlock = pow.BlockHashLE(a.ParentHeader80[:])
+	err := checkAuxPow(child, a, dc)
+	if err != nil && contains(err.Error(), "bad-cb-length") {
+		t.Fatalf("parent coinbase scriptSig >100 must match Core (accept): %v", err)
 	}
 }
 
