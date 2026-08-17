@@ -37,15 +37,18 @@ func (b *blockUndoView) Lookup(prevHash [32]byte, idx uint32) (PrevOut, bool) {
 	return o, ok
 }
 
-func (b *blockUndoView) addTx(tx *wire.Tx) {
+func (b *blockUndoView) addTx(tx *wire.Tx, height int64) {
 	if b.outs == nil {
 		b.outs = make(map[[36]byte]PrevOut)
 	}
 	h := tx.TxHash()
+	coinbase := IsCoinbaseTx(tx)
 	for i, o := range tx.Vout {
 		b.outs[outpointKey(h, uint32(i))] = PrevOut{
 			Value:    o.Value,
 			PkScript: append([]byte(nil), o.PkScript...),
+			Height:   height,
+			Coinbase: coinbase,
 		}
 	}
 }
@@ -134,7 +137,7 @@ func CheckBlockDuplicateSpends(pb *wire.ParsedBlock) error {
 }
 
 // ConnectBlock validates non-coinbase transactions (scripts, fees, coinbase amount) when chainView
-// can resolve prevouts. index and journal enable coinbase maturity; pass nil to skip maturity checks.
+// can resolve prevouts from the UTXO cache (Core ConnectBlock; txindex is not used here).
 func ConnectBlock(pb *wire.ParsedBlock, height int64, net chain.Network, chainView PrevOutView, index TxIndexer, journal HeaderChain) error {
 	if pb == nil || chainView == nil {
 		return nil
@@ -214,7 +217,7 @@ func connectBlockInternal(hdr primitives.BlockHeader, walk blockTxWalker, sigOpC
 			for _, o := range tx.Vout {
 				cbOut += o.Value
 			}
-			intra.addTx(tx)
+			intra.addTx(tx, height)
 			sameBlock[h] = struct{}{}
 			return nil
 		}
@@ -225,8 +228,8 @@ func connectBlockInternal(hdr primitives.BlockHeader, walk blockTxWalker, sigOpC
 			}
 			dupSpend[k] = struct{}{}
 		}
-		if index != nil && journal != nil && EnforceBIP68Sequence(tx) {
-			prevH, err := PrevHeightsForTx(tx, index, journal, height, sameBlock, 0, chainView)
+		if journal != nil && EnforceBIP68Sequence(tx) {
+			prevH, err := PrevHeightsForTx(tx, nil, journal, height, sameBlock, 0, chainView)
 			if err != nil {
 				return fmt.Errorf("tx %d prev heights: %w", i, err)
 			}
@@ -237,16 +240,13 @@ func connectBlockInternal(hdr primitives.BlockHeader, walk blockTxWalker, sigOpC
 		if err := CheckTransaction(tx, true); err != nil {
 			return fmt.Errorf("tx %d: %w", i, err)
 		}
-		if err := CheckTxInputs(tx, view); err != nil {
+		if err := CheckTxInputsAtHeight(tx, view, height, net); err != nil {
 			return fmt.Errorf("tx %d: %w", i, err)
 		}
 		if scriptChecks {
 			if err := VerifyScriptAtHeight(tx, view, height, net, journal); err != nil {
 				return fmt.Errorf("tx %d: %w", i, err)
 			}
-		}
-		if err := CheckTxCoinbaseMaturityFromView(tx, height, net, view, index, journal); err != nil {
-			return fmt.Errorf("tx %d: %w", i, err)
 		}
 		fee, err := TxFee(tx, view)
 		if err != nil {
@@ -256,7 +256,7 @@ func connectBlockInternal(hdr primitives.BlockHeader, walk blockTxWalker, sigOpC
 			return fmt.Errorf("tx %d: bad-txns-in-belowout", i)
 		}
 		fees += fee
-		intra.addTx(tx)
+		intra.addTx(tx, height)
 		sameBlock[h] = struct{}{}
 		return nil
 	})

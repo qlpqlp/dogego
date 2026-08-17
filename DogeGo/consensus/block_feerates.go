@@ -25,7 +25,7 @@ func BlockTxFeeSamplesRaw(blockRaw []byte, chainView PrevOutView) []BlockFeeSamp
 	_ = wire.ForEachBlockTx(blockRaw, func(i uint32, tx *wire.Tx) error {
 		if i == 0 || IsCoinbaseTx(tx) {
 			if IsCoinbaseTx(tx) {
-				intra.addTx(tx)
+				intra.addTx(tx, 0)
 			}
 			return nil
 		}
@@ -37,7 +37,7 @@ func BlockTxFeeSamplesRaw(blockRaw []byte, chainView PrevOutView) []BlockFeeSamp
 				FeeratePerKB: rate,
 			})
 		}
-		intra.addTx(tx)
+		intra.addTx(tx, 0)
 		return nil
 	})
 	return out
@@ -54,7 +54,7 @@ func BlockTxFeeSamples(pb *wire.ParsedBlock, chainView PrevOutView) []BlockFeeSa
 	for i, tx := range pb.Txs {
 		if i == 0 || IsCoinbaseTx(tx) {
 			if IsCoinbaseTx(tx) {
-				intra.addTx(tx)
+				intra.addTx(tx, 0)
 			}
 			continue
 		}
@@ -66,7 +66,7 @@ func BlockTxFeeSamples(pb *wire.ParsedBlock, chainView PrevOutView) []BlockFeeSa
 				FeeratePerKB: rate,
 			})
 		}
-		intra.addTx(tx)
+		intra.addTx(tx, 0)
 	}
 	return out
 }

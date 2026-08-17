@@ -55,23 +55,23 @@ func computeBlockFeeStatsFromTxs(txs []*wire.Tx, view PrevOutView) (BlockFeeStat
 	for i, tx := range txs {
 		if i == 0 || IsCoinbaseTx(tx) {
 			if IsCoinbaseTx(tx) {
-				intra.addTx(tx)
+				intra.addTx(tx, 0)
 			}
 			continue
 		}
 		raw, err := tx.Serialize()
 		if err != nil {
-			intra.addTx(tx)
+			intra.addTx(tx, 0)
 			continue
 		}
 		fee, err := TxFee(tx, v)
 		if err != nil || fee < 0 {
-			intra.addTx(tx)
+			intra.addTx(tx, 0)
 			continue
 		}
 		sz := len(raw)
 		if sz <= 0 {
-			intra.addTx(tx)
+			intra.addTx(tx, 0)
 			continue
 		}
 		fees = append(fees, fee)
@@ -95,7 +95,7 @@ func computeBlockFeeStatsFromTxs(txs []*wire.Tx, view PrevOutView) (BlockFeeStat
 				out.MaxFeerate = rate
 			}
 		}
-		intra.addTx(tx)
+		intra.addTx(tx, 0)
 	}
 	if len(fees) == 0 {
 		return out, false

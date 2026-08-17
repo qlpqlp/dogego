@@ -11,6 +11,11 @@ type UtxoOutpointSource interface {
 	UnspentOutpoint(prevHash [32]byte, vout uint32) (value int64, pkScript []byte, ok bool)
 }
 
+// utxoEntrySource supplies Core CCoins-style height and coinbase flag for ConnectBlock.
+type utxoEntrySource interface {
+	UnspentEntry(prevHash [32]byte, vout uint32) (height int64, coinbase bool, value int64, pkScript []byte, ok bool)
+}
+
 // UtxoPrevOutView adapts UtxoOutpointSource to PrevOutView.
 type UtxoPrevOutView struct {
 	Source UtxoOutpointSource
@@ -20,6 +25,13 @@ type UtxoPrevOutView struct {
 func (v UtxoPrevOutView) Lookup(prevHash [32]byte, idx uint32) (PrevOut, bool) {
 	if v.Source == nil {
 		return PrevOut{}, false
+	}
+	if ent, ok := v.Source.(utxoEntrySource); ok {
+		h, cb, val, pk, ok := ent.UnspentEntry(prevHash, idx)
+		if !ok {
+			return PrevOut{}, false
+		}
+		return PrevOut{Value: val, PkScript: pk, Height: h, Coinbase: cb}, true
 	}
 	val, pk, ok := v.Source.UnspentOutpoint(prevHash, idx)
 	if !ok {

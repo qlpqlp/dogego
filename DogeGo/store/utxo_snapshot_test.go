@@ -16,9 +16,13 @@ import (
 
 func TestUtxoSnapshotRoundTrip(t *testing.T) {
 	u := NewUtxoCache()
-	gen := wire.ParsedBlock{Txs: []*wire.Tx{{Version: 1, Vin: []wire.TxIn{{}}, Vout: []wire.TxOut{{Value: 50e8, PkScript: []byte{0xaa}}}}}}
+	gen := wire.ParsedBlock{Txs: []*wire.Tx{{Version: 1, Vin: []wire.TxIn{{PrevIdx: 0xffffffff, Sequence: 0xffffffff}}, Vout: []wire.TxOut{{Value: 50e8, PkScript: []byte{0xaa}}}}}}
 	if err := u.ApplyBlock(&gen, 0); err != nil {
 		t.Fatal(err)
+	}
+	h, cb, _, _, ok := u.UnspentEntry(gen.Txs[0].TxHash(), 0)
+	if !ok || !cb || h != 0 {
+		t.Fatalf("genesis coinbase entry h=%d cb=%v ok=%v", h, cb, ok)
 	}
 	dir := t.TempDir()
 	path := filepath.Join(dir, "utxo.cache")

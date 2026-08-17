@@ -143,7 +143,7 @@ func CheckBlockSigOpCostRaw(blockRaw []byte, view PrevOutView) error {
 	var total int64
 	return wire.ForEachBlockTx(blockRaw, func(i uint32, tx *wire.Tx) error {
 		if i == 0 {
-			intra.addTx(tx)
+			intra.addTx(tx, 0)
 			return nil
 		}
 		cost := GetTransactionSigOpCost(tx, chainView)
@@ -151,7 +151,7 @@ func CheckBlockSigOpCostRaw(blockRaw []byte, view PrevOutView) error {
 			return fmt.Errorf("bad-blk-sigops: %d+%d > %d", total, cost, MaxBlockSigopsCost)
 		}
 		total += cost
-		intra.addTx(tx)
+		intra.addTx(tx, 0)
 		return nil
 	})
 }
@@ -166,7 +166,7 @@ func CheckBlockSigOpCost(pb *wire.ParsedBlock, view PrevOutView) error {
 	var total int64
 	for i, tx := range pb.Txs {
 		if i == 0 {
-			intra.addTx(tx)
+			intra.addTx(tx, 0)
 			continue
 		}
 		cost := GetTransactionSigOpCost(tx, chainView)
@@ -174,7 +174,7 @@ func CheckBlockSigOpCost(pb *wire.ParsedBlock, view PrevOutView) error {
 			return fmt.Errorf("bad-blk-sigops: %d+%d > %d", total, cost, MaxBlockSigopsCost)
 		}
 		total += cost
-		intra.addTx(tx)
+		intra.addTx(tx, 0)
 	}
 	return nil
 }

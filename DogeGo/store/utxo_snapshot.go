@@ -16,7 +16,8 @@ import (
 
 const (
 	utxoSnapshotMagic   = "DGUT"
-	utxoSnapshotVersion = uint32(1)
+	utxoSnapshotVersion   = uint32(2)
+	utxoSnapshotVersionV1 = uint32(1)
 )
 
 // UtxoSnapshotPath is the on-disk UTXO cache file under a chain data directory (not Core chainstate).
@@ -47,7 +48,7 @@ func cloneUtxoCoinsForSnapshot(coins map[[36]byte]UtxoEntry) map[[36]byte]UtxoEn
 		if len(pk) > 0 {
 			pk = append([]byte(nil), pk...)
 		}
-		out[k] = UtxoEntry{Value: e.Value, Height: e.Height, PkScript: pk}
+		out[k] = UtxoEntry{Value: e.Value, Height: e.Height, PkScript: pk, Coinbase: e.Coinbase}
 	}
 	return out
 }
@@ -122,6 +123,13 @@ func writeUtxoSnapshot(w io.Writer, tip int64, coins map[[36]byte]UtxoEntry) err
 		if err := binary.Write(w, binary.LittleEndian, e.Height); err != nil {
 			return err
 		}
+		var cb byte
+		if e.Coinbase {
+			cb = 1
+		}
+		if err := binary.Write(w, binary.LittleEndian, cb); err != nil {
+			return err
+		}
 		if err := binary.Write(w, binary.LittleEndian, uint32(len(e.PkScript))); err != nil {
 			return err
 		}
@@ -146,7 +154,7 @@ func readUtxoSnapshot(r io.Reader) (tip int64, coins map[[36]byte]UtxoEntry, err
 	if err := binary.Read(r, binary.LittleEndian, &ver); err != nil {
 		return 0, nil, err
 	}
-	if ver != utxoSnapshotVersion {
+	if ver != utxoSnapshotVersion && ver != utxoSnapshotVersionV1 {
 		return 0, nil, fmt.Errorf("utxo snapshot: unsupported version %d", ver)
 	}
 	if err := binary.Read(r, binary.LittleEndian, &tip); err != nil {
@@ -168,6 +176,13 @@ func readUtxoSnapshot(r io.Reader) (tip int64, coins map[[36]byte]UtxoEntry, err
 		}
 		if err := binary.Read(r, binary.LittleEndian, &e.Height); err != nil {
 			return 0, nil, err
+		}
+		if ver >= utxoSnapshotVersion {
+			var cb byte
+			if err := binary.Read(r, binary.LittleEndian, &cb); err != nil {
+				return 0, nil, err
+			}
+			e.Coinbase = cb != 0
 		}
 		var slen uint32
 		if err := binary.Read(r, binary.LittleEndian, &slen); err != nil {

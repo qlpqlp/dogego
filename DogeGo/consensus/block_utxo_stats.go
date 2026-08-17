@@ -99,7 +99,7 @@ func blockUtxoSizeIncreaseFromTxs(txs []*wire.Tx, view PrevOutView) (int64, bool
 		for _, o := range tx.Vout {
 			inc += 8 + int64(len(o.PkScript))
 		}
-		intra.addTx(tx)
+		intra.addTx(tx, 0)
 	}
 	if resolved == 0 && len(txs) > 1 {
 		return 0, false

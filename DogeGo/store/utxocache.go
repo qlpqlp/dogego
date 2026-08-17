@@ -21,6 +21,7 @@ type UtxoEntry struct {
 	Value    int64
 	PkScript []byte
 	Height   int64
+	Coinbase bool // Core CCoins::fCoinBase for the creating transaction
 }
 
 // UtxoCache maintains the UTXO set for connected blocks up to TipHeight.
@@ -205,7 +206,8 @@ func (u *UtxoCache) ApplyBlockRaw(raw []byte, height int64) error {
 }
 
 func (u *UtxoCache) applyTxLocked(tx *wire.Tx, height int64) {
-	if !isCoinbaseTx(tx) {
+	coinbase := isCoinbaseTx(tx)
+	if !coinbase {
 		for _, in := range tx.Vin {
 			if isNullOutpoint(&in) {
 				continue
@@ -219,8 +221,18 @@ func (u *UtxoCache) applyTxLocked(tx *wire.Tx, height int64) {
 			Value:    o.Value,
 			PkScript: append([]byte(nil), o.PkScript...),
 			Height:   height,
+			Coinbase: coinbase,
 		}
 	}
+}
+
+// UnspentEntry returns full coin metadata for ConnectBlock (Core AccessCoins).
+func (u *UtxoCache) UnspentEntry(prevHash [32]byte, vout uint32) (height int64, coinbase bool, value int64, pkScript []byte, ok bool) {
+	e, ok := u.LookupOutpoint(prevHash, vout)
+	if !ok {
+		return 0, false, 0, nil, false
+	}
+	return e.Height, e.Coinbase, e.Value, e.PkScript, true
 }
 
 // SerializedHash returns Core-compatible hash_serialized when the cache is non-empty.

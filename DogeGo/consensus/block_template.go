@@ -128,7 +128,7 @@ func SelectBlockTemplateTxs(pool *mempool.Pool, view PrevOutView, maxBlockWeight
 			out.TotalFees += fees[c.id]
 			out.TotalWeight = curWeight
 			out.TotalSigOps = curSigOps
-			intra.addTx(tx)
+			intra.addTx(tx, 0)
 			added = true
 		}
 		if !added {

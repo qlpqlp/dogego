@@ -17,6 +17,8 @@ import (
 type PrevOut struct {
 	Value    int64
 	PkScript []byte
+	Height   int64 // confirmation height; 0 when unknown (mempool / chain scan without UTXO)
+	Coinbase bool  // Core CCoins::fCoinBase; false when unknown
 }
 
 // PrevOutView resolves prevouts for script verification.

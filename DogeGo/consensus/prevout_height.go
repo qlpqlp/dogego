@@ -115,6 +115,10 @@ func PrevHeightsForTx(tx *wire.Tx, index TxIndexer, journal HeaderChain, blockHe
 			out[i] = int(h)
 			continue
 		}
+		// ConnectBlock (unconfirmedHeight==0): Core uses AccessCoins()->nHeight only; no txindex.
+		if unconfirmedHeight <= 0 {
+			return nil, fmt.Errorf("input %d: missing funding height", i)
+		}
 		h, found, err := FundingTxHeight(index, journal, in.PrevHash)
 		if err != nil {
 			return nil, fmt.Errorf("input %d: %w", i, err)

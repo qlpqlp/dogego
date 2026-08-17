@@ -16,6 +16,32 @@ type stubUtxoHeightSource struct {
 	heights map[[36]byte]int64
 }
 
+type stubUtxoCoinSource struct {
+	heights  map[[36]byte]int64
+	coinbase map[[36]byte]bool
+}
+
+func (s stubUtxoCoinSource) UnspentOutpoint(prevHash [32]byte, vout uint32) (int64, []byte, bool) {
+	if _, ok := s.heights[outpointKey(prevHash, vout)]; !ok {
+		return 0, nil, false
+	}
+	return 1, []byte{0x76, 0xa9}, true
+}
+
+func (s stubUtxoCoinSource) UnspentHeight(prevHash [32]byte, vout uint32) (int64, bool) {
+	h, ok := s.heights[outpointKey(prevHash, vout)]
+	return h, ok
+}
+
+func (s stubUtxoCoinSource) UnspentEntry(prevHash [32]byte, vout uint32) (int64, bool, int64, []byte, bool) {
+	k := outpointKey(prevHash, vout)
+	h, ok := s.heights[k]
+	if !ok {
+		return 0, false, 0, nil, false
+	}
+	return h, s.coinbase[k], 1, []byte{0x76, 0xa9}, true
+}
+
 func (s stubUtxoHeightSource) UnspentOutpoint(prevHash [32]byte, vout uint32) (int64, []byte, bool) {
 	if _, ok := s.heights[outpointKey(prevHash, vout)]; !ok {
 		return 0, nil, false
@@ -78,6 +104,16 @@ func TestPrevHeightsForTxPrefersUtxoOverIndex(t *testing.T) {
 	}
 	if len(got) != 1 || got[0] != 99 {
 		t.Fatalf("heights %v want [99] (must not consult txindex when UTXO has height)", got)
+	}
+}
+
+func TestPrevHeightsForTxConnectRejectsMissingUtxoHeight(t *testing.T) {
+	var prev [32]byte
+	prev[3] = 0x01
+	tx := &wire.Tx{Vin: []wire.TxIn{{PrevHash: prev, PrevIdx: 0}}}
+	_, err := PrevHeightsForTx(tx, panicIndexer{}, nil, 100, nil, 0, stubPrevOutView{})
+	if err == nil {
+		t.Fatal("connect path must not fall back to txindex when UTXO height is missing")
 	}
 }
 

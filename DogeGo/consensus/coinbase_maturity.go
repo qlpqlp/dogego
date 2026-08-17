@@ -44,6 +44,7 @@ func CheckTxCoinbaseMaturity(tx *wire.Tx, spendHeight int64, net chain.Network, 
 
 // CheckTxCoinbaseMaturityFromView uses UTXO confirmation heights when present so connect
 // catch-up does not scan headers.bin / indexes/tx for every input (Core CCoins nHeight).
+// ConnectBlock uses CheckTxInputsAtHeight instead; this remains for mempool admission when txindex is available.
 func CheckTxCoinbaseMaturityFromView(tx *wire.Tx, spendHeight int64, net chain.Network, view PrevOutView, index TxIndexer, journal HeaderChain) error {
 	if tx == nil || IsCoinbaseTx(tx) {
 		return nil
@@ -60,6 +61,9 @@ func CheckTxCoinbaseMaturityFromView(tx *wire.Tx, spendHeight int64, net chain.N
 		if h, ok := utxoHeightFromView(view, in.PrevHash, in.PrevIdx); ok {
 			if spendHeight-h >= int64(maturity) {
 				continue
+			}
+			if prev, ok := view.Lookup(in.PrevHash, in.PrevIdx); ok && prev.Coinbase {
+				return fmt.Errorf("%w (input %d, need %d blocks, have %d)", ErrCoinbaseImmature, i, maturity, spendHeight-h)
 			}
 		}
 		if index == nil || journal == nil {
