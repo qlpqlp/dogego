@@ -25,6 +25,13 @@ func maybeReconcileRawBlockCount(raw *store.RawBlockStore, contiguousH int64, ca
 	if raw == nil || contiguousH < 0 || int64(cached) >= contiguousH {
 		return cached
 	}
+	// Bundled FastCount used to ReadFile every blk*.dat; never rescan from the dashboard path.
+	if raw.StorageOpts().Layout == store.BlockLayoutBundled {
+		if cached > 0 {
+			return cached
+		}
+		return int(contiguousH) + 1
+	}
 	rawCountReconcileMu.Lock()
 	now := time.Now()
 	if now.Sub(rawCountReconcileAt) < rawCountReconcileMinInterval {

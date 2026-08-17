@@ -969,13 +969,17 @@ func Run(ctx context.Context, cfg Config) error {
 		feeHistory.ApplyCoreConfirmStats(best, stats)
 		applog.Line("mempool", "loaded fee_estimates.dat (Core TxConfirmStats)")
 	}
-	if tip, err := j.TipHeight(); err == nil && tip >= 0 {
-		feeHistory.CatchUpBlockHeights(tip)
-		if n := feeHistory.ApplyLoadedPendingTracks(tip); n > 0 {
+	if utxoCache != nil && utxoCache.TipHeight() >= 0 {
+		connected := utxoCache.TipHeight()
+		feeHistory.CatchUpBlockHeights(connected)
+		if n := feeHistory.ApplyLoadedPendingTracks(connected); n > 0 {
 			applog.Line("mempool", fmt.Sprintf("restored %d fee-estimator pending track(s) from fee_history.json", n))
 		}
 	}
-	saveFeeHistory := func() {
+	var feeSaveMu sync.Mutex
+	persistFeeHistory := func() {
+		feeSaveMu.Lock()
+		defer feeSaveMu.Unlock()
 		if err := feeHistory.SaveFile(feeHistoryPath); err != nil {
 			applog.Line("mempool", "fee_history save: "+err.Error())
 		}
@@ -983,8 +987,16 @@ func Run(ctx context.Context, cfg Config) error {
 			applog.Line("mempool", "fee_estimates.dat save: "+err.Error())
 		}
 	}
+	saveFeeHistory := func() {
+		// Core flushes fee_estimates.dat on a disk cadence, not per historical IBD block.
+		// AfterPut used to NotifyBlockHeight+save on every stored height (6 lanes, same .tmp).
+		if blockStore != nil && BodiesBehindHeaders(blockStore) {
+			return
+		}
+		persistFeeHistory()
+	}
 	defer func() {
-		if !RunWithTimeout(ShutdownFlushBudget, saveFeeHistory) {
+		if !RunWithTimeout(ShutdownFlushBudget, persistFeeHistory) {
 			applog.Line("mempool", "fee_history save timed out after "+ShutdownFlushBudget.String())
 		}
 	}()
@@ -1398,6 +1410,9 @@ func Run(ctx context.Context, cfg Config) error {
 			},
 			Pool: pool,
 			CollectMempoolConfirmed: func(blockRaw []byte, blockHeight int64) []store.MempoolConfirmFeeSample {
+				if blockStore != nil && BodiesBehindHeaders(blockStore) {
+					return nil
+				}
 				if len(blockRaw) < 80 {
 					return nil
 				}
@@ -1412,6 +1427,9 @@ func Run(ctx context.Context, cfg Config) error {
 				return out
 			},
 			RecordMempoolConfirmed: func(blockHeight int64, samples []store.MempoolConfirmFeeSample) {
+				if blockStore != nil && BodiesBehindHeaders(blockStore) {
+					return
+				}
 				if blockHeight >= 0 {
 					feeHistory.NotifyBlockHeight(blockHeight)
 				}
@@ -1428,6 +1446,9 @@ func Run(ctx context.Context, cfg Config) error {
 			},
 			AfterBlockStored: func(blockRaw []byte) {
 				if len(blockRaw) < 80 {
+					return
+				}
+				if blockStore != nil && BodiesBehindHeaders(blockStore) {
 					return
 				}
 				adm := consensus.NewMempoolAdmissionWithUtxo(pool, pool, utxoCache, txIx, rbStore, j, cfg.Network)

@@ -238,6 +238,11 @@ func (s *RawBlockStore) ProbeBundledContiguousTip() (int64, error) {
 			off += recLen
 		}
 	}
+	if last < 0 {
+		s.fileCount.Store(0)
+	} else {
+		s.fileCount.Store(last + 1)
+	}
 	return last, nil
 }
 

@@ -161,7 +161,13 @@ func applyCurBatchSnapshot(stats *TxConfirmStats, snap *confirmStatsFile) {
 	}
 }
 
+// maxFeeEstimatorCatchUpBlocks is one fee-history window. Core does not age TxConfirmStats
+// across a multi-million-block header-tip gap at startup during body IBD.
+const maxFeeEstimatorCatchUpBlocks = 288
+
 // CatchUpBlockHeights advances confirm-stats block state from saved tip through tip (Core post-restart sync).
+// Gaps larger than one fee-history window jump nBestSeenHeight instead of rolling the unconf ring
+// millions of times.
 func (h *FeeHistory) CatchUpBlockHeights(tipHeight int64) {
 	if h == nil || tipHeight < 0 {
 		return
@@ -173,6 +179,10 @@ func (h *FeeHistory) CatchUpBlockHeights(tipHeight int64) {
 	}
 	start := h.confirmStats.bestSeenHeight
 	if tipHeight > start {
+		if tipHeight-start > maxFeeEstimatorCatchUpBlocks {
+			h.confirmStats.SetBestSeenHeight(tipHeight)
+			return
+		}
 		for height := start + 1; height <= tipHeight; height++ {
 			h.confirmStats.AdvanceBlock(height)
 		}

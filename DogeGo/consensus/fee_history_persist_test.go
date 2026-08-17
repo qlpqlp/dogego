@@ -20,14 +20,19 @@ func TestFeeHistorySaveLoad(t *testing.T) {
 	if err := h.SaveFile(path); err != nil {
 		t.Fatal(err)
 	}
+	// Concurrent-style overwrite (Windows rename-over-open path in AtomicWriteFile).
+	h.Record([]uint64{70_000})
+	if err := h.SaveFile(path); err != nil {
+		t.Fatal(err)
+	}
 	loaded, err := LoadFeeHistoryFile(path, 10)
 	if err != nil {
 		t.Fatal(err)
 	}
-	if loaded == nil || loaded.BlockCount() != 1 {
+	if loaded == nil || loaded.BlockCount() != 2 {
 		t.Fatalf("blocks %d", loaded.BlockCount())
 	}
-	if got := loaded.EstimatePerKB(1); got != 60_000 {
+	if got := loaded.EstimatePerKB(1); got != 70_000 {
 		t.Fatalf("got %d", got)
 	}
 	_ = os.Remove(path)

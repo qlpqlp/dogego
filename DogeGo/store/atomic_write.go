@@ -12,6 +12,12 @@ import (
 	"time"
 )
 
+// AtomicWriteFile writes path atomically (tmp + rename), falling back to in-place
+// overwrite when rename fails (Windows: dest or .tmp briefly open by dashboard/antivirus).
+func AtomicWriteFile(path string, data []byte, perm os.FileMode) error {
+	return atomicWriteFile(path, data, perm)
+}
+
 // atomicWriteFile writes path atomically (tmp + rename), falling back to in-place
 // overwrite when rename fails (Windows: manifest.json open for read by dashboard).
 func atomicWriteFile(path string, data []byte, perm os.FileMode) error {

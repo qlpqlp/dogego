@@ -14,6 +14,8 @@ import (
 	"math"
 	"os"
 	"path/filepath"
+
+	"dogego/store"
 )
 
 // WriteCoreFeeEstimatesDat writes Core CBlockPolicyEstimator fee_estimates.dat layout:
@@ -35,15 +37,7 @@ func WriteCoreFeeEstimatesDat(path string, bestSeen int32, stats *TxConfirmStats
 			return err
 		}
 	}
-	tmp := path + ".tmp"
-	if err := os.WriteFile(tmp, buf.Bytes(), 0o600); err != nil {
-		return err
-	}
-	if err := os.Rename(tmp, path); err != nil {
-		_ = os.Remove(tmp)
-		return err
-	}
-	return nil
+	return store.AtomicWriteFile(path, buf.Bytes(), 0o600)
 }
 
 // ReadCoreFeeEstimatesDat loads Core fee_estimates.dat (missing file returns nil stats, nil error).

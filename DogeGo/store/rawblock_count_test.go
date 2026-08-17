@@ -35,10 +35,14 @@ func TestReconcileCountCacheFromDiskBundled(t *testing.T) {
 		}
 		prev = append([]byte(nil), next[:80]...)
 	}
-	// Simulate restart: stale per-file counter; bundled FastCount probes blk*.dat directly.
-	raw.fileCount.Store(0)
+	// Simulate restart: uninitialized counter; bundled FastCount probes blk*.dat once.
+	raw.fileCount.Store(-1)
 	if n, _ := raw.FastCount(); n != 4 {
 		t.Fatalf("bundled FastCount after stale cache: %d want 4", n)
+	}
+	raw.fileCount.Store(99)
+	if n, _ := raw.FastCount(); n != 99 {
+		t.Fatalf("bundled FastCount must use cache, not rescan blk*.dat: %d", n)
 	}
 	raw.fileCount.Store(0)
 	raw.ReconcileCountCacheFromDisk()
@@ -66,6 +70,10 @@ func TestReconcileCountCacheFromDisk(t *testing.T) {
 		t.Fatalf("after put: count %d want 1", n)
 	}
 	// Simulate stale cache (files on disk without counter bumps).
+	raw.fileCount.Store(-1)
+	if n, _ := raw.FastCount(); n != 1 {
+		t.Fatalf("uninitialized FastCount should rescan: %d want 1", n)
+	}
 	raw.fileCount.Store(0)
 	if n, _ := raw.FastCount(); n != 0 {
 		t.Fatalf("stale cache: %d want 0", n)

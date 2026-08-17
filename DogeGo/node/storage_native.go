@@ -52,11 +52,20 @@ func (c *storageSummaryCache) get(ttl time.Duration, build func() map[string]int
 func nativeStorageSummary(chainRoot string, rb *store.RawBlockStore, txIx *store.TxIndex, contiguousBody func() int64) func() map[string]interface{} {
 	var cache storageSummaryCache
 	return func() map[string]interface{} {
-		return cache.get(60*time.Second, func() map[string]interface{} {
+		// Heavy dir walks (txindex file counts, ChainStoreBytes) compete with body IBD I/O.
+		// Keep results longer so /api/summary does not re-walk millions of files every minute.
+		return cache.get(5*time.Minute, func() map[string]interface{} {
 			sm := map[string]interface{}{
 				"storage_mode": store.StorageNative,
 				"layout":       "native",
 			}
+			cont := int64(-1)
+			if contiguousBody != nil {
+				cont = contiguousBody()
+			}
+			// While bodies are still deep in IBD, skip full-tree size/format scans (Core does not
+			// walk every block/tx file for getblockchaininfo during IBD either).
+			deepBodyIBD := cont >= 0 && cont < 5_050_000
 			if chainRoot != "" {
 				sm["native_headers"] = filepath.Join(chainRoot, "headers.bin")
 				var headersBytes int64
@@ -64,10 +73,12 @@ func nativeStorageSummary(chainRoot string, rb *store.RawBlockStore, txIx *store
 				headersBytes += analytics.SubdirSizeIfExists(filepath.Join(chainRoot, "headers.bin"))
 				headersBytes += analytics.SubdirSizeIfExists(filepath.Join(chainRoot, "headers_aux.bin"))
 				sm["headers_bytes"] = headersBytes
-				_, rawB, txB, chainTotal := analytics.ChainStoreBytes(chainRoot)
-				sm["chain_bytes_total"] = chainTotal
-				sm["rawblocks_bytes"] = rawB
-				sm["txindex_bytes"] = txB
+				if !deepBodyIBD {
+					_, rawB, txB, chainTotal := analytics.ChainStoreBytes(chainRoot)
+					sm["chain_bytes_total"] = chainTotal
+					sm["rawblocks_bytes"] = rawB
+					sm["txindex_bytes"] = txB
+				}
 			}
 			if rb != nil {
 				sm["native_rawblocks"] = rb.Dir()
@@ -77,24 +88,24 @@ func nativeStorageSummary(chainRoot string, rb *store.RawBlockStore, txIx *store
 				if n, err := rb.Count(); err == nil {
 					sm["native_raw_block_count"] = n
 				}
-				if cs, err := rb.CachedCompressionStats(45 * time.Second); err == nil && cs.BlockCount > 0 {
-					sm["blocks_logical_bytes"] = cs.LogicalBytes
-					sm["blocks_stored_payload_bytes"] = cs.StoredPayloadBytes
-					sm["compression_ratio"] = cs.CompressionRatio
-					sm["compression_savings_pct"] = cs.CompressionSavingsPct
+				if !deepBodyIBD {
+					if cs, err := rb.CachedCompressionStats(45 * time.Second); err == nil && cs.BlockCount > 0 {
+						sm["blocks_logical_bytes"] = cs.LogicalBytes
+						sm["blocks_stored_payload_bytes"] = cs.StoredPayloadBytes
+						sm["compression_ratio"] = cs.CompressionRatio
+						sm["compression_savings_pct"] = cs.CompressionSavingsPct
+					}
 				}
 			}
 			sm["native_tx_index"] = txIx != nil
-			if txIx != nil {
+			if txIx != nil && !deepBodyIBD {
 				if legacy, v2, err := txIx.FormatStats(); err == nil {
 					sm["native_txindex_legacy_files"] = legacy
 					sm["native_txindex_v2_files"] = v2
 				}
 			}
-			if contiguousBody != nil {
-				if h := contiguousBody(); h >= 0 {
-					sm["native_contiguous_body_height"] = h
-				}
+			if cont >= 0 {
+				sm["native_contiguous_body_height"] = cont
 			}
 			return sm
 		})

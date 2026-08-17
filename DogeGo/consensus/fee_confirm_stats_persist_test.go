@@ -52,3 +52,12 @@ func TestCatchUpBlockHeightsRollsUnconf(t *testing.T) {
 		t.Fatalf("height %d", h.confirmStats.bestSeenHeight)
 	}
 }
+
+func TestCatchUpBlockHeightsLargeGapJumps(t *testing.T) {
+	h := NewFeeHistory(8)
+	h.confirmStats.SetBestSeenHeight(5)
+	h.CatchUpBlockHeights(6_000_000)
+	if h.confirmStats.bestSeenHeight != 6_000_000 {
+		t.Fatalf("height %d", h.confirmStats.bestSeenHeight)
+	}
+}

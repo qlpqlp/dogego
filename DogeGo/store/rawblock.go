@@ -51,11 +51,13 @@ func OpenRawBlockStoreWithOpts(datadir string, requested BlockStorageOpts) (*Raw
 		return nil, err
 	}
 	opts := ResolveBlockStorageOpts(requested, d)
-	return &RawBlockStore{
+	s := &RawBlockStore{
 		dir:       d,
 		opts:      opts,
 		readCache: newRawBlockReadCache(rawBlockReadCacheMax),
-	}, nil
+	}
+	s.fileCount.Store(-1)
+	return s, nil
 }
 
 // StorageOpts returns the effective on-disk block storage options.
@@ -371,21 +373,18 @@ func (s *RawBlockStore) FastCount() (int, error) {
 	if s == nil {
 		return 0, nil
 	}
+	if n := s.fileCount.Load(); n >= 0 {
+		return int(n), nil
+	}
 	if s.StorageOpts().Layout == BlockLayoutBundled {
 		tip, err := s.ProbeBundledContiguousTip()
 		if err != nil {
 			return 0, err
 		}
 		if tip < 0 {
-			s.fileCount.Store(0)
 			return 0, nil
 		}
-		n := int(tip) + 1
-		s.fileCount.Store(int64(n))
-		return n, nil
-	}
-	if n := s.fileCount.Load(); n >= 0 {
-		return int(n), nil
+		return int(tip) + 1, nil
 	}
 	n, err := s.scanFileCount()
 	if err != nil {

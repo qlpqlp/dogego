@@ -174,15 +174,29 @@ func (f *LiveFeed) refresh(cfg StartConfig) {
 	}
 }
 
-// patchSummaryTipFromManifest bumps cached tip fields when BuildSummaryMap blocks during header IBD.
+// patchSummaryTipFromManifest bumps cached tip/body fields when BuildSummaryMap blocks.
+// Header IBD used the segment manifest; body IBD must also read rawblocks_sync.json because
+// headers are already at tip so the old early-return left the dashboard frozen.
 func (f *LiveFeed) patchSummaryTipFromManifest(cfg StartConfig) {
-	if cfg.Journal == nil {
-		return
+	var headerTip int64 = -1
+	var headerHash string
+	if cfg.Journal != nil {
+		if m, ok := store.ReadSegmentManifest(cfg.Journal.ChainDir()); ok {
+			headerTip = m.TipHeight
+			headerHash = m.TipHashHex
+		}
 	}
-	m, ok := store.ReadSegmentManifest(cfg.Journal.ChainDir())
-	if !ok {
-		return
+	dir := f.chainDataDir
+	if dir == "" {
+		dir = strings.TrimSpace(cfg.ChainDataDir)
 	}
+	contig := int64(-1)
+	if dir != "" {
+		if cp, err := store.LoadRawBlockSyncCheckpoint(dir); err == nil && cp.ContiguousRawHeight >= 0 {
+			contig = cp.ContiguousRawHeight
+		}
+	}
+
 	f.mu.Lock()
 	defer f.mu.Unlock()
 	if len(f.summaryJSON) == 0 {
@@ -192,33 +206,54 @@ func (f *LiveFeed) patchSummaryTipFromManifest(cfg StartConfig) {
 	if json.Unmarshal(f.summaryJSON, &snap) != nil {
 		return
 	}
+	changed := false
 	oldTip, _ := snap["tip_height"].(float64)
-	if float64(m.TipHeight) <= oldTip {
+	if headerTip >= 0 && float64(headerTip) > oldTip {
+		snap["tip_height"] = headerTip
+		snap["header_count"] = headerTip + 1
+		if headerHash != "" {
+			snap["best_hash"] = headerHash
+		}
+		changed = true
+		if peerStart, ok := snap["peer_start_height"].(float64); ok && peerStart > float64(headerTip) {
+			bodyPaused, _ := snap["dogego_body_ibd_header_paused"].(bool)
+			if !bodyPaused {
+				contiguous := float64(-1)
+				if v, ok := snap["contiguous_raw_height"].(float64); ok {
+					contiguous = v
+				}
+				bodyPaused = rpc.BodyIBDOwnsPipeline(headerTip, int64(contiguous))
+			}
+			if !bodyPaused {
+				pct := int(float64(headerTip) / peerStart * 100)
+				if pct > 100 {
+					pct = 100
+				}
+				line := fmt.Sprintf("Synchronizing headers… %d%% (height %d / ~%d)", pct, headerTip, int64(peerStart))
+				snap["sync_status_line"] = line
+				snap["dogego_sync_status"] = line
+			}
+		}
+	}
+	oldCont, hasCont := snap["contiguous_raw_height"].(float64)
+	if contig >= 0 && (!hasCont || float64(contig) > oldCont) {
+		snap["contiguous_raw_height"] = contig
+		if rb, ok := snap["raw_blocks"].(float64); !ok || rb < float64(contig)+1 {
+			snap["raw_blocks"] = contig + 1
+		}
+		if tip, ok := jsonFloat(snap["tip_height"]); ok && tip > 0 {
+			body := (float64(contig) + 1) / (tip + 1)
+			snap["dogego_body_verification_progress"] = body
+			paused, _ := snap["dogego_body_ibd_header_paused"].(bool)
+			if paused || rpc.BodyIBDOwnsPipeline(int64(tip), contig) {
+				snap["verification_progress"] = body
+				snap["sync_pct"] = body * 100
+			}
+		}
+		changed = true
+	}
+	if !changed {
 		return
-	}
-	snap["tip_height"] = m.TipHeight
-	snap["header_count"] = m.TipHeight + 1
-	if m.TipHashHex != "" {
-		snap["best_hash"] = m.TipHashHex
-	}
-	if peerStart, ok := snap["peer_start_height"].(float64); ok && peerStart > float64(m.TipHeight) {
-		bodyPaused, _ := snap["dogego_body_ibd_header_paused"].(bool)
-		if !bodyPaused {
-			contiguous := float64(-1)
-			if v, ok := snap["contiguous_raw_height"].(float64); ok {
-				contiguous = v
-			}
-			bodyPaused = rpc.BodyIBDOwnsPipeline(int64(m.TipHeight), int64(contiguous))
-		}
-		if !bodyPaused {
-			pct := int(float64(m.TipHeight) / peerStart * 100)
-			if pct > 100 {
-				pct = 100
-			}
-			line := fmt.Sprintf("Synchronizing headers… %d%% (height %d / ~%d)", pct, m.TipHeight, int64(peerStart))
-			snap["sync_status_line"] = line
-			snap["dogego_sync_status"] = line
-		}
 	}
 	if b, err := json.Marshal(snap); err == nil {
 		f.summaryJSON = b
@@ -238,6 +273,19 @@ func (f *LiveFeed) patchSummaryTipFromManifest(cfg StartConfig) {
 		if liveB, err := json.Marshal(live); err == nil {
 			f.liveJSON = liveB
 		}
+	}
+}
+
+func jsonFloat(v any) (float64, bool) {
+	switch n := v.(type) {
+	case float64:
+		return n, true
+	case int64:
+		return float64(n), true
+	case int:
+		return float64(n), true
+	default:
+		return 0, false
 	}
 }
 

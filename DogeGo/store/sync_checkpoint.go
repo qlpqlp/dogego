@@ -112,9 +112,5 @@ func SaveRawBlockSyncCheckpoint(chainDir string, cp RawBlockSyncCheckpoint) erro
 	if err != nil {
 		return err
 	}
-	tmp := path + ".tmp"
-	if err := os.WriteFile(tmp, b, 0o600); err != nil {
-		return err
-	}
-	return os.Rename(tmp, path)
+	return atomicWriteFile(path, b, 0o600)
 }

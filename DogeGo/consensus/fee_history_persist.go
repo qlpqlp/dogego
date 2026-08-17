@@ -11,6 +11,8 @@ import (
 	"os"
 	"path/filepath"
 	"strconv"
+
+	"dogego/store"
 )
 
 type feeHistoryFile struct {
@@ -127,11 +129,7 @@ func (h *FeeHistory) SaveFile(path string) error {
 			return err
 		}
 	}
-	tmp := path + ".tmp"
-	if err := os.WriteFile(tmp, raw, 0o600); err != nil {
-		return err
-	}
-	return os.Rename(tmp, path)
+	return store.AtomicWriteFile(path, raw, 0o600)
 }
 
 // LoadFeeHistoryFile restores history from a prior SaveFile (missing file returns nil, nil).

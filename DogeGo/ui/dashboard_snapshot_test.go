@@ -171,3 +171,35 @@ func TestBootstrapLiveWarmingSetsLoadingFlags(t *testing.T) {
 		t.Fatalf("phase %#v", sum["dogego_ui_loading_phase"])
 	}
 }
+
+func TestPatchSummaryTipFromManifestBodyIBD(t *testing.T) {
+	dir := t.TempDir()
+	if err := store.SaveRawBlockSyncCheckpoint(dir, store.RawBlockSyncCheckpoint{
+		NextProbeHeight:     53249,
+		ContiguousRawHeight: 53248,
+	}); err != nil {
+		t.Fatal(err)
+	}
+	var f LiveFeed
+	f.chainDataDir = dir
+	sum := map[string]any{
+		"tip_height":                 float64(6_335_000),
+		"header_count":               float64(6_335_001),
+		"contiguous_raw_height":      float64(52992),
+		"raw_blocks":                 float64(52993),
+		"dogego_body_ibd_header_paused": true,
+	}
+	b, _ := json.Marshal(sum)
+	f.summaryJSON = b
+	f.patchSummaryTipFromManifest(StartConfig{ChainDataDir: dir})
+	var got map[string]any
+	if err := json.Unmarshal(f.summaryJSON, &got); err != nil {
+		t.Fatal(err)
+	}
+	if got["contiguous_raw_height"] != float64(53248) {
+		t.Fatalf("contiguous %#v", got["contiguous_raw_height"])
+	}
+	if got["raw_blocks"] != float64(53249) {
+		t.Fatalf("raw_blocks %#v", got["raw_blocks"])
+	}
+}
