@@ -223,6 +223,65 @@ func TestClaimBatch_frontierFirstPipelinesNextLane(t *testing.T) {
 	}
 }
 
+func TestClaimBatch_concurrentLanesGetDistinctRanges(t *testing.T) {
+	dir := t.TempDir()
+	g80, err := pow.Header80()
+	if err != nil {
+		t.Fatal(err)
+	}
+	genesisRaw := store.MakeTestBlockRaw(t, g80[:])
+	j, err := store.OpenHeaderJournal(filepath.Join(dir, "headers.bin"), genesisRaw[:80])
+	if err != nil {
+		t.Fatal(err)
+	}
+	for i := 0; i < 600; i++ {
+		prev, _ := j.ReadHeaderAt(int64(i))
+		h := append([]byte(nil), prev...)
+		ph := pow.BlockHashLE(prev)
+		copy(h[4:36], ph[:])
+		h[76] ^= byte(i + 1)
+		if err := j.AppendHeaders([][]byte{h}); err != nil {
+			t.Fatal(err)
+		}
+	}
+	rs, err := store.OpenRawBlockStore(dir)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := rs.Put(pow.BlockHashLE(genesisRaw[:80]), genesisRaw); err != nil {
+		t.Fatal(err)
+	}
+	p, _ := chain.ParamsFor(chain.RebootTestnet)
+	var s progressiveRawState
+	s.SetSyncParallelism(4)
+	bs := &BlockStoreCtx{Journal: j, Raw: rs, Params: p}
+	type res struct {
+		c  rawBatchClaim
+		ok bool
+	}
+	out := make([]res, 2)
+	var wg sync.WaitGroup
+	wg.Add(2)
+	go func() { defer wg.Done(); out[0].c, out[0].ok = s.claimBatch(bs, 0) }()
+	go func() { defer wg.Done(); out[1].c, out[1].ok = s.claimBatch(bs, 2) }()
+	wg.Wait()
+	if !out[0].ok || !out[1].ok {
+		t.Fatalf("concurrent claims ok=%v/%v (race used to leave the second lane empty)", out[0].ok, out[1].ok)
+	}
+	seen := map[int64]int{}
+	for i, r := range out {
+		for _, h := range r.c.heights {
+			if prev, dup := seen[h]; dup {
+				t.Fatalf("height %d claimed by lane %d and %d", h, prev, i)
+			}
+			seen[h] = i
+		}
+	}
+	if len(seen) < 2 {
+		t.Fatalf("want both lanes to hold heights, got %d unique", len(seen))
+	}
+}
+
 func TestPrepareAtStartup_claimsGenesisWhenMissing(t *testing.T) {
 	dir := t.TempDir()
 	g80, err := pow.Header80()

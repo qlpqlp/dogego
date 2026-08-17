@@ -211,7 +211,7 @@ func handleRelayP2PMessage(ctx context.Context, env RelayEnv, pm *PeerMgr, link 
 		if env.BlockStore != nil {
 			HandleInvBlockFetch(ctx, mw, p, env.BlockStore, pl)
 		}
-		if !env.AllowUnverifiedMempool && env.Pool != nil {
+		if !env.AllowUnverifiedMempool && env.Pool != nil && !ShouldSuppressInvTxFetchDuringIBD(env.BlockStore) {
 			feeHint := uint64(0)
 			if env.PeerFeeFilter != nil {
 				feeHint = env.PeerFeeFilter.Max()

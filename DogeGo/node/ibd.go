@@ -402,6 +402,13 @@ func shouldFillContiguousFrontierFirst(bs *BlockStoreCtx, lowMissing int64) bool
 	return ShouldDeferTipBackfill(tip, cont)
 }
 
+// ShouldSuppressInvTxFetchDuringIBD skips inv/tx getdata while stored bodies lag the header tip.
+// Core does not fill the mempool during IBD. The old tip<500k quiet window stopped applying once
+// headers reached assumevalid (~5.05M) while bodies were still near genesis.
+func ShouldSuppressInvTxFetchDuringIBD(bs *BlockStoreCtx) bool {
+	return bs != nil && BodiesBehindHeaders(bs)
+}
+
 // ShouldDeferInvBlockFetch skips inv-driven block getdata far ahead of the contiguous raw
 // frontier during forward IBD (Core prioritizes sequential fill from the lowest missing height).
 func ShouldDeferInvBlockFetch(bs *BlockStoreCtx, hashLE [32]byte) bool {

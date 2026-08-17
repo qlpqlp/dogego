@@ -269,6 +269,33 @@ func TestShouldDeferInvBlockFetch(t *testing.T) {
 	}
 }
 
+func TestShouldSuppressInvTxFetchDuringIBD(t *testing.T) {
+	if ShouldSuppressInvTxFetchDuringIBD(nil) {
+		t.Fatal("nil store")
+	}
+	dir := t.TempDir()
+	g80, err := pow.Header80()
+	if err != nil {
+		t.Fatal(err)
+	}
+	genesisRaw := store.MakeTestBlockRaw(t, g80[:])
+	j, err := store.OpenHeaderJournal(dir+"/h.bin", genesisRaw[:80])
+	if err != nil {
+		t.Fatal(err)
+	}
+	appendFakeHeaderChain(t, j, genesisRaw[:80], 600_000)
+	rs, err := store.OpenRawBlockStore(dir)
+	if err != nil {
+		t.Fatal(err)
+	}
+	_ = rs.Put(pow.BlockHashLE(genesisRaw[:80]), genesisRaw)
+	bs := &BlockStoreCtx{Journal: j, Raw: rs}
+	bs.noteBlockStoredAt(0)
+	if !ShouldSuppressInvTxFetchDuringIBD(bs) {
+		t.Fatal("headers far ahead of bodies must suppress mempool inv (not only tip<500k)")
+	}
+}
+
 func TestForwardIBDStripeTip(t *testing.T) {
 	dir := t.TempDir()
 	g80, err := pow.Header80()

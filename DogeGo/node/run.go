@@ -3409,13 +3409,7 @@ func Run(ctx context.Context, cfg Config) error {
 				HandleInvBlockFetch(ctx, mw, p, blockStore, pl)
 			}
 			if !cfg.AllowUnverifiedMempool {
-				deepIBDQuiet := false
-				if blockStore != nil && BodiesBehindHeaders(blockStore) {
-					tip, _ := j.TipHeight()
-					if tip < 500_000 || blockStore.ContiguousRawHeight() < 0 {
-						deepIBDQuiet = true
-					}
-				}
+				deepIBDQuiet := ShouldSuppressInvTxFetchDuringIBD(blockStore)
 				if deepIBDQuiet {
 					if time.Since(lastInvTxQuietLog) >= 2*time.Minute {
 						lastInvTxQuietLog = time.Now()

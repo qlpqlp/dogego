@@ -642,26 +642,43 @@ func (s *progressiveRawState) claimBatch(bs *BlockStoreCtx, workerID int) (rawBa
 		s.mu.Unlock()
 		return empty, false
 	}
-	s.mu.Lock()
-	defer s.mu.Unlock()
-	for i, h := range claim.heights {
-		if _, busy := s.inFlight[h]; busy {
-			claim.heights = claim.heights[:i]
-			claim.hashes = claim.hashes[:i]
-			break
+	for attempt := 0; attempt < workers; attempt++ {
+		if attempt > 0 {
+			s.mu.Lock()
+			inFlightSnap = make(map[int64][32]byte, len(s.inFlight))
+			for h, hash := range s.inFlight {
+				inFlightSnap[h] = hash
+			}
+			laneInflight = s.inFlightCountForLaneLocked(workerID)
+			s.mu.Unlock()
+			claim = s.planClaimRange(bs, j, rs, probeStart, rangeLo, rangeHi, downloadTip, lowMissing, workerID, workers, laneInflight, inFlightSnap)
+			if len(claim.heights) == 0 {
+				return empty, false
+			}
 		}
+		s.mu.Lock()
+		for i, h := range claim.heights {
+			if _, busy := s.inFlight[h]; busy {
+				claim.heights = claim.heights[:i]
+				claim.hashes = claim.hashes[:i]
+				break
+			}
+		}
+		if len(claim.heights) == 0 {
+			s.mu.Unlock()
+			continue
+		}
+		for i, h := range claim.heights {
+			s.inFlight[h] = claim.hashes[i]
+			s.inFlightLane[h] = workerID
+		}
+		s.noteBatchDownloadStartLocked(workerID)
+		claim.lo = claim.heights[0]
+		claim.hi = claim.heights[len(claim.heights)-1]
+		s.mu.Unlock()
+		return claim, true
 	}
-	if len(claim.heights) == 0 {
-		return empty, false
-	}
-	for i, h := range claim.heights {
-		s.inFlight[h] = claim.hashes[i]
-		s.inFlightLane[h] = workerID
-	}
-	s.noteBatchDownloadStartLocked(workerID)
-	claim.lo = claim.heights[0]
-	claim.hi = claim.heights[len(claim.heights)-1]
-	return claim, true
+	return empty, false
 }
 
 func (s *progressiveRawState) inFlightCountForLaneLocked(lane int) int {
