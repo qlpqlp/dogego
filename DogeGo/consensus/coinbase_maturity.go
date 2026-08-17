@@ -11,7 +11,6 @@ import (
 	"fmt"
 
 	"dogego/chain"
-	"dogego/pow"
 	"dogego/wire"
 )
 
@@ -31,8 +30,7 @@ func CoinbaseFundingHeight(index TxIndexer, journal HeaderChain, prevHash [32]by
 	if txIdx != 0 {
 		return 0, false, nil
 	}
-	blockHex := pow.LEUint256DisplayHex(blockHash[:])
-	h, err := journal.HeightByDisplayHash(blockHex)
+	h, err := headerHeightForBlockHash(journal, blockHash)
 	if err != nil {
 		return 0, false, fmt.Errorf("coinbase maturity: block height: %w", err)
 	}
@@ -41,7 +39,13 @@ func CoinbaseFundingHeight(index TxIndexer, journal HeaderChain, prevHash [32]by
 
 // CheckTxCoinbaseMaturity rejects spends of immature coinbase outputs (Core ConnectBlock / mempool).
 func CheckTxCoinbaseMaturity(tx *wire.Tx, spendHeight int64, net chain.Network, index TxIndexer, journal HeaderChain) error {
-	if tx == nil || IsCoinbaseTx(tx) || index == nil || journal == nil {
+	return CheckTxCoinbaseMaturityFromView(tx, spendHeight, net, nil, index, journal)
+}
+
+// CheckTxCoinbaseMaturityFromView uses UTXO confirmation heights when present so connect
+// catch-up does not scan headers.bin / indexes/tx for every input (Core CCoins nHeight).
+func CheckTxCoinbaseMaturityFromView(tx *wire.Tx, spendHeight int64, net chain.Network, view PrevOutView, index TxIndexer, journal HeaderChain) error {
+	if tx == nil || IsCoinbaseTx(tx) {
 		return nil
 	}
 	maturity := LookupConsensus(net, spendHeight).CoinbaseMaturity
@@ -51,6 +55,14 @@ func CheckTxCoinbaseMaturity(tx *wire.Tx, spendHeight int64, net chain.Network, 
 	for i := range tx.Vin {
 		in := &tx.Vin[i]
 		if IsNullOutpoint(in) {
+			continue
+		}
+		if h, ok := utxoHeightFromView(view, in.PrevHash, in.PrevIdx); ok {
+			if spendHeight-h >= int64(maturity) {
+				continue
+			}
+		}
+		if index == nil || journal == nil {
 			continue
 		}
 		coinH, isCB, err := CoinbaseFundingHeight(index, journal, in.PrevHash)

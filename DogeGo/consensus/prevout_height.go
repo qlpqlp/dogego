@@ -23,12 +23,25 @@ func FundingTxHeight(index TxIndexer, journal HeaderChain, prevHash [32]byte) (h
 	if err != nil {
 		return 0, false, nil
 	}
-	blockHex := pow.LEUint256DisplayHex(blockHash[:])
-	h, err := journal.HeightByDisplayHash(blockHex)
+	h, err := headerHeightForBlockHash(journal, blockHash)
 	if err != nil {
 		return 0, false, fmt.Errorf("funding height: %w", err)
 	}
 	return h, true, nil
+}
+
+type headerHeightByHashLE interface {
+	HeightByBlockHashLE(hashLE [32]byte) (int64, error)
+}
+
+func headerHeightForBlockHash(journal HeaderChain, blockHashLE [32]byte) (int64, error) {
+	if journal == nil {
+		return -1, fmt.Errorf("nil journal")
+	}
+	if hb, ok := journal.(headerHeightByHashLE); ok {
+		return hb.HeightByBlockHashLE(blockHashLE)
+	}
+	return journal.HeightByDisplayHash(pow.LEUint256DisplayHex(blockHashLE[:]))
 }
 
 // utxoHeightLookup resolves funding height from the connected UTXO set when txindex lags during IBD.
@@ -95,15 +108,18 @@ func PrevHeightsForTx(tx *wire.Tx, index TxIndexer, journal HeaderChain, blockHe
 				continue
 			}
 		}
+		// Prefer UTXO confirmation height (O(1)). Txindex + journal HeightByDisplayHash
+		// scans headers.bin under the journal lock; that stalled live mainnet connect at ~17k
+		// with 6.3M headers on disk (Core CBlockIndex nHeight is O(1)).
+		if h, ok := utxoHeightFromView(chainView, in.PrevHash, in.PrevIdx); ok {
+			out[i] = int(h)
+			continue
+		}
 		h, found, err := FundingTxHeight(index, journal, in.PrevHash)
 		if err != nil {
 			return nil, fmt.Errorf("input %d: %w", i, err)
 		}
 		if !found {
-			if h, ok := utxoHeightFromView(chainView, in.PrevHash, in.PrevIdx); ok {
-				out[i] = int(h)
-				continue
-			}
 			if unconfirmedHeight <= 0 {
 				return nil, fmt.Errorf("input %d: missing funding height", i)
 			}

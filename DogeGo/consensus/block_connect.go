@@ -225,7 +225,7 @@ func connectBlockInternal(hdr primitives.BlockHeader, walk blockTxWalker, sigOpC
 			}
 			dupSpend[k] = struct{}{}
 		}
-		if index != nil && journal != nil {
+		if index != nil && journal != nil && EnforceBIP68Sequence(tx) {
 			prevH, err := PrevHeightsForTx(tx, index, journal, height, sameBlock, 0, chainView)
 			if err != nil {
 				return fmt.Errorf("tx %d prev heights: %w", i, err)
@@ -245,7 +245,7 @@ func connectBlockInternal(hdr primitives.BlockHeader, walk blockTxWalker, sigOpC
 				return fmt.Errorf("tx %d: %w", i, err)
 			}
 		}
-		if err := CheckTxCoinbaseMaturity(tx, height, net, index, journal); err != nil {
+		if err := CheckTxCoinbaseMaturityFromView(tx, height, net, view, index, journal); err != nil {
 			return fmt.Errorf("tx %d: %w", i, err)
 		}
 		fee, err := TxFee(tx, view)

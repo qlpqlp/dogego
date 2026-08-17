@@ -8,7 +8,6 @@ package store
 
 import (
 	"dogego/chain"
-	"dogego/pow"
 	"dogego/wire"
 )
 
@@ -46,8 +45,7 @@ func (b *BlockPutSideband) AfterPut(hashLE [32]byte, raw []byte) {
 	}
 	height := int64(-1)
 	if b.Journal != nil {
-		display := pow.BlockHashHex(raw[:80])
-		if h, err := b.Journal.HeightByDisplayHash(display); err == nil {
+		if h, err := b.Journal.HeightByBlockHashLE(hashLE); err == nil {
 			height = h
 		}
 	}

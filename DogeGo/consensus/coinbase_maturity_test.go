@@ -54,3 +54,18 @@ func TestCheckTxCoinbaseMaturity(t *testing.T) {
 		t.Fatalf("mature: %v", err)
 	}
 }
+
+func TestCheckTxCoinbaseMaturityFromViewSkipsIndexWhenMature(t *testing.T) {
+	var prev [32]byte
+	prev[0] = 0x11
+	spend := &wire.Tx{
+		Version: 1,
+		Vin:     []wire.TxIn{{PrevHash: prev, PrevIdx: 0, Sequence: 0xffffffff}},
+		Vout:    []wire.TxOut{{Value: 1, PkScript: []byte{0x51}}},
+	}
+	src := stubUtxoHeightSource{heights: map[[36]byte]int64{outpointKey(prev, 0): 10}}
+	view := UtxoPrevOutView{Source: src}
+	if err := CheckTxCoinbaseMaturityFromView(spend, 10+300, chain.RebootTestnet, view, panicIndexer{}, nil); err != nil {
+		t.Fatalf("mature UTXO height must not consult txindex: %v", err)
+	}
+}

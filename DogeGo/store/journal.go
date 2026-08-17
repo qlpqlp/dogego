@@ -525,8 +525,8 @@ func (j *HeaderJournal) HeightByBlockHashLE(hashLE [32]byte) (int64, error) {
 	if j.seg != nil {
 		return j.seg.heightByHashLE(hashLE)
 	}
-	j.mu.Lock()
-	defer j.mu.Unlock()
+	j.mu.RLock()
+	defer j.mu.RUnlock()
 	st, err := os.Stat(j.path)
 	if err != nil {
 		return -1, err
@@ -601,8 +601,8 @@ func (j *HeaderJournal) HeightByDisplayHash(displayHex string) (int64, error) {
 	if j.seg != nil {
 		return j.seg.heightByDisplayHash(displayHex)
 	}
-	j.mu.Lock()
-	defer j.mu.Unlock()
+	j.mu.RLock()
+	defer j.mu.RUnlock()
 	st, err := os.Stat(j.path)
 	if err != nil {
 		return -1, err
