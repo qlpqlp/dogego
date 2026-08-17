@@ -6,7 +6,10 @@
 
 package node
 
-import "testing"
+import (
+	"testing"
+	"time"
+)
 
 func TestEffectiveBlockDownloadTimeoutEarlyIBDCap(t *testing.T) {
 	bs := &BlockStoreCtx{}
@@ -23,5 +26,27 @@ func TestEffectiveBlockDownloadTimeoutEarlyIBDCap(t *testing.T) {
 	d = EffectiveBlockDownloadTimeout(bs, 4)
 	if d <= earlyIBDBlockDownloadTimeout {
 		t.Fatalf("caught-up timeout=%v want > %v", d, earlyIBDBlockDownloadTimeout)
+	}
+}
+
+func TestBlockDownloadTimeoutMatchesCoreFormula(t *testing.T) {
+	// Core: max(nPowTargetSpacing,10) * (BASE + PER_PEER * otherDownloaders)
+	// BASE=5e6, PER_PEER=2.5e6 millionths → 5 min + 2.5 min/peer at 60s spacing.
+	if got := BlockDownloadTimeout(0, 60); got != 5*time.Minute {
+		t.Fatalf("1 downloader %v want 5m", got)
+	}
+	if got := BlockDownloadTimeout(5, 60); got != 1050*time.Second {
+		t.Fatalf("6 lanes %v want 1050s (Core nCalculatedDlWindow)", got)
+	}
+}
+
+func TestEffectiveBlockDownloadTimeoutAt50kUsesCoreWindow(t *testing.T) {
+	bs := &BlockStoreCtx{}
+	bs.contiguousMu.Lock()
+	bs.contiguousTip = 51_000
+	bs.contiguousMu.Unlock()
+	d := EffectiveBlockDownloadTimeout(bs, 6)
+	if d != 1050*time.Second {
+		t.Fatalf("body IBD at 51k timeout=%v want Core 1050s (not 60s)", d)
 	}
 }

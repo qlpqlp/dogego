@@ -862,6 +862,11 @@ func (s *progressiveRawState) tryFetchMissingBatches(ctx context.Context, w *Msg
 		batchCtx, endBatch := s.startBatch(workerID, ctx, batchTimeout)
 		n, ferr := fetchAndStoreRawBlocksBatch(batchCtx, w, p, claim.hashes, claim.heights, bs, lanes)
 		endBatch()
+		if n > 0 {
+			s.mu.Lock()
+			s.noteLaneDownloadProgressLocked(workerID)
+			s.mu.Unlock()
+		}
 		if ferr != nil && n == 0 {
 			peer := ""
 			if w != nil {

@@ -29,6 +29,17 @@ func (s *progressiveRawState) noteBatchDownloadStartLocked(lane int) {
 	}
 }
 
+// noteLaneDownloadProgressLocked refreshes Core nDownloadingSince when a block is received
+// for this lane (net_processing.cpp MarkBlockAsReceived updates the front-of-queue timer).
+func (s *progressiveRawState) noteLaneDownloadProgressLocked(lane int) {
+	if s == nil || lane < 0 || s.laneDownloadSince == nil {
+		return
+	}
+	if _, ok := s.laneDownloadSince[lane]; ok {
+		s.laneDownloadSince[lane] = time.Now()
+	}
+}
+
 func (s *progressiveRawState) clearLaneDownloadIfIdleLocked(lane int) {
 	if s == nil || lane < 0 || s.laneDownloadSince == nil {
 		return

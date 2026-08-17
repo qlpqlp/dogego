@@ -616,6 +616,12 @@ func fetchAndStoreRawBlocksBatchInv(ctx context.Context, w *MsgWriter, p chain.P
 			notifyBlockFromPeer(bs, w.PeerAddr, got)
 			delete(pending, got)
 			stored++
+			// Core MarkBlockAsReceived: nDownloadingSince = now when the front of the
+			// in-flight queue is delivered. Refresh the batch window so slow-but-live
+			// ancient getdata is not killed after the first block.
+			limit := EffectiveBlockDownloadTimeout(bs, syncLanes)
+			batchDL = time.Now().Add(limit)
+			hardTimer.Reset(limit + 250*time.Millisecond)
 			if stored == 1 && len(entries) <= 4 {
 				applog.Line("block", fmt.Sprintf("batched block %x… stored (%d B) height %d", got[:4], len(payload), height))
 			}

@@ -16,10 +16,9 @@ const (
 	blockDownloadTimeoutBaseMicro    = int64(5_000_000)  // ~5 min at 60s spacing
 	blockDownloadTimeoutPerPeerMicro = int64(2_500_000) // +~2.5 min per other downloading peer
 	blockDownloadMinMultiplierSec    = int64(10)
-	// earlyIBDBlockDownloadTimeout caps batch wait while fetching ancient blocks near genesis.
+	// earlyIBDBlockDownloadTimeout caps batch wait while fetching the first ~1000 blocks
+	// (peers that only send inv/headers). After that, use Core nCalculatedDlWindow.
 	earlyIBDBlockDownloadTimeout = 90 * time.Second
-	// bodyIBDPauseDownloadTimeout caps batch wait while deep forward body IBD runs (rotate slow peers faster).
-	bodyIBDPauseDownloadTimeout = 60 * time.Second
 	// batchBlockReadSlice caps each ReadMessage wait so ping/inv chatter cannot stall a batch until Core-scale windows.
 	batchBlockReadSlice = 15 * time.Second
 )
@@ -48,7 +47,9 @@ func BlockDownloadTimeout(otherDownloadingPeers int, blockIntervalSec int64) tim
 }
 
 // EffectiveBlockDownloadTimeout returns the in-flight batch window for progressive getdata.
-// Ancient forward IBD uses a shorter cap so assist peers that only send inv/headers rotate quickly.
+// Matches Core nCalculatedDlWindow (nPowTargetSpacing * (BASE + PER_PEER * other downloaders)).
+// Only the first ~1000 bodies keep a shorter cap so inv-only peers rotate; after that a 60s
+// cap was disconnecting peers that were still seeking ancient blocks (Core waits ~5–17 min).
 func EffectiveBlockDownloadTimeout(bs *BlockStoreCtx, syncLanes int) time.Duration {
 	others := syncLanes - 1
 	if others < 0 {
@@ -57,9 +58,6 @@ func EffectiveBlockDownloadTimeout(bs *BlockStoreCtx, syncLanes int) time.Durati
 	d := BlockDownloadTimeout(others, 60)
 	if bs != nil {
 		cont := bs.ContiguousRawHeight()
-		if ShouldPauseHeaderCatchUpForBodyIBD(bs, 0) && cont >= 0 && cont < 100_000 && d > bodyIBDPauseDownloadTimeout {
-			return bodyIBDPauseDownloadTimeout
-		}
 		if cont < 1000 && d > earlyIBDBlockDownloadTimeout {
 			return earlyIBDBlockDownloadTimeout
 		}

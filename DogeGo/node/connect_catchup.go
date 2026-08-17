@@ -188,6 +188,7 @@ func runConnectCatchUpOnce(bs *BlockStoreCtx, utxo *store.UtxoCache) {
 		}
 	}
 	if err != nil {
+		applog.Line("utxo", "connect catch-up: "+err.Error())
 		bs.maybeRealignBodyDownloadOnConnectGap()
 		maybeRepairTxIndexOnConnectStall(bs, err)
 		return
