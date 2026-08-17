@@ -178,6 +178,51 @@ func TestClaimBatch_frontierFirstAllowsAssistLaneID(t *testing.T) {
 	}
 }
 
+func TestClaimBatch_frontierFirstPipelinesNextLane(t *testing.T) {
+	dir := t.TempDir()
+	g80, err := pow.Header80()
+	if err != nil {
+		t.Fatal(err)
+	}
+	genesisRaw := store.MakeTestBlockRaw(t, g80[:])
+	j, err := store.OpenHeaderJournal(filepath.Join(dir, "headers.bin"), genesisRaw[:80])
+	if err != nil {
+		t.Fatal(err)
+	}
+	for i := 0; i < 600; i++ {
+		prev, _ := j.ReadHeaderAt(int64(i))
+		h := append([]byte(nil), prev...)
+		ph := pow.BlockHashLE(prev)
+		copy(h[4:36], ph[:])
+		h[76] ^= byte(i + 1)
+		if err := j.AppendHeaders([][]byte{h}); err != nil {
+			t.Fatal(err)
+		}
+	}
+	rs, err := store.OpenRawBlockStore(dir)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := rs.Put(pow.BlockHashLE(genesisRaw[:80]), genesisRaw); err != nil {
+		t.Fatal(err)
+	}
+	p, _ := chain.ParamsFor(chain.RebootTestnet)
+	var s progressiveRawState
+	s.SetSyncParallelism(4)
+	bs := &BlockStoreCtx{Journal: j, Raw: rs, Params: p}
+	a, ok := s.claimBatch(bs, 0)
+	if !ok || len(a.heights) == 0 {
+		t.Fatalf("lane 0 claim ok=%v n=%d", ok, len(a.heights))
+	}
+	b, ok := s.claimBatch(bs, 2)
+	if !ok || len(b.heights) == 0 {
+		t.Fatalf("lane 2 should pipeline the next 16 after in-flight, ok=%v n=%d", ok, len(b.heights))
+	}
+	if b.heights[0] != a.hi+1 {
+		t.Fatalf("lane 2 first height %d want %d (Core download window, not idle behind lane 0)", b.heights[0], a.hi+1)
+	}
+}
+
 func TestPrepareAtStartup_claimsGenesisWhenMissing(t *testing.T) {
 	dir := t.TempDir()
 	g80, err := pow.Header80()

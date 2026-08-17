@@ -693,9 +693,9 @@ func (s *progressiveRawState) planClaimRange(bs *BlockStoreCtx, j *store.HeaderJ
 			if len(claim.heights) > 0 {
 				break
 			}
-			if shouldFillContiguousFrontierFirst(bs, lowMissing) {
-				break
-			}
+			// Core fills a 1024-high BLOCK_DOWNLOAD_WINDOW from several peers at once.
+			// Skip heights already in flight so the next lane can claim the following 16
+			// instead of sitting idle behind one 16-block getdata.
 			continue
 		}
 		h80, err := j.ReadHeaderAt(probe)

@@ -511,12 +511,9 @@ func shouldPostBatchInlineConnect(bs *BlockStoreCtx) bool {
 	}
 	if ShouldPauseHeaderCatchUpForBodyIBD(bs, 0) {
 		// Prefer getdata throughput during deep body IBD; catch-up worker handles connect.
-		// Aggressive inline connect here starves download and collapses blk/min after the first hour.
-		thresh := int64(8192)
-		if bs.IBDOptimize {
-			thresh = 32768
-		}
-		return lag > thresh
+		// A 32k lag threshold still fired on live mainnet (~34k stored-ahead) and ran
+		// SyncUtxoCache on the download lane between 16-block batches.
+		return false
 	}
 	return lag > PostBatchConnectLagThreshold(bs)
 }
