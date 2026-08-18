@@ -180,3 +180,26 @@ func TestLiveFeedPublishesP2PWhileSummaryBlocked(t *testing.T) {
 	close(release)
 	t.Fatal("expected live P2P overlay while BuildSummaryMap blocked")
 }
+
+func TestPublishCachedJSONAfterRawMessageBootstrap(t *testing.T) {
+	dir := t.TempDir()
+	sum := map[string]any{"tip_height": float64(1), "network": "mainnet"}
+	if err := saveDashboardSnapshot(dir, &dashboardSnapshotFile{
+		TipHeight: 1,
+		Summary:   sum,
+		P2P:       json.RawMessage(`{"wired":true}`),
+	}); err != nil {
+		t.Fatal(err)
+	}
+	var f LiveFeed
+	f.chainDataDir = dir
+	f.bootstrapLiveIfEmpty(StartConfig{ChainDataDir: dir, Network: "mainnet", ChainDisplay: "mainnet"})
+	// Disk snapshot P2P is json.RawMessage; live overlay stores plain []byte.
+	// atomic.Value panics if those types are mixed.
+	f.publishCachedJSON(
+		[]byte(`{"ok":true}`),
+		[]byte(`{"wired":true,"contiguous_block_height":10}`),
+		[]byte(`{"txs":[]}`),
+		[]byte(`{"ok":true,"summary":{"ok":true}}`),
+	)
+}

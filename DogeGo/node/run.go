@@ -954,6 +954,17 @@ func Run(ctx context.Context, cfg Config) error {
 		}
 		defer saveUtxoSnapshotOnShutdown()
 	}
+	if rbStore != nil {
+		defer func() {
+			if !RunWithTimeout(ShutdownFlushBudget, func() {
+				if err := rbStore.Flush(); err != nil {
+					applog.Line("block", "raw block write-behind flush: "+err.Error())
+				}
+			}) {
+				applog.Line("block", "raw block write-behind flush timed out after "+ShutdownFlushBudget.String())
+			}
+		}()
+	}
 	feeHistoryPath := filepath.Join(chainDataAbs, "fee_history.json")
 	feeEstimatesDatPath := filepath.Join(chainDataAbs, "fee_estimates.dat")
 	feeHistory := consensus.NewFeeHistory(0)

@@ -18,19 +18,18 @@ import (
 // ErrBlockDownloadStall is returned when Core BLOCK_STALLING_TIMEOUT fires on the frontier height.
 var ErrBlockDownloadStall = errors.New("block download stall")
 
-// Core validation.h BLOCK_STALLING_TIMEOUT - disconnect when download window cannot advance.
+// Core validation.h / net_processing BLOCK_STALLING_TIMEOUT - disconnect the peer holding
+// the next height when the download window cannot advance.
 const blockStallingTimeout = 2 * time.Second
 
-// During deep body IBD, ancient getdata often exceeds 2s; a hard 2s disconnect churns peers
-// and collapses download rate. Soften timeout and prefer soft cooldown while bodies lag headers.
-// During deep body IBD, match ltcd netsync maxStallDuration (3m). A 15s release
-// dropped the frontier claim while a large getdata was still in flight.
-const blockStallingTimeoutBodyIBD = 3 * time.Minute
+// Aliases kept for snapshot / tests. ltcd's 3-minute maxStallDuration is for a single
+// fat-getdata sync peer; mixing that with Core's 2s hole-stall (or stretching to 15s)
+// left the contiguous height stuck while later blocks filled the window.
+const blockStallingTimeoutBodyIBD = blockStallingTimeout
+const blockStallingTimeoutBodyIBDEarly = blockStallingTimeout
 
 func blockStallingTimeoutFor(bs *BlockStoreCtx) time.Duration {
-	if bs != nil && ShouldPauseHeaderCatchUpForBodyIBD(bs, 0) {
-		return blockStallingTimeoutBodyIBD
-	}
+	_ = bs
 	return blockStallingTimeout
 }
 
@@ -84,34 +83,36 @@ func (s *progressiveRawState) maybePenalizeStallingPeer(bs *BlockStoreCtx, score
 		}
 	}
 	if slot := s.activeBatch[lane]; slot != nil && slot.cancel != nil {
-		// The frontier getdata is still on the wire — do not release so another lane
-		// does not send a second getdata for the same height (ltcd keeps requestedBlocks).
-		return "", false
+		slot.cancel()
+		delete(s.activeBatch, lane)
 	}
 	peerAddr := ""
 	if s.laneAddr != nil {
 		peerAddr = s.laneAddr[lane]
 	}
-	delete(s.inFlight, frontier)
+	freed := 0
 	if s.inFlightLane != nil {
-		delete(s.inFlightLane, frontier)
+		for h, l := range s.inFlightLane {
+			if l != lane {
+				continue
+			}
+			delete(s.inFlight, h)
+			delete(s.inFlightLane, h)
+			freed++
+		}
+	} else {
+		delete(s.inFlight, frontier)
+		freed = 1
 	}
+	delete(s.laneDownloadSince, lane)
 	s.stallingSince = time.Time{}
 	s.idleFull = false
 	s.lastStallPeer = peerAddr
 	s.lastStallAt = now
-	bodyIBD := ShouldPauseHeaderCatchUpForBodyIBD(bs, 0)
 	if peerAddr != "" {
-		if bodyIBD {
-			// Soft: release the frontier claim and brief cooldown — do not disconnect.
-			// Hard 2s stalls during ancient getdata were rotating peers and collapsing blk/min.
-			penalizeBlockPeer(scorer, book, peerAddr, false)
-			applog.Line("block", "block download stall: peer "+peerAddr+" held height "+formatInt64(frontier)+" in flight >"+stallTO.String()+" without delivery; soft release (body IBD, peer kept)")
-			return "", false
-		}
 		penalizeBlockPeer(scorer, book, peerAddr, true)
 		NoteBlockPeerDisconnect(peerAddr, "block stall at height "+formatInt64(frontier))
-		applog.Line("block", "block download stall: peer "+peerAddr+" held height "+formatInt64(frontier)+" in flight >"+stallTO.String()+" without delivery; disconnecting peer (Core BLOCK_STALLING_TIMEOUT)")
+		applog.Line("block", fmt.Sprintf("block download stall: peer %s held height %s in flight >%s without delivery; released %d in-flight height(s) and disconnecting (Core BLOCK_STALLING_TIMEOUT)", peerAddr, formatInt64(frontier), stallTO, freed))
 		return peerAddr, true
 	}
 	applog.Line("block", "block download stall: released in-flight height "+formatInt64(frontier)+" after "+stallTO.String()+" without delivery")

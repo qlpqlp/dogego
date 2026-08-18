@@ -41,6 +41,7 @@
   let apiFailStreak = 0;
   let lastApiSuccessAt = 0;
   let refreshInFlight = false;
+  let refreshStartedAt = 0;
   let walletPanelInFlight = false;
   let walletAutoRescanStarted = false;
   let walletHistoryScanDeferred = false;
@@ -52,10 +53,10 @@
   let walletAbFilterTimer = null;
   let walletUnlockCountdownTimer = null;
   const API_FAIL_HARD_THRESHOLD = 15;
-  const LOCAL_API_TIMEOUT_MS = 45000;
-  const LIVE_API_TIMEOUT_MS = 30000;
-  const WALLET_API_TIMEOUT_MS = 45000;
-  const WALLET_TX_API_TIMEOUT_MS = 60000;
+  const LOCAL_API_TIMEOUT_MS = 0;
+  const LIVE_API_TIMEOUT_MS = 0;
+  const WALLET_API_TIMEOUT_MS = 0;
+  const WALLET_TX_API_TIMEOUT_MS = 0;
   const CONNECT_LAG_POLL_DEFER = 32;
   const CONNECT_LAG_HEAVY_DEFER = 64;
   let bootOverlayHidden = false;
@@ -2527,7 +2528,12 @@
     }
     const set = (id, text) => { const el = $(id); if (el) el.textContent = text; };
     set("ibd-phase-connected", active >= 0 ? active.toLocaleString() : "...");
-    set("ibd-phase-stored", stored >= 0 ? stored.toLocaleString() : "...");
+    const inflight = Number(s.in_flight_batches);
+    let storedText = stored >= 0 ? stored.toLocaleString() : "...";
+    if (stored >= 0 && isFinite(inflight) && inflight > 0) {
+      storedText += " (+" + inflight.toLocaleString() + " in flight)";
+    }
+    set("ibd-phase-stored", storedText);
     set("ibd-phase-headers", isFinite(tip) ? tip.toLocaleString() : "...");
     set("ibd-phase-download-rate", isFinite(dlRate) && dlRate > 0 ? dlRate.toFixed(1) + " blk/min" : "...");
     set("ibd-phase-connect-rate", isFinite(connRate) && connRate > 0 ? connRate.toFixed(1) + " blk/min" : "...");
@@ -8643,6 +8649,7 @@
       el.textContent = text || "(no log lines yet ... node activity will appear here as sync runs)";
       if ($("log-autoscroll") && $("log-autoscroll").checked) el.scrollTop = el.scrollHeight;
     } catch (e) {
+      if (isTransientAPIError(e)) return;
       el.textContent = String(e);
     }
   }
@@ -8797,18 +8804,15 @@
   }
 
   function apiTimeoutMs() {
-    if (Date.now() - PAGE_LOAD < BOOT_GRACE_MS) return 60000;
-    return LOCAL_API_TIMEOUT_MS;
+    return 0;
   }
 
   function friendlyAPIError(e) {
     if (!e) return "unknown error";
     const msg = (e.message || String(e)).toLowerCase();
-    if (e.name === "TimeoutError" || msg.includes("timed out") || msg.includes("timeout")) {
-      return "request timed out (node may be busy syncing)";
-    }
-    if (e.name === "AbortError" || msg.includes("aborted")) {
-      return "request timed out (node may be busy syncing)";
+    if (e.name === "TimeoutError" || msg.includes("timed out") || msg.includes("timeout") ||
+        e.name === "AbortError" || msg.includes("aborted")) {
+      return "";
     }
     if (msg.includes("failed to fetch") || msg.includes("networkerror")) {
       return "connection failed (is the node still starting?)";
@@ -8818,24 +8822,28 @@
 
   function isTransientAPIError(e) {
     if (!e) return false;
-    const msg = (e.message || "").toLowerCase();
+    const msg = (e.message || String(e)).toLowerCase();
     return e.name === "TimeoutError" || e.name === "AbortError" ||
-      msg.includes("aborted") || msg.includes("timeout") ||
+      msg.includes("aborted") || msg.includes("timeout") || msg.includes("timed out") ||
       msg.includes("failed to fetch") || msg.includes("network");
   }
 
   function showAPIError(e, streak) {
     const err = $("err");
     if (!err) return;
+    if (isTransientAPIError(e)) {
+      err.classList.remove("show");
+      if (isBootPhase()) setBootOverlayMessage(bootStatusMessage(e));
+      return;
+    }
     const boot = isBootPhase();
-    const transient = isTransientAPIError(e);
     const recentOk = lastApiSuccessAt > 0 && Date.now() - lastApiSuccessAt < 60000;
     const softStart =
       boot ||
       streak < API_FAIL_HARD_THRESHOLD ||
       recentOk ||
       ((e && e.message) || "").toLowerCase().includes("dashboard not ready");
-    if (transient && softStart) {
+    if (softStart) {
       if (boot) {
         err.classList.remove("show");
         setBootOverlayMessage(bootStatusMessage(e));
@@ -8846,17 +8854,11 @@
         err.className = "alert warn show";
         return;
       }
-      err.textContent = "Node API slow to respond ... retrying. (" + friendlyAPIError(e) + ")";
-      err.className = "alert warn show";
-      return;
-    }
-    if (boot) {
-      err.classList.remove("show");
-      setBootOverlayMessage(bootStatusMessage(e));
       return;
     }
     hideBootOverlay();
-    err.textContent = "Cannot reach node API ... " + friendlyAPIError(e);
+    const detail = friendlyAPIError(e);
+    err.textContent = detail ? ("Cannot reach node API ... " + detail) : "Cannot reach node API ... retrying.";
     err.className = "alert err show";
   }
 
@@ -8866,26 +8868,39 @@
   }
 
   function fetchAPI(path, ms, init) {
-    const timeout = ms == null ? apiTimeoutMs() : ms;
-    const ctrl = new AbortController();
-    const timer = setTimeout(() => {
-      try {
-        ctrl.abort(new DOMException("Request timed out", "TimeoutError"));
-      } catch (_) {
-        ctrl.abort();
-      }
-    }, timeout);
-    const opts = Object.assign({ cache: "no-store", signal: ctrl.signal, credentials: "same-origin" }, init || {});
+    const opts = Object.assign({ cache: "no-store", credentials: "same-origin" }, init || {});
+    delete opts.signal;
     if (window.DogeGoSecurity && window.DogeGoSecurity.guardFetch && path.indexOf("/api/wallet") === 0) {
-      return window.DogeGoSecurity.guardFetch(path, opts).finally(() => clearTimeout(timer));
+      return window.DogeGoSecurity.guardFetch(path, opts);
     }
-    return fetch(path, opts).finally(() => clearTimeout(timer));
+    return fetch(path, opts);
+  }
+
+  async function fetchLiveDashboard(gen) {
+    try {
+      const rLive = await fetchAPI("/api/live", LIVE_API_TIMEOUT_MS);
+      if (gen !== refreshGen) return null;
+      if (!rLive.ok) throw new Error("live HTTP " + rLive.status);
+      const live = await rLive.json();
+      if (live && live.summary) return live;
+    } catch (e) {
+      if (gen !== refreshGen) return null;
+      if (!isTransientAPIError(e)) throw e;
+    }
+    const r = await fetchAPI("/api/summary", 0);
+    if (gen !== refreshGen) return null;
+    if (!r.ok) throw new Error("summary HTTP " + r.status);
+    const s = await r.json();
+    if (!s || s.live === false && !s.tip_height && !s.contiguous_raw_height) {
+      throw new Error("dashboard not ready");
+    }
+    return { ok: true, summary: s, summary_stale: true };
   }
 
   function pollIntervalMs(summary) {
     const lag = summaryConnectLag(summary);
     const ibd = summary && (summary.ibd_active || (Number(summary.blocks_behind_headers) || 0) > 64);
-    if (ibd) return 1200;
+    if (ibd) return 400;
     if (lag > 128) return 4000;
     if (lag > CONNECT_LAG_POLL_DEFER) return 2500;
     return POLL_MS;
@@ -8974,8 +8989,12 @@
   }
 
   async function refresh() {
-    if (refreshInFlight) return;
+    if (refreshInFlight) {
+      if (Date.now() - refreshStartedAt < 8000) return;
+      beginRefreshCycle();
+    }
     refreshInFlight = true;
+    refreshStartedAt = Date.now();
     let gen = 0;
     try {
       ({ gen } = beginRefreshCycle());
@@ -8985,11 +9004,9 @@
         } catch (_) { /* */ }
         if (gen !== refreshGen) return;
       }
-      const rLive = await fetchAPI("/api/live", LIVE_API_TIMEOUT_MS);
+      const live = await fetchLiveDashboard(gen);
       if (gen !== refreshGen) return;
-      if (!rLive.ok) throw new Error("live HTTP " + rLive.status);
-      const live = await rLive.json();
-      if (!live.ok || !live.summary) throw new Error(live.summary_error || "dashboard not ready");
+      if (!live || !live.summary) throw new Error(live && live.summary_error ? live.summary_error : "dashboard not ready");
       const s = live.summary;
       const p2snap = live.p2p || null;
       lastSummary = s;
@@ -9185,37 +9202,39 @@
       if (runSlow && !deferDuringSend) {
         lastSlowPollAt = now;
         const ibd = !!s.ibd_active || (Number(s.blocks_behind_headers) || 0) > 32;
-        if (!deferSlowExtras) {
-          const chainPath = ibd ? "/api/chainstats?light=1" : "/api/chainstats";
-          const rStats = await fetchAPI(chainPath);
-          if (gen !== refreshGen) return;
-          if (rStats.ok) try { fillChainStats(await rStats.json()); } catch (_) {}
-        }
-        applySummaryWalletStub(s);
-        if (!shouldDeferWalletPoll(s)) {
-          void refreshWalletPanelAsync(gen);
-        }
-        if (!deferSlowExtras) {
-          const rMin = await fetchAPI("/api/mining");
-          if (gen !== refreshGen) return;
-          if (rMin.ok) {
-            const mn = await rMin.json();
-            if ($("mine-in-conf")) $("mine-in-conf").textContent = mn.mine_in_config ? "on" : "off";
-          }
-          if (isPanelActive("settings")) {
-            void loadServicesPanel();
-          }
-          if (s.embedded_analytics_sidecar) {
-            const rAn = await fetchAPI("/api/analytics/summary");
+        try {
+          if (!deferSlowExtras) {
+            const chainPath = ibd ? "/api/chainstats?light=1" : "/api/chainstats";
+            const rStats = await fetchAPI(chainPath);
             if (gen !== refreshGen) return;
-            if (rAn.ok) {
-              try {
-                lastAnalyticsJson = await rAn.json();
-                renderOverviewCharts(s, lastAnalyticsJson);
-              } catch (_) {}
+            if (rStats.ok) try { fillChainStats(await rStats.json()); } catch (_) {}
+          }
+          applySummaryWalletStub(s);
+          if (!shouldDeferWalletPoll(s)) {
+            void refreshWalletPanelAsync(gen);
+          }
+          if (!deferSlowExtras) {
+            const rMin = await fetchAPI("/api/mining");
+            if (gen !== refreshGen) return;
+            if (rMin.ok) {
+              const mn = await rMin.json();
+              if ($("mine-in-conf")) $("mine-in-conf").textContent = mn.mine_in_config ? "on" : "off";
+            }
+            if (isPanelActive("settings")) {
+              void loadServicesPanel();
+            }
+            if (s.embedded_analytics_sidecar) {
+              const rAn = await fetchAPI("/api/analytics/summary");
+              if (gen !== refreshGen) return;
+              if (rAn.ok) {
+                try {
+                  lastAnalyticsJson = await rAn.json();
+                  renderOverviewCharts(s, lastAnalyticsJson);
+                } catch (_) {}
+              }
             }
           }
-        }
+        } catch (_) { /* extras must never hide live IBD metrics */ }
       } else if (lastSummary) {
         updateSendUI(null, s);
       }
@@ -9277,7 +9296,12 @@
       if (err) err.classList.remove("show");
     } catch (e) {
       if (gen !== refreshGen) return;
-      if (e && e.name === "AbortError") return;
+      if (isTransientAPIError(e) || (e && ((e.message || "").toLowerCase().includes("dashboard not ready")))) {
+        if (isBootPhase()) setBootOverlayMessage(bootStatusMessage(e));
+        const err = $("err");
+        if (err) err.classList.remove("show");
+        return;
+      }
       apiFailStreak++;
       showAPIError(e, apiFailStreak);
     } finally {
@@ -11057,17 +11081,7 @@
   }
 
   async function fetchWithTimeout(url, options, ms) {
-    const timeoutMs = ms || 12000;
-    const ctrl = new AbortController();
-    const timer = setTimeout(() => ctrl.abort(), timeoutMs);
-    try {
-      return await fetch(url, Object.assign({}, options || {}, { signal: ctrl.signal }));
-    } catch (e) {
-      if (e && e.name === "AbortError") throw new Error("Request timed out after " + timeoutMs + "ms");
-      throw e;
-    } finally {
-      clearTimeout(timer);
-    }
+    return fetch(url, Object.assign({ cache: "no-store", credentials: "same-origin" }, options || {}));
   }
 
   async function renderMarkdownInto(el, md, basePath) {

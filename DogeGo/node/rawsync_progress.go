@@ -8,6 +8,7 @@ package node
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"sync"
 	"time"
@@ -87,7 +88,8 @@ func (s *progressiveRawState) syncWorkerCount() int {
 }
 
 // laneForAddr picks a unique sync lane for a non-primary P2P link (lane 0 is reserved for the primary peer).
-// Hashing into a small worker count made 17 outbound peers share 5 assist lanes and cancel each other's getdata.
+// Relays use a bounded pool above assist IDs. Growing syncWorkers per relay (live: 46 lanes)
+// inflated download timeouts to 1h and leaked thousands of in-flight claims.
 func (s *progressiveRawState) laneForAddr(addr string) int {
 	if s == nil || addr == "" {
 		return 1
@@ -112,22 +114,37 @@ func (s *progressiveRawState) laneForAddr(addr string) int {
 	}
 	// Lane 0 is primary; 1..syncWorkers-1 are block-assist workers. Relays must not
 	// reuse those IDs or ReleaseLaneInFlight on assist disconnect cancels relay getdata.
-	id := 1
+	start := 1
 	if s.syncWorkers > 1 {
-		id = s.syncWorkers
+		start = s.syncWorkers
 	}
-	for {
-		if _, taken := used[id]; !taken {
+	limit := start + defaultMaxOutbound
+	id := -1
+	for cand := start; cand < limit; cand++ {
+		if _, taken := used[cand]; !taken {
+			id = cand
 			break
 		}
-		id++
+	}
+	if id < 0 {
+		return -1
 	}
 	s.peerLane[addr] = id
-	if id+1 > s.syncWorkers {
-		s.syncWorkers = id + 1
+	return id
+}
+
+func (s *progressiveRawState) peekLaneForAddr(addr string) int {
+	if s == nil || addr == "" {
+		return -1
 	}
-	if s.syncWorkers < 2 {
-		s.syncWorkers = 2
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	if s.peerLane == nil {
+		return -1
+	}
+	id, ok := s.peerLane[addr]
+	if !ok || id <= 0 {
+		return -1
 	}
 	return id
 }
@@ -136,6 +153,9 @@ func (s *progressiveRawState) laneForAddr(addr string) int {
 func (s *progressiveRawState) SetSyncParallelism(workers int) {
 	if s == nil || workers < 1 {
 		return
+	}
+	if workers > maxBlockAssistWorkers+1 {
+		workers = maxBlockAssistWorkers + 1
 	}
 	s.mu.Lock()
 	s.syncWorkers = workers
@@ -345,6 +365,61 @@ func (s *progressiveRawState) ReleaseLaneInFlight(lane int) int {
 	return freed
 }
 
+// releaseOrphanInFlight drops getdata claims whose lane has no live peer (relay/assist
+// disconnect used to leak thousands of heights and freeze the contiguous hole).
+func (s *progressiveRawState) releaseOrphanInFlight() int {
+	if s == nil {
+		return 0
+	}
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	return s.releaseOrphanInFlightLocked()
+}
+
+func (s *progressiveRawState) releaseOrphanInFlightLocked() int {
+	if len(s.inFlight) == 0 && len(s.inFlightLane) == 0 {
+		return 0
+	}
+	live := make(map[int]struct{}, len(s.activeBatch)+len(s.laneAddr))
+	for lane := range s.activeBatch {
+		live[lane] = struct{}{}
+	}
+	for lane := range s.laneAddr {
+		live[lane] = struct{}{}
+	}
+	if len(live) == 0 {
+		n := len(s.inFlight)
+		s.inFlight = make(map[int64][32]byte)
+		s.inFlightLane = make(map[int64]int)
+		if n > 0 {
+			s.idleFull = false
+			applog.Line("block", fmt.Sprintf("released %d orphan in-flight height(s) (no live download peer)", n))
+		}
+		return n
+	}
+	freed := 0
+	for h, lane := range s.inFlightLane {
+		if _, ok := live[lane]; ok {
+			continue
+		}
+		delete(s.inFlight, h)
+		delete(s.inFlightLane, h)
+		freed++
+	}
+	for h := range s.inFlight {
+		if _, ok := s.inFlightLane[h]; ok {
+			continue
+		}
+		delete(s.inFlight, h)
+		freed++
+	}
+	if freed > 0 {
+		s.idleFull = false
+		applog.Line("block", fmt.Sprintf("released %d orphan in-flight height(s) (download peer gone)", freed))
+	}
+	return freed
+}
+
 // ResetInFlightForHeaderRewind clears in-flight getdata claims during header journal truncate.
 // Does not rescan the journal (PrepareAtStartup) so truncate is not blocked on progressiveRawState.mu.
 func (s *progressiveRawState) ResetInFlightForHeaderRewind() {
@@ -537,6 +612,40 @@ func (s *progressiveRawState) startBatch(lane int, parent context.Context, d tim
 	}, true
 }
 
+// watchFrontierStall cancels this lane's getdata when Core BLOCK_STALLING_TIMEOUT fires
+// while ReadMessage is blocked (live: ahead blocks kept resetting the 30s deadline and
+// stall was only checked between batches).
+func (s *progressiveRawState) watchFrontierStall(ctx context.Context, bs *BlockStoreCtx, scorer *BlockPeerScorer, book *AddrBook, lane int) func() {
+	if s == nil || ctx == nil {
+		return func() {}
+	}
+	done := make(chan struct{})
+	var once sync.Once
+	stop := func() { once.Do(func() { close(done) }) }
+	go func() {
+		t := time.NewTicker(250 * time.Millisecond)
+		defer t.Stop()
+		for {
+			select {
+			case <-ctx.Done():
+				return
+			case <-done:
+				return
+			case <-t.C:
+				if scorer == nil {
+					continue
+				}
+				if peer, stalled := s.maybePenalizeStallingPeer(bs, scorer, book); stalled {
+					_ = peer
+					_ = lane
+					return
+				}
+			}
+		}
+	}()
+	return stop
+}
+
 func (s *progressiveRawState) cancelAllActiveBatches() {
 	s.mu.Lock()
 	defer s.mu.Unlock()
@@ -555,9 +664,12 @@ func (s *progressiveRawState) recomputeSyncCursorLocked(j *store.HeaderJournal, 
 		return
 	}
 	low, err := store.LowestMissingAfterContiguous(j, rs, contiguous, tip, net)
-	if low < 0 {
-		searchStart := store.LowestMissingSearchStart(j, rs, contiguous, net)
-		low, err = store.LowestMissingBlockHeightFrom(j, rs, searchStart, tip, net)
+	if low < 0 && contiguous < tip {
+		if contiguous < 0 {
+			low = 0
+		} else {
+			low = contiguous + 1
+		}
 	}
 	low = PreferConnectFrontierMissing(j, rs, low, connectNext, net)
 	if err != nil {
@@ -616,6 +728,7 @@ func (s *progressiveRawState) claimBatch(bs *BlockStoreCtx, workerID int) (rawBa
 	if bs == nil || bs.Raw == nil || bs.Journal == nil {
 		return empty, false
 	}
+	s.ensureBodyDownloadArmed(bs)
 	s.mu.Lock()
 	if s.inFlight == nil {
 		s.inFlight = make(map[int64][32]byte)
@@ -627,12 +740,12 @@ func (s *progressiveRawState) claimBatch(bs *BlockStoreCtx, workerID int) (rawBa
 	if workerID < 0 {
 		workerID = 0
 	}
-	if workerID+1 > s.syncWorkers {
-		s.syncWorkers = workerID + 1
-	}
 	workers := s.syncWorkers
 	if workers < 1 {
 		workers = 1
+	}
+	if workers > maxBlockAssistWorkers+1 {
+		workers = maxBlockAssistWorkers + 1
 	}
 	nextProbe := s.nextProbe
 	inFlightSnap := make(map[int64][32]byte, len(s.inFlight))
@@ -662,7 +775,6 @@ func (s *progressiveRawState) claimBatch(bs *BlockStoreCtx, workerID int) (rawBa
 	s.mu.Unlock()
 
 	contiguous := bs.ContiguousRawHeight()
-	j.ReconcileCountCacheFromDisk()
 	downloadTip := capBodyDownloadTip(bs, tip)
 	lowMissing, err := LowestMissingForIBD(j, rs, contiguous, tip, bs)
 	if err != nil {
@@ -688,13 +800,23 @@ func (s *progressiveRawState) claimBatch(bs *BlockStoreCtx, workerID int) (rawBa
 		s.mu.Unlock()
 		return empty, false
 	}
-	stripeTip := forwardIBDStripeTip(bs, lowMissing, downloadTip)
+	win := int(ibdBodyFetchWindow(bs, workers))
+	if win < progressiveBatchSize {
+		win = progressiveBatchSize
+	}
+	if len(inFlightSnap) >= win {
+		if _, busy := inFlightSnap[lowMissing]; busy {
+			return empty, false
+		}
+	}
+	stripeTip := forwardIBDStripeTipFor(bs, lowMissing, downloadTip, workers)
 	stripeWorkers := workers
 	if shouldFillContiguousFrontierFirst(bs, lowMissing) {
 		stripeWorkers = 1
 	}
 	stripeID := workerID
-	if stripeWorkers == 1 {
+	if stripeWorkers == 1 || workerID >= stripeWorkers {
+		stripeWorkers = 1
 		stripeID = 0
 	}
 	stripeLo, stripeHi, ok := syncStripeBounds(lowMissing, stripeTip, stripeID, stripeWorkers)
@@ -744,13 +866,17 @@ func (s *progressiveRawState) claimBatch(bs *BlockStoreCtx, workerID int) (rawBa
 			}
 		}
 		s.mu.Lock()
+		var keptH []int64
+		var keptHash [][32]byte
 		for i, h := range claim.heights {
 			if _, busy := s.inFlight[h]; busy {
-				claim.heights = claim.heights[:i]
-				claim.hashes = claim.hashes[:i]
-				break
+				continue
 			}
+			keptH = append(keptH, h)
+			keptHash = append(keptHash, claim.hashes[i])
 		}
+		claim.heights = keptH
+		claim.hashes = keptHash
 		if len(claim.heights) == 0 {
 			s.mu.Unlock()
 			continue
@@ -766,6 +892,26 @@ func (s *progressiveRawState) claimBatch(bs *BlockStoreCtx, workerID int) (rawBa
 		return claim, true
 	}
 	return empty, false
+}
+
+func (s *progressiveRawState) laneHoldsFrontier(bs *BlockStoreCtx, lane int) bool {
+	if s == nil || bs == nil || lane < 0 {
+		return false
+	}
+	cont := bs.ContiguousRawHeight()
+	frontier := cont + 1
+	if cont < 0 {
+		frontier = 0
+	}
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	if _, ok := s.inFlight[frontier]; !ok {
+		return false
+	}
+	if s.inFlightLane == nil {
+		return false
+	}
+	return s.inFlightLane[frontier] == lane
 }
 
 func (s *progressiveRawState) inFlightCountForLaneLocked(lane int) int {
@@ -816,18 +962,54 @@ func (s *progressiveRawState) planClaimRange(bs *BlockStoreCtx, j *store.HeaderJ
 		return claim
 	}
 	maxNew := batchCap - laneInflight
+	if j == nil {
+		return claim
+	}
+	cont := int64(-2)
+	if bs != nil {
+		cont = bs.ContiguousRawHeight()
+	}
+	if cont >= 0 && probeStart <= cont {
+		probeStart = cont + 1
+	}
+	skipDisk := shouldSkipDiskBodyProbe(bs)
+	// During download-first IBD skip HasStoredBody (NTFS Stat + locator). Walk past
+	// in-flight heights up to the stripe so each lane can still send a fat getdata.
+	walkCap := maxNew * 2
+	if skipDisk {
+		walkCap = int(rangeHi - probeStart + 1)
+		if walkCap < maxNew {
+			walkCap = maxNew
+		}
+		if walkCap > 8192 {
+			walkCap = 8192
+		}
+	} else {
+		if walkCap < 64 {
+			walkCap = 64
+		}
+		if walkCap > 512 {
+			walkCap = 512
+		}
+	}
+	scanned := 0
 	for probe := probeStart; probe <= rangeHi && probe <= tip && len(claim.heights) < maxNew; probe++ {
-		if _, busy := inFlight[probe]; busy {
-			// Core FindNextBlocksToDownload skips in-flight hashes and keeps filling the window.
+		if cont >= 0 && probe <= cont {
 			continue
+		}
+		if _, busy := inFlight[probe]; busy {
+			continue
+		}
+		scanned++
+		if scanned > walkCap {
+			break
 		}
 		h80, err := j.ReadHeaderAt(probe)
 		if err != nil {
 			return claim
 		}
 		hash := pow.BlockHashLE(h80)
-		if store.HasStoredBodyAtHeight(j, rs, probe, bs.chainNet()) {
-			// Sparse ahead-of-contiguous files must not shrink getdata to 1 height (break-on-stored).
+		if !skipDisk && rs != nil && rs.HasStoredBody(hash, store.MinRawBlockBytes(bs.chainNet(), probe)) {
 			continue
 		}
 		claim.heights = append(claim.heights, probe)
@@ -954,14 +1136,16 @@ func (s *progressiveRawState) tryFetchMissingBatches(ctx context.Context, w *Msg
 	if maxBatches < 1 {
 		maxBatches = 1
 	}
+	if workerID < 0 {
+		return 0, nil
+	}
+	s.ensureBodyDownloadArmed(bs)
 	var total int
 	var lastErr error
+	s.releaseOrphanInFlight()
 	for batch := 0; batch < maxBatches; batch++ {
 		if w != nil && w.PeerAddr != "" {
 			s.noteLanePeer(workerID, w.PeerAddr)
-		}
-		if s.laneHasActiveBatch(workerID) {
-			break
 		}
 		if scorer != nil {
 			if stallPeer, stalled := s.maybePenalizeStallingPeer(bs, scorer, book); stalled {
@@ -971,19 +1155,22 @@ func (s *progressiveRawState) tryFetchMissingBatches(ctx context.Context, w *Msg
 				return total, blockDownloadTimeoutError(timeoutPeer)
 			}
 		}
+		if s.laneHasActiveBatch(workerID) {
+			break
+		}
 		lanes := s.syncWorkerCount()
 		batchTimeout := EffectiveBlockDownloadTimeout(bs, lanes)
-		if shouldPipelineGetData(bs) {
-			// Progress is tracked by batchDL refresh on each stored block; a hard
-			// timeout here would abort ltcd-style getdata refill mid-pipe.
-			batchTimeout = 0
-		}
 		batchCtx, endBatch, started := s.startBatch(workerID, ctx, batchTimeout)
 		if !started {
 			break
 		}
+		stopWatch := func() {}
+		if scorer != nil {
+			stopWatch = s.watchFrontierStall(batchCtx, bs, scorer, book, workerID)
+		}
 		claim, ok := s.claimBatch(bs, workerID)
 		if !ok {
+			stopWatch()
 			endBatch()
 			break
 		}
@@ -996,7 +1183,9 @@ func (s *progressiveRawState) tryFetchMissingBatches(ctx context.Context, w *Msg
 		var extra []rawBatchClaim
 		var hooks *getdataBatchHooks
 		if shouldPipelineGetData(bs) {
+			refillBelow := getdataRefillThreshold(EffectiveProgressiveBatchSizeForIBD(bs, lanes))
 			hooks = &getdataBatchHooks{
+				RefillBelow: refillBelow,
 				OnStored: func(h int64) {
 					s.releaseInFlightHeight(h)
 					s.mu.Lock()
@@ -1004,7 +1193,7 @@ func (s *progressiveRawState) tryFetchMissingBatches(ctx context.Context, w *Msg
 					s.mu.Unlock()
 				},
 				Refill: func(pending int) ([][32]byte, []int64) {
-					if !shouldRefillGetData(pending) {
+					if !shouldRefillGetDataAt(pending, EffectiveProgressiveBatchSizeForIBD(bs, lanes)) {
 						return nil, nil
 					}
 					more, ok := s.claimBatch(bs, workerID)
@@ -1017,12 +1206,23 @@ func (s *progressiveRawState) tryFetchMissingBatches(ctx context.Context, w *Msg
 			}
 		}
 		n, ferr := fetchAndStoreRawBlocksBatch(batchCtx, w, p, claim.hashes, claim.heights, bs, lanes, hooks)
+		stopWatch()
 		endBatch()
 		claim = mergeRawBatchClaims(claim, extra)
 		if n > 0 {
 			s.mu.Lock()
 			s.noteLaneDownloadProgressLocked(workerID)
 			s.mu.Unlock()
+		}
+		if ferr != nil && (errors.Is(ferr, context.Canceled) || errors.Is(ferr, context.DeadlineExceeded)) {
+			s.mu.Lock()
+			stallPeer := s.lastStallPeer
+			stallAt := s.lastStallAt
+			s.mu.Unlock()
+			if !stallAt.IsZero() && time.Since(stallAt) < 3*time.Second {
+				s.finishBatch(bs, claim, n, ferr)
+				return total + n, blockStallError(stallPeer)
+			}
 		}
 		if ferr != nil && n == 0 {
 			peer := ""
@@ -1135,9 +1335,17 @@ func (s *progressiveRawState) snapshot() map[string]interface{} {
 	if lanes < 1 {
 		lanes = 1
 	}
-	out["block_download_timeout_sec"] = int64(BlockDownloadTimeout(lanes-1, 60).Seconds())
+	if lanes > maxBlockAssistWorkers+1 {
+		lanes = maxBlockAssistWorkers + 1
+	}
+	dl := BlockDownloadTimeout(lanes-1, 60)
+	if len(s.inFlight) > 0 && dl > bodyIBDBlockDownloadTimeout {
+		dl = bodyIBDBlockDownloadTimeout
+	}
+	out["block_download_timeout_sec"] = int64(dl.Seconds())
 	out["block_stalling_timeout_sec"] = int64(blockStallingTimeout.Seconds())
 	out["block_stalling_timeout_body_ibd_sec"] = int64(blockStallingTimeoutBodyIBD.Seconds())
+	out["block_stalling_timeout_body_ibd_early_sec"] = int64(blockStallingTimeoutBodyIBDEarly.Seconds())
 	if !s.stallingSince.IsZero() {
 		out["frontier_stalling_since"] = s.stallingSince.Unix()
 	}
@@ -1149,7 +1357,7 @@ func (s *progressiveRawState) snapshot() map[string]interface{} {
 		out["last_block_download_timeout_peer"] = s.lastDownloadTimeoutPeer
 		out["last_block_download_timeout_at"] = s.lastDownloadTimeoutAt.Unix()
 	}
-	out["max_blocks_in_transit_per_peer"] = EffectiveProgressiveBatchSize(lanes)
+	out["max_blocks_in_transit_per_peer"] = ibdGetDataBatch
 	if len(s.inFlightLane) > 0 {
 		laneInflight := make(map[string]int)
 		for _, lane := range s.inFlightLane {

@@ -9,6 +9,7 @@ package node
 import (
 	"context"
 	"encoding/binary"
+	"fmt"
 	"testing"
 	"time"
 
@@ -227,6 +228,93 @@ func TestLaneForAddr(t *testing.T) {
 	if a < 7 || b < 7 {
 		t.Fatalf("relay lanes %d,%d must start at syncWorkers=7 (assist reserves 1-6)", a, b)
 	}
+	if s.syncWorkers != 7 {
+		t.Fatalf("relay lanes must not grow syncWorkers (got %d)", s.syncWorkers)
+	}
+}
+
+func TestClaimBatchDoesNotGrowSyncWorkersForRelayLane(t *testing.T) {
+	dir := t.TempDir()
+	g80, err := pow.Header80()
+	if err != nil {
+		t.Fatal(err)
+	}
+	genesisRaw := store.MakeTestBlockRaw(t, g80[:])
+	j, err := store.OpenHeaderJournal(dir+"/headers.bin", genesisRaw[:80])
+	if err != nil {
+		t.Fatal(err)
+	}
+	for i := 0; i < 40; i++ {
+		prev, _ := j.ReadHeaderAt(int64(i))
+		h := append([]byte(nil), prev...)
+		ph := pow.BlockHashLE(prev)
+		copy(h[4:36], ph[:])
+		h[76] ^= byte(i + 1)
+		if err := j.AppendHeaders([][]byte{h}); err != nil {
+			t.Fatal(err)
+		}
+	}
+	rs, err := store.OpenRawBlockStore(dir)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := rs.Put(pow.BlockHashLE(genesisRaw[:80]), genesisRaw); err != nil {
+		t.Fatal(err)
+	}
+	var s progressiveRawState
+	s.SetSyncParallelism(8)
+	bs := &BlockStoreCtx{Journal: j, Raw: rs}
+	bs.noteBlockStoredAt(0)
+	if _, ok := s.claimBatch(bs, 52); !ok {
+		t.Fatal("relay lane should still claim via the shared frontier window")
+	}
+	if s.syncWorkers != 8 {
+		t.Fatalf("claimBatch grew syncWorkers to %d (live node hit 53 lanes and 1h timeouts)", s.syncWorkers)
+	}
+}
+
+func TestLaneForAddrPoolExhausted(t *testing.T) {
+	var s progressiveRawState
+	s.SetSyncParallelism(2)
+	for i := 0; i < defaultMaxOutbound; i++ {
+		if s.laneForAddr(fmt.Sprintf("10.0.0.%d:22556", i+1)) < 2 {
+			t.Fatal("expected a relay lane")
+		}
+	}
+	if s.laneForAddr("10.9.9.9:22556") != -1 {
+		t.Fatal("relay lane pool must be bounded")
+	}
+	if s.syncWorkers != 2 {
+		t.Fatalf("syncWorkers grew to %d", s.syncWorkers)
+	}
+}
+
+func TestReleaseOrphanInFlight(t *testing.T) {
+	s := &progressiveRawState{
+		inFlight:     map[int64][32]byte{10: {}, 11: {}, 12: {}},
+		inFlightLane: map[int64]int{10: 9, 11: 9, 12: 1},
+		laneAddr:     map[int]string{1: "1.2.3.4:22556"},
+		activeBatch:  map[int]*batchSlot{1: {}},
+	}
+	if n := s.releaseOrphanInFlight(); n != 2 {
+		t.Fatalf("freed %d want 2 (lane 9 has no live peer)", n)
+	}
+	if _, ok := s.inFlight[12]; !ok {
+		t.Fatal("live lane 1 claim must stay")
+	}
+}
+
+func TestReleaseOrphanInFlightClearsDeadWindow(t *testing.T) {
+	s := &progressiveRawState{
+		inFlight:     map[int64][32]byte{10: {}, 11: {}, 12: {}},
+		inFlightLane: map[int64]int{},
+	}
+	if n := s.releaseOrphanInFlight(); n != 3 {
+		t.Fatalf("freed %d want 3 (no live peer, window jammed)", n)
+	}
+	if len(s.inFlight) != 0 {
+		t.Fatalf("inFlight leftover %v", s.inFlight)
+	}
 }
 
 func TestStartBatchDoesNotCancelInFlight(t *testing.T) {
@@ -350,6 +438,9 @@ func TestForwardIBDStripeTip(t *testing.T) {
 	tip, _ := j.TipHeight()
 	hi := forwardIBDStripeTip(bs, 2, tip)
 	want := int64(2 + blockDownloadWindow - 1)
+	if want > tip {
+		want = tip
+	}
 	if hi != want {
 		t.Fatalf("forward cap hi=%d want %d (Core BLOCK_DOWNLOAD_WINDOW past the hole)", hi, want)
 	}
@@ -496,7 +587,7 @@ func TestEffectiveProgressiveBatchSizeForIBDDeepBodyPause(t *testing.T) {
 	bs.SeedContiguousTip(616)
 	got := EffectiveProgressiveBatchSizeForIBD(bs, 8)
 	if got != ibdGetDataBatch {
-		t.Fatalf("batch size during download-first body IBD got %d want %d (ltcd-style fat getdata)", got, ibdGetDataBatch)
+		t.Fatalf("batch size during download-first body IBD got %d want %d (fat getdata into RAM)", got, ibdGetDataBatch)
 	}
 	bs.SeedContiguousTip(3085)
 	got2 := EffectiveProgressiveBatchSizeForIBD(bs, 6)
@@ -514,6 +605,71 @@ func TestShouldRefillGetData(t *testing.T) {
 	}
 	if !shouldRefillGetData(0) {
 		t.Fatal("empty in-flight queue must refill like ltcd")
+	}
+}
+
+func TestGetdataRefillThresholdFatBatch(t *testing.T) {
+	if getdataRefillThreshold(progressiveBatchSize) != minInFlightBlocks {
+		t.Fatalf("Core-sized batch threshold=%d want %d (ltcd minInFlightBlocks)", getdataRefillThreshold(progressiveBatchSize), minInFlightBlocks)
+	}
+	if shouldRefillGetDataAt(minInFlightBlocks, progressiveBatchSize) {
+		t.Fatal("at ltcd minInFlightBlocks must not refill")
+	}
+	if !shouldRefillGetDataAt(minInFlightBlocks-1, progressiveBatchSize) {
+		t.Fatal("below ltcd minInFlightBlocks must refill to hide getdata RTT")
+	}
+	if getdataRefillThreshold(ibdGetDataBatch) != ibdGetDataBatch/2 {
+		t.Fatalf("fat-batch threshold=%d want %d", getdataRefillThreshold(ibdGetDataBatch), ibdGetDataBatch/2)
+	}
+	if getdataRefillThreshold(256) != 128 {
+		t.Fatalf("256-inv threshold=%d want 128 (refill at half-full)", getdataRefillThreshold(256))
+	}
+}
+
+func TestIBDBodyFetchWindowKeepsAllPeersBusy(t *testing.T) {
+	p, err := chain.ParamsFor(chain.MainnetDogecoin)
+	if err != nil {
+		t.Fatal(err)
+	}
+	g80, err := pow.Header80FromParams(p)
+	if err != nil {
+		t.Fatal(err)
+	}
+	dir := t.TempDir()
+	j, err := store.OpenHeaderChain(dir, g80[:])
+	if err != nil {
+		t.Fatal(err)
+	}
+	appendFakeHeaderChain(t, j, g80[:], 600_000)
+	rs, err := store.OpenRawBlockStore(dir)
+	if err != nil {
+		t.Fatal(err)
+	}
+	bs := NewBlockStoreCtx(j, nil, p, rs, nil, nil)
+	bs.SeedContiguousTip(55_657)
+	const workers = 12
+	win := ibdBodyFetchWindow(bs, workers)
+	want := int64(workers * ibdGetDataBatch)
+	if want > int64(maxIBDFetchWindow) {
+		want = int64(maxIBDFetchWindow)
+	}
+	if want < int64(blockDownloadWindow) {
+		want = int64(blockDownloadWindow)
+	}
+	if win != want {
+		t.Fatalf("fetch window=%d want %d (peers×fat getdata into RAM, cap %d)", win, want, maxIBDFetchWindow)
+	}
+	inflated := ibdBodyFetchWindow(bs, 125)
+	wantCap := int64(maxBlockAssistWorkers+1) * int64(ibdGetDataBatch)
+	if wantCap > int64(maxIBDFetchWindow) {
+		wantCap = int64(maxIBDFetchWindow)
+	}
+	if inflated != wantCap {
+		t.Fatalf("inflated lane count window=%d want %d (clamped lanes×batch, cap %d)", inflated, wantCap, maxIBDFetchWindow)
+	}
+	hi := forwardIBDStripeTipFor(bs, 55_658, 600_000, workers)
+	if hi != 55_658+win-1 {
+		t.Fatalf("stripe tip=%d want %d", hi, 55_658+win-1)
 	}
 }
 
@@ -583,8 +739,8 @@ func TestIdleFetchBatchesPerRound(t *testing.T) {
 	}
 	bs := NewBlockStoreCtx(j, nil, p, rs, nil, nil)
 	bs.SeedContiguousTip(616)
-	if IdleFetchBatchesPerRound(bs) != 4 {
-		t.Fatal("want 3 idle batches when header catch-up paused")
+	if IdleFetchBatchesPerRound(bs) != 8 {
+		t.Fatal("want 8 idle batches when header catch-up paused")
 	}
 }
 
@@ -632,5 +788,46 @@ func TestShouldDeferConnectForBodyDownload(t *testing.T) {
 	}
 	if ShouldDeferConnectForBodyDownload(nil) {
 		t.Fatal("nil store must not defer")
+	}
+}
+
+func TestClaimBatchFatDownloadFirstIBD(t *testing.T) {
+	p, err := chain.ParamsFor(chain.MainnetDogecoin)
+	if err != nil {
+		t.Fatal(err)
+	}
+	g80, err := pow.Header80FromParams(p)
+	if err != nil {
+		t.Fatal(err)
+	}
+	dir := t.TempDir()
+	j, err := store.OpenHeaderChain(dir, g80[:])
+	if err != nil {
+		t.Fatal(err)
+	}
+	appendFakeHeaderChain(t, j, g80[:], 5000)
+	rs, err := store.OpenRawBlockStore(dir)
+	if err != nil {
+		t.Fatal(err)
+	}
+	bs := NewBlockStoreCtx(j, nil, p, rs, nil, nil)
+	bs.SeedContiguousTip(2000)
+	if !shouldSkipDiskBodyProbe(bs) {
+		t.Fatal("download-first IBD must skip per-height disk probes")
+	}
+	var s progressiveRawState
+	s.SetSyncParallelism(8)
+	b, ok := s.claimBatch(bs, 0)
+	if !ok {
+		t.Fatal("expected fat claim")
+	}
+	if len(b.heights) != ibdGetDataBatch {
+		t.Fatalf("claimed %d want %d (torrent-sized getdata)", len(b.heights), ibdGetDataBatch)
+	}
+	if b.heights[0] != 2001 {
+		t.Fatalf("first height %d want 2001", b.heights[0])
+	}
+	if b.heights[len(b.heights)-1] != 2000+int64(ibdGetDataBatch) {
+		t.Fatalf("last height %d want %d", b.heights[len(b.heights)-1], 2000+int64(ibdGetDataBatch))
 	}
 }

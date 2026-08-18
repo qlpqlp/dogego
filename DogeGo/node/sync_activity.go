@@ -59,8 +59,8 @@ type syncActivityState struct {
 	lastBlockFetchAt time.Time
 
 	recoveryKickSuppressed int
-	lastRecoveryKickLog  time.Time
-	lastRecoveryForceLog time.Time
+	lastRecoveryKickLog    time.Time
+	lastRecoveryForceLog   time.Time
 
 	watchdogStallTip   int64
 	watchdogStallCount int
@@ -224,16 +224,16 @@ func BuildSyncActivitySnapshot(in SyncActivityInput) map[string]any {
 		in.HeaderTip > in.ContiguousBodies+32 && !syncActivityBodyDownloadActive(in)
 
 	out := map[string]any{
-		"headline":               headline,
-		"detail":                 detail,
-		"last_progress_at":       unixOrZero(lastAt),
-		"last_progress_message":  lastMsg,
-		"last_progress_kind":     lastKind,
-		"seconds_since_progress": secSinceProgress,
-		"stalled":                stalled,
-		"tasks":                  tasks,
-		"header_recovery_running":  in.HeaderRecoveryRunning,
-		"dedicated_header_running": in.DedicatedHeaderRunning,
+		"headline":                  headline,
+		"detail":                    detail,
+		"last_progress_at":          unixOrZero(lastAt),
+		"last_progress_message":     lastMsg,
+		"last_progress_kind":        lastKind,
+		"seconds_since_progress":    secSinceProgress,
+		"stalled":                   stalled,
+		"tasks":                     tasks,
+		"header_recovery_running":   in.HeaderRecoveryRunning,
+		"dedicated_header_running":  in.DedicatedHeaderRunning,
 		"recovery_kicks_suppressed": kickSupp,
 	}
 	if !lastFetchAt.IsZero() {
@@ -269,8 +269,12 @@ func syncActivityHeadline(in SyncActivityInput, secSince int64, lastKind, lastMs
 		}
 		return head, joinParts(detail, stringsJoin(parts, " · "))
 	}
-	if in.LowestMissing >= 0 && in.HeaderTip > in.ContiguousBodies {
-		head := fmt.Sprintf("Downloading block bodies from height %d", in.LowestMissing)
+	if in.HeaderTip > in.ContiguousBodies {
+		low := in.LowestMissing
+		if low < 0 {
+			low = in.ContiguousBodies + 1
+		}
+		head := fmt.Sprintf("Downloading block bodies from height %d", low)
 		var parts []string
 		if in.HeaderTip > 0 {
 			parts = append(parts, fmt.Sprintf("headers through %d", in.HeaderTip))
@@ -352,8 +356,12 @@ func syncActivityTasks(in SyncActivityInput, recPass int, recDetail string, recS
 		}
 		tasks = append(tasks, map[string]string{"name": "connect_catchup", "state": "active", "detail": d})
 	}
-	if in.LowestMissing >= 0 && in.HeaderTip > in.ContiguousBodies {
-		d := fmt.Sprintf("forward sync from height %d", in.LowestMissing)
+	if in.HeaderTip > in.ContiguousBodies {
+		low := in.LowestMissing
+		if low < 0 {
+			low = in.ContiguousBodies + 1
+		}
+		d := fmt.Sprintf("forward sync from height %d", low)
 		if lastFetch != "" {
 			d += "; " + lastFetch
 		}

@@ -68,6 +68,8 @@ func serveStaticFile(mux *http.ServeMux, route, path, contentType string) {
 		w.Header().Set("Content-Type", contentType)
 		if strings.HasSuffix(path, ".svg") {
 			w.Header().Set("Cache-Control", "public, max-age=86400")
+		} else if strings.HasSuffix(path, ".js") || strings.HasSuffix(path, ".html") {
+			w.Header().Set("Cache-Control", "no-store")
 		} else {
 			w.Header().Set("Cache-Control", "no-cache")
 		}

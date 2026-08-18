@@ -50,7 +50,14 @@ type RelayEnv struct {
 }
 
 func runRelayPeerSession(ctx context.Context, env RelayEnv, pm *PeerMgr, link *peerLink) {
-	defer pm.removeSession(link.addr)
+	defer func() {
+		if env.RawFill != nil && link != nil {
+			if lane := env.RawFill.peekLaneForAddr(link.addr); lane > 0 {
+				env.RawFill.ReleaseLaneInFlight(lane)
+			}
+		}
+		pm.removeSession(link.addr)
+	}()
 	p := pm.params
 	mw := link.mw
 	for {
@@ -63,38 +70,40 @@ func runRelayPeerSession(ctx context.Context, env RelayEnv, pm *PeerMgr, link *p
 		link.ping.maybePing(mw)
 		if env.FullNode && env.RawFill != nil && env.BlockStore != nil && env.RawFill.bodiesDownloadActive(env.BlockStore) {
 			readTO = 4 * time.Second
-			lane := env.RawFill.laneForAddr(link.addr)
-			n, perr := MaybePumpLaneBodyIBDDownload(ctx, mw, p, env.BlockStore, env.RawFill, lane, pm.blockScorer, addrBookFromPeerMgr(pm), &link.lastBodyPump)
-			if perr != nil {
-				if errors.Is(perr, ErrBlockDownloadStall) || errors.Is(perr, ErrBlockDownloadTimeout) || sessionFailureHardFromFetchErr(perr) {
-					applog.Line("block", "relay block disconnect: "+perr.Error())
-					_ = pm.DisconnectPeer(link.addr)
-					return
+			if lane := env.RawFill.laneForAddr(link.addr); lane > 0 {
+				n, perr := MaybePumpLaneBodyIBDDownload(ctx, mw, p, env.BlockStore, env.RawFill, lane, pm.blockScorer, addrBookFromPeerMgr(pm), &link.lastBodyPump)
+				if perr != nil {
+					if errors.Is(perr, ErrBlockDownloadStall) || errors.Is(perr, ErrBlockDownloadTimeout) || sessionFailureHardFromFetchErr(perr) {
+						applog.Line("block", "relay block disconnect: "+perr.Error())
+						_ = pm.DisconnectPeer(link.addr)
+						return
+					}
+				} else if n > 0 && pm.blockScorer != nil {
+					pm.blockScorer.NoteBlocksDelivered(link.addr, n)
 				}
-			} else if n > 0 && pm.blockScorer != nil {
-				pm.blockScorer.NoteBlocksDelivered(link.addr, n)
 			}
 		}
 		_ = mw.Conn().SetReadDeadline(time.Now().Add(readTO))
 		cmd, pl, err := wire.ReadMessage(mw.Conn(), p.Magic)
 		if err != nil {
 			if isNetTimeout(err) && env.FullNode && env.RawFill != nil && env.BlockStore != nil && env.RawFill.bodiesDownloadActive(env.BlockStore) {
-				lane := env.RawFill.laneForAddr(link.addr)
-				n, ferr := env.RawFill.tryFetchMissingBatches(ctx, mw, p, env.BlockStore, lane, IdleFetchBatchesPerRound(env.BlockStore), pm.blockScorer, addrBookFromPeerMgr(pm))
-				if errors.Is(ferr, ErrBlockDownloadStall) || errors.Is(ferr, ErrBlockDownloadTimeout) {
-					applog.Line("block", "relay block disconnect: "+ferr.Error())
-					_ = pm.DisconnectPeer(link.addr)
-					return
-				}
-				if ferr != nil {
-					hard := sessionFailureHardFromFetchErr(ferr)
-					penalizeBlockPeer(pm.blockScorer, addrBookFromPeerMgr(pm), link.addr, hard)
-					if hard {
+				if lane := env.RawFill.laneForAddr(link.addr); lane > 0 {
+					n, ferr := env.RawFill.tryFetchMissingBatches(ctx, mw, p, env.BlockStore, lane, IdleFetchBatchesPerRound(env.BlockStore), pm.blockScorer, addrBookFromPeerMgr(pm))
+					if errors.Is(ferr, ErrBlockDownloadStall) || errors.Is(ferr, ErrBlockDownloadTimeout) {
+						applog.Line("block", "relay block disconnect: "+ferr.Error())
 						_ = pm.DisconnectPeer(link.addr)
 						return
 					}
-				} else if n > 0 && pm.blockScorer != nil {
-					pm.blockScorer.NoteBlocksDelivered(link.addr, n)
+					if ferr != nil {
+						hard := sessionFailureHardFromFetchErr(ferr)
+						penalizeBlockPeer(pm.blockScorer, addrBookFromPeerMgr(pm), link.addr, hard)
+						if hard {
+							_ = pm.DisconnectPeer(link.addr)
+							return
+						}
+					} else if n > 0 && pm.blockScorer != nil {
+						pm.blockScorer.NoteBlocksDelivered(link.addr, n)
+					}
 				}
 				continue
 			}

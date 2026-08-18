@@ -14,8 +14,8 @@ import (
 
 	"dogego/analytics"
 	"dogego/applog"
-	"dogego/clock"
 	"dogego/chain"
+	"dogego/clock"
 	"dogego/consensus"
 	"dogego/pow"
 	"dogego/store"
@@ -29,8 +29,8 @@ type BlockStoreCtx struct {
 	Params  chain.Params
 	Raw     *store.RawBlockStore
 	TxIndex *store.TxIndex
-	Utxo     *store.UtxoCache
-	Policy   *store.ChainPolicy
+	Utxo    *store.UtxoCache
+	Policy  *store.ChainPolicy
 	// FeeHistory records confirmed block feerates for fee estimation RPC (optional).
 	FeeHistory *consensus.FeeHistory
 	// FeeHistoryPath persists fee history after ConnectBlock when set (optional).
@@ -44,18 +44,18 @@ type BlockStoreCtx struct {
 	// DbCacheMB is the effective UTXO working-set budget (Core -dbcache).
 	DbCacheMB int
 
-	onTipChanged           func(int64)
-	onContiguousAdvance    func(contiguous int64)
-	onChainActiveAdvance   func(height int64)
+	onTipChanged         func(int64)
+	onContiguousAdvance  func(contiguous int64)
+	onChainActiveAdvance func(height int64)
 	// realignBodyDownload runs when ConnectTip needs a raw body below the download cursor.
 	realignBodyDownload func(missingHeight int64)
 	// OnChainTruncating runs at the start of TruncateChainToHeight (clear in-flight block sync).
 	OnChainTruncating func(keepThrough int64)
 	// OnChainTruncated runs after TruncateChainToHeight (header rewind / operator truncate).
 	OnChainTruncated func(keepThrough int64)
-	announce            BlockAnnounceEnv
-	forkProbe           ForkProbeFunc
-	chainElection       ChainElectionFunc
+	announce         BlockAnnounceEnv
+	forkProbe        ForkProbeFunc
+	chainElection    ChainElectionFunc
 
 	contiguousMu  sync.Mutex
 	contiguousTip int64 // highest height h with raw bodies for [0,h]; -1 = not initialized
@@ -158,12 +158,12 @@ func (c *BlockStoreCtx) SetChainElection(fn ChainElectionFunc) {
 // NewBlockStoreCtx returns a block store context with contiguous-body tracking initialized.
 func NewBlockStoreCtx(j *store.HeaderJournal, aux *store.HeaderAuxJournal, p chain.Params, raw *store.RawBlockStore, txIx *store.TxIndex, utxo *store.UtxoCache) *BlockStoreCtx {
 	return &BlockStoreCtx{
-		Journal:       j,
-		Aux:           aux,
-		Params:        p,
-		Raw:           raw,
-		TxIndex:       txIx,
-		Utxo:          utxo,
+		Journal:              j,
+		Aux:                  aux,
+		Params:               p,
+		Raw:                  raw,
+		TxIndex:              txIx,
+		Utxo:                 utxo,
 		contiguousTip:        -1,
 		lastBadNBitsRewind:   -1,
 		badNBitsRepeatHeight: -1,
@@ -535,7 +535,7 @@ func (c *BlockStoreCtx) storeValidatedBlock(want [32]byte, payload []byte, known
 			return fmt.Errorf("raw block too short at height %d: %d bytes (need >= %d)", height, len(payload), minB)
 		}
 	}
-	if height >= 0 {
+	if height >= 0 && !(trustHeight && ShouldDeferConnectForBodyDownload(c)) {
 		if err := consensus.CheckBlockPayload(payload, want, height, c.Params.Net); err != nil {
 			return fmt.Errorf("block consensus: %w", err)
 		}

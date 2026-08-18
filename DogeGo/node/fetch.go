@@ -448,6 +448,8 @@ func isBenignBlockFetchNoise(cmd string) bool {
 type getdataBatchHooks struct {
 	OnStored func(height int64)
 	Refill   func(pending int) (hashes [][32]byte, heights []int64)
+	// RefillBelow requests more getdata when pending drops under this (0 = minInFlightBlocks).
+	RefillBelow int
 }
 
 // storeInboundBlockBody writes a full block if the header journal knows its height.
@@ -510,7 +512,14 @@ func fetchAndStoreRawBlocksBatch(ctx context.Context, w *MsgWriter, p chain.Para
 }
 
 func applyGetDataRefill(w *MsgWriter, pending map[[32]byte]struct{}, hashHeights map[[32]byte]int64, invType uint32, hooks *getdataBatchHooks) (int, error) {
-	if w == nil || hooks == nil || hooks.Refill == nil || pending == nil || !shouldRefillGetData(len(pending)) {
+	if w == nil || hooks == nil || hooks.Refill == nil || pending == nil {
+		return 0, nil
+	}
+	below := hooks.RefillBelow
+	if below < 1 {
+		below = minInFlightBlocks
+	}
+	if len(pending) >= below {
 		return 0, nil
 	}
 	hashes, heights := hooks.Refill(len(pending))
@@ -590,6 +599,9 @@ func fetchAndStoreRawBlocksBatchInv(ctx context.Context, w *MsgWriter, p chain.P
 			}
 		}
 		if bs.rawBodyPresent(h, height) {
+			if hooks != nil && hooks.OnStored != nil && height >= 0 {
+				hooks.OnStored(height)
+			}
 			continue
 		}
 		pending[h] = struct{}{}
@@ -632,20 +644,21 @@ func fetchAndStoreRawBlocksBatchInv(ctx context.Context, w *MsgWriter, p chain.P
 	}
 	batchDL := blockBatchDeadline(ctx, syncLanes, bs)
 	abortBatch := make(chan struct{})
+	wakeRead := func() {
+		if conn != nil {
+			_ = conn.SetReadDeadline(time.Now())
+		}
+	}
 	go func() {
 		select {
 		case <-ctx.Done():
-			if c, ok := conn.(interface{ Close() error }); ok {
-				_ = c.Close()
-			}
+			// Do not Close the TCP session: endBatch() cancels this ctx after every
+			// getdata, and Close was aborting all download peers (Windows wsasend abort).
+			wakeRead()
 		case <-abortBatch:
 		}
 	}()
-	hardTimer := time.AfterFunc(time.Until(batchDL)+250*time.Millisecond, func() {
-		if c, ok := conn.(interface{ Close() error }); ok {
-			_ = c.Close()
-		}
-	})
+	hardTimer := time.AfterFunc(time.Until(batchDL)+250*time.Millisecond, wakeRead)
 	defer func() {
 		close(abortBatch)
 		hardTimer.Stop()
@@ -722,12 +735,14 @@ func fetchAndStoreRawBlocksBatchInv(ctx context.Context, w *MsgWriter, p chain.P
 			if hooks != nil && hooks.OnStored != nil {
 				hooks.OnStored(height)
 			}
-			// Core MarkBlockAsReceived: nDownloadingSince = now when the front of the
-			// in-flight queue is delivered. Refresh the batch window so slow-but-live
-			// ancient getdata is not killed after the first block.
-			limit := EffectiveBlockDownloadTimeout(bs, syncLanes)
-			batchDL = time.Now().Add(limit)
-			hardTimer.Reset(limit + 250*time.Millisecond)
+			// Do not refresh the batch deadline on every body during forward IBD.
+			// Live: a peer delivered later heights, the 30s window kept sliding, the
+			// contiguous hole stayed in-flight, and stall never ran until ReadMessage returned.
+			if !ShouldDeferConnectForBodyDownload(bs) && !ShouldPauseHeaderCatchUpForBodyIBD(bs, 0) {
+				limit := EffectiveBlockDownloadTimeout(bs, syncLanes)
+				batchDL = time.Now().Add(limit)
+				hardTimer.Reset(limit + 250*time.Millisecond)
+			}
 			if stored == 1 && requested <= 4 {
 				applog.Line("block", fmt.Sprintf("batched block %x… stored (%d B) height %d", got[:4], len(payload), height))
 			}
@@ -810,6 +825,9 @@ func HandleInvBlockFetchEntries(ctx context.Context, w *MsgWriter, p chain.Param
 		}
 	}
 	if nBlk > 0 {
+		if ShouldDeferConnectForBodyDownload(bs) || ShouldPauseHeaderCatchUpForBodyIBD(bs, 0) {
+			return
+		}
 		applog.Line("block", fmt.Sprintf("inv: %d block(s), %d tx inv(s), %d other; scheduling getdata for blocks (capped)", nBlk, nTx, nOther))
 	} else if nTx > 0 && !ShouldSuppressInvTxFetchDuringIBD(bs) {
 		applog.Line("mempool", fmt.Sprintf("inv: %d tx advertisement(s); getdata handled in steady-state loop (capped)", nTx))

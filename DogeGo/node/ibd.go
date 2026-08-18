@@ -15,23 +15,35 @@ import (
 	"dogego/wire"
 )
 
-// IBD tuning (Core downloads blocks in parallel from several peers; historical catch-up is sequential in height).
+// IBD body download: many sockets like Core, fat getdata like ltcd, bodies staged in RAM
+// then flushed to disk off the P2P read path.
+//
+// Core MAX_BLOCKS_IN_TRANSIT_PER_PEER=16 is sized for ~1MB Bitcoin blocks. Early Dogecoin
+// bodies are hundreds of bytes; 16-inv getdata leaves the TCP window empty. Live DogeGo
+// already reached ~2000–4000 blk/min when getdata stayed fat and the hole kept moving.
+//
+// Claim planning used to Open headers.bin (or parse headers/manifest.json) and Stat
+// rawblocks/ once per height × every lane. That pegged CPU at ~90 blk/min and starved
+// the dashboard. Hashes come from the journal window cache; missing heights are claimed
+// without disk probes (duplicate getdata is cheap — fetch skips bodies already in RAM).
+//
+// ltcd: one sync peer, getdata up to MaxInvPerMsg, refill when pending < 10, 3m stall.
+// DogeGo: many peers, 500-inv getdata into RAM, refill at half-full, 2s hole stall,
+// disk writers drain the RAM queue.
 const (
-	progressiveBatchSize    = 16 // per-peer in-flight cap (Core MAX_BLOCKS_IN_TRANSIT_PER_PEER)
-	progressiveBatchSizeMax = 32 // scaled cap when many parallel sync lanes share load
-	// ibdGetDataBatch is ltcd-style (netsync/manager.go fetchHeaderBlocks): one getdata
-	// keeps the peer busy. ltcd allows up to wire.MaxInvPerMsg (50_000); 256 is large
-	// enough to fill a fast pipe without a 50k inv that some Dogecoin peers drop.
-	ibdGetDataBatch = 256
+	progressiveBatchSize    = 16 // near-tip / inv (Core MAX_BLOCKS_IN_TRANSIT_PER_PEER)
+	progressiveBatchSizeMax = 32 // scaled cap near tip when several lanes share inv load
+	ibdGetDataBatch         = 500
 	// minInFlightBlocks matches ltcd netsync: send the next getdata when requested
 	// blocks on that peer drop below this, so the TCP pipe does not drain between batches.
 	minInFlightBlocks          = 10
 	tipBackfillDeferGap        = 512
-	blockDownloadWindow        = 1024 // Core validation.h BLOCK_DOWNLOAD_WINDOW
-	forwardIBDParallelWindow   = 4096 // wider stripe span when many parallel lanes share load
-	invBlockFetchFrontierSlack = 128  // defer inv getdata for blocks ahead of contiguous bodies during forward IBD
-	headerCatchUpPeerLead      = 32   // peer within this many headers of local tip → defer header sync while bodies lag
-	headersSyncRoundsBodiesLag = 2    // max getheaders rounds when peer ≤ tip but bodies still behind
+	blockDownloadWindow        = 1024  // Core validation.h BLOCK_DOWNLOAD_WINDOW (floor)
+	maxIBDFetchWindow          = 16384 // RAM lookahead; disk flush trails this
+	forwardIBDParallelWindow   = maxIBDFetchWindow
+	invBlockFetchFrontierSlack = 128 // defer inv getdata for blocks ahead of contiguous bodies during forward IBD
+	headerCatchUpPeerLead      = 32  // peer within this many headers of local tip → defer header sync while bodies lag
+	headersSyncRoundsBodiesLag = 2   // max getheaders rounds when peer ≤ tip but bodies still behind
 	minBlockAssistWorkers      = 3
 	maxBlockAssistWorkers      = 24
 )
@@ -134,7 +146,7 @@ func blockFetchInvTypes(p chain.Params) []uint32 {
 // IdleFetchBatchesPerRound is how many progressive getdata rounds assist/relay peers run per idle timeout (primary uses 3).
 func IdleFetchBatchesPerRound(bs *BlockStoreCtx) int {
 	if bs != nil && ShouldPauseHeaderCatchUpForBodyIBD(bs, 0) {
-		return 4
+		return 8
 	}
 	return 2
 }
@@ -145,14 +157,61 @@ func shouldRefillGetData(pending int) bool {
 	return pending < minInFlightBlocks
 }
 
+// getdataRefillThreshold is ltcd minInFlightBlocks (10) for Core-sized 16-block getdata.
+func getdataRefillThreshold(batchCap int) int {
+	if batchCap >= 64 {
+		th := batchCap / 2
+		if th < minInFlightBlocks {
+			return minInFlightBlocks
+		}
+		return th
+	}
+	return minInFlightBlocks
+}
+
+func shouldRefillGetDataAt(pending, batchCap int) bool {
+	return pending < getdataRefillThreshold(batchCap)
+}
+
+// ibdBodyFetchWindow is how far ahead of the contiguous hole getdata may run.
+// Bodies live in the RAM write-behind first, so a few thousand heights of lookahead
+// do not stall the hole on NTFS. Cap at maxIBDFetchWindow; never follow inflated lane IDs.
+func ibdBodyFetchWindow(bs *BlockStoreCtx, workers int) int64 {
+	if workers < 1 {
+		workers = maxBlockAssistWorkers
+	}
+	if workers > maxBlockAssistWorkers+1 {
+		workers = maxBlockAssistWorkers + 1
+	}
+	batch := EffectiveProgressiveBatchSizeForIBD(bs, workers)
+	if batch < 1 {
+		batch = progressiveBatchSize
+	}
+	win := int64(workers) * int64(batch)
+	if win < int64(blockDownloadWindow) {
+		win = int64(blockDownloadWindow)
+	}
+	if win > int64(maxIBDFetchWindow) {
+		win = int64(maxIBDFetchWindow)
+	}
+	return win
+}
+
+// shouldSkipDiskBodyProbe is true during download-first IBD: treat heights after
+// contiguous coverage as missing unless already in-flight. Per-file Stat/locator
+// probes on every claim froze getdata at Core-sized ~16 leftover hashes per peer.
+func shouldSkipDiskBodyProbe(bs *BlockStoreCtx) bool {
+	return bs != nil && (ShouldDeferConnectForBodyDownload(bs) || ShouldPauseHeaderCatchUpForBodyIBD(bs, 0))
+}
+
 // shouldPipelineGetData enables mid-batch getdata refill during download-first IBD.
 func shouldPipelineGetData(bs *BlockStoreCtx) bool {
 	return ShouldDeferConnectForBodyDownload(bs) || ShouldPauseHeaderCatchUpForBodyIBD(bs, 0)
 }
 
 // EffectiveProgressiveBatchSizeForIBD sizes getdata during body IBD.
-// Download-first (headers far ahead): fat getdata like ltcd fetchHeaderBlocks.
-// tryFetchMissingBatches then refills when pending drops below minInFlightBlocks.
+// Download-first uses fat getdata into RAM (ltcd fetchHeaderBlocks, capped below 1000-inv
+// hangs). tryFetchMissingBatches refills when pending drops below getdataRefillThreshold.
 func EffectiveProgressiveBatchSizeForIBD(bs *BlockStoreCtx, syncLanes int) int {
 	n := EffectiveProgressiveBatchSize(syncLanes)
 	if bs == nil {
@@ -364,7 +423,16 @@ func PreferConnectFrontierMissing(j *store.HeaderJournal, rs *store.RawBlockStor
 	if store.HasStoredBodyAtHeight(j, rs, connectNext, net) {
 		return low
 	}
-	if low < 0 || connectNext < low {
+	if low < 0 {
+		return connectNext
+	}
+	if connectNext < low {
+		// Download-first IBD: UTXO at 0 with bodies at 50k+ must not collapse the
+		// getdata window back to height 1 (claims then sit inside already-stored
+		// coverage and fetch nothing).
+		if low-connectNext > int64(blockDownloadWindow) {
+			return low
+		}
 		return connectNext
 	}
 	return low
@@ -380,13 +448,35 @@ func LowestMissingForIBD(j *store.HeaderJournal, rs *store.RawBlockStore, contig
 	if bs != nil {
 		net = bs.chainNet()
 	}
-	low, err := store.LowestMissingAfterContiguous(j, rs, contiguous, tip, net)
-	if low < 0 {
-		searchStart := store.LowestMissingSearchStart(j, rs, contiguous, net)
-		low, err = store.LowestMissingBlockHeightFrom(j, rs, searchStart, tip, net)
+	if shouldSkipDiskBodyProbe(bs) && contiguous >= 0 {
+		low := contiguous + 1
+		if low > tip {
+			return -1, nil
+		}
+		connectNext := int64(-1)
+		if bs != nil {
+			connectNext = ConnectFrontierHeight(bs)
+		}
+		return PreferConnectFrontierMissing(j, rs, low, connectNext, net), nil
 	}
+	low, err := store.LowestMissingAfterContiguous(j, rs, contiguous, tip, net)
 	if err != nil {
 		return low, err
+	}
+	if low < 0 && bs != nil && contiguous >= 0 && contiguous < tip {
+		bs.extendContiguousIfNextStored()
+		contiguous = bs.ContiguousRawHeight()
+		low, err = store.LowestMissingAfterContiguous(j, rs, contiguous, tip, net)
+		if err != nil {
+			return low, err
+		}
+	}
+	if low < 0 && contiguous < tip {
+		if contiguous < 0 {
+			low = 0
+		} else {
+			low = contiguous + 1
+		}
 	}
 	connectNext := int64(-1)
 	if bs != nil {
@@ -469,9 +559,9 @@ func ShouldDeferInvBlockFetch(bs *BlockStoreCtx, hashLE [32]byte) bool {
 	if cont >= 0 && h > cont+invBlockFetchFrontierSlack {
 		return true
 	}
-	maxFetch := cont + forwardIBDParallelWindow
-	if maxFetch < low+forwardIBDParallelWindow-1 {
-		maxFetch = low + forwardIBDParallelWindow - 1
+	maxFetch := cont + int64(blockDownloadWindow)
+	if maxFetch < low+int64(blockDownloadWindow)-1 {
+		maxFetch = low + int64(blockDownloadWindow) - 1
 	}
 	return h > maxFetch
 }
@@ -517,6 +607,10 @@ func invBlockFetchWorthwhile(bs *BlockStoreCtx, entries []wire.InvEntry) bool {
 // forwardIBDStripeTip caps parallel download stripes during forward IBD when headers are far
 // ahead of contiguous bodies. Without this, lane 1+ would fetch height ~tip/3 while height 2 is missing.
 func forwardIBDStripeTip(bs *BlockStoreCtx, lowMissing, tip int64) int64 {
+	return forwardIBDStripeTipFor(bs, lowMissing, tip, 0)
+}
+
+func forwardIBDStripeTipFor(bs *BlockStoreCtx, lowMissing, tip int64, workers int) int64 {
 	if bs == nil || tip < 0 || lowMissing < 0 {
 		return tip
 	}
@@ -525,12 +619,9 @@ func forwardIBDStripeTip(bs *BlockStoreCtx, lowMissing, tip int64) int64 {
 	}
 	win := int64(forwardIBDParallelWindow)
 	if shouldFillContiguousFrontierFirst(bs, lowMissing) {
-		// Core BLOCK_DOWNLOAD_WINDOW: several peers each take a fat getdata of missing
-		// hashes inside this span (planClaimRange skips stored/in-flight holes).
-		win = int64(blockDownloadWindow)
-		if win < int64(ibdGetDataBatch) {
-			win = int64(ibdGetDataBatch)
-		}
+		// Core FindNextBlocksToDownload: every peer walks the same 1024-block window
+		// from the hole. Stall-cancel still frees the contiguous height.
+		win = ibdBodyFetchWindow(bs, workers)
 	}
 	hi := lowMissing + win - 1
 	if hi > tip {

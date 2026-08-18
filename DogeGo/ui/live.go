@@ -38,9 +38,20 @@ type LiveFeed struct {
 
 	refreshing atomic.Bool
 	p2pBusy    atomic.Bool
+	// HTTP handlers read these without taking f.mu during IBD marshal.
+	summaryAtomic atomic.Value // []byte
+	liveAtomic    atomic.Value // []byte
+	p2pAtomic     atomic.Value // []byte
+	lastHeavyAt   atomic.Int64
 	// summaryBuild, when set, replaces BuildSummaryMap (tests).
 	summaryBuild func(StartConfig) (map[string]any, error)
 }
+
+const (
+	liveOverlayInterval   = 250 * time.Millisecond
+	liveHeavyIBDInterval  = 15 * time.Second
+	liveP2POverlayTimeout = 80 * time.Millisecond
+)
 
 // StartLiveFeed runs periodic refresh until ctx is cancelled. interval should be ~500ms-1s during IBD.
 func StartLiveFeed(ctx context.Context, cfg StartConfig, interval time.Duration) *LiveFeed {
@@ -56,15 +67,43 @@ func StartLiveFeed(ctx context.Context, cfg StartConfig, interval time.Duration)
 func (f *LiveFeed) loop(ctx context.Context, cfg StartConfig, interval time.Duration) {
 	tick := time.NewTicker(interval)
 	defer tick.Stop()
+	overlay := time.NewTicker(liveOverlayInterval)
+	defer overlay.Stop()
 	f.refresh(cfg)
+	f.lastHeavyAt.Store(time.Now().UnixNano())
 	for {
 		select {
 		case <-ctx.Done():
 			return
+		case <-overlay.C:
+			f.publishLiveProgress(cfg)
 		case <-tick.C:
+			if liveIBDActive(cfg) {
+				last := time.Unix(0, f.lastHeavyAt.Load())
+				if !last.IsZero() && time.Since(last) < liveHeavyIBDInterval {
+					f.publishLiveProgress(cfg)
+					continue
+				}
+			}
 			f.refresh(cfg)
+			f.lastHeavyAt.Store(time.Now().UnixNano())
 		}
 	}
+}
+
+func liveIBDActive(cfg StartConfig) bool {
+	if cfg.Journal == nil {
+		return false
+	}
+	tip, _, err := journalTipForDashboard(cfg.Journal)
+	if err != nil || tip < 0 {
+		return false
+	}
+	cont := contiguousHeightForAPI(cfg)
+	if cont < 0 {
+		return tip > 64
+	}
+	return tip-cont > 64
 }
 
 func (f *LiveFeed) buildSummary(cfg StartConfig) (map[string]any, error) {
@@ -131,9 +170,7 @@ func (f *LiveFeed) commitRefresh(cfg StartConfig, sum map[string]any, sumErr err
 					}
 				}
 				liveB, _ := json.Marshal(live)
-				f.mu.Lock()
-				f.liveJSON = liveB
-				f.mu.Unlock()
+				f.publishCachedJSON(nil, nil, nil, liveB)
 				return
 			}
 		}
@@ -178,12 +215,7 @@ func (f *LiveFeed) commitRefresh(cfg StartConfig, sum map[string]any, sumErr err
 	}
 	liveB, _ := json.Marshal(live)
 
-	f.mu.Lock()
-	f.summaryJSON = sumB
-	f.p2pJSON = p2pB
-	f.mempoolJSON = mpB
-	f.liveJSON = liveB
-	f.mu.Unlock()
+	f.publishCachedJSON(sumB, p2pB, mpB, liveB)
 
 	if sumErr == nil && sum != nil {
 		dir := f.chainDataDir
@@ -209,40 +241,51 @@ func (f *LiveFeed) publishLiveProgress(cfg StartConfig) {
 }
 
 func (f *LiveFeed) commitLiveP2P(cfg StartConfig) {
-	var p2pB []byte
+	var snap map[string]any
 	if cfg.P2PSnapshot != nil {
-		if snap := p2PSnapshotWithTimeout(cfg.P2PSnapshot); snap != nil {
-			p2pB, _ = json.Marshal(snap)
-			storeP2PSnapshotCache(snap)
+		snap = p2PSnapshotWithTimeoutDur(cfg.P2PSnapshot, liveP2POverlayTimeout)
+		if snap == nil {
+			snap = cachedP2PSnapshot(3 * time.Second)
 		}
 	}
-	if len(p2pB) == 0 {
-		return
+	if snap != nil {
+		storeP2PSnapshotCache(snap)
+	}
+	p2pB, _ := json.Marshal(snap)
+	if snap == nil {
+		p2pB = nil
 	}
 	mpB, _ := json.Marshal(MempoolDetailForAPI(cfg.Pool, 200, cfg.EffectiveFile, cfg.OrphanCount))
-	f.mu.Lock()
-	defer f.mu.Unlock()
-	f.p2pJSON = p2pB
-	f.mempoolJSON = mpB
+
+	f.mu.RLock()
+	prevSum := append([]byte(nil), f.summaryJSON...)
+	analyticsCopy := append([]byte(nil), f.analyticsJSON...)
+	f.mu.RUnlock()
+
 	var sum map[string]any
-	if len(f.summaryJSON) > 0 {
-		_ = json.Unmarshal(f.summaryJSON, &sum)
+	if len(prevSum) > 0 {
+		_ = json.Unmarshal(prevSum, &sum)
 	}
 	if sum == nil {
 		sum = map[string]any{}
 	}
+	if cont := contiguousHeightForAPI(cfg); cont >= 0 {
+		sum["contiguous_raw_height"] = cont
+		sum["dogego_contiguous_raw_height"] = cont
+	}
 	var p2 map[string]any
-	if json.Unmarshal(p2pB, &p2) == nil {
+	if len(p2pB) > 0 && json.Unmarshal(p2pB, &p2) == nil {
 		overlayP2PProgressOnSummary(sum, p2)
 	}
 	sumB, _ := json.Marshal(sum)
-	f.summaryJSON = sumB
 	live := map[string]any{
 		"ok":                 true,
 		"summary":            sum,
 		"summary_stale":      true,
 		"from_disk_snapshot": false,
-		"p2p":                p2,
+	}
+	if p2 != nil {
+		live["p2p"] = p2
 	}
 	if len(mpB) > 0 {
 		var mp any
@@ -250,15 +293,52 @@ func (f *LiveFeed) commitLiveP2P(cfg StartConfig) {
 			live["mempool"] = mp
 		}
 	}
-	if len(f.analyticsJSON) > 0 {
+	if len(analyticsCopy) > 0 {
 		var an any
-		if json.Unmarshal(f.analyticsJSON, &an) == nil {
+		if json.Unmarshal(analyticsCopy, &an) == nil {
 			live["analytics_summary"] = an
 		}
 	}
-	if liveB, err := json.Marshal(live); err == nil {
+	liveB, _ := json.Marshal(live)
+	f.publishCachedJSON(sumB, p2pB, mpB, liveB)
+}
+
+func asJSONBytes(b []byte) []byte {
+	if len(b) == 0 {
+		return nil
+	}
+	return append([]byte(nil), b...)
+}
+
+func storeJSONAtomic(dst *atomic.Value, b []byte) {
+	if dst == nil || len(b) == 0 {
+		return
+	}
+	dst.Store(asJSONBytes(b))
+}
+
+func (f *LiveFeed) publishCachedJSON(sumB, p2pB, mpB, liveB []byte) {
+	sumB = asJSONBytes(sumB)
+	p2pB = asJSONBytes(p2pB)
+	mpB = asJSONBytes(mpB)
+	liveB = asJSONBytes(liveB)
+	f.mu.Lock()
+	if len(sumB) > 0 {
+		f.summaryJSON = sumB
+	}
+	if len(p2pB) > 0 {
+		f.p2pJSON = p2pB
+	}
+	if len(mpB) > 0 {
+		f.mempoolJSON = mpB
+	}
+	if len(liveB) > 0 {
 		f.liveJSON = liveB
 	}
+	f.mu.Unlock()
+	storeJSONAtomic(&f.summaryAtomic, sumB)
+	storeJSONAtomic(&f.p2pAtomic, p2pB)
+	storeJSONAtomic(&f.liveAtomic, liveB)
 }
 
 func overlayP2PProgressOnSummary(sum, p2p map[string]any) {
@@ -312,6 +392,15 @@ func overlayP2PProgressOnSummary(sum, p2p map[string]any) {
 	}
 	if v, ok := prog["block_stalling_timeout_body_ibd_sec"]; ok {
 		sum["dogego_block_stalling_timeout_sec"] = v
+	}
+	if v, ok := prog["lane_in_flight"]; ok {
+		sum["dogego_lane_in_flight"] = v
+	}
+	if v, ok := prog["sync_workers"]; ok {
+		sum["sync_workers"] = v
+	}
+	if v, ok := prog["blocks_stored_ibd"]; ok {
+		sum["blocks_stored_ibd"] = v
 	}
 }
 
@@ -474,10 +563,13 @@ func (f *LiveFeed) bootstrapLiveIfEmpty(cfg StartConfig) {
 			}
 		}
 		liveB, _ := json.Marshal(live)
-		f.summaryJSON = sumB
-		f.p2pJSON = p2pB
-		f.mempoolJSON = mpB
-		f.liveJSON = liveB
+		f.summaryJSON = asJSONBytes(sumB)
+		f.p2pJSON = asJSONBytes(p2pB)
+		f.mempoolJSON = asJSONBytes(mpB)
+		f.liveJSON = asJSONBytes(liveB)
+		storeJSONAtomic(&f.summaryAtomic, sumB)
+		storeJSONAtomic(&f.p2pAtomic, p2pB)
+		storeJSONAtomic(&f.liveAtomic, liveB)
 		return
 	}
 	if cfg.Journal == nil {
@@ -504,10 +596,13 @@ func (f *LiveFeed) bootstrapLiveIfEmpty(cfg StartConfig) {
 		}
 	}
 	liveB, _ := json.Marshal(live)
-	f.summaryJSON = sumB
-	f.p2pJSON = p2pB
-	f.mempoolJSON = mpB
-	f.liveJSON = liveB
+	f.summaryJSON = asJSONBytes(sumB)
+	f.p2pJSON = asJSONBytes(p2pB)
+	f.mempoolJSON = asJSONBytes(mpB)
+	f.liveJSON = asJSONBytes(liveB)
+	storeJSONAtomic(&f.summaryAtomic, sumB)
+	storeJSONAtomic(&f.p2pAtomic, p2pB)
+	storeJSONAtomic(&f.liveAtomic, liveB)
 }
 
 func warmingSummaryFromManifest(cfg StartConfig) map[string]any {
@@ -632,13 +727,24 @@ func (f *LiveFeed) RememberAnalytics(detail map[string]any) {
 	go f.persistSnapshotAsync(dir, sum, p2pB, mpB, b)
 }
 
+func (f *LiveFeed) cachedJSON(atom *atomic.Value, fallback []byte) []byte {
+	if atom != nil {
+		if v := atom.Load(); v != nil {
+			if b, ok := v.([]byte); ok && len(b) > 0 {
+				return b
+			}
+		}
+	}
+	return fallback
+}
+
 func (f *LiveFeed) writeSummary(w http.ResponseWriter) {
 	f.mu.RLock()
-	b := f.summaryJSON
+	b := f.cachedJSON(&f.summaryAtomic, f.summaryJSON)
 	f.mu.RUnlock()
 	w.Header().Set("Content-Type", "application/json; charset=utf-8")
 	if len(b) == 0 {
-		_, _ = w.Write([]byte(`{"live":false,"note":"dashboard warming up"}`))
+		_, _ = w.Write([]byte(`{"live":true,"note":"dashboard warming up"}`))
 		return
 	}
 	_, _ = w.Write(b)
@@ -646,11 +752,11 @@ func (f *LiveFeed) writeSummary(w http.ResponseWriter) {
 
 func (f *LiveFeed) writeP2P(w http.ResponseWriter) {
 	f.mu.RLock()
-	b := f.p2pJSON
+	b := f.cachedJSON(&f.p2pAtomic, f.p2pJSON)
 	f.mu.RUnlock()
 	w.Header().Set("Content-Type", "application/json; charset=utf-8")
 	if len(b) == 0 {
-		_, _ = w.Write([]byte(`{"wired":false,"live":false}`))
+		_, _ = w.Write([]byte(`{"wired":false,"live":true}`))
 		return
 	}
 	_, _ = w.Write(b)
@@ -669,12 +775,19 @@ func (f *LiveFeed) writeMempool(w http.ResponseWriter) {
 }
 
 func (f *LiveFeed) writeLive(w http.ResponseWriter) {
+	if v := f.liveAtomic.Load(); v != nil {
+		if b, ok := v.([]byte); ok && len(b) > 0 {
+			w.Header().Set("Content-Type", "application/json; charset=utf-8")
+			_, _ = w.Write(b)
+			return
+		}
+	}
 	f.mu.RLock()
 	b := f.liveJSON
 	f.mu.RUnlock()
 	w.Header().Set("Content-Type", "application/json; charset=utf-8")
 	if len(b) == 0 {
-		_, _ = w.Write([]byte(`{"ok":false,"live":false}`))
+		_, _ = w.Write([]byte(`{"ok":true,"live":true,"summary":{"dogego_ui_loading":true,"dogego_sync_ok":true},"warming_up":true}`))
 		return
 	}
 	_, _ = w.Write(b)

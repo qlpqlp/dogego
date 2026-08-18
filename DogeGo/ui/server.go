@@ -232,6 +232,7 @@ func Start(ctx context.Context, cfg StartConfig) (baseURL string, err error) {
 			return
 		}
 		w.Header().Set("Content-Type", "text/html; charset=utf-8")
+		w.Header().Set("Cache-Control", "no-store")
 		_, _ = w.Write(indexHTML)
 	})
 	mux.HandleFunc("/analytics.html", func(w http.ResponseWriter, r *http.Request) {

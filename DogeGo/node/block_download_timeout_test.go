@@ -24,8 +24,8 @@ func TestEffectiveBlockDownloadTimeoutEarlyIBDCap(t *testing.T) {
 	bs.contiguousTip = 5000
 	bs.contiguousMu.Unlock()
 	d = EffectiveBlockDownloadTimeout(bs, 4)
-	if d <= earlyIBDBlockDownloadTimeout {
-		t.Fatalf("caught-up timeout=%v want > %v", d, earlyIBDBlockDownloadTimeout)
+	if d != bodyIBDBlockDownloadTimeout {
+		t.Fatalf("body IBD timeout=%v want %v (must not wait Core 17m while claims leak)", d, bodyIBDBlockDownloadTimeout)
 	}
 }
 
@@ -46,7 +46,7 @@ func TestEffectiveBlockDownloadTimeoutAt50kUsesCoreWindow(t *testing.T) {
 	bs.contiguousTip = 51_000
 	bs.contiguousMu.Unlock()
 	d := EffectiveBlockDownloadTimeout(bs, 6)
-	if d != 1050*time.Second {
-		t.Fatalf("body IBD at 51k timeout=%v want Core 1050s (not 60s)", d)
+	if d != bodyIBDBlockDownloadTimeout {
+		t.Fatalf("body IBD at 51k timeout=%v want %v (not Core 1050s)", d, bodyIBDBlockDownloadTimeout)
 	}
 }

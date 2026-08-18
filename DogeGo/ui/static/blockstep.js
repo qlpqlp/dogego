@@ -244,24 +244,10 @@
   }
 
   async function api(path) {
-    const isAddr = path.indexOf("/address") === 0;
-    const timeoutMs = isAddr ? 90000 : 45000;
-    const ctrl = new AbortController();
-    const timer = setTimeout(() => {
-      try {
-        ctrl.abort(new DOMException("Request timed out", "TimeoutError"));
-      } catch (_) {
-        ctrl.abort();
-      }
-    }, timeoutMs);
-    try {
-      const r = await fetch(API + path, { cache: "no-store", signal: ctrl.signal, credentials: "same-origin" });
-      const data = await r.json();
-      if (!r.ok && data.error) throw new Error(data.error);
-      return data;
-    } finally {
-      clearTimeout(timer);
-    }
+    const r = await fetch(API + path, { cache: "no-store", credentials: "same-origin" });
+    const data = await r.json();
+    if (!r.ok && data.error) throw new Error(data.error);
+    return data;
   }
 
   function setView(v) {

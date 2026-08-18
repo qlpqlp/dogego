@@ -18,6 +18,10 @@ import (
 	"dogego/pow"
 )
 
+// headerReadWindowHeights is one P2P getheaders batch: IBD claim/contiguous walks
+// consecutive heights, so one 160 KiB read serves 2000 ReadHeaderAt calls.
+const headerReadWindowHeights = 2000
+
 // HeaderJournal appends raw 80-byte non-auxpow headers sequentially (monolith headers.bin or segment files under headers/seg/).
 type HeaderJournal struct {
 	path     string // monolith path; empty when using segments
@@ -27,6 +31,10 @@ type HeaderJournal struct {
 	// cachedCount/cachedTip avoid Stat on every dashboard poll (-1 = refresh from disk).
 	cachedCount atomic.Int64
 	cachedTip   atomic.Int64
+	// winStart/winBytes cache a contiguous slice of the monolith so IBD does not
+	// Open+Seek+Read+Close headers.bin (500+ MiB at mainnet tip) per height.
+	winStart int64
+	winBytes []byte
 }
 
 // OpenHeaderJournal opens or creates the journal; if empty, writes genesis80 as the first record.
@@ -304,6 +312,8 @@ func (j *HeaderJournal) appendHeaderBytes(b []byte) error {
 		werr = cerr
 	}
 	if werr == nil {
+		j.winStart = 0
+		j.winBytes = nil
 		j.reconcileCountCacheLocked()
 	}
 	j.mu.Unlock()
@@ -442,29 +452,74 @@ func (j *HeaderJournal) ReadHeaderAt(height int64) ([]byte, error) {
 	if height < 0 {
 		return nil, fmt.Errorf("negative height %d", height)
 	}
-	off := height * 80
+	if buf, ok := j.headerFromWindow(height); ok {
+		return buf, nil
+	}
+	j.mu.Lock()
+	defer j.mu.Unlock()
+	if buf, ok := j.headerFromWindowLocked(height); ok {
+		return buf, nil
+	}
+	if err := j.loadHeaderWindowLocked(height); err != nil {
+		return nil, err
+	}
+	buf, ok := j.headerFromWindowLocked(height)
+	if !ok {
+		return nil, fmt.Errorf("height %d out of range", height)
+	}
+	return buf, nil
+}
+
+func (j *HeaderJournal) headerFromWindow(height int64) ([]byte, bool) {
 	j.mu.RLock()
 	defer j.mu.RUnlock()
+	return j.headerFromWindowLocked(height)
+}
+
+func (j *HeaderJournal) headerFromWindowLocked(height int64) ([]byte, bool) {
+	if len(j.winBytes) < 80 || height < j.winStart {
+		return nil, false
+	}
+	off := int(height-j.winStart) * 80
+	if off+80 > len(j.winBytes) {
+		return nil, false
+	}
+	buf := make([]byte, 80)
+	copy(buf, j.winBytes[off:off+80])
+	return buf, true
+}
+
+func (j *HeaderJournal) loadHeaderWindowLocked(height int64) error {
+	start := (height / headerReadWindowHeights) * headerReadWindowHeights
+	off := start * 80
 	f, err := os.Open(j.path)
 	if err != nil {
-		return nil, err
+		return err
 	}
 	defer f.Close()
 	st, err := f.Stat()
 	if err != nil {
-		return nil, err
+		return err
 	}
 	if off+80 > st.Size() {
-		return nil, fmt.Errorf("height %d out of range (size %d)", height, st.Size())
+		return fmt.Errorf("height %d out of range (size %d)", height, st.Size())
 	}
-	if _, err := f.Seek(off, io.SeekStart); err != nil {
-		return nil, err
+	want := int64(headerReadWindowHeights) * 80
+	remain := st.Size() - off
+	if remain < want {
+		want = remain
 	}
-	buf := make([]byte, 80)
-	if _, err := io.ReadFull(f, buf); err != nil {
-		return nil, err
+	buf := make([]byte, want)
+	n, err := f.ReadAt(buf, off)
+	if err != nil && err != io.EOF {
+		return err
 	}
-	return buf, nil
+	if n < 80 {
+		return fmt.Errorf("height %d short read", height)
+	}
+	j.winStart = start
+	j.winBytes = buf[:n/80*80]
+	return nil
 }
 
 // BuildBlockLocator returns a Bitcoin-style block locator (newest first), up to max entries (max 101).
@@ -588,6 +643,8 @@ func (j *HeaderJournal) TruncateToHeight(inclusiveHeight int64) error {
 	if err := f.Sync(); err != nil {
 		return err
 	}
+	j.winStart = 0
+	j.winBytes = nil
 	j.reconcileCountCacheLocked()
 	return nil
 }

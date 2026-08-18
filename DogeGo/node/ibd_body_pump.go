@@ -16,13 +16,13 @@ import (
 // bodyIBDPumpInterval is how often the primary session proactively issues getdata during forward
 // body IBD. Core's block download manager runs continuously; DogeGo previously relied only on P2P
 // read idle (~4s), which starved when peers kept sending inv/ping/headers chatter.
-const bodyIBDPumpInterval = 1500 * time.Millisecond
+const bodyIBDPumpInterval = 50 * time.Millisecond
 
 // bodyIBDAssistStallRelaunch rotates block-assist workers when sessions stay up without body progress.
 const bodyIBDAssistStallRelaunch = 45 * time.Second
 
 // bodyIBDPumpBatchesPerRound is progressive getdata rounds per proactive pump tick.
-const bodyIBDPumpBatchesPerRound = 2
+const bodyIBDPumpBatchesPerRound = 4
 
 // ensureBodyDownloadArmed clears stale idleFull while headers still lead stored bodies so claimBatch
 // and stall recovery cannot deadlock (idleFull disables both fetch and MaybeRecoverIBDStall).

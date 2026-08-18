@@ -66,12 +66,13 @@ func maybeEnsureBlockAssistDuringNoPrimary(
 		return
 	}
 	if *candidates == nil {
-		if refreshDiscovery != nil {
+		*candidates = seedBlockAssistCandidates(ctx, p, bs, scorer, feed, discovered)
+		if (*candidates == nil || (*candidates).Len() == 0) && refreshDiscovery != nil {
 			if fresh := refreshDiscovery(); len(fresh) > 0 {
 				discovered = fresh
+				*candidates = seedBlockAssistCandidates(ctx, p, bs, scorer, feed, discovered)
 			}
 		}
-		*candidates = seedBlockAssistCandidates(ctx, p, bs, scorer, feed, discovered)
 	} else if lastPoolRefresh != nil && time.Since(*lastPoolRefresh) >= blockAssistCandidatesRefreshInterval {
 		RefreshBlockAssistPool(*candidates, DiscoverySnapshot(feed, discovered), pm, scorer, bs, added)
 		*lastPoolRefresh = time.Now()

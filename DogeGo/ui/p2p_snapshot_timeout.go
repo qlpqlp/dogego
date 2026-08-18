@@ -13,8 +13,15 @@ const p2pSnapshotTimeout = 5 * time.Second
 // p2PSnapshotWithTimeout runs cfg.P2PSnapshot on a goroutine and returns nil on timeout.
 // During heavy IBD the full P2P snapshot can block on locks; the dashboard still renders journal/contiguous fields.
 func p2PSnapshotWithTimeout(fn func() map[string]any) map[string]any {
+	return p2PSnapshotWithTimeoutDur(fn, p2pSnapshotTimeout)
+}
+
+func p2PSnapshotWithTimeoutDur(fn func() map[string]any, d time.Duration) map[string]any {
 	if fn == nil {
 		return nil
+	}
+	if d <= 0 {
+		d = p2pSnapshotTimeout
 	}
 	ch := make(chan map[string]any, 1)
 	go func() {
@@ -23,7 +30,7 @@ func p2PSnapshotWithTimeout(fn func() map[string]any) map[string]any {
 	select {
 	case s := <-ch:
 		return s
-	case <-time.After(p2pSnapshotTimeout):
+	case <-time.After(d):
 		return nil
 	}
 }

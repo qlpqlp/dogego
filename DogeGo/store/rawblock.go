@@ -13,6 +13,7 @@ import (
 	"path/filepath"
 	"sync"
 	"sync/atomic"
+	"testing"
 	"time"
 
 	"dogego/wire"
@@ -29,11 +30,12 @@ type RawBlockStore struct {
 	// deferIndexing, when set and true, skips tx/addr IndexBlock on Put (Core indexes on connect;
 	// per-txid files during deep body IBD dominate disk I/O and starve block download).
 	deferIndexing func() bool
-	sideband   *BlockPutSideband
-	readCache  *rawBlockReadCache
-	compStats  *compressionStatsCache
-	bytesDisk  *bytesOnDiskCache
-	manifestOK bool
+	sideband      *BlockPutSideband
+	readCache     *rawBlockReadCache
+	compStats     *compressionStatsCache
+	bytesDisk     *bytesOnDiskCache
+	manifestOK    bool
+	writeBehind   *ibdWriteBehind
 	// fileCount is -1 until first Count/FastCount refresh; then maintained on Put/Remove.
 	fileCount atomic.Int64
 }
@@ -57,7 +59,21 @@ func OpenRawBlockStoreWithOpts(datadir string, requested BlockStorageOpts) (*Raw
 		readCache: newRawBlockReadCache(rawBlockReadCacheMax),
 	}
 	s.fileCount.Store(-1)
+	if opts.Layout != BlockLayoutBundled && !testing.Testing() {
+		s.writeBehind = newIBDWriteBehind(s)
+	}
 	return s, nil
+}
+
+// EnableWriteBehind starts RAM staging + async disk flush (on by default outside tests).
+func (s *RawBlockStore) EnableWriteBehind() {
+	if s == nil || s.writeBehind != nil {
+		return
+	}
+	if s.StorageOpts().Layout == BlockLayoutBundled {
+		return
+	}
+	s.writeBehind = newIBDWriteBehind(s)
 }
 
 // StorageOpts returns the effective on-disk block storage options.
@@ -145,20 +161,14 @@ func (s *RawBlockStore) ensureManifestLocked() error {
 	return nil
 }
 
-// Has reports whether a block payload exists.
+// Has reports whether a block payload exists (RAM write-behind or disk).
 func (s *RawBlockStore) Has(hashLE [32]byte) bool {
+	if s.writeBehind != nil && s.writeBehind.has(hashLE) {
+		return true
+	}
 	s.mu.Lock()
 	defer s.mu.Unlock()
-	if loc, ok, err := readBlockLocator(s.locatorRoot(), hashLE); err == nil && ok {
-		if loc.FileNum == perFileLocatorNum {
-			_, err := os.Stat(s.pathFor(hashLE))
-			return err == nil
-		}
-		_, err := os.Stat(bundledBlkPath(s.dir, loc.FileNum))
-		return err == nil
-	}
-	_, err := os.Stat(s.pathFor(hashLE))
-	return err == nil
+	return s.hasLocked(hashLE)
 }
 
 // Put writes the raw block bytes (full serialized block as in the P2P "block" message body).
@@ -171,27 +181,40 @@ func (s *RawBlockStore) Put(hashLE [32]byte, raw []byte) error {
 	}
 	s.mu.Lock()
 	had := s.hasLocked(hashLE)
+	if s.writeBehind != nil && s.writeBehind.has(hashLE) {
+		had = true
+	}
 	if err := s.ensureManifestLocked(); err != nil {
 		s.mu.Unlock()
 		return err
 	}
-	var putErr error
-	switch s.opts.Layout {
-	case BlockLayoutBundled:
-		putErr = s.putBundled(hashLE, raw)
-	default:
-		putErr = s.putPerFile(hashLE, raw)
-	}
-	if putErr != nil {
-		s.mu.Unlock()
-		return putErr
-	}
+	layout := s.opts.Layout
 	ix := s.txIndex
 	addrIx := s.addrIndex
 	on := s.indexingOn
 	deferIdx := s.deferIndexing
 	sb := s.sideband
-	s.mu.Unlock()
+	useBehind := s.writeBehind != nil && layout != BlockLayoutBundled && !writeBehindTestHooksActive()
+	var putErr error
+	if layout == BlockLayoutBundled {
+		// Bundled blk*.dat appends share one file offset; keep the mutex.
+		putErr = s.putBundled(hashLE, raw)
+		s.mu.Unlock()
+	} else if useBehind {
+		s.mu.Unlock()
+		if had {
+			return nil
+		}
+		putErr = s.writeBehind.stage(hashLE, raw)
+	} else {
+		// Per-file IBD: do not hold s.mu across WriteFile/Rename. Parallel getdata
+		// lanes were serializing on NTFS while the contiguous hole sat idle.
+		s.mu.Unlock()
+		putErr = s.putPerFile(hashLE, raw)
+	}
+	if putErr != nil {
+		return putErr
+	}
 	if !had {
 		s.bumpFileCount(1)
 		s.InvalidateCompressionStatsCache()
@@ -211,7 +234,7 @@ func (s *RawBlockStore) Put(hashLE [32]byte, raw []byte) error {
 	if sb != nil {
 		sb.AfterPut(hashLE, raw)
 	}
-	if s.readCache != nil {
+	if s.readCache != nil && !useBehind {
 		s.readCache.put(hashLE, raw)
 	}
 	return nil
@@ -234,6 +257,9 @@ func (s *RawBlockStore) hasLocked(hashLE [32]byte) bool {
 func (s *RawBlockStore) Remove(hashLE [32]byte) error {
 	s.mu.Lock()
 	had := s.hasLocked(hashLE)
+	if s.writeBehind != nil && s.writeBehind.has(hashLE) {
+		had = true
+	}
 	_ = removeBlockLocator(s.locatorRoot(), hashLE)
 	path := s.pathFor(hashLE)
 	s.mu.Unlock()
@@ -249,6 +275,9 @@ func (s *RawBlockStore) Remove(hashLE [32]byte) error {
 		s.InvalidateCompressionStatsCache()
 		s.InvalidateBytesOnDiskCache()
 	}
+	if s.writeBehind != nil {
+		s.writeBehind.drop(hashLE)
+	}
 	if s.readCache != nil {
 		s.readCache.drop(hashLE)
 	}
@@ -257,6 +286,11 @@ func (s *RawBlockStore) Remove(hashLE [32]byte) error {
 
 // Get returns the stored raw block payload for this block id (LE), or an error if missing.
 func (s *RawBlockStore) Get(hashLE [32]byte) ([]byte, error) {
+	if s.writeBehind != nil {
+		if b, ok := s.writeBehind.get(hashLE); ok {
+			return b, nil
+		}
+	}
 	if s.readCache != nil {
 		if b, ok := s.readCache.get(hashLE); ok {
 			return b, nil
@@ -295,6 +329,15 @@ func (s *RawBlockStore) Dir() string {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 	return s.dir
+}
+
+// Flush waits for write-behind workers to finish persisting staged bodies.
+func (s *RawBlockStore) Flush() error {
+	if s == nil || s.writeBehind == nil {
+		return nil
+	}
+	s.writeBehind.Flush()
+	return nil
 }
 
 func (s *RawBlockStore) bumpFileCount(delta int64) {

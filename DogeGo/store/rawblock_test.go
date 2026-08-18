@@ -8,6 +8,7 @@ package store_test
 
 import (
 	"path/filepath"
+	"sync"
 	"testing"
 	"time"
 
@@ -31,6 +32,9 @@ func TestRawBlockStorePutHasCount(t *testing.T) {
 	if !rs.Has(h) {
 		t.Fatal("expected Has after Put")
 	}
+	if err := rs.Flush(); err != nil {
+		t.Fatal(err)
+	}
 	n, err := rs.Count()
 	if err != nil {
 		t.Fatal(err)
@@ -44,9 +48,15 @@ func TestRawBlockStorePutHasCount(t *testing.T) {
 	if err := rs.Put(h2, raw2); err != nil {
 		t.Fatal(err)
 	}
+	if err := rs.Flush(); err != nil {
+		t.Fatal(err)
+	}
 	n2, _ := rs.Count()
 	if n2 != 2 {
 		t.Fatalf("count2 %d", n2)
+	}
+	if err := rs.Flush(); err != nil {
+		t.Fatal(err)
 	}
 	matches, err := filepath.Glob(filepath.Join(dir, "rawblocks", "*.bin"))
 	if err != nil {
@@ -54,6 +64,45 @@ func TestRawBlockStorePutHasCount(t *testing.T) {
 	}
 	if len(matches) != 2 {
 		t.Fatalf("glob want 2 files, got %d: %v", len(matches), matches)
+	}
+}
+
+func TestRawBlockStoreParallelPerFilePut(t *testing.T) {
+	dir := t.TempDir()
+	rs, err := store.OpenRawBlockStore(dir)
+	if err != nil {
+		t.Fatal(err)
+	}
+	const n = 32
+	var wg sync.WaitGroup
+	errCh := make(chan error, n)
+	for i := 0; i < n; i++ {
+		wg.Add(1)
+		go func(i int) {
+			defer wg.Done()
+			raw, _ := store.TestMinimalBlock()
+			raw[76] = byte(i)
+			raw[77] = byte(i >> 8)
+			h := pow.BlockHashLE(raw[:80])
+			errCh <- rs.Put(h, raw)
+		}(i)
+	}
+	wg.Wait()
+	close(errCh)
+	for err := range errCh {
+		if err != nil {
+			t.Fatal(err)
+		}
+	}
+	if err := rs.Flush(); err != nil {
+		t.Fatal(err)
+	}
+	count, err := rs.Count()
+	if err != nil {
+		t.Fatal(err)
+	}
+	if count != n {
+		t.Fatalf("count %d want %d", count, n)
 	}
 }
 
@@ -91,6 +140,9 @@ func TestRawBlockStoreBytesOnDisk(t *testing.T) {
 	if err := rs.Put(h, raw); err != nil {
 		t.Fatal(err)
 	}
+	if err := rs.Flush(); err != nil {
+		t.Fatal(err)
+	}
 	n, err := rs.BytesOnDisk()
 	if err != nil {
 		t.Fatal(err)
@@ -108,6 +160,9 @@ func TestRawBlockStoreCachedBytesOnDisk(t *testing.T) {
 	}
 	raw, h := store.TestMinimalBlock()
 	if err := rs.Put(h, raw); err != nil {
+		t.Fatal(err)
+	}
+	if err := rs.Flush(); err != nil {
 		t.Fatal(err)
 	}
 	n1, err := rs.CachedBytesOnDisk(time.Minute)

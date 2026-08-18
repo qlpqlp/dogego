@@ -381,3 +381,56 @@ func TestNoteBlockStoredAtSequentialRequiresAdequateBody(t *testing.T) {
 		t.Fatalf("contiguous=%d want 0 when height 1 body missing", bs.contiguousTip)
 	}
 }
+
+func TestNoteBlockStoredAheadDoesNotRescanHole(t *testing.T) {
+	dir := t.TempDir()
+	g80, err := pow.Header80()
+	if err != nil {
+		t.Fatal(err)
+	}
+	genesisRaw := store.MakeTestBlockRaw(t, g80[:])
+	j, err := store.OpenHeaderJournal(dir+"/headers.bin", genesisRaw[:80])
+	if err != nil {
+		t.Fatal(err)
+	}
+	appendFakeHeaderChain(t, j, genesisRaw[:80], 20)
+	rs, err := store.OpenRawBlockStore(dir)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := rs.Put(pow.BlockHashLE(genesisRaw[:80]), genesisRaw); err != nil {
+		t.Fatal(err)
+	}
+	params, err := chain.ParamsFor(chain.RebootTestnet)
+	if err != nil {
+		t.Fatal(err)
+	}
+	bs := NewBlockStoreCtx(j, nil, params, rs, nil, nil)
+	bs.noteBlockStoredAt(0)
+	if bs.ContiguousRawHeight() != 0 {
+		t.Fatalf("contiguous=%d want 0", bs.ContiguousRawHeight())
+	}
+	putJournalBody := func(height int64) {
+		t.Helper()
+		hdr, err := j.ReadHeaderAt(height)
+		if err != nil {
+			t.Fatal(err)
+		}
+		body := make([]byte, 220)
+		copy(body[:80], hdr)
+		hash := pow.BlockHashLE(hdr)
+		if err := os.WriteFile(filepath.Join(rs.Dir(), hex.EncodeToString(hash[:])+".bin"), body, 0o600); err != nil {
+			t.Fatal(err)
+		}
+	}
+	putJournalBody(5)
+	bs.noteBlockStoredAt(5)
+	if got := bs.ContiguousRawHeight(); got != 0 {
+		t.Fatalf("ahead store must not move the hole: contiguous=%d want 0", got)
+	}
+	putJournalBody(1)
+	bs.noteBlockStoredAt(1)
+	if got := bs.ContiguousRawHeight(); got != 1 {
+		t.Fatalf("after filling height 1 contiguous=%d want 1 (height 5 is still ahead)", got)
+	}
+}

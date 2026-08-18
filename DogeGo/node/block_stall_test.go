@@ -56,23 +56,38 @@ func TestMaybePenalizeStallingPeerWaitsForTimeout(t *testing.T) {
 	}
 }
 
-func TestMaybePenalizeStallingPeerKeepsActiveGetdata(t *testing.T) {
+func TestBlockStallingTimeoutNearTipIsTwoSeconds(t *testing.T) {
+	if got := blockStallingTimeoutFor(nil); got != blockStallingTimeout {
+		t.Fatalf("timeout=%v want %v", got, blockStallingTimeout)
+	}
+	bs := &BlockStoreCtx{}
+	if got := blockStallingTimeoutFor(bs); got != blockStallingTimeout {
+		t.Fatalf("no journal timeout=%v want %v", got, blockStallingTimeout)
+	}
+}
+
+func TestMaybePenalizeStallingPeerCancelsActiveGetdata(t *testing.T) {
 	bs := &BlockStoreCtx{}
 	bs.contiguousMu.Lock()
 	bs.contiguousTip = 5
 	bs.contiguousMu.Unlock()
 
+	canceled := false
 	raw := &progressiveRawState{
-		inFlight:      map[int64][32]byte{6: {}},
-		inFlightLane:  map[int64]int{6: 0},
+		inFlight:      map[int64][32]byte{6: {}, 7: {}},
+		inFlightLane:  map[int64]int{6: 0, 7: 0},
 		laneAddr:      map[int]string{0: "93.184.216.1:22556"},
 		stallingSince: time.Now().Add(-3 * time.Second),
-		activeBatch:   map[int]*batchSlot{0: {cancel: func() {}}},
+		activeBatch:   map[int]*batchSlot{0: {cancel: func() { canceled = true }}},
 	}
-	if _, stalled := raw.maybePenalizeStallingPeer(bs, NewBlockPeerScorer(), nil); stalled {
-		t.Fatal("must not stall-release while that lane still has getdata on the wire")
+	peer, stalled := raw.maybePenalizeStallingPeer(bs, NewBlockPeerScorer(), nil)
+	if !stalled || peer != "93.184.216.1:22556" {
+		t.Fatalf("expected stall disconnect, peer=%q stalled=%v", peer, stalled)
 	}
-	if len(raw.inFlight) != 1 {
-		t.Fatal("frontier claim must stay until the active batch ends")
+	if !canceled {
+		t.Fatal("stalled getdata context must be canceled so another peer can fetch the hole")
+	}
+	if len(raw.inFlight) != 0 {
+		t.Fatalf("inFlight %v want empty after stall", raw.inFlight)
 	}
 }

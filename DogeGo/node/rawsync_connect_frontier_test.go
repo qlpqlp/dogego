@@ -50,6 +50,9 @@ func TestPreferConnectFrontierMissing(t *testing.T) {
 	if got := PreferConnectFrontierMissing(j, rs, 1, 1, net); got != 1 {
 		t.Fatalf("already missing at connectNext got %d want 1", got)
 	}
+	if got := PreferConnectFrontierMissing(j, rs, 50_000, 1, net); got != 50_000 {
+		t.Fatalf("deep body IBD must not collapse getdata to height 1: got %d", got)
+	}
 }
 
 func TestRealignProbeToConnectFrontier(t *testing.T) {

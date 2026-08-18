@@ -12,7 +12,6 @@ import (
 
 	"dogego/applog"
 	"dogego/chain"
-	"dogego/p2p"
 )
 
 // seedBlockAssistCandidates builds an assist dial pool from known scores, fixed seeds, and discovery.
@@ -43,7 +42,8 @@ func seedBlockAssistCandidates(ctx context.Context, p chain.Params, bs *BlockSto
 		add(a)
 	}
 	if len(base) == 0 {
-		for _, a := range p2p.DiscoverAddresses(ctx, p, func(msg string) { applog.Line("net", msg) }) {
+		// Last resort only: DNS belongs in the background refresh, not the first getdata arm.
+		for _, a := range p.FixedPeers {
 			add(a)
 		}
 	}

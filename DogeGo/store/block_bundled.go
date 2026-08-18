@@ -152,6 +152,15 @@ func (s *RawBlockStore) putPerFile(hashLE [32]byte, raw []byte) error {
 		data = raw
 	}
 	tmp := path + ".tmp"
+	if !s.opts.Zstd && !writeBehindTestHooksActive() {
+		if err := os.MkdirAll(filepath.Dir(path), 0o700); err != nil {
+			return err
+		}
+		if err := os.WriteFile(path, data, 0o600); err != nil {
+			return err
+		}
+		return removeBlockLocator(s.locatorRoot(), hashLE)
+	}
 	if err := os.WriteFile(tmp, data, 0o600); err != nil {
 		return err
 	}

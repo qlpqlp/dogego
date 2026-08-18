@@ -55,13 +55,12 @@ func (c *BlockStoreCtx) noteBlockStoredAtInner(height int64, notify bool) {
 				c.extendContiguousForwardLocked()
 			}
 		}
-	} else if height > c.contiguousTip+1 {
-		if !replay {
-			c.recomputeContiguousTipLocked()
-		}
 	} else if height <= c.contiguousTip && !replay {
 		c.extendContiguousForwardLocked()
 	}
+	// height > contiguous+1: parallel getdata may land ahead of the hole.
+	// Do not rescan from genesis — that hashed+stated every stored height on
+	// each file and froze every download lane. Coverage moves when the hole fills.
 	if notify && c.onContiguousAdvance != nil && c.contiguousTip >= 0 && c.contiguousTip != prev {
 		notifyCont = c.contiguousTip
 	}
@@ -142,6 +141,20 @@ func (c *BlockStoreCtx) maybeBackfillAuxAfterHeaderAdvance() {
 	if n > 0 {
 		applog.Line("headers", fmt.Sprintf("aux backfill after header catch-up: %d auxpow record(s) (through %d, tip %d)", n, through, tip))
 	}
+}
+
+// extendContiguousIfNextStored walks cached coverage forward while contiguous+1 is on disk.
+// Used instead of scanning the header tip for the next hole (O(headers) Stats during IBD).
+func (c *BlockStoreCtx) extendContiguousIfNextStored() {
+	if c == nil {
+		return
+	}
+	c.contiguousMu.Lock()
+	defer c.contiguousMu.Unlock()
+	if c.contiguousTip < 0 {
+		return
+	}
+	c.extendContiguousForwardLocked()
 }
 
 // extendContiguousForwardLocked extends contiguousTip while consecutive headers have raw bodies.
@@ -440,10 +453,15 @@ func (c *BlockStoreCtx) ResetContiguousTip() {
 }
 
 func (c *BlockStoreCtx) recomputeContiguousTipLocked() {
-	c.contiguousTip = -1
 	if c == nil || c.Journal == nil || c.Raw == nil {
+		if c != nil {
+			c.contiguousTip = -1
+		}
 		return
 	}
+	// Scan into a local so concurrent ContiguousRawHeight readers never see -1
+	// mid-pass (that used to trigger nested genesis scans on every claim).
+	found := int64(-1)
 	for h := int64(0); ; h++ {
 		if _, err := c.Journal.ReadHeaderAt(h); err != nil {
 			break
@@ -451,8 +469,9 @@ func (c *BlockStoreCtx) recomputeContiguousTipLocked() {
 		if !store.HasStoredBodyAtHeight(c.Journal, c.Raw, h, c.chainNet()) {
 			break
 		}
-		c.contiguousTip = h
+		found = h
 	}
+	c.contiguousTip = found
 }
 
 // hasAncestorBlockBodies reports whether raw block files exist for heights [0, height).

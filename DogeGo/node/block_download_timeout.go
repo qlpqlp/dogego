@@ -19,6 +19,8 @@ const (
 	// earlyIBDBlockDownloadTimeout caps batch wait while fetching the first ~1000 blocks
 	// (peers that only send inv/headers). After that, use Core nCalculatedDlWindow.
 	earlyIBDBlockDownloadTimeout = 90 * time.Second
+	// bodyIBDBlockDownloadTimeout caps one getdata while thousands of tiny bodies are in flight.
+	bodyIBDBlockDownloadTimeout = 30 * time.Second
 	// batchBlockReadSlice caps each ReadMessage wait so ping/inv chatter cannot stall a batch until Core-scale windows.
 	batchBlockReadSlice = 15 * time.Second
 )
@@ -60,6 +62,11 @@ func EffectiveBlockDownloadTimeout(bs *BlockStoreCtx, syncLanes int) time.Durati
 		cont := bs.ContiguousRawHeight()
 		if cont < 1000 && d > earlyIBDBlockDownloadTimeout {
 			return earlyIBDBlockDownloadTimeout
+		}
+		// Core nCalculatedDlWindow grows to 17–60 minutes with many peers. Relays that
+		// disconnect leave getdata claims in that window and freeze IBD at <1 blk/min.
+		if (ShouldDeferConnectForBodyDownload(bs) || ShouldPauseHeaderCatchUpForBodyIBD(bs, 0) || (cont >= 0 && cont < 500_000)) && d > bodyIBDBlockDownloadTimeout {
+			return bodyIBDBlockDownloadTimeout
 		}
 	}
 	return d

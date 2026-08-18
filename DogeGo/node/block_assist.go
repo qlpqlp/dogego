@@ -23,6 +23,10 @@ import (
 // blockAssistIdleSleep is how long the assist loop waits when the coordinator reports catch-up.
 const blockAssistIdleSleep = 750 * time.Millisecond
 
+// blockAssistWindowFullSleep is a short wait when this lane has no claim but other lanes
+// still have getdata in flight (Core keeps asking as soon as a slot opens).
+const blockAssistWindowFullSleep = 100 * time.Millisecond
+
 // blockAssistDrainTimeout bounds draining unsolicited P2P messages between getdata batches.
 const blockAssistDrainTimeout = 100 * time.Millisecond
 
@@ -238,12 +242,12 @@ func runBlockAssistSession(ctx context.Context, conn net.Conn, addr string, p ch
 			return
 		}
 		if n == 0 {
-			if raw != nil && raw.laneHasActiveBatch(laneID) {
+			if raw != nil && (raw.laneHasActiveBatch(laneID) || raw.hasDownloadInFlight()) {
 				lastBodyAt = time.Now()
 				select {
 				case <-ctx.Done():
 					return
-				case <-time.After(blockAssistIdleSleep):
+				case <-time.After(blockAssistWindowFullSleep):
 				}
 				continue
 			}
@@ -340,6 +344,9 @@ func assistPeerCandidates(ctx context.Context, p chain.Params, discovered []stri
 	var base []string
 	if len(discovered) > 0 {
 		base = discovered
+	} else if len(p.FixedPeers) > 0 {
+		// Never block body IBD on DNS; fixed seeds are enough to start getdata (Core).
+		base = append([]string(nil), p.FixedPeers...)
 	} else {
 		base = p2p.DiscoverAddresses(ctx, p, nil)
 	}

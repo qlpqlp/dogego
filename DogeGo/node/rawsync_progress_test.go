@@ -391,3 +391,62 @@ func TestClaimBatch_skipsStoredHolesInFrontierWindow(t *testing.T) {
 		}
 	}
 }
+
+func TestClaimBatch_skipsBusyMiddleKeepsLaterHeights(t *testing.T) {
+	dir := t.TempDir()
+	g80, err := pow.Header80()
+	if err != nil {
+		t.Fatal(err)
+	}
+	genesisRaw := store.MakeTestBlockRaw(t, g80[:])
+	j, err := store.OpenHeaderJournal(filepath.Join(dir, "headers.bin"), genesisRaw[:80])
+	if err != nil {
+		t.Fatal(err)
+	}
+	for i := 0; i < 80; i++ {
+		prev, _ := j.ReadHeaderAt(int64(i))
+		h := append([]byte(nil), prev...)
+		ph := pow.BlockHashLE(prev)
+		copy(h[4:36], ph[:])
+		h[76] ^= byte(i + 1)
+		if err := j.AppendHeaders([][]byte{h}); err != nil {
+			t.Fatal(err)
+		}
+	}
+	rs, err := store.OpenRawBlockStore(dir)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := rs.Put(pow.BlockHashLE(genesisRaw[:80]), genesisRaw); err != nil {
+		t.Fatal(err)
+	}
+	p, _ := chain.ParamsFor(chain.RebootTestnet)
+	var s progressiveRawState
+	s.SetSyncParallelism(2)
+	bs := &BlockStoreCtx{Journal: j, Raw: rs, Params: p}
+	bs.noteBlockStoredAt(0)
+	s.inFlight = map[int64][32]byte{2: {}}
+	s.inFlightLane = map[int64]int{2: 0}
+	b, ok := s.claimBatch(bs, 0)
+	if !ok || len(b.heights) < 2 {
+		t.Fatalf("claim ok=%v n=%d heights=%v", ok, len(b.heights), b.heights)
+	}
+	for _, h := range b.heights {
+		if h == 2 {
+			t.Fatalf("claimed in-flight height 2: %v", b.heights)
+		}
+	}
+	if b.heights[0] != 1 {
+		t.Fatalf("first %d want 1", b.heights[0])
+	}
+	foundLater := false
+	for _, h := range b.heights {
+		if h > 2 {
+			foundLater = true
+			break
+		}
+	}
+	if !foundLater {
+		t.Fatalf("truncated at busy height 2 instead of claiming later holes: %v", b.heights)
+	}
+}

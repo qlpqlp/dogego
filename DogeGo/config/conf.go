@@ -117,7 +117,7 @@ type File struct {
 	ZmqPubHashTx    string `json:"zmqpubhashtx,omitempty"`
 	ZmqPubRawBlock  string `json:"zmqpubrawblock,omitempty"`
 	ZmqPubRawTx     string `json:"zmqpubrawtx,omitempty"`
-	// MaxOutbound caps total P2P sessions including the primary sync peer (0 = default 12).
+	// MaxOutbound caps total P2P sessions including the primary sync peer (0 = default 16).
 	MaxOutbound int `json:"maxoutbound,omitempty"`
 	// MaxInbound caps accepted inbound connections when listening (0 = default 16).
 	MaxInbound int `json:"maxinbound,omitempty"`

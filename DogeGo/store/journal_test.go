@@ -113,6 +113,47 @@ func TestReadHeaderAt(t *testing.T) {
 	}
 }
 
+func TestReadHeaderAtWindowCache(t *testing.T) {
+	dir := t.TempDir()
+	p, err := chain.ParamsFor(chain.RebootTestnet)
+	if err != nil {
+		t.Fatal(err)
+	}
+	g80, err := pow.Header80FromParams(p)
+	if err != nil {
+		t.Fatal(err)
+	}
+	path := filepath.Join(dir, "win.bin")
+	j, err := OpenHeaderJournal(path, g80[:])
+	if err != nil {
+		t.Fatal(err)
+	}
+	const extra = 64
+	batch := make([][]byte, extra)
+	prev := append([]byte(nil), g80[:]...)
+	for i := 0; i < extra; i++ {
+		h := append([]byte(nil), prev...)
+		ph := pow.BlockHashLE(prev)
+		copy(h[4:36], ph[:])
+		h[76] ^= byte(i + 1)
+		batch[i] = h
+		prev = h
+	}
+	if err := j.AppendHeaders(batch); err != nil {
+		t.Fatal(err)
+	}
+	for height := int64(0); height <= extra; height++ {
+		h, err := j.ReadHeaderAt(height)
+		if err != nil || len(h) != 80 {
+			t.Fatalf("height %d: %v len %d", height, err, len(h))
+		}
+		h2, err := j.ReadHeaderAt(height)
+		if err != nil || !bytes.Equal(h, h2) {
+			t.Fatalf("cached reread mismatch at %d", height)
+		}
+	}
+}
+
 func TestHeaderJournalTruncateToHeight(t *testing.T) {
 	dir := t.TempDir()
 	p, err := chain.ParamsFor(chain.RebootTestnet)

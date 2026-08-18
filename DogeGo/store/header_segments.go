@@ -455,14 +455,14 @@ func (l *headerSegmentLayout) readAt(height int64) ([]byte, error) {
 	if height < 0 {
 		return nil, fmt.Errorf("negative height %d", height)
 	}
-	tip := int64(-1)
-	if m, ok := readSegmentManifestFile(l.chainDir); ok {
-		tip = m.TipHeight
-	}
-	if tip < 0 {
-		l.mu.RLock()
-		tip = l.manifest.TipHeight
-		l.mu.RUnlock()
+	l.mu.RLock()
+	tip := l.manifest.TipHeight
+	l.mu.RUnlock()
+	if height > tip {
+		// Rare: another writer appended. One disk read, not every IBD claim height.
+		if m, ok := readSegmentManifestFile(l.chainDir); ok {
+			tip = m.TipHeight
+		}
 	}
 	if height > tip {
 		return nil, fmt.Errorf("height %d out of range (tip %d)", height, tip)

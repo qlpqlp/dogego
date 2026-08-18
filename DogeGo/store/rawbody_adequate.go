@@ -55,11 +55,18 @@ func (s *RawBlockStore) HasStoredBody(hashLE [32]byte, minBytes int) bool {
 
 // storedPayloadSize returns the uncompressed (or on-disk) payload length without reading the body.
 func (s *RawBlockStore) storedPayloadSize(hashLE [32]byte) (int, bool) {
+	if s.writeBehind != nil {
+		if n, ok := s.writeBehind.size(hashLE); ok {
+			return n, true
+		}
+	}
+	path := s.pathFor(hashLE)
 	s.mu.Lock()
-	defer s.mu.Unlock()
-	if loc, ok, err := readBlockLocator(s.locatorRoot(), hashLE); err == nil && ok {
+	loc, ok, err := readBlockLocator(s.locatorRoot(), hashLE)
+	s.mu.Unlock()
+	if err == nil && ok {
 		if loc.FileNum == perFileLocatorNum {
-			fi, err := os.Stat(s.pathFor(hashLE))
+			fi, err := os.Stat(path)
 			if err != nil {
 				return 0, false
 			}
@@ -78,7 +85,7 @@ func (s *RawBlockStore) storedPayloadSize(hashLE [32]byte) (int, bool) {
 		}
 		return 0, false
 	}
-	fi, err := os.Stat(s.pathFor(hashLE))
+	fi, err := os.Stat(path)
 	if err != nil {
 		return 0, false
 	}

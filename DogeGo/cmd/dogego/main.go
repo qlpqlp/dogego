@@ -147,7 +147,7 @@ func runNodeMode(args []string, defaultNodeMode string) {
 	mempoolFullRBF := fs.Bool("mempoolfullrbf", false, "accept replacements of non-BIP125-signaling mempool txs (Core -mempoolfullrbf)")
 	maxOrphanTx := fs.Int("maxorphantx", 0, "max orphan transactions in memory (0 = default 100; dogecoinconf.json maxorphantx)")
 	p2pConn := fs.String("p2p", "", "P2P connectivity: classic (inbound listen + outbound), cgnat (outbound-only multi-peer), both (default when omitted; dogecoinconf.json p2p_connectivity)")
-	maxOutbound := fs.Int("maxoutbound", 0, "max P2P sessions including primary sync peer (0 = default 12)")
+	maxOutbound := fs.Int("maxoutbound", 0, "max P2P sessions including primary sync peer (0 = default 16)")
 	maxInbound := fs.Int("maxinbound", 0, "max inbound P2P connections when listening (0 = default 16)")
 	alertNotify := fs.String("alertnotify", "", "shell command when chain warnings change; %s = message (Core -alertnotify)")
 	assumeValid := fs.String("assumevalid", "", "Core -assumevalid block hash (empty = mainnet default; 0 = verify all scripts)")

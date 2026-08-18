@@ -67,6 +67,8 @@ func EnsureBlockAssistWorkers(p BlockAssistLaunchParams) {
 	}
 	if p.Candidates == nil {
 		p.Candidates = NewBlockAssistCandidates(assistPeerCandidates(p.Ctx, p.Params, nil, p.Scorer, blockFetchWantHeight(p.BlockStore)), p.Scorer)
+	} else if p.Candidates.Len() == 0 {
+		p.Candidates.Refresh(assistPeerCandidates(p.Ctx, p.Params, nil, p.Scorer, blockFetchWantHeight(p.BlockStore)), nil, p.Scorer)
 	}
 	workers := p.Workers
 	if workers < 1 {
