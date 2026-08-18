@@ -13,10 +13,11 @@ import (
 	"net/http"
 	"strings"
 	"sync"
+	"sync/atomic"
 	"time"
 
-	"dogego/store"
 	"dogego/rpc"
+	"dogego/store"
 )
 
 // LiveFeed serves dashboard API responses from a background refresh loop so sync never blocks HTTP.
@@ -34,6 +35,10 @@ type LiveFeed struct {
 	chainStatsAt   time.Time
 
 	chainDataDir string
+
+	refreshing atomic.Bool
+	// summaryBuild, when set, replaces BuildSummaryMap (tests).
+	summaryBuild func(StartConfig) (map[string]any, error)
 }
 
 // StartLiveFeed runs periodic refresh until ctx is cancelled. interval should be ~500ms-1s during IBD.
@@ -61,25 +66,40 @@ func (f *LiveFeed) loop(ctx context.Context, cfg StartConfig, interval time.Dura
 	}
 }
 
-func (f *LiveFeed) refresh(cfg StartConfig) {
-	type result struct {
-		sum map[string]any
-		err error
+func (f *LiveFeed) buildSummary(cfg StartConfig) (map[string]any, error) {
+	if f != nil && f.summaryBuild != nil {
+		return f.summaryBuild(cfg)
 	}
-	ch := make(chan result, 1)
+	return BuildSummaryMap(cfg)
+}
+
+func (f *LiveFeed) refresh(cfg StartConfig) {
+	// One BuildSummaryMap at a time. The old 12s timeout returned while the
+	// goroutine kept running, so IBD + a busy dashboard stacked dozens of
+	// full-chain summaries until the process died (~15 GB RSS).
+	if !f.refreshing.CompareAndSwap(false, true) {
+		f.patchSummaryTipFromManifest(cfg)
+		return
+	}
+
+	done := make(chan struct{})
 	go func() {
-		sum, err := BuildSummaryMap(cfg)
-		ch <- result{sum, err}
+		defer func() {
+			f.refreshing.Store(false)
+			close(done)
+		}()
+		sum, err := f.buildSummary(cfg)
+		f.commitRefresh(cfg, sum, err)
 	}()
-	var res result
 	select {
-	case res = <-ch:
+	case <-done:
 	case <-time.After(12 * time.Second):
 		f.patchSummaryTipFromManifest(cfg)
 		f.bootstrapLiveIfEmpty(cfg)
-		return // keep last good snapshot; avoid permanent stale UI if summary blocks
 	}
-	sum, sumErr := res.sum, res.err
+}
+
+func (f *LiveFeed) commitRefresh(cfg StartConfig, sum map[string]any, sumErr error) {
 	var sumB, p2pB, mpB []byte
 	if sumErr == nil {
 		sumB, _ = json.Marshal(sum)
@@ -93,10 +113,10 @@ func (f *LiveFeed) refresh(cfg StartConfig) {
 			var snap map[string]any
 			if json.Unmarshal(prevSummary, &snap) == nil {
 				live := map[string]any{
-					"ok":             true,
-					"summary":        snap,
-					"summary_stale":  true,
-					"summary_error":  sumErr.Error(),
+					"ok":            true,
+					"summary":       snap,
+					"summary_stale": true,
+					"summary_error": sumErr.Error(),
 				}
 				if len(prevP2P) > 0 {
 					var p2 map[string]any

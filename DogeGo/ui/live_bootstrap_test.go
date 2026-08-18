@@ -8,6 +8,7 @@ package ui
 
 import (
 	"encoding/json"
+	"sync/atomic"
 	"testing"
 	"time"
 
@@ -77,5 +78,43 @@ func TestBootstrapLiveIfEmpty(t *testing.T) {
 	}
 	if sum["dogego_ui_loading"] != true {
 		t.Fatalf("expected dogego_ui_loading on warming bootstrap: %#v", sum)
+	}
+}
+
+func TestLiveFeedSkipsOverlappingRefresh(t *testing.T) {
+	var calls atomic.Int32
+	started := make(chan struct{})
+	release := make(chan struct{})
+	var f LiveFeed
+	f.summaryBuild = func(StartConfig) (map[string]any, error) {
+		n := calls.Add(1)
+		if n == 1 {
+			close(started)
+			<-release
+		}
+		return map[string]any{"ok": true, "tip_height": n}, nil
+	}
+	done := make(chan struct{})
+	go func() {
+		f.refresh(StartConfig{})
+		close(done)
+	}()
+	select {
+	case <-started:
+	case <-time.After(2 * time.Second):
+		t.Fatal("first summary build did not start")
+	}
+	f.refresh(StartConfig{})
+	if calls.Load() != 1 {
+		t.Fatalf("overlapping refresh started a second BuildSummaryMap: calls=%d", calls.Load())
+	}
+	close(release)
+	select {
+	case <-done:
+	case <-time.After(2 * time.Second):
+		t.Fatal("first refresh did not finish")
+	}
+	if calls.Load() != 1 {
+		t.Fatalf("first refresh should be the only build, calls=%d", calls.Load())
 	}
 }
