@@ -110,7 +110,12 @@ func (s *progressiveRawState) laneForAddr(addr string) int {
 	for lane := range s.laneAddr {
 		used[lane] = struct{}{}
 	}
+	// Lane 0 is primary; 1..syncWorkers-1 are block-assist workers. Relays must not
+	// reuse those IDs or ReleaseLaneInFlight on assist disconnect cancels relay getdata.
 	id := 1
+	if s.syncWorkers > 1 {
+		id = s.syncWorkers
+	}
 	for {
 		if _, taken := used[id]; !taken {
 			break
@@ -813,12 +818,7 @@ func (s *progressiveRawState) planClaimRange(bs *BlockStoreCtx, j *store.HeaderJ
 	maxNew := batchCap - laneInflight
 	for probe := probeStart; probe <= rangeHi && probe <= tip && len(claim.heights) < maxNew; probe++ {
 		if _, busy := inFlight[probe]; busy {
-			if len(claim.heights) > 0 {
-				break
-			}
-			// Core fills a 1024-high BLOCK_DOWNLOAD_WINDOW from several peers at once.
-			// Skip heights already in flight so the next lane can claim the following 16
-			// instead of sitting idle behind one 16-block getdata.
+			// Core FindNextBlocksToDownload skips in-flight hashes and keeps filling the window.
 			continue
 		}
 		h80, err := j.ReadHeaderAt(probe)
@@ -827,9 +827,7 @@ func (s *progressiveRawState) planClaimRange(bs *BlockStoreCtx, j *store.HeaderJ
 		}
 		hash := pow.BlockHashLE(h80)
 		if store.HasStoredBodyAtHeight(j, rs, probe, bs.chainNet()) {
-			if len(claim.heights) > 0 {
-				break
-			}
+			// Sparse ahead-of-contiguous files must not shrink getdata to 1 height (break-on-stored).
 			continue
 		}
 		claim.heights = append(claim.heights, probe)
@@ -969,20 +967,10 @@ func (s *progressiveRawState) tryFetchMissingBatches(ctx context.Context, w *Msg
 			if stallPeer, stalled := s.maybePenalizeStallingPeer(bs, scorer, book); stalled {
 				return total, blockStallError(stallPeer)
 			}
-			if timeoutPeer, timedOut := s.maybePenalizeDownloadTimeout(bs, scorer, book); timedOut {
+			if timeoutPeer, timedOut := s.maybePenalizeDownloadTimeout(bs, scorer, book, workerID); timedOut {
 				return total, blockDownloadTimeoutError(timeoutPeer)
 			}
 		}
-		claim, ok := s.claimBatch(bs, workerID)
-		if !ok {
-			break
-		}
-		if s.syncWorkers > 1 {
-			applog.Line("block", fmt.Sprintf("progressive getdata heights %d..%d (%d block(s), lane %d/%d)", claim.lo, claim.hi, len(claim.hashes), workerID, s.syncWorkers))
-		} else {
-			applog.Line("block", fmt.Sprintf("progressive getdata heights %d..%d (%d block(s))", claim.lo, claim.hi, len(claim.hashes)))
-		}
-		NoteBlockGetdata(claim.lo, claim.hi, workerID)
 		lanes := s.syncWorkerCount()
 		batchTimeout := EffectiveBlockDownloadTimeout(bs, lanes)
 		if shouldPipelineGetData(bs) {
@@ -992,14 +980,29 @@ func (s *progressiveRawState) tryFetchMissingBatches(ctx context.Context, w *Msg
 		}
 		batchCtx, endBatch, started := s.startBatch(workerID, ctx, batchTimeout)
 		if !started {
-			s.finishBatch(bs, claim, 0, nil)
 			break
 		}
+		claim, ok := s.claimBatch(bs, workerID)
+		if !ok {
+			endBatch()
+			break
+		}
+		if s.syncWorkers > 1 {
+			applog.Line("block", fmt.Sprintf("progressive getdata heights %d..%d (%d block(s), lane %d/%d)", claim.lo, claim.hi, len(claim.hashes), workerID, s.syncWorkers))
+		} else {
+			applog.Line("block", fmt.Sprintf("progressive getdata heights %d..%d (%d block(s))", claim.lo, claim.hi, len(claim.hashes)))
+		}
+		NoteBlockGetdata(claim.lo, claim.hi, workerID)
 		var extra []rawBatchClaim
 		var hooks *getdataBatchHooks
 		if shouldPipelineGetData(bs) {
 			hooks = &getdataBatchHooks{
-				OnStored: s.releaseInFlightHeight,
+				OnStored: func(h int64) {
+					s.releaseInFlightHeight(h)
+					s.mu.Lock()
+					s.noteLaneDownloadProgressLocked(workerID)
+					s.mu.Unlock()
+				},
 				Refill: func(pending int) ([][32]byte, []int64) {
 					if !shouldRefillGetData(pending) {
 						return nil, nil

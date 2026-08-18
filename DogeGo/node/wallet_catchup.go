@@ -43,6 +43,10 @@ func StartWalletCatchUpRescan(ctx context.Context, paths *rpc.DataPaths, j *stor
 				", contiguous tip "+strconv.FormatInt(cont, 10))
 			return
 		}
+		if tip, err := j.TipHeight(); err == nil && tip-cont > tipBackfillDeferGap {
+			applog.Line("wallet", fmt.Sprintf("catch-up skipped during body IBD (contiguous %d, header tip %d)", cont, tip))
+			return
+		}
 		if paths.SyncUtxo != nil && !rpc.WalletRescanUtxoSynced(paths, j, raw) {
 			if err := paths.SyncUtxo(); err != nil {
 				applog.Line("wallet", "catch-up SyncUtxo: "+err.Error())

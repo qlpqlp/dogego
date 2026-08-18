@@ -83,6 +83,11 @@ func (s *progressiveRawState) maybePenalizeStallingPeer(bs *BlockStoreCtx, score
 			lane = l
 		}
 	}
+	if slot := s.activeBatch[lane]; slot != nil && slot.cancel != nil {
+		// The frontier getdata is still on the wire — do not release so another lane
+		// does not send a second getdata for the same height (ltcd keeps requestedBlocks).
+		return "", false
+	}
 	peerAddr := ""
 	if s.laneAddr != nil {
 		peerAddr = s.laneAddr[lane]

@@ -172,7 +172,7 @@ func runBlockAssistSession(ctx context.Context, conn net.Conn, addr string, p ch
 		}
 	}()
 	// Drain post-handshake cmpct/feefilter before the first getdata (avoids bad magic on block read).
-	drainAssistInboundFor(conn, p.Magic, w, &ping, blockAssistPreFetchDrain)
+	drainAssistInboundFor(conn, p.Magic, w, &ping, blockAssistPreFetchDrain, bs)
 	for {
 		select {
 		case <-ctx.Done():
@@ -206,7 +206,7 @@ func runBlockAssistSession(ctx context.Context, conn net.Conn, addr string, p ch
 			sessionBlocks += n
 			lastBodyAt = time.Now()
 		}
-		drainAssistInboundFor(conn, p.Magic, w, &ping, blockAssistDrainTimeout)
+		drainAssistInboundFor(conn, p.Magic, w, &ping, blockAssistDrainTimeout, bs)
 		ping.maybePing(w)
 		n, err := raw.tryFetchMissingBatches(ctx, w, p, bs, laneID, IdleFetchBatchesPerRound(bs), scorer, book)
 		if err != nil {
@@ -260,11 +260,11 @@ func runBlockAssistSession(ctx context.Context, conn net.Conn, addr string, p ch
 	}
 }
 
-func drainAssistInbound(conn net.Conn, magic [4]byte, w *MsgWriter, ping *peerPingTracker) {
-	drainAssistInboundFor(conn, magic, w, ping, blockAssistDrainTimeout)
+func drainAssistInbound(conn net.Conn, magic [4]byte, w *MsgWriter, ping *peerPingTracker, bs *BlockStoreCtx) {
+	drainAssistInboundFor(conn, magic, w, ping, blockAssistDrainTimeout, bs)
 }
 
-func drainAssistInboundFor(conn net.Conn, magic [4]byte, w *MsgWriter, ping *peerPingTracker, window time.Duration) {
+func drainAssistInboundFor(conn net.Conn, magic [4]byte, w *MsgWriter, ping *peerPingTracker, window time.Duration, bs *BlockStoreCtx) {
 	deadline := time.Now().Add(window)
 	for {
 		if time.Now().After(deadline) {
@@ -291,6 +291,10 @@ func drainAssistInboundFor(conn net.Conn, magic [4]byte, w *MsgWriter, ping *pee
 			}
 		case "sendcmpct":
 			_, _ = ReplySendCmpctDecline(w, pl)
+		case "block":
+			if _, ok := storeInboundBlockBody(bs, pl, -1); ok {
+				continue
+			}
 		default:
 			// inv, headers, tx, etc. - ignored on block-assist link
 		}

@@ -18,9 +18,9 @@ func TestMaybePenalizeStallingPeerReleasesFrontier(t *testing.T) {
 	bs.contiguousMu.Unlock()
 
 	raw := &progressiveRawState{
-		inFlight:     map[int64][32]byte{6: {}},
-		inFlightLane: map[int64]int{6: 0},
-		laneAddr:     map[int]string{0: "93.184.216.1:22556"},
+		inFlight:      map[int64][32]byte{6: {}},
+		inFlightLane:  map[int64]int{6: 0},
+		laneAddr:      map[int]string{0: "93.184.216.1:22556"},
 		stallingSince: time.Now().Add(-3 * time.Second),
 	}
 	scorer := NewBlockPeerScorer()
@@ -44,8 +44,8 @@ func TestMaybePenalizeStallingPeerWaitsForTimeout(t *testing.T) {
 	bs.contiguousMu.Unlock()
 
 	raw := &progressiveRawState{
-		inFlight:     map[int64][32]byte{1: {}},
-		inFlightLane: map[int64]int{1: 0},
+		inFlight:      map[int64][32]byte{1: {}},
+		inFlightLane:  map[int64]int{1: 0},
 		stallingSince: time.Now().Add(-500 * time.Millisecond),
 	}
 	if _, stalled := raw.maybePenalizeStallingPeer(bs, NewBlockPeerScorer(), nil); stalled {
@@ -53,5 +53,26 @@ func TestMaybePenalizeStallingPeerWaitsForTimeout(t *testing.T) {
 	}
 	if len(raw.inFlight) != 1 {
 		t.Fatal("claim should remain in flight")
+	}
+}
+
+func TestMaybePenalizeStallingPeerKeepsActiveGetdata(t *testing.T) {
+	bs := &BlockStoreCtx{}
+	bs.contiguousMu.Lock()
+	bs.contiguousTip = 5
+	bs.contiguousMu.Unlock()
+
+	raw := &progressiveRawState{
+		inFlight:      map[int64][32]byte{6: {}},
+		inFlightLane:  map[int64]int{6: 0},
+		laneAddr:      map[int]string{0: "93.184.216.1:22556"},
+		stallingSince: time.Now().Add(-3 * time.Second),
+		activeBatch:   map[int]*batchSlot{0: {cancel: func() {}}},
+	}
+	if _, stalled := raw.maybePenalizeStallingPeer(bs, NewBlockPeerScorer(), nil); stalled {
+		t.Fatal("must not stall-release while that lane still has getdata on the wire")
+	}
+	if len(raw.inFlight) != 1 {
+		t.Fatal("frontier claim must stay until the active batch ends")
 	}
 }

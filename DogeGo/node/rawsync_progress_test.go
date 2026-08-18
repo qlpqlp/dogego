@@ -318,3 +318,76 @@ func TestPrepareAtStartup_claimsGenesisWhenMissing(t *testing.T) {
 		t.Fatalf("claim genesis ok=%v heights=%v", ok, b.heights)
 	}
 }
+
+func TestClaimBatch_skipsStoredHolesInFrontierWindow(t *testing.T) {
+	dir := t.TempDir()
+	g80, err := pow.Header80()
+	if err != nil {
+		t.Fatal(err)
+	}
+	genesisRaw := store.MakeTestBlockRaw(t, g80[:])
+	j, err := store.OpenHeaderJournal(filepath.Join(dir, "headers.bin"), genesisRaw[:80])
+	if err != nil {
+		t.Fatal(err)
+	}
+	for i := 0; i < 80; i++ {
+		prev, _ := j.ReadHeaderAt(int64(i))
+		h := append([]byte(nil), prev...)
+		ph := pow.BlockHashLE(prev)
+		copy(h[4:36], ph[:])
+		h[76] ^= byte(i + 1)
+		if err := j.AppendHeaders([][]byte{h}); err != nil {
+			t.Fatal(err)
+		}
+	}
+	rs, err := store.OpenRawBlockStore(dir)
+	if err != nil {
+		t.Fatal(err)
+	}
+	putAt := func(height int64) {
+		t.Helper()
+		hdr, err := j.ReadHeaderAt(height)
+		if err != nil {
+			t.Fatal(err)
+		}
+		raw := store.MakeTestBlockRaw(t, hdr)
+		if err := rs.Put(pow.BlockHashLE(hdr), raw); err != nil {
+			t.Fatal(err)
+		}
+	}
+	putAt(0)
+	putAt(2)
+	putAt(4)
+	p, _ := chain.ParamsFor(chain.RebootTestnet)
+	var s progressiveRawState
+	bs := &BlockStoreCtx{Journal: j, Raw: rs, Params: p}
+	bs.noteBlockStoredAt(0)
+	b, ok := s.claimBatch(bs, 0)
+	if !ok || len(b.heights) < 3 {
+		t.Fatalf("claim ok=%v n=%d want several hole heights, got %v", ok, len(b.heights), b.heights)
+	}
+	if b.heights[0] != 1 {
+		t.Fatalf("first claimed %d want 1 (lowest hole)", b.heights[0])
+	}
+	for i := 1; i < len(b.heights); i++ {
+		if b.heights[i] <= b.heights[i-1] {
+			t.Fatalf("heights not increasing: %v", b.heights)
+		}
+		if b.heights[i]%2 == 0 && b.heights[i] <= 4 {
+			t.Fatalf("claimed already-stored height %d", b.heights[i])
+		}
+	}
+	want := map[int64]bool{1: true, 3: true, 5: true}
+	for h := range want {
+		found := false
+		for _, got := range b.heights {
+			if got == h {
+				found = true
+				break
+			}
+		}
+		if !found {
+			t.Fatalf("missing hole %d in claim %v", h, b.heights)
+		}
+	}
+}

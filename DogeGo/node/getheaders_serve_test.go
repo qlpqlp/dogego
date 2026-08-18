@@ -281,3 +281,57 @@ func TestHandleInboundGetHeadersMaxCap(t *testing.T) {
 	}
 	<-done
 }
+
+func TestHandleInboundGetHeadersDefersDuringBodyIBD(t *testing.T) {
+	p, err := chain.ParamsFor(chain.MainnetDogecoin)
+	if err != nil {
+		t.Fatal(err)
+	}
+	g80, err := pow.Header80FromParams(p)
+	if err != nil {
+		t.Fatal(err)
+	}
+	dir := t.TempDir()
+	j, err := store.OpenHeaderChain(dir, g80[:])
+	if err != nil {
+		t.Fatal(err)
+	}
+	appendFakeHeaderChain(t, j, g80[:], 534_000)
+	rs, err := store.OpenRawBlockStore(dir)
+	if err != nil {
+		t.Fatal(err)
+	}
+	bs := NewBlockStoreCtx(j, nil, p, rs, nil, nil)
+	bs.SeedContiguousTip(10_005)
+	if !ShouldPauseHeaderCatchUpForBodyIBD(bs, 0) {
+		t.Fatal("fixture should pause getheaders during deep body IBD")
+	}
+	pl, err := wire.EncodeGetHeaders(p.ProtocolVersion, [][32]byte{pow.BlockHashLE(g80[:])}, [32]byte{})
+	if err != nil {
+		t.Fatal(err)
+	}
+	cSrv, cCli := net.Pipe()
+	mw := NewMsgWriter(cSrv, p.Magic)
+	done := make(chan struct{})
+	go func() {
+		defer close(done)
+		_ = cCli.SetReadDeadline(time.Now().Add(5 * time.Second))
+		cmd, body, err := wire.ReadMessage(cCli, p.Magic)
+		if err != nil || cmd != "headers" {
+			t.Errorf("cmd %q err %v", cmd, err)
+			return
+		}
+		got, err := wire.DecodeHeadersPayload(body)
+		if err != nil {
+			t.Errorf("decode: %v", err)
+			return
+		}
+		if len(got) != 0 {
+			t.Errorf("served %d header(s) during body IBD; want empty (keep TCP free for getdata)", len(got))
+		}
+	}()
+	if err := HandleInboundGetHeaders(context.Background(), mw, GetHeadersServeEnv{Journal: j, BlockStore: bs}, pl); err != nil {
+		t.Fatal(err)
+	}
+	<-done
+}

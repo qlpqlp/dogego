@@ -17,8 +17,9 @@ import (
 
 // GetHeadersServeEnv holds the header chain served to peers.
 type GetHeadersServeEnv struct {
-	Journal *store.HeaderJournal
-	Aux     *store.HeaderAuxJournal
+	Journal    *store.HeaderJournal
+	Aux        *store.HeaderAuxJournal
+	BlockStore *BlockStoreCtx
 }
 
 // HandleInboundGetHeaders answers getheaders with a headers message (Core ProcessGetHeaders subset).
@@ -30,6 +31,13 @@ func HandleInboundGetHeaders(ctx context.Context, mw *MsgWriter, env GetHeadersS
 	case <-ctx.Done():
 		return ctx.Err()
 	default:
+	}
+	if ShouldPauseHeaderCatchUpForBodyIBD(env.BlockStore, 0) {
+		pl, err := wire.EncodeHeadersPayload(nil)
+		if err != nil {
+			return err
+		}
+		return mw.Write("headers", pl)
 	}
 	req, err := wire.DecodeGetHeaders(payload)
 	if err != nil {
@@ -58,6 +66,11 @@ func HandleInboundGetHeaders(ctx context.Context, mw *MsgWriter, env GetHeadersS
 	if err := mw.Write("headers", pl); err != nil {
 		return err
 	}
-	applog.Line("headers", fmt.Sprintf("getheaders reply: %d header(s) after fork height %d", len(headers), fork))
+	tip, _ := env.Journal.TipHeight()
+	peer := ""
+	if mw != nil {
+		peer = mw.PeerAddr
+	}
+	applog.Line("headers", fmt.Sprintf("served getheaders to %s: %d header(s) (locator fork %d, local tip %d)", peer, len(headers), fork, tip))
 	return nil
 }

@@ -33,20 +33,20 @@ type RelayEnv struct {
 	Standard               consensus.StandardPolicy
 	MempoolLimits          consensus.MempoolRelayLimits
 
-	Journal     *store.HeaderJournal
-	Aux         *store.HeaderAuxJournal
-	ChainPolicy *store.ChainPolicy
-	BlockStore  *BlockStoreCtx
-	Pool        *mempool.Pool
-	Orphans     *mempool.OrphanPool
-	TxIndex   *store.TxIndex
-	RawBlocks *store.RawBlockStore
+	Journal       *store.HeaderJournal
+	Aux           *store.HeaderAuxJournal
+	ChainPolicy   *store.ChainPolicy
+	BlockStore    *BlockStoreCtx
+	Pool          *mempool.Pool
+	Orphans       *mempool.OrphanPool
+	TxIndex       *store.TxIndex
+	RawBlocks     *store.RawBlockStore
 	BlockFilters  *store.BlockFilterIndex
 	PeerFeeFilter *FeeFilterSet
-	TipWait     *rpc.TipWaiter
-	RawFill     *progressiveRawState
-	Misbehavior *MisbehaviorTracker
-	DGRFanIn    func(cmd string, payload []byte)
+	TipWait       *rpc.TipWaiter
+	RawFill       *progressiveRawState
+	Misbehavior   *MisbehaviorTracker
+	DGRFanIn      func(cmd string, payload []byte)
 }
 
 func runRelayPeerSession(ctx context.Context, env RelayEnv, pm *PeerMgr, link *peerLink) {
@@ -205,7 +205,7 @@ func handleRelayP2PMessage(ctx context.Context, env RelayEnv, pm *PeerMgr, link 
 		HandleFilterClear(pm, link.addr)
 	case "getheaders":
 		if env.Journal != nil {
-			_ = HandleInboundGetHeaders(ctx, mw, GetHeadersServeEnv{Journal: env.Journal, Aux: env.Aux}, pl)
+			_ = HandleInboundGetHeaders(ctx, mw, GetHeadersServeEnv{Journal: env.Journal, Aux: env.Aux, BlockStore: env.BlockStore}, pl)
 		}
 	case "inv":
 		if env.BlockStore != nil {

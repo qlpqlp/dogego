@@ -525,11 +525,11 @@ func forwardIBDStripeTip(bs *BlockStoreCtx, lowMissing, tip int64) int64 {
 	}
 	win := int64(forwardIBDParallelWindow)
 	if shouldFillContiguousFrontierFirst(bs, lowMissing) {
-		// One fat getdata (ltcd-style) past the hole — not the full 1024-high window,
-		// which let other lanes fetch ~1000 heights ahead while height N was still missing.
-		win = int64(ibdGetDataBatch)
-		if win < 16 {
-			win = 16
+		// Core BLOCK_DOWNLOAD_WINDOW: several peers each take a fat getdata of missing
+		// hashes inside this span (planClaimRange skips stored/in-flight holes).
+		win = int64(blockDownloadWindow)
+		if win < int64(ibdGetDataBatch) {
+			win = int64(ibdGetDataBatch)
 		}
 	}
 	hi := lowMissing + win - 1

@@ -152,8 +152,8 @@ type Config struct {
 	// MaxTipAge is Core -maxtipage in seconds (0 = default 86400).
 	MaxTipAge int
 	// RpcTLS / WebUITLS optional PEM paths for native TLS (both cert and key required per listener).
-	RpcTLS   httptls.Pair
-	WebUITLS httptls.Pair
+	RpcTLS           httptls.Pair
+	WebUITLS         httptls.Pair
 	localTLSMaterial *httptls.LocalMaterial
 	// DogeGoRelayCGNAT configures integrated QUIC reachability relay (NODE_DOGEGO_RELAY_CGNAT).
 	DogeGoRelayCGNAT config.DogeGoRelayCGNAT
@@ -794,10 +794,10 @@ func Run(ctx context.Context, cfg Config) error {
 				}
 				return analytics.ReadSideDetail(filepath.Join(chainDataAbs, "dogego_analytics.db"))
 			},
-			Services:                 runtimeSvc,
-			WalletSend:               walletSendBridge,
-			WalletTxs:                walletTxsBridge,
-			P2PSnapshot:              p2pSnapForDashboard,
+			Services:    runtimeSvc,
+			WalletSend:  walletSendBridge,
+			WalletTxs:   walletTxsBridge,
+			P2PSnapshot: p2pSnapForDashboard,
 			DGRSnapshot: func() map[string]any {
 				if dgrMgr != nil {
 					return dgrMgr.MetricsSnapshot()
@@ -827,9 +827,9 @@ func Run(ctx context.Context, cfg Config) error {
 				}
 				return uiRPCInvoke(method, params)
 			},
-			Extensions:         extMgr,
-			ExtensionManager:   func() *extensions.Manager { return extMgr },
-			UtxoCache: func() *store.UtxoCache { return utxoCache },
+			Extensions:       extMgr,
+			ExtensionManager: func() *extensions.Manager { return extMgr },
+			UtxoCache:        func() *store.UtxoCache { return utxoCache },
 			OrphanCount: func() int {
 				if orphans != nil {
 					return orphans.Count()
@@ -1159,7 +1159,7 @@ func Run(ctx context.Context, cfg Config) error {
 		BanMgr: banMgr, Orphans: orphans, PeerFeeFilters: peerFeeFilters, ContiguousForUI: contiguousForUI,
 		HeaderCatchUpPending: func() bool { return headerCatchUpPending.Load() },
 		SaveUtxoShutdown:     saveUtxoSnapshotOnShutdown,
-		Disk: disk, WIFVer: p.PrivKeyWIFVersion, PKHVer: p.PubkeyHashAddrID, SHVer: p.ScriptHashAddrID,
+		Disk:                 disk, WIFVer: p.PrivKeyWIFVersion, PKHVer: p.PubkeyHashAddrID, SHVer: p.ScriptHashAddrID,
 	})
 	startIBDConnectWorkers(ctx, blockStore, utxoCache, utxoQuarantinedOnStartup)
 	autoFilterRepair := autoRecoverFilterRepairFn(j, chainRoot, filterIx, txIx, rbStore)
@@ -3608,7 +3608,7 @@ func Run(ctx context.Context, cfg Config) error {
 			HandleFilterClear(peerMgr, connectedAddr)
 		case "getheaders":
 			if j != nil {
-				if err := HandleInboundGetHeaders(ctx, mw, GetHeadersServeEnv{Journal: j, Aux: auxJ}, pl); err != nil {
+				if err := HandleInboundGetHeaders(ctx, mw, GetHeadersServeEnv{Journal: j, Aux: auxJ, BlockStore: blockStore}, pl); err != nil {
 					applog.Line("headers", "getheaders serve: "+err.Error())
 				}
 			}

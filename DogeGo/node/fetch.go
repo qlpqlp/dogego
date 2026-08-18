@@ -450,6 +450,31 @@ type getdataBatchHooks struct {
 	Refill   func(pending int) (hashes [][32]byte, heights []int64)
 }
 
+// storeInboundBlockBody writes a full block if the header journal knows its height.
+// Used for claimed getdata, assist drain leftovers, and late replies after refill.
+func storeInboundBlockBody(bs *BlockStoreCtx, payload []byte, heightHint int64) (height int64, stored bool) {
+	if bs == nil || bs.Raw == nil || len(payload) < 80 {
+		return -1, false
+	}
+	got := pow.BlockHashLE(payload[:80])
+	height = heightHint
+	if height < 0 && bs.Journal != nil {
+		if ht, err := bs.Journal.HeightByBlockHashLE(got); err == nil {
+			height = ht
+		}
+	}
+	if height < 0 {
+		return -1, false
+	}
+	if bs.rawBodyPresent(got, height) {
+		return height, false
+	}
+	if err := bs.StoreValidatedBlockAtHeight(got, payload, height); err != nil {
+		return height, false
+	}
+	return height, true
+}
+
 func fetchAndStoreRawBlocksBatch(ctx context.Context, w *MsgWriter, p chain.Params, wants [][32]byte, heights []int64, bs *BlockStoreCtx, syncLanes int, hooks *getdataBatchHooks) (int, error) {
 	hashHeights := batchHashHeights(wants, heights)
 	invOrder := blockFetchInvTypes(p)
@@ -653,6 +678,19 @@ func fetchAndStoreRawBlocksBatchInv(ctx context.Context, w *MsgWriter, p chain.P
 			}
 			got := pow.BlockHashLE(payload[:80])
 			if _, ok := pending[got]; !ok {
+				hint := int64(-1)
+				if hashHeights != nil {
+					if h, ok := hashHeights[got]; ok {
+						hint = h
+					}
+				}
+				if ht, storedLate := storeInboundBlockBody(bs, payload, hint); storedLate {
+					stored++
+					if hooks != nil && hooks.OnStored != nil && ht >= 0 {
+						hooks.OnStored(ht)
+					}
+					continue
+				}
 				if len(ignoredCmds) < 4 {
 					ignoredCmds = append(ignoredCmds, fmt.Sprintf("block %x… (%d B)", got[:4], len(payload)))
 				}

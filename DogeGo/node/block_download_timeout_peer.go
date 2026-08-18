@@ -54,7 +54,8 @@ func (s *progressiveRawState) clearLaneDownloadIfIdleLocked(lane int) {
 
 // maybePenalizeDownloadTimeout releases in-flight heights and disconnects when a lane exceeds
 // Core's BLOCK_DOWNLOAD_TIMEOUT window (net_processing.cpp nDownloadingSince check).
-func (s *progressiveRawState) maybePenalizeDownloadTimeout(bs *BlockStoreCtx, scorer *BlockPeerScorer, book *AddrBook) (peer string, timedOut bool) {
+// laneFilter >= 0 only inspects that lane so one worker cannot disconnect another connection.
+func (s *progressiveRawState) maybePenalizeDownloadTimeout(bs *BlockStoreCtx, scorer *BlockPeerScorer, book *AddrBook, laneFilter int) (peer string, timedOut bool) {
 	if s == nil || bs == nil || scorer == nil {
 		return "", false
 	}
@@ -70,6 +71,9 @@ func (s *progressiveRawState) maybePenalizeDownloadTimeout(bs *BlockStoreCtx, sc
 	limit := EffectiveBlockDownloadTimeout(bs, lanes)
 	now := time.Now()
 	for lane, since := range s.laneDownloadSince {
+		if laneFilter >= 0 && lane != laneFilter {
+			continue
+		}
 		if now.Sub(since) < limit {
 			continue
 		}

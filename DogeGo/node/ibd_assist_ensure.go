@@ -10,7 +10,6 @@ import (
 	"context"
 	"time"
 
-	"dogego/applog"
 	"dogego/chain"
 )
 
@@ -32,7 +31,7 @@ func enrichAssistDiagnostics(snap map[string]interface{}, pool *BlockAssistCandi
 	snap["block_assist_workers_started"] = BlockAssistWorkersActive()
 }
 
-// MaybeEnsureBlockAssistWorkers starts or relaunches assist when the pool has peers but no live sessions.
+// MaybeEnsureBlockAssistWorkers starts assist workers once when the pool has peers.
 func MaybeEnsureBlockAssistWorkers(p BlockAssistLaunchParams) {
 	if p.BlockStore == nil || p.Raw == nil || p.Candidates == nil || p.Candidates.Len() == 0 {
 		return
@@ -40,18 +39,8 @@ func MaybeEnsureBlockAssistWorkers(p BlockAssistLaunchParams) {
 	if !p.Raw.bodiesDownloadActive(p.BlockStore) {
 		return
 	}
-	if p.AssistReg != nil && BlockAssistWorkersActive() {
-		empty := p.AssistReg.Count() == 0
-		stalled := blockAssistSessionsStalled(p.Raw, p.AssistReg)
-		if empty || stalled {
-			if stalled {
-				applog.Line("block", "block-assist sessions stalled without body progress; relaunching workers")
-			} else {
-				applog.Line("block", "block-assist workers idle with empty sessions; relaunching")
-			}
-			resetBlockAssistLaunch()
-		}
-	}
+	// Do not resetBlockAssistLaunch while workers are alive: that spawned a second
+	// set of goroutines on the same lane IDs and cancelled in-flight getdata.
 	if !BlockAssistWorkersActive() {
 		EnsureBlockAssistWorkers(p)
 	}

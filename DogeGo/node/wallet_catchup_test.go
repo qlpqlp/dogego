@@ -83,6 +83,21 @@ func TestWalletCatchUpRescanIncrementalFromCursor(t *testing.T) {
 	}
 }
 
+func TestWalletCatchUpRescanSkipsDuringBodyIBD(t *testing.T) {
+	ctx, paths, j, raw, w, cont := testWalletCatchUpSetup(t)
+	prev, err := j.ReadHeaderAt(cont)
+	if err != nil {
+		t.Fatal(err)
+	}
+	appendFakeHeaderChain(t, j, prev, 600)
+	paths.WalletRescanBlocks = func(start int64) error {
+		t.Fatalf("rescan from %d must not run while bodies lag headers", start)
+		return nil
+	}
+	StartWalletCatchUpRescan(ctx, paths, j, raw, w)
+	time.Sleep(250 * time.Millisecond)
+}
+
 func TestWalletCatchUpRescanContinuesAfterPartialIndex(t *testing.T) {
 	ctx, paths, j, raw, w, cont := testWalletCatchUpSetup(t)
 	if cont < 1 {
