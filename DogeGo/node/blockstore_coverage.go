@@ -619,6 +619,9 @@ func (c *BlockStoreCtx) maybeConnectFrontier() {
 	if c == nil || c.utxoAheadOfStoredBodies() {
 		return
 	}
+	if ShouldDeferConnectForBodyDownload(c) {
+		return
+	}
 	cont := c.ContiguousRawHeight()
 	if c.deferConnectDuringIBD(cont) {
 		if cont >= 0 && cont%effectiveIBDConnectDeferInterval(c) != 0 && cont != c.AssumeValid.Height() {
@@ -632,6 +635,9 @@ func (c *BlockStoreCtx) maybeConnectFrontier() {
 // During deep body IBD, use the throttled frontier path so every getdata batch does not kick a full connect storm.
 func (c *BlockStoreCtx) FlushDeferredConnect() {
 	if c == nil || c.utxoAheadOfStoredBodies() {
+		return
+	}
+	if ShouldDeferConnectForBodyDownload(c) {
 		return
 	}
 	if ShouldPauseHeaderCatchUpForBodyIBD(c, 0) {
@@ -730,6 +736,9 @@ func (c *BlockStoreCtx) tryConnectContiguousFrontierSteps(maxSteps int) {
 // tryReconnectAround re-runs ConnectBlock for stored blocks near height when bodies caught up (out-of-order fetch).
 func (c *BlockStoreCtx) tryReconnectAround(height int64) {
 	if c == nil || c.Journal == nil || c.Raw == nil || c.TxIndex == nil {
+		return
+	}
+	if ShouldDeferConnectForBodyDownload(c) {
 		return
 	}
 	tip, err := c.Journal.TipHeight()

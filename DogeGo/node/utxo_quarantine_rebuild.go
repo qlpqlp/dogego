@@ -32,6 +32,11 @@ func rebuildUtxoFromStoredBodiesAfterQuarantine(bs *BlockStoreCtx, utxo *store.U
 			applog.Line("utxo", "UTXO rebuild complete through height "+strconv.FormatInt(tip, 10))
 			return
 		}
+		if ShouldDeferConnectForBodyDownload(bs) {
+			noteConnectDeferredForDownload(bs)
+			time.Sleep(5 * time.Second)
+			continue
+		}
 		if ConnectCatchUpLag(bs, utxo) >= 2048 {
 			runConnectCatchUpStartupBurst(bs, utxo)
 		} else if err := bs.SyncUtxoCacheBounded(256); err != nil {

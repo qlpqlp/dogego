@@ -10,12 +10,41 @@ import (
 	"fmt"
 	"strconv"
 	"sync"
+	"sync/atomic"
 	"time"
 
 	"dogego/applog"
 	"dogego/consensus"
 	"dogego/store"
 )
+
+var connectDeferredForDownloadLogged atomic.Bool
+
+func noteConnectDeferredForDownload(bs *BlockStoreCtx) {
+	if !connectDeferredForDownloadLogged.CompareAndSwap(false, true) {
+		return
+	}
+	cont := int64(-1)
+	tip := int64(-1)
+	if bs != nil {
+		cont = bs.ContiguousRawHeight()
+		if bs.Journal != nil {
+			tip, _ = bs.Journal.TipHeight()
+		}
+	}
+	applog.Line("utxo", fmt.Sprintf("download-first IBD: deferring ConnectBlock until bodies catch headers (bodies through %d, headers %d)", cont, tip))
+}
+
+func noteConnectResumedAfterDownload(bs *BlockStoreCtx) {
+	if !connectDeferredForDownloadLogged.CompareAndSwap(true, false) {
+		return
+	}
+	cont := int64(-1)
+	if bs != nil {
+		cont = bs.ContiguousRawHeight()
+	}
+	applog.Line("utxo", fmt.Sprintf("bodies near header tip (through %d); starting ConnectBlock and index catch-up", cont))
+}
 
 const (
 	connectCatchUpPollInterval   = 3 * time.Second
@@ -133,6 +162,10 @@ func runConnectCatchUpStartupBurst(bs *BlockStoreCtx, utxo *store.UtxoCache) {
 	if bs == nil || utxo == nil || !BodiesBehindHeaders(bs) {
 		return
 	}
+	if ShouldDeferConnectForBodyDownload(bs) {
+		noteConnectDeferredForDownload(bs)
+		return
+	}
 	lag := ConnectCatchUpLag(bs, utxo)
 	if lag < 2048 {
 		runConnectCatchUpOnce(bs, utxo)
@@ -161,7 +194,16 @@ func runConnectCatchUpOnce(bs *BlockStoreCtx, utxo *store.UtxoCache) {
 	if bs == nil || utxo == nil {
 		return
 	}
+	if ShouldDeferConnectForBodyDownload(bs) {
+		noteConnectDeferredForDownload(bs)
+		return
+	}
 	if !BodiesBehindHeaders(bs) {
+		lag := ConnectCatchUpLag(bs, utxo)
+		if lag >= 2048 {
+			runPostDownloadConnectOnce(bs, utxo)
+			return
+		}
 		runCaughtUpConnectLagOnce(bs, utxo)
 		return
 	}
@@ -303,6 +345,30 @@ func caughtUpConnectMaxBlocks(lag int64) int {
 	}
 }
 
+// runPostDownloadConnectOnce replays ConnectBlock after body IBD (headers and bodies on disk).
+func runPostDownloadConnectOnce(bs *BlockStoreCtx, utxo *store.UtxoCache) {
+	if bs == nil || utxo == nil {
+		return
+	}
+	noteConnectResumedAfterDownload(bs)
+	before := utxo.TipHeight()
+	if err := bs.SyncUtxoCache(); err != nil {
+		applog.Line("utxo", "post-download connect: "+err.Error())
+		return
+	}
+	after := utxo.TipHeight()
+	if after > before && after >= 0 {
+		RecordIBDConnectAdvance(after)
+		applog.Line("utxo", "post-download connect: chainActive "+strconv.FormatInt(before, 10)+
+			" → "+strconv.FormatInt(after, 10)+fmt.Sprintf(" (lag %d)", ConnectCatchUpLag(bs, utxo)))
+		if after > 0 && after%256 == 0 {
+			if dir := blockStoreChainDir(bs); dir != "" {
+				go MaybeSaveIBDUtxoSnapshot(bs, utxo, dir, after)
+			}
+		}
+	}
+}
+
 // runCaughtUpConnectLagOnce drains small stored-body ahead of chainActive when headers are caught up.
 func runCaughtUpConnectLagOnce(bs *BlockStoreCtx, utxo *store.UtxoCache) {
 	if bs == nil || utxo == nil || BodiesBehindHeaders(bs) {
@@ -333,6 +399,10 @@ func MaybeSyncConnectCatchUp(bs *BlockStoreCtx, utxo *store.UtxoCache, last *tim
 	if bs == nil || utxo == nil || last == nil {
 		return
 	}
+	if ShouldDeferConnectForBodyDownload(bs) {
+		noteConnectDeferredForDownload(bs)
+		return
+	}
 	if !BodiesBehindHeaders(bs) {
 		lag := ConnectCatchUpLag(bs, utxo)
 		if lag < connectCatchUpMinLagCaughtUp {
@@ -342,6 +412,10 @@ func MaybeSyncConnectCatchUp(bs *BlockStoreCtx, utxo *store.UtxoCache, last *tim
 			return
 		}
 		*last = time.Now()
+		if lag >= 2048 {
+			runPostDownloadConnectOnce(bs, utxo)
+			return
+		}
 		runCaughtUpConnectLagOnce(bs, utxo)
 		return
 	}
@@ -464,7 +538,7 @@ func rampReplayContiguousFromDiskBounded(bs *BlockStoreCtx, maxPasses int) int64
 // syncUtxoMaxConnectPasses scales multi-pass connect replay during deep catch-up.
 func syncUtxoMaxConnectPasses(bs *BlockStoreCtx, contiguousThrough int64) int {
 	maxConnectPasses := 128
-	if !BodiesBehindHeaders(bs) || bs.Utxo == nil {
+	if bs == nil || bs.Utxo == nil {
 		return maxConnectPasses
 	}
 	utxoTip := bs.Utxo.TipHeight()
@@ -472,6 +546,10 @@ func syncUtxoMaxConnectPasses(bs *BlockStoreCtx, contiguousThrough int64) int {
 		return maxConnectPasses
 	}
 	backlog := contiguousThrough - utxoTip
+	// No header journal: not body IBD; keep the caught-up cap.
+	if !BodiesBehindHeaders(bs) && bs.Journal == nil {
+		return maxConnectPasses
+	}
 	switch {
 	case backlog > 8192:
 		return 512
@@ -500,6 +578,9 @@ func PostBatchConnectLagThreshold(bs *BlockStoreCtx) int64 {
 // Deep body IBD prefers download: leave routine connect to the catch-up worker unless lag is extreme.
 func shouldPostBatchInlineConnect(bs *BlockStoreCtx) bool {
 	if bs == nil || bs.Utxo == nil {
+		return false
+	}
+	if ShouldDeferConnectForBodyDownload(bs) {
 		return false
 	}
 	if ConnectBodyGapHeight(bs) >= 0 {

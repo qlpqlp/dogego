@@ -321,6 +321,9 @@ func mergeDogegoRawSyncDiagnostics(res map[string]interface{}, prog map[string]i
 	if v, ok := prog["body_ibd_header_paused"].(bool); ok && v {
 		res["dogego_body_ibd_header_paused"] = true
 	}
+	if v, ok := prog["connect_deferred_for_download"].(bool); ok && v {
+		res["dogego_connect_deferred_for_download"] = true
+	}
 	if v, ok := prog["body_ibd_eta_minutes"].(int64); ok && v > 0 {
 		res["dogego_body_ibd_eta_minutes"] = v
 	}

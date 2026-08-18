@@ -389,11 +389,8 @@ func TestShouldPauseHeaderCatchUpForBodyIBD(t *testing.T) {
 	if !ShouldPauseHeaderCatchUpForBodyIBD(bs, 6_000_000) {
 		t.Fatal("deep body IBD should pause header catch-up")
 	}
-	if got := EffectiveConnectCatchUpMinLag(bs); got != connectCatchUpMinLagFrontier {
-		t.Fatalf("deep body min lag=%d want %d (early ancient IBD)", got, connectCatchUpMinLagFrontier)
-	}
-	if got := PostBatchConnectLagThreshold(bs); got != connectCatchUpMinLagFrontier {
-		t.Fatalf("post-batch threshold=%d want %d", got, connectCatchUpMinLagFrontier)
+	if !ShouldDeferConnectForBodyDownload(bs) {
+		t.Fatal("deep body IBD must defer ConnectBlock until bodies catch headers")
 	}
 	if ShouldRunHeaderAdvanceWatchdog(j, bs, 6_000_000) {
 		t.Fatal("watchdog should not run during deep body IBD")
@@ -513,5 +510,41 @@ func TestBlockFetchInvTypesNoWitness(t *testing.T) {
 	types := blockFetchInvTypes(p)
 	if len(types) != 1 || types[0] != wire.InvTypeBlock {
 		t.Fatalf("inv types=%v want MSG_BLOCK only", types)
+	}
+}
+
+func TestShouldDeferConnectForBodyDownload(t *testing.T) {
+	p, err := chain.ParamsFor(chain.MainnetDogecoin)
+	if err != nil {
+		t.Fatal(err)
+	}
+	g80, err := pow.Header80FromParams(p)
+	if err != nil {
+		t.Fatal(err)
+	}
+	dir := t.TempDir()
+	j, err := store.OpenHeaderChain(dir, g80[:])
+	if err != nil {
+		t.Fatal(err)
+	}
+	appendFakeHeaderChain(t, j, g80[:], 534_000)
+	rs, err := store.OpenRawBlockStore(dir)
+	if err != nil {
+		t.Fatal(err)
+	}
+	bs := NewBlockStoreCtx(j, nil, p, rs, nil, nil)
+	if err := EnsureLocalGenesis(bs); err != nil {
+		t.Fatal(err)
+	}
+	bs.SeedContiguousTip(54_506)
+	if !ShouldDeferConnectForBodyDownload(bs) {
+		t.Fatal("headers far ahead of bodies must defer connect")
+	}
+	bs.SeedContiguousTip(533_500)
+	if ShouldDeferConnectForBodyDownload(bs) {
+		t.Fatal("bodies within BLOCK_DOWNLOAD_WINDOW of header tip should connect")
+	}
+	if ShouldDeferConnectForBodyDownload(nil) {
+		t.Fatal("nil store must not defer")
 	}
 }

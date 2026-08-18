@@ -47,6 +47,10 @@ func (u *utxoIBDSync) onContiguousAdvance(bs *BlockStoreCtx, utxo *store.UtxoCac
 	if cont < 0 {
 		return
 	}
+	if ShouldDeferConnectForBodyDownload(bs) {
+		u.noteContiguous(cont)
+		return
+	}
 	// Connect catch-up worker owns UTXO replay while stored bodies run far ahead of chainActive.
 	if ConnectCatchUpLag(bs, utxo) >= EffectiveConnectCatchUpMinLag(bs) {
 		u.noteContiguous(cont)

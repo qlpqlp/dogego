@@ -254,8 +254,8 @@ func syncActivityHeadline(in SyncActivityInput, secSince int64, lastKind, lastMs
 		detail = "No recent progress for " + formatSecAgo(secSince) + ". Last: " + lastMsg
 	}
 
-	// Block bodies are the usual operator concern during early IBD.
-	if in.ConnectLag > 256 && in.ChainActiveHeight >= 0 {
+	// Download-first IBD: headline body download while headers still lead; connect after bodies land.
+	if in.HeaderTip <= in.ContiguousBodies+blockDownloadWindow && in.ConnectLag > 256 && in.ChainActiveHeight >= 0 {
 		head := fmt.Sprintf("Connecting stored blocks (%d ahead of chainActive)", in.ConnectLag)
 		var parts []string
 		parts = append(parts, fmt.Sprintf("chainActive through %d", in.ChainActiveHeight))
@@ -339,7 +339,13 @@ func syncActivityTasks(in SyncActivityInput, recPass int, recDetail string, recS
 		"state":  syncActivityP2PState(in),
 		"detail": syncActivityP2PDetail(in),
 	})
-	if in.ConnectLag > 256 && in.ChainActiveHeight >= 0 {
+	if in.HeaderTip > in.ContiguousBodies+blockDownloadWindow {
+		tasks = append(tasks, map[string]string{
+			"name":   "connect_catchup",
+			"state":  "deferred",
+			"detail": "waiting until block bodies catch headers (download-first IBD)",
+		})
+	} else if in.ConnectLag > 256 && in.ChainActiveHeight >= 0 {
 		d := fmt.Sprintf("replay stored bodies from height %d", in.ChainActiveHeight+1)
 		if in.ConnectBlocksPerMinute > 0 {
 			d += fmt.Sprintf("; %.1f connect/min", in.ConnectBlocksPerMinute)

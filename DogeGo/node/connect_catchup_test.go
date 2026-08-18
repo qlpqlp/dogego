@@ -218,8 +218,8 @@ func TestShouldPostBatchInlineConnect(t *testing.T) {
 	if shouldPostBatchInlineConnect(bs) {
 		t.Fatal("want false while body missing at connect frontier")
 	}
-	if got := EffectiveConnectCatchUpMinLag(bs); got != connectCatchUpMinLagFrontier {
-		t.Fatalf("min lag=%d want %d", got, connectCatchUpMinLagFrontier)
+	if !ShouldDeferConnectForBodyDownload(bs) {
+		t.Fatal("want download-first defer while headers lead bodies by >1024")
 	}
 }
 

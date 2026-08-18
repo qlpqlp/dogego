@@ -26,6 +26,9 @@ func enrichIBDProgressSnapshot(snap map[string]interface{}, j *store.HeaderJourn
 		if ShouldPauseHeaderCatchUpForBodyIBD(bs, 0) {
 			snap["body_ibd_header_paused"] = true
 		}
+		if ShouldDeferConnectForBodyDownload(bs) {
+			snap["connect_deferred_for_download"] = true
+		}
 		snap["connect_catch_up_min_lag"] = EffectiveConnectCatchUpMinLag(bs)
 		if bs.utxoAheadOfStoredBodies() && bs.Utxo != nil && bs.Utxo.TipHeight() >= 0 {
 			snap["snapshot_body_replay"] = true

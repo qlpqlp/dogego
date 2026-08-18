@@ -37,6 +37,26 @@ func contiguousHeightForAPI(cfg StartConfig) int64 {
 
 // chainActiveHeightForAPI returns Core chainActive (UTXO/connect tip), not stored bodies ahead of ConnectBlock.
 func chainActiveHeightForAPI(cfg StartConfig, headerTip int64) int64 {
+	if cfg.UtxoCache != nil || cfg.ContiguousRawHeight != nil {
+		paths := rpc.DataPaths{
+			ContiguousRawHeight: cfg.ContiguousRawHeight,
+		}
+		if cfg.UtxoCache != nil {
+			paths.Utxo = cfg.UtxoCache()
+		}
+		if cfg.Journal != nil && cfg.RawBlocks != nil {
+			return rpc.ActiveChainBlockHeight(cfg.Journal, cfg.RawBlocks, &paths)
+		}
+		if paths.Utxo != nil && paths.Utxo.TipHeight() >= 0 {
+			tip := paths.Utxo.TipHeight()
+			if cfg.ContiguousRawHeight != nil {
+				if cont := cfg.ContiguousRawHeight(); cont >= 0 && tip > cont {
+					return cont
+				}
+			}
+			return tip
+		}
+	}
 	if cfg.ChainIBDSync != nil {
 		snap := cfg.ChainIBDSync()
 		if snap.Blocks >= 0 {

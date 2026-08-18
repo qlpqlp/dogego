@@ -513,6 +513,9 @@ func mergeIBDProgressDiagnostics(summary map[string]any, prog map[string]interfa
 	if v, ok := prog["body_ibd_header_paused"].(bool); ok && v {
 		summary["dogego_body_ibd_header_paused"] = true
 	}
+	if v, ok := prog["connect_deferred_for_download"].(bool); ok && v {
+		summary["dogego_connect_deferred_for_download"] = true
+	}
 	if v, ok := prog["body_ibd_eta_minutes"].(int64); ok && v > 0 {
 		summary["dogego_body_ibd_eta_minutes"] = v
 	} else if v, ok := prog["body_ibd_eta_minutes"].(float64); ok && v > 0 {

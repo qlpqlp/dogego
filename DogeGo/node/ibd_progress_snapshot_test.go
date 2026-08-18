@@ -15,6 +15,9 @@ func TestEnrichIBDProgressSnapshotConnectCatchUpTuning(t *testing.T) {
 	if snap["connect_lag"] != int64(15_000) {
 		t.Fatalf("connect_lag=%v want 15000", snap["connect_lag"])
 	}
+	if snap["connect_deferred_for_download"] != true {
+		t.Fatal("want connect_deferred_for_download during download-first IBD")
+	}
 	if snap["connect_catch_up_passes"] != 8 {
 		t.Fatalf("passes=%v want 8", snap["connect_catch_up_passes"])
 	}

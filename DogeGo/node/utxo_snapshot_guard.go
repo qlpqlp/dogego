@@ -28,6 +28,9 @@ func utxoStartupConnectNeeded(bs *BlockStoreCtx, utxo *store.UtxoCache) bool {
 	if bs == nil {
 		return false
 	}
+	if ShouldDeferConnectForBodyDownload(bs) {
+		return false
+	}
 	cont := bs.ContiguousRawHeight()
 	if cont < 0 {
 		return true
@@ -51,9 +54,29 @@ func BodiesAlignedForUtxoSnapshot(bs *BlockStoreCtx, utxo *store.UtxoCache) bool
 	return utxo.TipHeight() <= cont+utxoSnapshotBodyMargin
 }
 
+// shouldSkipUtxoSnapshotDowngrade reports when persisting would replace a higher on-disk snapshot
+// with a lower replay tip (e.g. after quarantine + connect restart from genesis).
+func shouldSkipUtxoSnapshotDowngrade(path string, newTip int64) bool {
+	if path == "" || newTip < 0 {
+		return false
+	}
+	diskTip, err := store.ReadUtxoSnapshotDiskTip(path)
+	if err != nil || diskTip < 0 {
+		return false
+	}
+	const downgradeMargin = 256
+	return newTip+downgradeMargin < diskTip
+}
+
 // PersistUtxoSnapshotIfAligned writes utxo.cache only when stored bodies cover the UTXO tip.
 func PersistUtxoSnapshotIfAligned(bs *BlockStoreCtx, utxo *store.UtxoCache, path string, reason string) error {
 	if utxo == nil || path == "" || utxo.TipHeight() < 0 {
+		return nil
+	}
+	if shouldSkipUtxoSnapshotDowngrade(path, utxo.TipHeight()) {
+		diskTip, _ := store.ReadUtxoSnapshotDiskTip(path)
+		applog.Line("utxo", "snapshot save skipped ("+reason+"): in-memory tip "+strconv.FormatInt(utxo.TipHeight(), 10)+
+			" would downgrade on-disk tip "+strconv.FormatInt(diskTip, 10))
 		return nil
 	}
 	if !BodiesAlignedForUtxoSnapshot(bs, utxo) {

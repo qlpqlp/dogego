@@ -82,3 +82,32 @@ func TestSyncActivityStalledWhenNoBodyProgress(t *testing.T) {
 		t.Fatal("expected stalled=true with large header/body gap and no body activity")
 	}
 }
+
+func TestSyncActivityHeadlinePrefersBodyDownloadOverConnect(t *testing.T) {
+	snap := BuildSyncActivitySnapshot(SyncActivityInput{
+		HeaderTip:         6_335_103,
+		ContiguousBodies:  54_506,
+		ChainActiveHeight: 6_702,
+		ConnectLag:        47_804,
+		LowestMissing:     54_507,
+		BlocksPerMinute:   1.9,
+		InFlightBatches:   79,
+	})
+	headline, _ := snap["headline"].(string)
+	if headline != "Downloading block bodies from height 54507" {
+		t.Fatalf("headline %q want body download during download-first IBD", headline)
+	}
+	tasks, _ := snap["tasks"].([]map[string]string)
+	found := false
+	for _, task := range tasks {
+		if task["name"] == "connect_catchup" {
+			found = true
+			if task["state"] != "deferred" {
+				t.Fatalf("connect_catchup state %q want deferred", task["state"])
+			}
+		}
+	}
+	if !found {
+		t.Fatal("expected deferred connect_catchup task")
+	}
+}

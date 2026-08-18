@@ -243,6 +243,20 @@ func BodiesBehindHeaders(bs *BlockStoreCtx) bool {
 	return bs.ContiguousRawHeight() < tip
 }
 
+// ShouldDeferConnectForBodyDownload is Core-style download-first IBD: fetch headers and block
+// bodies before ConnectBlock / txindex. Connect and indexes run once bodies are within
+// BLOCK_DOWNLOAD_WINDOW of the header tip (or after IBD). UTXO-ahead snapshot replay still
+// fetches missing bodies and is not treated as connect work.
+func ShouldDeferConnectForBodyDownload(bs *BlockStoreCtx) bool {
+	if bs == nil || !BodiesBehindHeaders(bs) {
+		return false
+	}
+	if bs.utxoAheadOfStoredBodies() {
+		return false
+	}
+	return bs.forwardIBDGap() > blockDownloadWindow
+}
+
 // NeedsGenesisBlock is true when height 0 is missing from rawblocks/ but headers exist.
 func NeedsGenesisBlock(bs *BlockStoreCtx) bool {
 	if bs == nil || bs.Journal == nil || bs.Raw == nil {

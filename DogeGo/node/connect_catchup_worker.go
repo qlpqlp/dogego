@@ -80,6 +80,9 @@ func MaybeSaveIBDUtxoSnapshot(bs *BlockStoreCtx, utxo *store.UtxoCache, chainDir
 		return
 	}
 	path := store.UtxoSnapshotPath(chainDir)
+	if shouldSkipUtxoSnapshotDowngrade(path, height) {
+		return
+	}
 	ibdUtxoSnapshotSave.mu.Lock()
 	defer ibdUtxoSnapshotSave.mu.Unlock()
 	if height <= ibdUtxoSnapshotSave.lastSavedHeight {
@@ -168,8 +171,10 @@ func startConnectCatchUpWorker(ctx context.Context, bs *BlockStoreCtx, utxo *sto
 		}()
 		interval := 100 * time.Millisecond
 		for {
-			if bs != nil && ShouldPauseHeaderCatchUpForBodyIBD(bs, 0) {
-				// Prefer getdata bandwidth during deep body IBD; connect still runs but less often.
+			if ShouldDeferConnectForBodyDownload(bs) {
+				noteConnectDeferredForDownload(bs)
+				interval = 5 * time.Second
+			} else if bs != nil && ShouldPauseHeaderCatchUpForBodyIBD(bs, 0) {
 				interval = 250 * time.Millisecond
 			} else {
 				interval = 100 * time.Millisecond
@@ -181,6 +186,9 @@ func startConnectCatchUpWorker(ctx context.Context, bs *BlockStoreCtx, utxo *sto
 				return
 			case <-timer.C:
 			}
+			if ShouldDeferConnectForBodyDownload(bs) {
+				continue
+			}
 			if !connectCatchUpRunning.TryLock() {
 				continue
 			}
@@ -188,7 +196,7 @@ func startConnectCatchUpWorker(ctx context.Context, bs *BlockStoreCtx, utxo *sto
 			connectCatchUpRunning.Unlock()
 		}
 	}()
-	applog.Line("utxo", "connect catch-up worker started (chainActive replay during body IBD and caught-up lag)")
+	applog.Line("utxo", "connect catch-up worker started (download-first IBD: ConnectBlock after bodies catch headers)")
 }
 
 // startIBDConnectWorkers runs connect catch-up as soon as blockStore/UTXO are ready (Core: validation alongside download).
