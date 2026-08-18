@@ -95,6 +95,9 @@ func blockAssistSessionsStalled(raw *progressiveRawState, reg *AssistPeerRegistr
 	if raw == nil || reg == nil || reg.Count() == 0 {
 		return false
 	}
+	if raw.hasDownloadInFlight() {
+		return false
+	}
 	snap := raw.snapshot()
 	lastUnix, _ := snap["last_block_stored_at"].(int64)
 	if lastUnix <= 0 {

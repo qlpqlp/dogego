@@ -346,9 +346,9 @@ func TestForwardIBDStripeTip(t *testing.T) {
 	bs.noteBlockStoredAt(0)
 	tip, _ := j.TipHeight()
 	hi := forwardIBDStripeTip(bs, 2, tip)
-	want := int64(2 + blockDownloadWindow - 1)
+	want := int64(2 + ibdGetDataBatch - 1)
 	if hi != want {
-		t.Fatalf("forward cap hi=%d want %d (Core BLOCK_DOWNLOAD_WINDOW)", hi, want)
+		t.Fatalf("forward cap hi=%d want %d (one IBD getdata past the hole)", hi, want)
 	}
 	lo, hi2, ok := syncStripeBounds(2, hi, 1, 3)
 	if !ok || lo < 2 || hi2 > hi || lo > hi2 {

@@ -118,3 +118,65 @@ func TestLiveFeedSkipsOverlappingRefresh(t *testing.T) {
 		t.Fatalf("first refresh should be the only build, calls=%d", calls.Load())
 	}
 }
+
+func TestLiveFeedPublishesP2PWhileSummaryBlocked(t *testing.T) {
+	started := make(chan struct{})
+	release := make(chan struct{})
+	var f LiveFeed
+	f.summaryBuild = func(StartConfig) (map[string]any, error) {
+		close(started)
+		<-release
+		return map[string]any{"ok": true, "tip_height": float64(1)}, nil
+	}
+	cfg := StartConfig{
+		P2PSnapshot: func() map[string]any {
+			return map[string]any{
+				"wired":                   true,
+				"contiguous_block_height": 55013,
+				"ibd_progress": map[string]any{
+					"blocks_per_minute":     12.5,
+					"in_flight_batches":     6,
+					"lowest_missing_height": 55014,
+				},
+				"dogego_sync_activity": map[string]any{
+					"headline": "Downloading block bodies from height 55014",
+				},
+			}
+		},
+	}
+	done := make(chan struct{})
+	go func() {
+		f.refresh(cfg)
+		close(done)
+	}()
+	select {
+	case <-started:
+	case <-time.After(2 * time.Second):
+		t.Fatal("summary build did not start")
+	}
+	f.refresh(cfg)
+	deadline := time.Now().Add(3 * time.Second)
+	for time.Now().Before(deadline) {
+		f.mu.RLock()
+		live := append([]byte(nil), f.liveJSON...)
+		f.mu.RUnlock()
+		if len(live) > 0 {
+			var m map[string]any
+			if json.Unmarshal(live, &m) == nil {
+				p2, _ := m["p2p"].(map[string]any)
+				sum, _ := m["summary"].(map[string]any)
+				if p2["wired"] == true && m["from_disk_snapshot"] == false && sum["blocks_per_minute"] == 12.5 {
+					close(release)
+					select {
+					case <-done:
+					case <-time.After(2 * time.Second):
+					}
+					return
+				}
+			}
+		}
+		time.Sleep(20 * time.Millisecond)
+	}
+	close(release)
+	t.Fatal("expected live P2P overlay while BuildSummaryMap blocked")
+}

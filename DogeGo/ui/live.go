@@ -37,6 +37,7 @@ type LiveFeed struct {
 	chainDataDir string
 
 	refreshing atomic.Bool
+	p2pBusy    atomic.Bool
 	// summaryBuild, when set, replaces BuildSummaryMap (tests).
 	summaryBuild func(StartConfig) (map[string]any, error)
 }
@@ -78,7 +79,7 @@ func (f *LiveFeed) refresh(cfg StartConfig) {
 	// goroutine kept running, so IBD + a busy dashboard stacked dozens of
 	// full-chain summaries until the process died (~15 GB RSS).
 	if !f.refreshing.CompareAndSwap(false, true) {
-		f.patchSummaryTipFromManifest(cfg)
+		f.publishLiveProgress(cfg)
 		return
 	}
 
@@ -94,8 +95,7 @@ func (f *LiveFeed) refresh(cfg StartConfig) {
 	select {
 	case <-done:
 	case <-time.After(12 * time.Second):
-		f.patchSummaryTipFromManifest(cfg)
-		f.bootstrapLiveIfEmpty(cfg)
+		f.publishLiveProgress(cfg)
 	}
 }
 
@@ -191,6 +191,127 @@ func (f *LiveFeed) commitRefresh(cfg StartConfig, sum map[string]any, sumErr err
 			dir = strings.TrimSpace(cfg.ChainDataDir)
 		}
 		go f.persistSnapshotAsync(dir, sum, p2pB, mpB, analyticsCopy)
+	}
+}
+
+// publishLiveProgress updates the dashboard from the body checkpoint and a live P2P
+// snapshot without waiting for BuildSummaryMap (which can block for minutes on perfile IBD).
+func (f *LiveFeed) publishLiveProgress(cfg StartConfig) {
+	f.patchSummaryTipFromManifest(cfg)
+	f.bootstrapLiveIfEmpty(cfg)
+	if !f.p2pBusy.CompareAndSwap(false, true) {
+		return
+	}
+	go func() {
+		defer f.p2pBusy.Store(false)
+		f.commitLiveP2P(cfg)
+	}()
+}
+
+func (f *LiveFeed) commitLiveP2P(cfg StartConfig) {
+	var p2pB []byte
+	if cfg.P2PSnapshot != nil {
+		if snap := p2PSnapshotWithTimeout(cfg.P2PSnapshot); snap != nil {
+			p2pB, _ = json.Marshal(snap)
+			storeP2PSnapshotCache(snap)
+		}
+	}
+	if len(p2pB) == 0 {
+		return
+	}
+	mpB, _ := json.Marshal(MempoolDetailForAPI(cfg.Pool, 200, cfg.EffectiveFile, cfg.OrphanCount))
+	f.mu.Lock()
+	defer f.mu.Unlock()
+	f.p2pJSON = p2pB
+	f.mempoolJSON = mpB
+	var sum map[string]any
+	if len(f.summaryJSON) > 0 {
+		_ = json.Unmarshal(f.summaryJSON, &sum)
+	}
+	if sum == nil {
+		sum = map[string]any{}
+	}
+	var p2 map[string]any
+	if json.Unmarshal(p2pB, &p2) == nil {
+		overlayP2PProgressOnSummary(sum, p2)
+	}
+	sumB, _ := json.Marshal(sum)
+	f.summaryJSON = sumB
+	live := map[string]any{
+		"ok":                 true,
+		"summary":            sum,
+		"summary_stale":      true,
+		"from_disk_snapshot": false,
+		"p2p":                p2,
+	}
+	if len(mpB) > 0 {
+		var mp any
+		if json.Unmarshal(mpB, &mp) == nil {
+			live["mempool"] = mp
+		}
+	}
+	if len(f.analyticsJSON) > 0 {
+		var an any
+		if json.Unmarshal(f.analyticsJSON, &an) == nil {
+			live["analytics_summary"] = an
+		}
+	}
+	if liveB, err := json.Marshal(live); err == nil {
+		f.liveJSON = liveB
+	}
+}
+
+func overlayP2PProgressOnSummary(sum, p2p map[string]any) {
+	if sum == nil || p2p == nil {
+		return
+	}
+	delete(sum, "from_disk_snapshot")
+	if act, ok := p2p["dogego_sync_activity"]; ok && act != nil {
+		sum["dogego_sync_activity"] = act
+		if m, ok := act.(map[string]any); ok {
+			if h, _ := m["headline"].(string); h != "" {
+				sum["dogego_sync_status"] = h
+				sum["sync_status_line"] = h
+			}
+		}
+	}
+	if h, _ := p2p["contiguous_block_height"].(float64); h >= 0 {
+		sum["contiguous_raw_height"] = h
+		sum["dogego_contiguous_raw_height"] = h
+	} else if h, ok := p2p["contiguous_block_height"].(int64); ok && h >= 0 {
+		sum["contiguous_raw_height"] = h
+		sum["dogego_contiguous_raw_height"] = h
+	} else if h, ok := p2p["contiguous_block_height"].(int); ok && h >= 0 {
+		sum["contiguous_raw_height"] = h
+		sum["dogego_contiguous_raw_height"] = h
+	}
+	prog, _ := p2p["ibd_progress"].(map[string]any)
+	if prog == nil {
+		if p, ok := p2p["ibd_progress"].(map[string]interface{}); ok {
+			prog = p
+		}
+	}
+	if prog == nil {
+		return
+	}
+	if v, ok := prog["blocks_per_minute"]; ok {
+		sum["blocks_per_minute"] = v
+	}
+	if v, ok := prog["in_flight_batches"]; ok {
+		sum["in_flight_batches"] = v
+	}
+	if v, ok := prog["lowest_missing_height"]; ok {
+		sum["lowest_missing_height"] = v
+	}
+	if v, ok := prog["contiguous_raw_height"]; ok {
+		sum["contiguous_raw_height"] = v
+		sum["dogego_contiguous_raw_height"] = v
+	}
+	if v, ok := prog["max_blocks_in_transit_per_peer"]; ok {
+		sum["dogego_max_blocks_in_transit_per_peer"] = v
+	}
+	if v, ok := prog["block_stalling_timeout_body_ibd_sec"]; ok {
+		sum["dogego_block_stalling_timeout_sec"] = v
 	}
 }
 

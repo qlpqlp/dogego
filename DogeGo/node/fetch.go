@@ -773,7 +773,7 @@ func HandleInvBlockFetchEntries(ctx context.Context, w *MsgWriter, p chain.Param
 	}
 	if nBlk > 0 {
 		applog.Line("block", fmt.Sprintf("inv: %d block(s), %d tx inv(s), %d other; scheduling getdata for blocks (capped)", nBlk, nTx, nOther))
-	} else if nTx > 0 {
+	} else if nTx > 0 && !ShouldSuppressInvTxFetchDuringIBD(bs) {
 		applog.Line("mempool", fmt.Sprintf("inv: %d tx advertisement(s); getdata handled in steady-state loop (capped)", nTx))
 	}
 	done := 0

@@ -474,6 +474,23 @@ func (s *progressiveRawState) laneHasActiveBatch(lane int) bool {
 	return slot != nil && slot.cancel != nil
 }
 
+func (s *progressiveRawState) hasDownloadInFlight() bool {
+	if s == nil {
+		return false
+	}
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	if len(s.inFlight) > 0 {
+		return true
+	}
+	for _, slot := range s.activeBatch {
+		if slot != nil && slot.cancel != nil {
+			return true
+		}
+	}
+	return false
+}
+
 // startBatch begins a getdata window for one lane. If that lane is already downloading,
 // it returns ok=false and does not cancel the in-flight batch (relays used to abort assist getdata).
 func (s *progressiveRawState) startBatch(lane int, parent context.Context, d time.Duration) (ctx context.Context, end func(), ok bool) {

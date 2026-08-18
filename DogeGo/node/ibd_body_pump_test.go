@@ -80,6 +80,13 @@ func TestBlockAssistSessionsStalled(t *testing.T) {
 	if blockAssistSessionsStalled(raw, reg) {
 		t.Fatal("expected fresh body progress to clear stall")
 	}
+	raw.mu.Lock()
+	raw.lastStoredAt = time.Now().Add(-2 * time.Minute)
+	raw.inFlight = map[int64][32]byte{100: {}}
+	raw.mu.Unlock()
+	if blockAssistSessionsStalled(raw, reg) {
+		t.Fatal("in-flight getdata must not relaunch assist workers")
+	}
 }
 
 func TestMaybeRecoverIBDStallRunsWhenIdleFull(t *testing.T) {

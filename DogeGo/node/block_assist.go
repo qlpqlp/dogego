@@ -238,6 +238,15 @@ func runBlockAssistSession(ctx context.Context, conn net.Conn, addr string, p ch
 			return
 		}
 		if n == 0 {
+			if raw != nil && raw.laneHasActiveBatch(laneID) {
+				lastBodyAt = time.Now()
+				select {
+				case <-ctx.Done():
+					return
+				case <-time.After(blockAssistIdleSleep):
+				}
+				continue
+			}
 			if time.Since(lastBodyAt) >= blockAssistSessionIdleRotate && time.Since(sessionStart) >= 10*time.Second {
 				applog.Line("block", fmt.Sprintf("block-assist %s idle without blocks for %s; rotating peer", addr, blockAssistSessionIdleRotate))
 				return
