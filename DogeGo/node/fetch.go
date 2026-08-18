@@ -15,9 +15,9 @@ import (
 	"time"
 
 	"dogego/applog"
-	"dogego/consensus"
 	"dogego/chain"
 	"dogego/clock"
+	"dogego/consensus"
 	"dogego/pow"
 	"dogego/store"
 	"dogego/wire"
@@ -165,14 +165,14 @@ outer:
 				}
 				count, partial, err := ApplyHeadersMessage(j, aux, p, pl, nowUnix, bs)
 				if err != nil {
-				if IsHeaderRewindRetryErr(err) {
-					applog.Line("headers", err.Error())
-					if bs != nil {
-						MaybeResetContiguousAfterHeaderRewind(bs)
+					if IsHeaderRewindRetryErr(err) {
+						applog.Line("headers", err.Error())
+						if bs != nil {
+							MaybeResetContiguousAfterHeaderRewind(bs)
+						}
+						lastHeadersReceived = time.Time{}
+						continue outer
 					}
-					lastHeadersReceived = time.Time{}
-					continue outer
-				}
 					return err
 				}
 				if count == 0 {
@@ -444,7 +444,13 @@ func isBenignBlockFetchNoise(cmd string) bool {
 
 // fetchAndStoreRawBlocksBatch requests multiple blocks in one getdata and stores each "block" reply.
 // heights, when len(heights)==len(wants), avoids O(tip) hash scans during forward IBD.
-func fetchAndStoreRawBlocksBatch(ctx context.Context, w *MsgWriter, p chain.Params, wants [][32]byte, heights []int64, bs *BlockStoreCtx, syncLanes int) (int, error) {
+// hooks, when set, pipelines another getdata before the current request drains (ltcd minInFlightBlocks).
+type getdataBatchHooks struct {
+	OnStored func(height int64)
+	Refill   func(pending int) (hashes [][32]byte, heights []int64)
+}
+
+func fetchAndStoreRawBlocksBatch(ctx context.Context, w *MsgWriter, p chain.Params, wants [][32]byte, heights []int64, bs *BlockStoreCtx, syncLanes int, hooks *getdataBatchHooks) (int, error) {
 	hashHeights := batchHashHeights(wants, heights)
 	invOrder := blockFetchInvTypes(p)
 	stored := 0
@@ -461,8 +467,14 @@ func fetchAndStoreRawBlocksBatch(ctx context.Context, w *MsgWriter, p chain.Para
 		if len(still) == 0 {
 			return stored, lastErr
 		}
-		tryCtx, cancelTry := context.WithTimeout(ctx, perTry)
-		n, err := fetchAndStoreRawBlocksBatchInv(tryCtx, w, p, still, batchHashHeights(still, stillHeights), bs, invType, syncLanes)
+		tryCtx := ctx
+		cancelTry := func() {}
+		if hooks == nil {
+			var cancel context.CancelFunc
+			tryCtx, cancel = context.WithTimeout(ctx, perTry)
+			cancelTry = cancel
+		}
+		n, err := fetchAndStoreRawBlocksBatchInv(tryCtx, w, p, still, batchHashHeights(still, stillHeights), bs, invType, syncLanes, hooks)
 		cancelTry()
 		stored += n
 		if err != nil {
@@ -470,6 +482,44 @@ func fetchAndStoreRawBlocksBatch(ctx context.Context, w *MsgWriter, p chain.Para
 		}
 	}
 	return stored, lastErr
+}
+
+func applyGetDataRefill(w *MsgWriter, pending map[[32]byte]struct{}, hashHeights map[[32]byte]int64, invType uint32, hooks *getdataBatchHooks) (int, error) {
+	if w == nil || hooks == nil || hooks.Refill == nil || pending == nil || !shouldRefillGetData(len(pending)) {
+		return 0, nil
+	}
+	hashes, heights := hooks.Refill(len(pending))
+	if len(hashes) == 0 {
+		return 0, nil
+	}
+	fresh := make([]wire.InvEntry, 0, len(hashes))
+	for i, h := range hashes {
+		if _, already := pending[h]; already {
+			continue
+		}
+		ht := int64(-1)
+		if i < len(heights) {
+			ht = heights[i]
+		}
+		if hashHeights != nil {
+			hashHeights[h] = ht
+		}
+		pending[h] = struct{}{}
+		fresh = append(fresh, wire.InvEntry{Type: invType, Hash: h})
+	}
+	if len(fresh) == 0 {
+		return 0, nil
+	}
+	pl, err := wire.EncodeGetData(fresh)
+	if err != nil {
+		return 0, err
+	}
+	if err := w.Write("getdata", pl); err != nil {
+		return 0, err
+	}
+	peer := w.PeerAddr
+	applog.Line("block", fmt.Sprintf("getdata refill +%d block(s) on %s (%d in flight)", len(fresh), peer, len(pending)))
+	return len(fresh), nil
 }
 
 func wantsMissingRaw(bs *BlockStoreCtx, wants [][32]byte, heights []int64, hashHeights map[[32]byte]int64) (still [][32]byte, stillHeights []int64) {
@@ -501,7 +551,7 @@ func batchHashHeights(wants [][32]byte, heights []int64) map[[32]byte]int64 {
 	return m
 }
 
-func fetchAndStoreRawBlocksBatchInv(ctx context.Context, w *MsgWriter, p chain.Params, wants [][32]byte, hashHeights map[[32]byte]int64, bs *BlockStoreCtx, invType uint32, syncLanes int) (int, error) {
+func fetchAndStoreRawBlocksBatchInv(ctx context.Context, w *MsgWriter, p chain.Params, wants [][32]byte, hashHeights map[[32]byte]int64, bs *BlockStoreCtx, invType uint32, syncLanes int, hooks *getdataBatchHooks) (int, error) {
 	if bs == nil || bs.Raw == nil || len(wants) == 0 {
 		return 0, nil
 	}
@@ -538,8 +588,23 @@ func fetchAndStoreRawBlocksBatchInv(ctx context.Context, w *MsgWriter, p chain.P
 	}
 	stored := 0
 	stubRejects := 0
+	requested := len(entries)
 	var ignoredCmds []string
-	maxReads := 500 * len(entries)
+	maxReads := 500 * requested
+	enqueueRefill := func() error {
+		added, err := applyGetDataRefill(w, pending, hashHeights, invType, hooks)
+		if err != nil {
+			return err
+		}
+		if added > 0 {
+			requested += added
+			maxReads += 500 * added
+		}
+		return nil
+	}
+	if err := enqueueRefill(); err != nil {
+		return 0, err
+	}
 	batchDL := blockBatchDeadline(ctx, syncLanes, bs)
 	abortBatch := make(chan struct{})
 	go func() {
@@ -568,7 +633,7 @@ func fetchAndStoreRawBlocksBatchInv(ctx context.Context, w *MsgWriter, p chain.P
 		}
 		if time.Now().After(batchDL) {
 			if len(pending) > 0 {
-				applog.Line("block", fmt.Sprintf("getdata batch deadline expired with %d/%d block(s) still pending on %s", len(pending), len(entries), w.PeerAddr))
+				applog.Line("block", fmt.Sprintf("getdata batch deadline expired with %d/%d block(s) still pending on %s", len(pending), requested, w.PeerAddr))
 			}
 			break
 		}
@@ -616,24 +681,33 @@ func fetchAndStoreRawBlocksBatchInv(ctx context.Context, w *MsgWriter, p chain.P
 			notifyBlockFromPeer(bs, w.PeerAddr, got)
 			delete(pending, got)
 			stored++
+			if hooks != nil && hooks.OnStored != nil {
+				hooks.OnStored(height)
+			}
 			// Core MarkBlockAsReceived: nDownloadingSince = now when the front of the
 			// in-flight queue is delivered. Refresh the batch window so slow-but-live
 			// ancient getdata is not killed after the first block.
 			limit := EffectiveBlockDownloadTimeout(bs, syncLanes)
 			batchDL = time.Now().Add(limit)
 			hardTimer.Reset(limit + 250*time.Millisecond)
-			if stored == 1 && len(entries) <= 4 {
+			if stored == 1 && requested <= 4 {
 				applog.Line("block", fmt.Sprintf("batched block %x… stored (%d B) height %d", got[:4], len(payload), height))
 			}
+			if err := enqueueRefill(); err != nil {
+				return stored, err
+			}
 		case "notfound":
-			entries, err := wire.DecodeInvPayload(payload)
+			nf, err := wire.DecodeInvPayload(payload)
 			if err != nil {
 				continue
 			}
-			for _, e := range entries {
+			for _, e := range nf {
 				if e.Type == invType || e.Type == wire.InvTypeBlock || e.Type == wire.InvTypeWitnessBlock {
 					delete(pending, e.Hash)
 				}
+			}
+			if err := enqueueRefill(); err != nil {
+				return stored, err
 			}
 		case "reject":
 			rj, err := wire.DecodeRejectPayload(payload)
@@ -650,10 +724,10 @@ func fetchAndStoreRawBlocksBatchInv(ctx context.Context, w *MsgWriter, p chain.P
 			}
 		}
 	}
-	if stored == 0 && len(entries) > 0 {
-		msg := fmt.Sprintf("batch incomplete: 0/%d block(s) stored", len(entries))
+	if stored == 0 && requested > 0 {
+		msg := fmt.Sprintf("batch incomplete: 0/%d block(s) stored", requested)
 		if len(pending) > 0 {
-			msg = fmt.Sprintf("batch incomplete: %d/%d block(s) missing (notfound or timeout)", len(pending), len(entries))
+			msg = fmt.Sprintf("batch incomplete: %d/%d block(s) missing (notfound or timeout)", len(pending), requested)
 		}
 		if stubRejects > 0 {
 			msg += fmt.Sprintf("; rejected %d undersized stub(s)", stubRejects)

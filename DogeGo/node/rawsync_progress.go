@@ -9,7 +9,6 @@ package node
 import (
 	"context"
 	"fmt"
-	"hash/fnv"
 	"sync"
 	"time"
 
@@ -28,21 +27,22 @@ type rawBatchClaim struct {
 
 // progressiveRawState coordinates forward raw-block download with parallel workers via in-flight claims.
 type progressiveRawState struct {
-	mu          sync.Mutex
-	chainDir    string
-	lastTip     int64
-	nextProbe   int64 // scan start for gaps (ascending)
-	idleFull    bool
+	mu           sync.Mutex
+	chainDir     string
+	lastTip      int64
+	nextProbe    int64 // scan start for gaps (ascending)
+	idleFull     bool
 	inFlight     map[int64][32]byte
 	inFlightLane map[int64]int // height → sync lane (0 = primary)
 	syncWorkers  int           // parallel download lanes (primary + block-assist); 1 = no striping
 
-	ibdStarted       time.Time
-	blocksStoredIBD  int64
-	lastStoredAt     time.Time
-	rateSamples      []ibdRateSample // recent window for stable blk/min (not lifetime mean)
+	ibdStarted      time.Time
+	blocksStoredIBD int64
+	lastStoredAt    time.Time
+	rateSamples     []ibdRateSample // recent window for stable blk/min (not lifetime mean)
 
 	laneAddr      map[int]string // sync lane → peer host:port (block stall detection)
+	peerLane      map[string]int // peer host:port → unique getdata lane (no hash collisions)
 	stallingSince time.Time      // Core nStallingSince when frontier height is in-flight
 	lastStallPeer string         // last peer penalized for block stalling (RPC snapshot)
 	lastStallAt   time.Time
@@ -86,19 +86,45 @@ func (s *progressiveRawState) syncWorkerCount() int {
 	return n
 }
 
-// laneForAddr picks a sync lane for a non-primary P2P link (lane 0 is reserved for the primary peer).
+// laneForAddr picks a unique sync lane for a non-primary P2P link (lane 0 is reserved for the primary peer).
+// Hashing into a small worker count made 17 outbound peers share 5 assist lanes and cancel each other's getdata.
 func (s *progressiveRawState) laneForAddr(addr string) int {
-	n := s.syncWorkerCount()
-	if n <= 1 {
-		return 0
+	if s == nil || addr == "" {
+		return 1
 	}
-	h := fnv.New32a()
-	_, _ = h.Write([]byte(addr))
-	slot := 1 + int(h.Sum32()%uint32(n-1))
-	if slot >= n {
-		slot = n - 1
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	if s.peerLane == nil {
+		s.peerLane = make(map[string]int)
 	}
-	return slot
+	if id, ok := s.peerLane[addr]; ok && id > 0 {
+		return id
+	}
+	used := make(map[int]struct{}, len(s.peerLane)+len(s.activeBatch)+len(s.laneAddr))
+	for _, id := range s.peerLane {
+		used[id] = struct{}{}
+	}
+	for lane := range s.activeBatch {
+		used[lane] = struct{}{}
+	}
+	for lane := range s.laneAddr {
+		used[lane] = struct{}{}
+	}
+	id := 1
+	for {
+		if _, taken := used[id]; !taken {
+			break
+		}
+		id++
+	}
+	s.peerLane[addr] = id
+	if id+1 > s.syncWorkers {
+		s.syncWorkers = id + 1
+	}
+	if s.syncWorkers < 2 {
+		s.syncWorkers = 2
+	}
+	return id
 }
 
 // SetSyncParallelism configures height stripes for parallel getdata (include primary link in the count).
@@ -221,6 +247,7 @@ func (s *progressiveRawState) initProgressiveRawAtStartup(chainDir string, bs *B
 		s.SyncCheckpointToContiguous(cont)
 	}
 }
+
 // InitFromCheckpoint restores nextProbe from rawblocks_sync.json when present.
 // contiguous is the connected raw-body height (-1 if unknown); stale checkpoints far ahead of
 // bodies are clamped so forward IBD always resumes from the lowest missing height.
@@ -295,6 +322,16 @@ func (s *progressiveRawState) ReleaseLaneInFlight(lane int) int {
 		delete(s.inFlightLane, h)
 		freed++
 	}
+	if slot := s.activeBatch[lane]; slot != nil && slot.cancel != nil {
+		slot.cancel()
+		delete(s.activeBatch, lane)
+	}
+	if s.laneAddr != nil {
+		if addr := s.laneAddr[lane]; addr != "" && s.peerLane != nil {
+			delete(s.peerLane, addr)
+		}
+		delete(s.laneAddr, lane)
+	}
 	if freed > 0 {
 		s.idleFull = false
 		applog.Line("block", fmt.Sprintf("released %d in-flight block height(s) on sync lane %d (peer disconnected)", freed, lane))
@@ -314,6 +351,7 @@ func (s *progressiveRawState) ResetInFlightForHeaderRewind() {
 	s.inFlight = make(map[int64][32]byte)
 	s.inFlightLane = make(map[int64]int)
 	s.laneAddr = make(map[int]string)
+	s.peerLane = make(map[string]int)
 	s.laneDownloadSince = make(map[int]time.Time)
 	s.stallingSince = time.Time{}
 	s.idleFull = false
@@ -426,20 +464,44 @@ func (s *progressiveRawState) bodiesDownloadActive(bs *BlockStoreCtx) bool {
 	return bs != nil && BodiesBehindHeaders(bs)
 }
 
-func (s *progressiveRawState) startBatch(lane int, parent context.Context, d time.Duration) (context.Context, func()) {
+func (s *progressiveRawState) laneHasActiveBatch(lane int) bool {
+	if s == nil || lane < 0 {
+		return false
+	}
 	s.mu.Lock()
-	s.batchGen++
-	gen := s.batchGen
+	defer s.mu.Unlock()
+	slot := s.activeBatch[lane]
+	return slot != nil && slot.cancel != nil
+}
+
+// startBatch begins a getdata window for one lane. If that lane is already downloading,
+// it returns ok=false and does not cancel the in-flight batch (relays used to abort assist getdata).
+func (s *progressiveRawState) startBatch(lane int, parent context.Context, d time.Duration) (ctx context.Context, end func(), ok bool) {
+	s.mu.Lock()
 	if s.activeBatch == nil {
 		s.activeBatch = make(map[int]*batchSlot)
 	}
 	if old := s.activeBatch[lane]; old != nil && old.cancel != nil {
-		old.cancel()
+		s.mu.Unlock()
+		return nil, nil, false
 	}
+	s.batchGen++
+	gen := s.batchGen
 	s.mu.Unlock()
 
-	batchCtx, cancel := context.WithTimeout(parent, d)
+	var batchCtx context.Context
+	var cancel context.CancelFunc
+	if d <= 0 {
+		batchCtx, cancel = context.WithCancel(parent)
+	} else {
+		batchCtx, cancel = context.WithTimeout(parent, d)
+	}
 	s.mu.Lock()
+	if old := s.activeBatch[lane]; old != nil && old.cancel != nil {
+		s.mu.Unlock()
+		cancel()
+		return nil, nil, false
+	}
 	s.activeBatch[lane] = &batchSlot{gen: gen, cancel: cancel}
 	s.mu.Unlock()
 
@@ -450,7 +512,7 @@ func (s *progressiveRawState) startBatch(lane int, parent context.Context, d tim
 			delete(s.activeBatch, lane)
 		}
 		s.mu.Unlock()
-	}
+	}, true
 }
 
 func (s *progressiveRawState) cancelAllActiveBatches() {
@@ -540,12 +602,15 @@ func (s *progressiveRawState) claimBatch(bs *BlockStoreCtx, workerID int) (rawBa
 		s.inFlightLane = make(map[int64]int)
 	}
 	idle := s.idleFull
+	if workerID < 0 {
+		workerID = 0
+	}
+	if workerID+1 > s.syncWorkers {
+		s.syncWorkers = workerID + 1
+	}
 	workers := s.syncWorkers
 	if workers < 1 {
 		workers = 1
-	}
-	if workerID < 0 || workerID >= workers {
-		workerID = 0
 	}
 	nextProbe := s.nextProbe
 	inFlightSnap := make(map[int64][32]byte, len(s.inFlight))
@@ -689,6 +754,30 @@ func (s *progressiveRawState) inFlightCountForLaneLocked(lane int) int {
 		}
 	}
 	return n
+}
+
+func (s *progressiveRawState) releaseInFlightHeight(h int64) {
+	if s == nil || h < 0 {
+		return
+	}
+	s.mu.Lock()
+	delete(s.inFlight, h)
+	delete(s.inFlightLane, h)
+	s.mu.Unlock()
+}
+
+func mergeRawBatchClaims(base rawBatchClaim, extra []rawBatchClaim) rawBatchClaim {
+	for _, e := range extra {
+		if len(e.heights) == 0 {
+			continue
+		}
+		base.heights = append(base.heights, e.heights...)
+		base.hashes = append(base.hashes, e.hashes...)
+		if e.hi > base.hi {
+			base.hi = e.hi
+		}
+	}
+	return base
 }
 
 // planClaimRange selects missing heights without holding progressiveRawState.mu or mutating in-flight maps.
@@ -856,6 +945,9 @@ func (s *progressiveRawState) tryFetchMissingBatches(ctx context.Context, w *Msg
 		if w != nil && w.PeerAddr != "" {
 			s.noteLanePeer(workerID, w.PeerAddr)
 		}
+		if s.laneHasActiveBatch(workerID) {
+			break
+		}
 		if scorer != nil {
 			if stallPeer, stalled := s.maybePenalizeStallingPeer(bs, scorer, book); stalled {
 				return total, blockStallError(stallPeer)
@@ -876,9 +968,37 @@ func (s *progressiveRawState) tryFetchMissingBatches(ctx context.Context, w *Msg
 		NoteBlockGetdata(claim.lo, claim.hi, workerID)
 		lanes := s.syncWorkerCount()
 		batchTimeout := EffectiveBlockDownloadTimeout(bs, lanes)
-		batchCtx, endBatch := s.startBatch(workerID, ctx, batchTimeout)
-		n, ferr := fetchAndStoreRawBlocksBatch(batchCtx, w, p, claim.hashes, claim.heights, bs, lanes)
+		if shouldPipelineGetData(bs) {
+			// Progress is tracked by batchDL refresh on each stored block; a hard
+			// timeout here would abort ltcd-style getdata refill mid-pipe.
+			batchTimeout = 0
+		}
+		batchCtx, endBatch, started := s.startBatch(workerID, ctx, batchTimeout)
+		if !started {
+			s.finishBatch(bs, claim, 0, nil)
+			break
+		}
+		var extra []rawBatchClaim
+		var hooks *getdataBatchHooks
+		if shouldPipelineGetData(bs) {
+			hooks = &getdataBatchHooks{
+				OnStored: s.releaseInFlightHeight,
+				Refill: func(pending int) ([][32]byte, []int64) {
+					if !shouldRefillGetData(pending) {
+						return nil, nil
+					}
+					more, ok := s.claimBatch(bs, workerID)
+					if !ok || len(more.heights) == 0 {
+						return nil, nil
+					}
+					extra = append(extra, more)
+					return more.hashes, more.heights
+				},
+			}
+		}
+		n, ferr := fetchAndStoreRawBlocksBatch(batchCtx, w, p, claim.hashes, claim.heights, bs, lanes, hooks)
 		endBatch()
+		claim = mergeRawBatchClaims(claim, extra)
 		if n > 0 {
 			s.mu.Lock()
 			s.noteLaneDownloadProgressLocked(workerID)

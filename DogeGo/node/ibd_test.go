@@ -7,8 +7,10 @@
 package node
 
 import (
+	"context"
 	"encoding/binary"
 	"testing"
+	"time"
 
 	"dogego/chain"
 	"dogego/consensus"
@@ -211,8 +213,35 @@ func TestRangeHasMissingBlock(t *testing.T) {
 func TestLaneForAddr(t *testing.T) {
 	var s progressiveRawState
 	s.SetSyncParallelism(7)
-	if s.laneForAddr("1.2.3.4:22556") == 0 {
+	a := s.laneForAddr("1.2.3.4:22556")
+	b := s.laneForAddr("5.6.7.8:22556")
+	if a == 0 || b == 0 {
 		t.Fatal("non-primary addr should not use lane 0")
+	}
+	if a == b {
+		t.Fatalf("distinct peers must not share a getdata lane (got %d)", a)
+	}
+	if s.laneForAddr("1.2.3.4:22556") != a {
+		t.Fatal("lane assignment must be stable for a peer")
+	}
+}
+
+func TestStartBatchDoesNotCancelInFlight(t *testing.T) {
+	var s progressiveRawState
+	parent := context.Background()
+	ctx1, end1, ok := s.startBatch(1, parent, time.Minute)
+	if !ok || ctx1 == nil {
+		t.Fatal("first startBatch should start")
+	}
+	defer end1()
+	_, _, ok2 := s.startBatch(1, parent, time.Minute)
+	if ok2 {
+		t.Fatal("second startBatch on same lane must not cancel the first")
+	}
+	select {
+	case <-ctx1.Done():
+		t.Fatal("first batch context was canceled")
+	default:
 	}
 }
 
@@ -463,13 +492,67 @@ func TestEffectiveProgressiveBatchSizeForIBDDeepBodyPause(t *testing.T) {
 	bs := NewBlockStoreCtx(j, nil, p, rs, nil, nil)
 	bs.SeedContiguousTip(616)
 	got := EffectiveProgressiveBatchSizeForIBD(bs, 8)
-	if got > 16 {
-		t.Fatalf("batch size during body IBD pause got %d want <=16", got)
+	if got != ibdGetDataBatch {
+		t.Fatalf("batch size during download-first body IBD got %d want %d (ltcd-style fat getdata)", got, ibdGetDataBatch)
 	}
 	bs.SeedContiguousTip(3085)
 	got2 := EffectiveProgressiveBatchSizeForIBD(bs, 6)
-	if got2 != 16 {
-		t.Fatalf("batch at height 3085 during pause got %d want 16 not 32", got2)
+	if got2 != ibdGetDataBatch {
+		t.Fatalf("batch at height 3085 during download-first got %d want %d", got2, ibdGetDataBatch)
+	}
+}
+
+func TestShouldRefillGetData(t *testing.T) {
+	if shouldRefillGetData(minInFlightBlocks) {
+		t.Fatal("at minInFlightBlocks must not refill")
+	}
+	if !shouldRefillGetData(minInFlightBlocks - 1) {
+		t.Fatal("below minInFlightBlocks must refill")
+	}
+	if !shouldRefillGetData(0) {
+		t.Fatal("empty in-flight queue must refill like ltcd")
+	}
+}
+
+func TestApplyGetDataRefillSkipsWhenAboveMin(t *testing.T) {
+	pending := make(map[[32]byte]struct{}, minInFlightBlocks)
+	for i := 0; i < minInFlightBlocks; i++ {
+		pending[[32]byte{byte(i)}] = struct{}{}
+	}
+	called := 0
+	hooks := &getdataBatchHooks{Refill: func(int) ([][32]byte, []int64) {
+		called++
+		return [][32]byte{{9}}, []int64{1}
+	}}
+	n, err := applyGetDataRefill(&MsgWriter{}, pending, map[[32]byte]int64{}, wire.InvTypeBlock, hooks)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if n != 0 || called != 0 {
+		t.Fatalf("refill ran with a full pipe n=%d called=%d", n, called)
+	}
+}
+
+func TestMergeRawBatchClaims(t *testing.T) {
+	base := rawBatchClaim{lo: 10, hi: 20, heights: []int64{10, 20}, hashes: [][32]byte{{1}, {2}}}
+	extra := []rawBatchClaim{{lo: 21, hi: 25, heights: []int64{21, 25}, hashes: [][32]byte{{3}, {4}}}}
+	got := mergeRawBatchClaims(base, extra)
+	if got.hi != 25 || len(got.heights) != 4 || len(got.hashes) != 4 {
+		t.Fatalf("merged claim %+v", got)
+	}
+}
+
+func TestReleaseInFlightHeight(t *testing.T) {
+	s := &progressiveRawState{
+		inFlight:     map[int64][32]byte{100: {}, 101: {}},
+		inFlightLane: map[int64]int{100: 0, 101: 0},
+	}
+	s.releaseInFlightHeight(100)
+	if _, ok := s.inFlight[100]; ok {
+		t.Fatal("height 100 still in flight")
+	}
+	if _, ok := s.inFlight[101]; !ok {
+		t.Fatal("height 101 should remain in flight")
 	}
 }
 

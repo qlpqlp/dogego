@@ -23,7 +23,9 @@ const blockStallingTimeout = 2 * time.Second
 
 // During deep body IBD, ancient getdata often exceeds 2s; a hard 2s disconnect churns peers
 // and collapses download rate. Soften timeout and prefer soft cooldown while bodies lag headers.
-const blockStallingTimeoutBodyIBD = 15 * time.Second
+// During deep body IBD, match ltcd netsync maxStallDuration (3m). A 15s release
+// dropped the frontier claim while a large getdata was still in flight.
+const blockStallingTimeoutBodyIBD = 3 * time.Minute
 
 func blockStallingTimeoutFor(bs *BlockStoreCtx) time.Duration {
 	if bs != nil && ShouldPauseHeaderCatchUpForBodyIBD(bs, 0) {

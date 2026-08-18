@@ -17,8 +17,15 @@ import (
 
 // IBD tuning (Core downloads blocks in parallel from several peers; historical catch-up is sequential in height).
 const (
-	progressiveBatchSize       = 16 // per-peer in-flight cap (Core MAX_BLOCKS_IN_TRANSIT_PER_PEER)
-	progressiveBatchSizeMax    = 32 // scaled cap when many parallel sync lanes share load
+	progressiveBatchSize    = 16 // per-peer in-flight cap (Core MAX_BLOCKS_IN_TRANSIT_PER_PEER)
+	progressiveBatchSizeMax = 32 // scaled cap when many parallel sync lanes share load
+	// ibdGetDataBatch is ltcd-style (netsync/manager.go fetchHeaderBlocks): one getdata
+	// keeps the peer busy. ltcd allows up to wire.MaxInvPerMsg (50_000); 256 is large
+	// enough to fill a fast pipe without a 50k inv that some Dogecoin peers drop.
+	ibdGetDataBatch = 256
+	// minInFlightBlocks matches ltcd netsync: send the next getdata when requested
+	// blocks on that peer drop below this, so the TCP pipe does not drain between batches.
+	minInFlightBlocks          = 10
 	tipBackfillDeferGap        = 512
 	blockDownloadWindow        = 1024 // Core validation.h BLOCK_DOWNLOAD_WINDOW
 	forwardIBDParallelWindow   = 4096 // wider stripe span when many parallel lanes share load
@@ -132,23 +139,34 @@ func IdleFetchBatchesPerRound(bs *BlockStoreCtx) int {
 	return 2
 }
 
-// EffectiveProgressiveBatchSizeForIBD caps batch size near the contiguous frontier so ancient
-// block requests stay small (many peers ignore or stall on 32-block ancient getdata bursts).
+// shouldRefillGetData is ltcd's minInFlightBlocks check: request more before the
+// current getdata fully drains so the peer's send buffer stays busy.
+func shouldRefillGetData(pending int) bool {
+	return pending < minInFlightBlocks
+}
+
+// shouldPipelineGetData enables mid-batch getdata refill during download-first IBD.
+func shouldPipelineGetData(bs *BlockStoreCtx) bool {
+	return ShouldDeferConnectForBodyDownload(bs) || ShouldPauseHeaderCatchUpForBodyIBD(bs, 0)
+}
+
+// EffectiveProgressiveBatchSizeForIBD sizes getdata during body IBD.
+// Download-first (headers far ahead): fat getdata like ltcd fetchHeaderBlocks.
+// tryFetchMissingBatches then refills when pending drops below minInFlightBlocks.
 func EffectiveProgressiveBatchSizeForIBD(bs *BlockStoreCtx, syncLanes int) int {
 	n := EffectiveProgressiveBatchSize(syncLanes)
 	if bs == nil {
 		return n
 	}
 	cont := bs.ContiguousRawHeight()
-	// Deep body IBD (header getheaders paused): never use full 32-block bursts on ancient heights.
-	if ShouldPauseHeaderCatchUpForBodyIBD(bs, 0) {
-		if n > 16 {
-			n = 16
+	if ShouldDeferConnectForBodyDownload(bs) || ShouldPauseHeaderCatchUpForBodyIBD(bs, 0) {
+		if cont < 32 {
+			if n > 8 {
+				return 8
+			}
+			return n
 		}
-		if cont < 32 && n > 8 {
-			n = 8
-		}
-		return n
+		return ibdGetDataBatch
 	}
 	if cont >= 1000 {
 		return n
