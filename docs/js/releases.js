@@ -20,8 +20,16 @@
     release: null,
     sourcesChecked: [],
     error: null,
-    checksums: {}
+    checksums: {},
+    fromFallback: false
   };
+
+  var GITHUB_API_HEADERS = {
+    Accept: "application/vnd.github+json"
+  };
+
+  var RELEASES_CACHE_KEY = "dogego:releases:v1";
+  var RELEASES_CACHE_TTL_MS = 30 * 60 * 1000;
 
   function t(key, params) {
     if (global.DogeGoSiteI18n && typeof global.DogeGoSiteI18n.t === "function") {
@@ -67,14 +75,89 @@
     return null;
   }
 
-  function findChecksumUrl(assets, assetName) {
-    if (!assetName) return "";
+  function findChecksumAsset(assets, assetName) {
+    if (!assetName) return null;
     var want = (assetName + ".sha256").toLowerCase();
     for (var i = 0; i < (assets || []).length; i++) {
       var a = assets[i];
-      if (a.name && a.name.toLowerCase() === want && a.browser_download_url) return a.browser_download_url;
+      if (a.name && a.name.toLowerCase() === want && a.id) return a;
     }
-    return "";
+    return null;
+  }
+
+  function isGitHubRateLimited(resp) {
+    return resp && (resp.status === 403 || resp.status === 429);
+  }
+
+  function readReleaseCache() {
+    try {
+      var raw = sessionStorage.getItem(RELEASES_CACHE_KEY);
+      if (!raw) return null;
+      var parsed = JSON.parse(raw);
+      if (!parsed || !parsed.at || Date.now() - parsed.at > RELEASES_CACHE_TTL_MS) return null;
+      return parsed.result || null;
+    } catch (_) {
+      return null;
+    }
+  }
+
+  function writeReleaseCache(result) {
+    if (!result || !result.release) return;
+    try {
+      sessionStorage.setItem(RELEASES_CACHE_KEY, JSON.stringify({ at: Date.now(), result: result }));
+    } catch (_) {}
+  }
+
+  function fallbackManifestUrl() {
+    try {
+      return new URL("data/latest-release.json", window.location.href).href;
+    } catch (_) {
+      return "data/latest-release.json";
+    }
+  }
+
+  function normalizeFallbackRelease(raw) {
+    if (!raw || !raw.tag) return null;
+    return {
+      tag: raw.tag,
+      version: raw.version || normalizeSemver(raw.tag),
+      name: raw.name || raw.tag,
+      body: typeof raw.body === "string" ? raw.body : "",
+      htmlUrl: raw.htmlUrl,
+      source: "https://github.com/" + raw.owner + "/" + raw.repo,
+      sourceLabel: raw.sourceLabel || (raw.owner + "/" + raw.repo),
+      owner: raw.owner,
+      repo: raw.repo,
+      assets: raw.assets || [],
+      publishedAt: raw.publishedAt || "",
+      prerelease: !!raw.prerelease,
+      checksums: raw.checksums || null,
+      fromFallback: true
+    };
+  }
+
+  function readEmbeddedFallbackRelease() {
+    var el = document.getElementById("release-fallback-data");
+    if (!el) return null;
+    try {
+      var data = JSON.parse(el.textContent || "");
+      if (!data || !data.release) return null;
+      return normalizeFallbackRelease(data.release);
+    } catch (_) {
+      return null;
+    }
+  }
+
+  function fetchFallbackRelease() {
+    return fetch(fallbackManifestUrl(), { cache: "no-cache" }).then(function (resp) {
+      if (!resp.ok) return readEmbeddedFallbackRelease();
+      return resp.json().then(function (data) {
+        if (!data || !data.release) return readEmbeddedFallbackRelease();
+        return normalizeFallbackRelease(data.release);
+      });
+    }).catch(function () {
+      return readEmbeddedFallbackRelease();
+    });
   }
 
   function parseChecksumFile(text) {
@@ -84,10 +167,16 @@
     return "";
   }
 
-  function fetchChecksumText(url) {
-    if (!url) return Promise.resolve("");
+  // browser_download_url lives on github.com and is blocked by CORS from dogego.org.
+  // Download release asset bytes via api.github.com (same origin policy as release list).
+  function fetchChecksumViaAPI(owner, repo, assetId) {
+    if (!owner || !repo || !assetId) return Promise.resolve("");
+    var url = "https://api.github.com/repos/" + encodeURIComponent(owner) + "/" +
+      encodeURIComponent(repo) + "/releases/assets/" + assetId;
     return fetch(url, {
-      headers: { "User-Agent": "DogeGo-Website-Release-Check" }
+      headers: {
+        Accept: "application/octet-stream"
+      }
     }).then(function (resp) {
       if (!resp.ok) return "";
       return resp.text();
@@ -104,6 +193,8 @@
       htmlUrl: rel.html_url,
       source: "https://github.com/" + owner + "/" + repo,
       sourceLabel: owner + "/" + repo,
+      owner: owner,
+      repo: repo,
       assets: rel.assets || [],
       publishedAt: rel.published_at || "",
       prerelease: !!rel.prerelease
@@ -136,67 +227,127 @@
     return best;
   }
 
-  function fetchLatestRelease(owner, repo) {
-    var listUrl = "https://api.github.com/repos/" + encodeURIComponent(owner) + "/" + encodeURIComponent(repo) + "/releases?per_page=30";
-    var latestUrl = "https://api.github.com/repos/" + encodeURIComponent(owner) + "/" + encodeURIComponent(repo) + "/releases/latest";
-    var headers = {
-      Accept: "application/vnd.github+json",
-      "User-Agent": "DogeGo-Website-Release-Check"
-    };
-    return fetch(listUrl, { headers: headers }).then(function (resp) {
+  function fetchLatestReleaseFromList(owner, repo) {
+    var listUrl = "https://api.github.com/repos/" + encodeURIComponent(owner) + "/" +
+      encodeURIComponent(repo) + "/releases?per_page=30";
+    return fetch(listUrl, { headers: GITHUB_API_HEADERS }).then(function (resp) {
       if (resp.status === 404) return null;
-      if (resp.ok) {
-        return resp.json().then(function (list) {
-          var best = pickBestFromList(list, owner, repo);
-          if (best) return best;
-          return fetch(latestUrl, { headers: headers }).then(function (latestResp) {
-            if (latestResp.status === 404) return null;
-            if (!latestResp.ok) return null;
-            return latestResp.json().then(function (rel) {
-              return mapRelease(rel, owner, repo);
-            });
-          });
-        });
-      }
-      return fetch(latestUrl, { headers: headers }).then(function (latestResp) {
-        if (latestResp.status === 404) return null;
-        if (!latestResp.ok) throw new Error(owner + "/" + repo + ": HTTP " + latestResp.status);
-        return latestResp.json().then(function (rel) {
-          return mapRelease(rel, owner, repo);
-        });
+      if (isGitHubRateLimited(resp)) return { rateLimited: true };
+      if (!resp.ok) return null;
+      return resp.json().then(function (list) {
+        return pickBestFromList(list, owner, repo);
       });
     });
   }
 
+  function fetchLatestRelease(owner, repo) {
+    return fetchLatestReleaseFromList(owner, repo);
+  }
+
+  function pickBestRelease(candidates) {
+    var best = null;
+    (candidates || []).forEach(function (r) {
+      if (!r || r.error || r.rateLimited || !r.tag) return;
+      if (!best) {
+        best = r;
+        return;
+      }
+      var cmp = semverCompare(r.version, best.version);
+      if (cmp > 0) {
+        best = r;
+        return;
+      }
+      if (cmp === 0) {
+        if (r.publishedAt && best.publishedAt && r.publishedAt > best.publishedAt) {
+          best = r;
+        } else if (r.publishedAt === best.publishedAt && best.prerelease && !r.prerelease) {
+          best = r;
+        }
+      }
+    });
+    return best;
+  }
+
+  function fetchRemainingSources(startIndex) {
+    var tail = UPDATE_SOURCES.slice(startIndex);
+    if (!tail.length) return Promise.resolve([]);
+    var checked = [];
+    return tail.reduce(function (chain, src) {
+      return chain.then(function (results) {
+        checked.push(src.owner + "/" + src.repo);
+        return fetchLatestRelease(src.owner, src.repo).then(function (release) {
+          results.push(release);
+          return results;
+        }).catch(function (err) {
+          results.push({ error: err });
+          return results;
+        });
+      });
+    }, Promise.resolve([])).then(function (results) {
+      return { results: results, sourcesChecked: checked };
+    });
+  }
+
   function fetchBestRelease() {
+    var cached = readReleaseCache();
+    if (cached) return Promise.resolve(cached);
+
     var sourcesChecked = [];
-    return Promise.all(UPDATE_SOURCES.map(function (src) {
-      sourcesChecked.push(src.owner + "/" + src.repo);
-      return fetchLatestRelease(src.owner, src.repo).catch(function (err) {
-        return { error: err };
-      });
-    })).then(function (results) {
-      var best = null;
-      results.forEach(function (r) {
-        if (!r || r.error || !r.tag) return;
-        if (!best) {
-          best = r;
-          return;
-        }
-        var cmp = semverCompare(r.version, best.version);
-        if (cmp > 0) {
-          best = r;
-          return;
-        }
-        if (cmp === 0) {
-          if (r.publishedAt && best.publishedAt && r.publishedAt > best.publishedAt) {
-            best = r;
-          } else if (r.publishedAt === best.publishedAt && best.prerelease && !r.prerelease) {
-            best = r;
+    var primary = UPDATE_SOURCES[0];
+    sourcesChecked.push(primary.owner + "/" + primary.repo);
+
+    return fetchLatestRelease(primary.owner, primary.repo).then(function (primaryRelease) {
+      if (primaryRelease && primaryRelease.rateLimited) {
+        return fetchFallbackRelease().then(function (fallback) {
+          if (fallback) {
+            return {
+              release: fallback,
+              sourcesChecked: sourcesChecked.concat(["docs/data/latest-release.json"])
+            };
           }
+          return { release: null, sourcesChecked: sourcesChecked };
+        });
+      }
+
+      if (primaryRelease && primaryRelease.tag) {
+        var hit = { release: primaryRelease, sourcesChecked: sourcesChecked };
+        writeReleaseCache(hit);
+        return hit;
+      }
+
+      var candidates = [];
+      if (primaryRelease) candidates.push(primaryRelease);
+
+      return fetchRemainingSources(1).then(function (tail) {
+        sourcesChecked = sourcesChecked.concat(tail.sourcesChecked);
+        candidates = candidates.concat(tail.results || []);
+        var best = pickBestRelease(candidates);
+        if (best && !best.fromFallback) {
+          var result = { release: best, sourcesChecked: sourcesChecked };
+          writeReleaseCache(result);
+          return result;
         }
+        if (best) return { release: best, sourcesChecked: sourcesChecked };
+        return fetchFallbackRelease().then(function (fallback) {
+          if (fallback) {
+            return {
+              release: fallback,
+              sourcesChecked: sourcesChecked.concat(["docs/data/latest-release.json"])
+            };
+          }
+          return { release: null, sourcesChecked: sourcesChecked };
+        });
       });
-      return { release: best, sourcesChecked: sourcesChecked };
+    }).catch(function () {
+      return fetchFallbackRelease().then(function (fallback) {
+        if (fallback) {
+          return {
+            release: fallback,
+            sourcesChecked: sourcesChecked.concat(["docs/data/latest-release.json"])
+          };
+        }
+        return { release: null, sourcesChecked: sourcesChecked };
+      });
     });
   }
 
@@ -205,12 +356,13 @@
     PLATFORM_ASSETS.forEach(function (spec) {
       var asset = findAsset(release.assets, spec.asset);
       if (!asset) return;
+      var checksumAsset = findChecksumAsset(release.assets, spec.asset);
       rows.push({
         id: spec.id,
         label: t(spec.labelKey),
         fileName: asset.name,
         url: asset.browser_download_url,
-        checksumUrl: findChecksumUrl(release.assets, spec.asset)
+        checksumAssetId: checksumAsset ? checksumAsset.id : 0
       });
     });
     return rows;
@@ -250,8 +402,25 @@
     else if (el) el.textContent = text;
   }
 
-  function setText(el, text) {
-    if (el) el.textContent = text;
+  var GRID_STATUS_ICONS = {
+    loading: "sync",
+    ready: "verified",
+    prerelease: "new_releases",
+    soon: "schedule"
+  };
+
+  function setPlatformDownloadBtn(link, iconName, labelText) {
+    if (!link) return;
+    var icon = link.querySelector(".material-icons-round");
+    var label = link.querySelector(".platform-download-label");
+    if (icon && iconName) icon.textContent = iconName;
+    if (label && labelText !== undefined) label.textContent = labelText;
+    else if (labelText !== undefined) link.textContent = labelText;
+    if (icon && iconName === "sync") {
+      icon.classList.add("platform-download-icon--spin");
+    } else if (icon) {
+      icon.classList.remove("platform-download-icon--spin");
+    }
   }
 
   function setHtml(el, html) {
@@ -367,8 +536,15 @@
   function setGridStatus(stateName, message) {
     var el = document.getElementById("download-grid-status");
     if (!el) return;
-    el.setAttribute("data-state", stateName || "loading");
-    if (message) setText(el, message);
+    var state = stateName || "loading";
+    el.setAttribute("data-state", state);
+    var iconEl = el.querySelector(".download-grid-status-icon");
+    if (iconEl) {
+      iconEl.textContent = GRID_STATUS_ICONS[state] || GRID_STATUS_ICONS.loading;
+      iconEl.classList.toggle("download-grid-status-icon--spin", state === "loading");
+    }
+    var textEl = el.querySelector(".download-grid-status-text");
+    if (message && textEl) textEl.textContent = message;
   }
 
   function renderPlatformCardsSoon() {
@@ -382,7 +558,7 @@
       hidePlatformChecksum(card);
       var link = card.querySelector(".platform-download-btn");
       if (link) {
-        link.textContent = t("download.soonLink");
+        setPlatformDownloadBtn(link, "schedule", t("download.soonLink"));
         link.href = "#download";
         link.removeAttribute("target");
         link.removeAttribute("rel");
@@ -401,7 +577,7 @@
       hidePlatformChecksum(card);
       var link = card.querySelector(".platform-download-btn");
       if (link) {
-        link.textContent = t("download.checkingTitle");
+        setPlatformDownloadBtn(link, "sync", t("download.checkingTitle"));
         link.href = "#download";
         link.removeAttribute("target");
         link.removeAttribute("rel");
@@ -427,13 +603,13 @@
       if (match) {
         card.classList.remove("platform-soon");
         if (link) {
-          link.textContent = t("download.downloadLink");
+          setPlatformDownloadBtn(link, "download", t("download.downloadLink"));
           link.href = match.url;
           link.target = "_blank";
           link.rel = "noopener noreferrer";
         }
         var hash = state.checksums[match.id] || "";
-        if (match.checksumUrl && !hash) {
+        if (match.checksumAssetId && !hash) {
           setPlatformChecksum(card, "", true);
         } else if (hash) {
           setPlatformChecksum(card, hash, false);
@@ -443,7 +619,7 @@
       } else {
         card.classList.add("platform-soon");
         if (link) {
-          link.textContent = t("download.getReleases");
+          setPlatformDownloadBtn(link, "open_in_new", t("download.getReleases"));
           link.href = rel.htmlUrl;
           link.target = "_blank";
           link.rel = "noopener noreferrer";
@@ -455,12 +631,19 @@
   }
 
   function loadChecksums(rel, rows) {
+    if (rel.checksums) {
+      rows.forEach(function (row) {
+        state.checksums[row.id] = rel.checksums[row.id] || "";
+      });
+      renderPlatformCardsReady(rel, rows);
+      return Promise.resolve();
+    }
     var jobs = rows.map(function (row) {
-      if (!row.checksumUrl) {
+      if (!row.checksumAssetId) {
         state.checksums[row.id] = "";
         return Promise.resolve();
       }
-      return fetchChecksumText(row.checksumUrl).then(function (hash) {
+      return fetchChecksumViaAPI(rel.owner, rel.repo, row.checksumAssetId).then(function (hash) {
         state.checksums[row.id] = hash;
       });
     });

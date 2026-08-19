@@ -1799,6 +1799,9 @@ body.site-sidebar-open {
 .platform-link:hover { color: inherit; }
 
 .download-grid-status {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.55rem;
   margin: 0 0 1.25rem;
   padding: 0.75rem 1rem;
   font-size: 0.92rem;
@@ -1809,9 +1812,29 @@ body.site-sidebar-open {
   border-radius: var(--radius-sm);
 }
 
+.download-grid-status-icon {
+  font-size: 1.25rem;
+  flex-shrink: 0;
+  margin-top: 0.05rem;
+  color: var(--accent-dim);
+}
+
+.download-grid-status-icon--spin {
+  animation: spin 1.2s linear infinite;
+}
+
+.download-grid-status-text {
+  flex: 1;
+  min-width: 0;
+}
+
 .download-grid-status[data-state="ready"] {
   border-color: rgba(22, 163, 74, 0.28);
   color: var(--text);
+}
+
+.download-grid-status[data-state="ready"] .download-grid-status-icon {
+  color: #16a34a;
 }
 
 .download-grid-status[data-state="prerelease"] {
@@ -1819,8 +1842,24 @@ body.site-sidebar-open {
   color: var(--text);
 }
 
+.download-grid-status[data-state="prerelease"] .download-grid-status-icon {
+  color: #c2410c;
+}
+
 .download-grid-status[data-state="soon"] {
   border-color: rgba(194, 166, 51, 0.28);
+}
+
+.download-grid-status[data-state="soon"] .download-grid-status-icon {
+  color: var(--accent-dim);
+}
+
+.platform-download-btn .material-icons-round {
+  font-size: 1.05rem;
+}
+
+.platform-download-icon--spin {
+  animation: spin 1.2s linear infinite;
 }
 
 .platform-grid--loading .platform-card {

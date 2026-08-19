@@ -1134,7 +1134,10 @@
           <p data-i18n="download.lead">Pre-built binaries are published on GitHub Releases when tagged (including pre-releases). This page checks the same repos as the running node.</p>
         </header>
 
-        <p class="download-grid-status" id="download-grid-status" data-state="loading" data-i18n="download.checkingBody">Querying qlpqlp/dogego, dogeorg/dogego, and dogecoinfoundation/dogego for the newest release or pre-release tag.</p>
+        <p class="download-grid-status" id="download-grid-status" data-state="loading">
+          <span class="material-icons-round download-grid-status-icon download-grid-status-icon--spin" aria-hidden="true">sync</span>
+          <span class="download-grid-status-text" data-i18n="download.checkingBody">Querying qlpqlp/dogego, dogeorg/dogego, and dogecoinfoundation/dogego for the newest release or pre-release tag.</span>
+        </p>
 
         <div class="platform-grid platform-grid--loading" id="platform-grid">
           <article class="platform-card platform-soon" data-platform="windows">
@@ -1147,7 +1150,10 @@
             </div>
             <h3 data-i18n="download.platforms.windows.name">Windows</h3>
             <p class="platform-arch" data-i18n="download.platforms.windows.arch">amd64</p>
-            <a href="#download" class="platform-link btn btn-primary btn-sm platform-download-btn" data-i18n="download.soonLink">Available soon</a>
+            <a href="#download" class="platform-link btn btn-primary btn-sm platform-download-btn">
+              <span class="material-icons-round" aria-hidden="true">schedule</span>
+              <span class="platform-download-label" data-i18n="download.soonLink">Available soon</span>
+            </a>
             <div class="platform-checksum" hidden>
               <span class="platform-checksum-label" data-i18n="download.sha256Label">SHA256</span>
               <div class="platform-checksum-row">
@@ -1169,7 +1175,10 @@
             </div>
             <h3 data-i18n="download.platforms.macosIntel.name">macOS (Intel)</h3>
             <p class="platform-arch" data-i18n="download.platforms.macosIntel.arch">amd64</p>
-            <a href="#download" class="platform-link btn btn-primary btn-sm platform-download-btn" data-i18n="download.soonLink">Available soon</a>
+            <a href="#download" class="platform-link btn btn-primary btn-sm platform-download-btn">
+              <span class="material-icons-round" aria-hidden="true">schedule</span>
+              <span class="platform-download-label" data-i18n="download.soonLink">Available soon</span>
+            </a>
             <div class="platform-checksum" hidden>
               <span class="platform-checksum-label" data-i18n="download.sha256Label">SHA256</span>
               <div class="platform-checksum-row">
@@ -1191,7 +1200,10 @@
             </div>
             <h3 data-i18n="download.platforms.macosArm.name">macOS (Apple Silicon)</h3>
             <p class="platform-arch" data-i18n="download.platforms.macosArm.arch">arm64</p>
-            <a href="#download" class="platform-link btn btn-primary btn-sm platform-download-btn" data-i18n="download.soonLink">Available soon</a>
+            <a href="#download" class="platform-link btn btn-primary btn-sm platform-download-btn">
+              <span class="material-icons-round" aria-hidden="true">schedule</span>
+              <span class="platform-download-label" data-i18n="download.soonLink">Available soon</span>
+            </a>
             <div class="platform-checksum" hidden>
               <span class="platform-checksum-label" data-i18n="download.sha256Label">SHA256</span>
               <div class="platform-checksum-row">
@@ -1213,7 +1225,10 @@
             </div>
             <h3 data-i18n="download.platforms.linux.name">Linux</h3>
             <p class="platform-arch" data-i18n="download.platforms.linux.arch">amd64</p>
-            <a href="#download" class="platform-link btn btn-primary btn-sm platform-download-btn" data-i18n="download.soonLink">Available soon</a>
+            <a href="#download" class="platform-link btn btn-primary btn-sm platform-download-btn">
+              <span class="material-icons-round" aria-hidden="true">schedule</span>
+              <span class="platform-download-label" data-i18n="download.soonLink">Available soon</span>
+            </a>
             <div class="platform-checksum" hidden>
               <span class="platform-checksum-label" data-i18n="download.sha256Label">SHA256</span>
               <div class="platform-checksum-row">
@@ -1404,6 +1419,34 @@ go build -o dogego ./cmd/dogego
     </div>
   </div>
 
+  <script type="application/json" id="release-fallback-data">
+  {
+    "manifestVersion": 1,
+    "release": {
+      "tag": "v0.1.0",
+      "version": "0.1.0",
+      "name": "v0.1.0",
+      "htmlUrl": "https://github.com/qlpqlp/dogego/releases/tag/v0.1.0",
+      "owner": "qlpqlp",
+      "repo": "dogego",
+      "sourceLabel": "qlpqlp/dogego",
+      "prerelease": true,
+      "publishedAt": "2026-01-01T00:00:00Z",
+      "assets": [
+        { "name": "dogego-windows-amd64.exe", "browser_download_url": "https://github.com/qlpqlp/dogego/releases/download/v0.1.0/dogego-windows-amd64.exe" },
+        { "name": "dogego-darwin-amd64", "browser_download_url": "https://github.com/qlpqlp/dogego/releases/download/v0.1.0/dogego-darwin-amd64" },
+        { "name": "dogego-darwin-arm64", "browser_download_url": "https://github.com/qlpqlp/dogego/releases/download/v0.1.0/dogego-darwin-arm64" },
+        { "name": "dogego-linux-amd64", "browser_download_url": "https://github.com/qlpqlp/dogego/releases/download/v0.1.0/dogego-linux-amd64" }
+      ],
+      "checksums": {
+        "windows": "124e5ad00e56667b00635884a1d7a523c3f6fe97529069b8387a0c272408e1c1",
+        "macos-intel": "00d02a7e962160dd1e679f3adadfec8dd2b0b05a5839d958ee4344f887fc501b",
+        "macos-arm": "91726a3cae0f331865448a71c241083bbd011ac6f91372f686b8670cdaf5ae3d",
+        "linux": "37721e441d69a4037f10f174af57943dafc7cea59c314061327df10b99392d11"
+      }
+    }
+  }
+  </script>
   <script src="js/i18n.js"></script>
   <script src="js/releases.js" defer></script>
   <script src="js/demo.js" defer></script>
