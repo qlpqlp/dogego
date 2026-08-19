@@ -969,8 +969,19 @@ func (s *progressiveRawState) planClaimRange(bs *BlockStoreCtx, j *store.HeaderJ
 	if bs != nil {
 		cont = bs.ContiguousRawHeight()
 	}
-	if cont >= 0 && probeStart <= cont {
-		probeStart = cont + 1
+	contSkip := cont
+	// If cont==0 but genesis raw is missing, treat cont as unknown so we
+	// still allow claiming height 0.
+	if contSkip == 0 && rs != nil && j != nil {
+		if h80, err := j.ReadHeaderAt(0); err == nil && len(h80) >= 80 {
+			genHash := pow.BlockHashLE(h80)
+			if !rs.Has(genHash) {
+				contSkip = -1
+			}
+		}
+	}
+	if contSkip >= 0 && probeStart <= contSkip {
+		probeStart = contSkip + 1
 	}
 	skipDisk := shouldSkipDiskBodyProbe(bs)
 	// During download-first IBD skip HasStoredBody (NTFS Stat + locator). Walk past
@@ -994,7 +1005,7 @@ func (s *progressiveRawState) planClaimRange(bs *BlockStoreCtx, j *store.HeaderJ
 	}
 	scanned := 0
 	for probe := probeStart; probe <= rangeHi && probe <= tip && len(claim.heights) < maxNew; probe++ {
-		if cont >= 0 && probe <= cont {
+		if contSkip >= 0 && probe <= contSkip {
 			continue
 		}
 		if _, busy := inFlight[probe]; busy {
@@ -1309,6 +1320,7 @@ func (s *progressiveRawState) snapshot() map[string]interface{} {
 		"next_probe_height": s.nextProbe,
 		"idle_full":         s.idleFull,
 		"in_flight_batches": len(s.inFlight),
+		"blocks_in_flight":   len(s.inFlight),
 		"last_header_tip":   s.lastTip,
 		"sync_workers":      s.syncWorkers,
 		"blocks_stored_ibd": s.blocksStoredIBD,

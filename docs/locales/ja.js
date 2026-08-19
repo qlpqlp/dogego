@@ -9,6 +9,11 @@
   },
   "skip": "コンテンツへスキップ",
   "beta": "Beta",
+  "reviewBanner": {
+    "title": "コードはレビュー中",
+    "body": "DogeGo はベータ段階です。このコードベースはレビュー中です。挙動はまだ変わる可能性があります。",
+    "dismissAria": "閉じる"
+  },
   "nav": {
     "home": "DogeGo ホーム",
     "openMenu": "メニューを開く",
@@ -686,6 +691,17 @@
       }
     },
     "downloadLink": "ダウンロード",
+    "sha256Label": "SHA256",
+    "copySha": "Copy",
+    "copiedSha": "Copied",
+    "copyShaAria": "Copy SHA256 checksum",
+    "badgeStable": "Stable",
+    "badgePrerelease": "Pre-release",
+    "checksumPending": "Loading checksum…",
+    "checksumUnavailable": "Checksum not published",
+    "readyBodyPlain": "Latest {version} from {source}. Verify SHA256 below before installing.",
+    "readyBodyPrereleasePlain": "Latest pre-release {version} from {source}. Verify SHA256 below before installing.",
+    "soonBodyPlain": "No GitHub Release published yet. Build from source below.",
     "buildTitle": "ソースからビルド",
     "buildEditorTitle": "bash · dogego",
     "buildCode": "git clone https://github.com/qlpqlp/dogego.git\ncd dogego/DogeGo\ngo build -o dogego ./cmd/dogego\n./dogego",

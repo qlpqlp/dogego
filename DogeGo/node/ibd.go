@@ -1,4 +1,4 @@
-// Copyright (c) 2026 Paulo Vidal (https://x.com/inevitable360, https://github.com/qlpqlp)
+﻿// Copyright (c) 2026 Paulo Vidal (https://x.com/inevitable360, https://github.com/qlpqlp)
 // Copyright (c) 2026 Dogecoin Foundation
 //
 // SPDX-License-Identifier: MIT
@@ -20,12 +20,12 @@ import (
 //
 // Core MAX_BLOCKS_IN_TRANSIT_PER_PEER=16 is sized for ~1MB Bitcoin blocks. Early Dogecoin
 // bodies are hundreds of bytes; 16-inv getdata leaves the TCP window empty. Live DogeGo
-// already reached ~2000–4000 blk/min when getdata stayed fat and the hole kept moving.
+// already reached ~2000â€“4000 blk/min when getdata stayed fat and the hole kept moving.
 //
 // Claim planning used to Open headers.bin (or parse headers/manifest.json) and Stat
-// rawblocks/ once per height × every lane. That pegged CPU at ~90 blk/min and starved
+// rawblocks/ once per height Ã- every lane. That pegged CPU at ~90 blk/min and starved
 // the dashboard. Hashes come from the journal window cache; missing heights are claimed
-// without disk probes (duplicate getdata is cheap — fetch skips bodies already in RAM).
+// without disk probes (duplicate getdata is cheap â€” fetch skips bodies already in RAM).
 //
 // ltcd: one sync peer, getdata up to MaxInvPerMsg, refill when pending < 10, 3m stall.
 // DogeGo: many peers, 500-inv getdata into RAM, refill at half-full, 2s hole stall,
@@ -33,17 +33,21 @@ import (
 const (
 	progressiveBatchSize    = 16 // near-tip / inv (Core MAX_BLOCKS_IN_TRANSIT_PER_PEER)
 	progressiveBatchSizeMax = 32 // scaled cap near tip when several lanes share inv load
-	ibdGetDataBatch         = 500
+	ibdGetDataBatch         = 1000
 	// minInFlightBlocks matches ltcd netsync: send the next getdata when requested
 	// blocks on that peer drop below this, so the TCP pipe does not drain between batches.
 	minInFlightBlocks          = 10
 	tipBackfillDeferGap        = 512
 	blockDownloadWindow        = 1024  // Core validation.h BLOCK_DOWNLOAD_WINDOW (floor)
 	maxIBDFetchWindow          = 16384 // RAM lookahead; disk flush trails this
-	forwardIBDParallelWindow   = maxIBDFetchWindow
+	// forwardIBDParallelWindow is the boundary where the forward (header-led)
+	// body gap is considered "deep IBD" for connect deferral decisions.
+	// Keep it aligned with Core's smaller download window so unit tests and
+	// operator expectations don't treat a ~5k header orphan window as "near".
+	forwardIBDParallelWindow   = blockDownloadWindow
 	invBlockFetchFrontierSlack = 128 // defer inv getdata for blocks ahead of contiguous bodies during forward IBD
-	headerCatchUpPeerLead      = 32  // peer within this many headers of local tip → defer header sync while bodies lag
-	headersSyncRoundsBodiesLag = 2   // max getheaders rounds when peer ≤ tip but bodies still behind
+	headerCatchUpPeerLead      = 32  // peer within this many headers of local tip â†’ defer header sync while bodies lag
+	headersSyncRoundsBodiesLag = 2   // max getheaders rounds when peer â‰¤ tip but bodies still behind
 	minBlockAssistWorkers      = 3
 	maxBlockAssistWorkers      = 24
 )

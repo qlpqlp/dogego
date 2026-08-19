@@ -1,4 +1,4 @@
-// Copyright (c) 2026 Paulo Vidal (https://x.com/inevitable360, https://github.com/qlpqlp)
+﻿// Copyright (c) 2026 Paulo Vidal (https://x.com/inevitable360, https://github.com/qlpqlp)
 // Copyright (c) 2026 Dogecoin Foundation
 //
 // SPDX-License-Identifier: MIT
@@ -21,7 +21,7 @@ func onContiguousAdvanceIndexFilters(bs *BlockStoreCtx, lastFilter *int64, cont 
 	}
 	if BodiesBehindHeaders(bs) {
 		// Seed watermark once (skip huge [0..cont] restart backfill). Do not drip-index or
-		// advance the watermark here — startBlockFilterCatchUpWorker indexes when connect lag is low.
+		// advance the watermark here â€” startBlockFilterCatchUpWorker indexes when connect lag is low.
 		if *lastFilter < 0 {
 			*lastFilter = cont
 			SetFilterIndexThrough(cont)

@@ -974,7 +974,18 @@ func (b *AddrBook) loadRecords(recs []AddrRecord) {
 		}
 		cp := r
 		cp.LastSeen = normalizeAddrSeenUnix(cp.LastSeen, now)
-		if cp.TriedSlot == 0 && !cp.Tried {
+		// When persisted, `tried_slot` / `tried_bucket` use `omitempty`, so valid
+		// values equal to 0 can be omitted and come back as zero after JSON
+		// unmarshalling. Treat 0 as "unset" so backfill can re-derive the
+		// Core-shaped bucket/slot placement from the address hash.
+		if cp.Tried {
+			if cp.TriedSlot == 0 {
+				cp.TriedSlot = -1
+			}
+			if cp.TriedBucket == 0 {
+				cp.TriedBucket = -1
+			}
+		} else if cp.TriedSlot == 0 {
 			cp.TriedSlot = -1
 		}
 		if len(cp.NewRefs) > 0 {

@@ -1,4 +1,4 @@
-// Copyright (c) 2026 Paulo Vidal (https://x.com/inevitable360, https://github.com/qlpqlp)
+﻿// Copyright (c) 2026 Paulo Vidal (https://x.com/inevitable360, https://github.com/qlpqlp)
 // Copyright (c) 2026 Dogecoin Foundation
 //
 // SPDX-License-Identifier: MIT
@@ -44,7 +44,7 @@ func TestAttemptEvict_addnodeMatchesHostPort(t *testing.T) {
 		t.Fatal(err)
 	}
 	pm := NewPeerMgr(P2PModeSettings{MaxInbound: 4, MaxOutbound: 4}, p, "/DogeGo/", net.Dialer{})
-	// Preferred as IP; session may use same host:port — must protect via addnodeMatchesSession.
+	// Preferred as IP; session may use same host:port â€” must protect via addnodeMatchesSession.
 	pm.SetPreferredPeers([]string{"93.184.216.1:22556"})
 	pm.mu.Lock()
 	pm.sessions["93.184.216.1:22556"] = &peerLink{
@@ -111,7 +111,7 @@ func TestAttemptEvict_preferCrowdedNetgroup(t *testing.T) {
 	pm := NewPeerMgr(P2PModeSettings{MaxInbound: 8, MaxOutbound: 4}, p, "/DogeGo/", net.Dialer{})
 	now := time.Now()
 	pm.mu.Lock()
-	// Crowded 1.2.0.0/16 — three peers; oldest in that group should win over lone diverse peer
+	// Crowded 1.2.0.0/16 â€” three peers; oldest in that group should win over lone diverse peer
 	// even if the diverse peer is older.
 	pm.sessions["1.2.3.4:22556"] = &peerLink{
 		addr: "1.2.3.4:22556", inbound: true, since: now.Add(-30 * time.Minute),

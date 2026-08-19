@@ -1,4 +1,4 @@
-/*
+﻿/*
 
  The MIT License (MIT)
 
@@ -142,7 +142,7 @@ dogecoin_bool thrc_hd_derive_pub(const uint8_t* parent_pk, size_t parent_pk_len,
                                  uint8_t* child_pk_out, size_t child_pk_len);
 
 /*
- * `_xof_sample_q` — uniform Z_q rejection sampler.  1:1 port of upstream
+ * `_xof_sample_q` â€” uniform Z_q rejection sampler.  1:1 port of upstream
  * `ThRc_Core._xof_sample_q` (thrc_core.py) at kappa=128 (SHAKE128).  Reads
  * ceil(q_bits/8) = 7 bytes per attempt, masks to q_bits=50 bits, accepts
  * if the masked value is in [0, q).  Deterministic given `seed`.
@@ -165,7 +165,7 @@ void raccoong_hdr24(uint8_t out[8], char ds,
                     uint32_t i, uint32_t j, uint8_t k);
 
 /*
- * `_expand_a` — fill the public k×ell matrix A from `A_seed`.
+ * `_expand_a` â€” fill the public kÃ-ell matrix A from `A_seed`.
  *
  * 1:1 port of upstream `ThRc_Core._expand_a`: for each (i, j) the entry is
  * `_xof_sample_q(_hdr8('A', i, j) + A_seed)`.  Upstream treats this matrix
@@ -200,12 +200,12 @@ dogecoin_bool raccoong_mul_mat_vec_ntt(polyr out[RACCOONG_K],
                                        const polyr v[RACCOONG_ELL]);
 
 /*
- * `_keygen_unrounded(key)` — byte-exact port of upstream
+ * `_keygen_unrounded(key)` â€” byte-exact port of upstream
  * `raccoon_primitives._keygen_unrounded`.  Emits:
  *   - `A_seed_out` (16 bytes)        = SHAKE256(_hdr8('A') + key, 16)
  *   - `t_out[k]`  (k polyrs in [0,q)) = vec_intt(A_ntt * vec_ntt(s)) + e1
  *
- * No rshift / nu_t rounding is applied — the unrounded shape is the
+ * No rshift / nu_t rounding is applied â€” the unrounded shape is the
  * canonical HD-wallet variant (preserves additive linearity for non-
  * hardened child derivation, see upstream docstring).
  *
@@ -219,11 +219,11 @@ dogecoin_bool raccoong_keygen_t_unrounded(const uint8_t key[32],
                                           polyr t_out[RACCOONG_K],
                                           polyr s_out[RACCOONG_ELL]);
 
-// Upstream `lg_st = 7` ⇒ sigma_t² = 2^14.
+// Upstream `lg_st = 7` â‡’ sigma_tÂ² = 2^14.
 #define RACCOONG_LG_ST       7u
 #define RACCOONG_LG_SIGMA_T2 14u
 
-// Upstream `lg_swt = 40` ⇒ sigma_w² = 2^80.
+// Upstream `lg_swt = 40` â‡’ sigma_wÂ² = 2^80.
 #define RACCOONG_LG_SWT      40u
 #define RACCOONG_LG_SIGMA_W2 80u
 
@@ -257,7 +257,7 @@ dogecoin_bool raccoong_keygen_t_unrounded(const uint8_t key[32],
      + (size_t)RACCOONG_K   * 256u * RACCOONG_H_COEFF_BYTES)
 
 /*
- * `raccoong_serialize_signature` — pack a Raccoon-G signature tuple
+ * `raccoong_serialize_signature` â€” pack a Raccoon-G signature tuple
  * `(c_hash, z, h)` into `RACCOONG_SIG_BYTES` of canonical bytes.
  *
  * Inputs:
@@ -279,13 +279,13 @@ dogecoin_bool raccoong_serialize_signature(
     const int16_t h_signed[RACCOONG_K][256]);
 
 /*
- * `raccoong_deserialize_signature` — unpack a canonical Raccoon-G
+ * `raccoong_deserialize_signature` â€” unpack a canonical Raccoon-G
  * signature.  Mirrors upstream `deserialize_signature`:
  *   - z coefficients are read as little-endian 7-byte unsigned values in
  *     [0, q); a value >= q is rejected (returns false).
  *   - h coefficients are read as little-endian 2-byte unsigned values in
  *     [0, q_w); a value >= q_w is rejected.  They are then centered into
- *     `h_signed_out` ∈ [-q_w/2, q_w/2).
+ *     `h_signed_out` âˆˆ [-q_w/2, q_w/2).
  *
  * Returns false on null inputs, sig_len != RACCOONG_SIG_BYTES, or
  * out-of-range coefficient.
@@ -299,13 +299,13 @@ dogecoin_bool raccoong_deserialize_signature(
 /*
  * Challenge-polynomial expansion (`_chal_poly` upstream).
  *
- * Maps the 32-byte challenge digest `c_hash` to a τ-weight ternary
+ * Maps the 32-byte challenge digest `c_hash` to a Ï„-weight ternary
  * polynomial in {-1, 0, +1}^256 (exactly RACCOONG_TAU non-zero
  * coefficients).  Used by both `thrc_sign` and `thrc_verify`.
  *
  * Algorithm (byte-exact with `ThRc_Core._chal_poly`):
- *   xof = SHAKE256(_hdr8('c', τ) || c_hash)
- *   while weight < τ:
+ *   xof = SHAKE256(_hdr8('c', Ï„) || c_hash)
+ *   while weight < Ï„:
  *       z    = xof.read(blen=2)            # 9 bits needed, blen=ceil(9/8)
  *       x    = u16_le(z)
  *       sign = x & 1
@@ -315,7 +315,7 @@ dogecoin_bool raccoong_deserialize_signature(
  *           weight += 1
  *
  * `out` is written iff the call returns true (which it always does for
- * valid arguments — SHAKE256 is unbounded so the rejection loop always
+ * valid arguments â€” SHAKE256 is unbounded so the rejection loop always
  * terminates within a few hundred reads).  Returns false only on null
  * arguments.
  */

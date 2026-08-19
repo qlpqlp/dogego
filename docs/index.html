@@ -1134,46 +1134,96 @@
           <p data-i18n="download.lead">Pre-built binaries are published on GitHub Releases when tagged (including pre-releases). This page checks the same repos as the running node.</p>
         </header>
 
-        <div class="soon-banner" id="release-banner" data-state="loading">
-          <span class="material-icons-round soon-banner-icon" id="release-banner-icon" aria-hidden="true">hourglass_top</span>
-          <div class="release-banner-text">
-            <strong id="release-banner-title" data-i18n="download.checkingTitle">Checking GitHub Releases…</strong>
-            <p id="release-banner-meta" class="release-banner-meta" hidden></p>
-            <div id="release-banner-body" class="release-banner-body" data-i18n="download.checkingBody">Querying qlpqlp/dogego, dogeorg/dogego, and dogecoinfoundation/dogego for the newest release or pre-release tag.</div>
-            <button type="button" id="release-notes-toggle" class="release-notes-toggle" hidden data-i18n="download.showMore">Show more</button>
-          </div>
-          <a href="https://github.com/qlpqlp/dogego/releases" class="btn btn-primary" id="release-banner-action" rel="noopener noreferrer" target="_blank" hidden data-i18n="download.getReleases">View release notes</a>
-        </div>
+        <p class="download-grid-status" id="download-grid-status" data-state="loading" data-i18n="download.checkingBody">Querying qlpqlp/dogego, dogeorg/dogego, and dogecoinfoundation/dogego for the newest release or pre-release tag.</p>
 
-        <div class="release-assets card" id="release-assets" hidden>
-          <h3 class="release-assets-title"><span class="material-icons-round" aria-hidden="true">download</span> <span data-i18n="download.assetsHeading">Download by platform</span></h3>
-          <ul class="release-assets-list" id="release-assets-list"></ul>
-        </div>
-
-        <div class="platform-grid" id="platform-grid">
+        <div class="platform-grid platform-grid--loading" id="platform-grid">
           <article class="platform-card platform-soon" data-platform="windows">
-            <span class="material-icons-round platform-icon" aria-hidden="true">desktop_windows</span>
+            <div class="platform-card-head">
+              <span class="material-icons-round platform-icon" aria-hidden="true">desktop_windows</span>
+              <div class="platform-badges" hidden>
+                <span class="platform-badge platform-badge-version"></span>
+                <span class="platform-badge platform-badge-channel"></span>
+              </div>
+            </div>
             <h3 data-i18n="download.platforms.windows.name">Windows</h3>
             <p class="platform-arch" data-i18n="download.platforms.windows.arch">amd64</p>
-            <a href="#download" class="platform-link" data-i18n="download.soonLink">Available soon</a>
+            <a href="#download" class="platform-link btn btn-primary btn-sm platform-download-btn" data-i18n="download.soonLink">Available soon</a>
+            <div class="platform-checksum" hidden>
+              <span class="platform-checksum-label" data-i18n="download.sha256Label">SHA256</span>
+              <div class="platform-checksum-row">
+                <code class="platform-checksum-hash"></code>
+                <button type="button" class="platform-checksum-copy" data-i18n-aria="download.copyShaAria" aria-label="Copy SHA256 checksum">
+                  <span class="material-icons-round" aria-hidden="true">content_copy</span>
+                  <span class="platform-checksum-copy-label" data-i18n="download.copySha">Copy</span>
+                </button>
+              </div>
+            </div>
           </article>
           <article class="platform-card platform-soon" data-platform="macos-intel">
-            <span class="material-icons-round platform-icon" aria-hidden="true">laptop_mac</span>
+            <div class="platform-card-head">
+              <span class="material-icons-round platform-icon" aria-hidden="true">laptop_mac</span>
+              <div class="platform-badges" hidden>
+                <span class="platform-badge platform-badge-version"></span>
+                <span class="platform-badge platform-badge-channel"></span>
+              </div>
+            </div>
             <h3 data-i18n="download.platforms.macosIntel.name">macOS (Intel)</h3>
             <p class="platform-arch" data-i18n="download.platforms.macosIntel.arch">amd64</p>
-            <a href="#download" class="platform-link" data-i18n="download.soonLink">Available soon</a>
+            <a href="#download" class="platform-link btn btn-primary btn-sm platform-download-btn" data-i18n="download.soonLink">Available soon</a>
+            <div class="platform-checksum" hidden>
+              <span class="platform-checksum-label" data-i18n="download.sha256Label">SHA256</span>
+              <div class="platform-checksum-row">
+                <code class="platform-checksum-hash"></code>
+                <button type="button" class="platform-checksum-copy" data-i18n-aria="download.copyShaAria" aria-label="Copy SHA256 checksum">
+                  <span class="material-icons-round" aria-hidden="true">content_copy</span>
+                  <span class="platform-checksum-copy-label" data-i18n="download.copySha">Copy</span>
+                </button>
+              </div>
+            </div>
           </article>
           <article class="platform-card platform-soon" data-platform="macos-arm">
-            <span class="material-icons-round platform-icon" aria-hidden="true">laptop_mac</span>
+            <div class="platform-card-head">
+              <span class="material-icons-round platform-icon" aria-hidden="true">laptop_mac</span>
+              <div class="platform-badges" hidden>
+                <span class="platform-badge platform-badge-version"></span>
+                <span class="platform-badge platform-badge-channel"></span>
+              </div>
+            </div>
             <h3 data-i18n="download.platforms.macosArm.name">macOS (Apple Silicon)</h3>
             <p class="platform-arch" data-i18n="download.platforms.macosArm.arch">arm64</p>
-            <a href="#download" class="platform-link" data-i18n="download.soonLink">Available soon</a>
+            <a href="#download" class="platform-link btn btn-primary btn-sm platform-download-btn" data-i18n="download.soonLink">Available soon</a>
+            <div class="platform-checksum" hidden>
+              <span class="platform-checksum-label" data-i18n="download.sha256Label">SHA256</span>
+              <div class="platform-checksum-row">
+                <code class="platform-checksum-hash"></code>
+                <button type="button" class="platform-checksum-copy" data-i18n-aria="download.copyShaAria" aria-label="Copy SHA256 checksum">
+                  <span class="material-icons-round" aria-hidden="true">content_copy</span>
+                  <span class="platform-checksum-copy-label" data-i18n="download.copySha">Copy</span>
+                </button>
+              </div>
+            </div>
           </article>
           <article class="platform-card platform-soon" data-platform="linux">
-            <span class="material-icons-round platform-icon" aria-hidden="true">computer</span>
+            <div class="platform-card-head">
+              <span class="material-icons-round platform-icon" aria-hidden="true">computer</span>
+              <div class="platform-badges" hidden>
+                <span class="platform-badge platform-badge-version"></span>
+                <span class="platform-badge platform-badge-channel"></span>
+              </div>
+            </div>
             <h3 data-i18n="download.platforms.linux.name">Linux</h3>
             <p class="platform-arch" data-i18n="download.platforms.linux.arch">amd64</p>
-            <a href="#download" class="platform-link" data-i18n="download.soonLink">Available soon</a>
+            <a href="#download" class="platform-link btn btn-primary btn-sm platform-download-btn" data-i18n="download.soonLink">Available soon</a>
+            <div class="platform-checksum" hidden>
+              <span class="platform-checksum-label" data-i18n="download.sha256Label">SHA256</span>
+              <div class="platform-checksum-row">
+                <code class="platform-checksum-hash"></code>
+                <button type="button" class="platform-checksum-copy" data-i18n-aria="download.copyShaAria" aria-label="Copy SHA256 checksum">
+                  <span class="material-icons-round" aria-hidden="true">content_copy</span>
+                  <span class="platform-checksum-copy-label" data-i18n="download.copySha">Copy</span>
+                </button>
+              </div>
+            </div>
           </article>
         </div>
 

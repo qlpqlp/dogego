@@ -1,4 +1,4 @@
-// Copyright (c) 2026 Paulo Vidal (https://x.com/inevitable360, https://github.com/qlpqlp)
+﻿// Copyright (c) 2026 Paulo Vidal (https://x.com/inevitable360, https://github.com/qlpqlp)
 // Copyright (c) 2026 Dogecoin Foundation
 //
 // SPDX-License-Identifier: MIT
@@ -184,7 +184,7 @@ func TestPackageDAG_propertyRandom(t *testing.T) {
 			id string
 		}
 		nodes := []node{{tx: root, id: txidDisplayHex(root.TxHash())}}
-		// Grow a small DAG: each new tx spends 1–2 random prior outputs.
+		// Grow a small DAG: each new tx spends 1â€“2 random prior outputs.
 		for n := 0; n < 8; n++ {
 			parent := nodes[rng.Intn(len(nodes))]
 			vout := uint32(rng.Intn(len(parent.tx.Vout)))

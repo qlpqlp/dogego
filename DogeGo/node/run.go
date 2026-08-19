@@ -1420,6 +1420,12 @@ func Run(ctx context.Context, cfg Config) error {
 				return blockStore.ContiguousRawHeight()
 			},
 			Pool: pool,
+			ShouldLookupHeight: func() bool {
+				// During download-first IBD we stage raw blocks without wanting to
+				// do per-block hash->height scans on the journal. Height lookups
+				// are only needed once we're ordering/connect/UTXO work.
+				return blockStore == nil || !BodiesBehindHeaders(blockStore)
+			},
 			CollectMempoolConfirmed: func(blockRaw []byte, blockHeight int64) []store.MempoolConfirmFeeSample {
 				if blockStore != nil && BodiesBehindHeaders(blockStore) {
 					return nil

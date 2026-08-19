@@ -1,4 +1,4 @@
-// Copyright (c) 2026 Paulo Vidal (https://x.com/inevitable360, https://github.com/qlpqlp)
+﻿// Copyright (c) 2026 Paulo Vidal (https://x.com/inevitable360, https://github.com/qlpqlp)
 // Copyright (c) 2026 Dogecoin Foundation
 //
 // SPDX-License-Identifier: MIT
@@ -46,7 +46,7 @@ func ShutdownDualPeers(dataDir, currentNetwork string) {
 	for _, e := range peers {
 		requestPeerShutdown(e.WebUI, e.Network)
 	}
-	// Retry once — peers under IBD may take a moment to accept the control request.
+	// Retry once â€” peers under IBD may take a moment to accept the control request.
 	time.Sleep(500 * time.Millisecond)
 	for _, e := range peers {
 		if TCPListenOpen(e.WebUI, 300*time.Millisecond) {

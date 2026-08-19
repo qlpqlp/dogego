@@ -53,9 +53,9 @@ func (s *progressiveRawState) maybePenalizeStallingPeer(bs *BlockStoreCtx, score
 		return "", false
 	}
 	s.mu.Lock()
-	defer s.mu.Unlock()
 	if len(s.inFlight) == 0 {
 		s.stallingSince = time.Time{}
+		s.mu.Unlock()
 		return "", false
 	}
 	cont := bs.ContiguousRawHeight()
@@ -65,15 +65,18 @@ func (s *progressiveRawState) maybePenalizeStallingPeer(bs *BlockStoreCtx, score
 	}
 	if _, blocked := s.inFlight[frontier]; !blocked {
 		s.stallingSince = time.Time{}
+		s.mu.Unlock()
 		return "", false
 	}
 	now := time.Now()
 	if s.stallingSince.IsZero() {
 		s.stallingSince = now
+		s.mu.Unlock()
 		return "", false
 	}
 	stallTO := blockStallingTimeoutFor(bs)
 	if now.Sub(s.stallingSince) < stallTO {
+		s.mu.Unlock()
 		return "", false
 	}
 	lane := 0
@@ -109,6 +112,7 @@ func (s *progressiveRawState) maybePenalizeStallingPeer(bs *BlockStoreCtx, score
 	s.idleFull = false
 	s.lastStallPeer = peerAddr
 	s.lastStallAt = now
+	s.mu.Unlock()
 	if peerAddr != "" {
 		penalizeBlockPeer(scorer, book, peerAddr, true)
 		NoteBlockPeerDisconnect(peerAddr, "block stall at height "+formatInt64(frontier))

@@ -12,6 +12,8 @@ import (
 	"net"
 	"os"
 	"strings"
+	"sync"
+	"sync/atomic"
 	"time"
 
 	"dogego/applog"
@@ -46,10 +48,11 @@ func DownloadHeaders(ctx context.Context, w *MsgWriter, p chain.Params, j *store
 	if rawSync != nil && bs != nil && !headersOnly {
 		rawSync.PrepareAtStartup(bs)
 	}
-	if bs != nil && ShouldPauseHeaderCatchUpForBodyIBD(bs, peerStartHeight) {
+	// Dedicated / headers-only sync sessions should not yield to body download.
+	// They keep advancing the header pipeline independently.
+	if !headersOnly && bs != nil && ShouldPauseHeaderCatchUpForBodyIBD(bs, peerStartHeight) {
 		cont := bs.ContiguousRawHeight()
 		applog.Line("headers", fmt.Sprintf("forward block IBD owns pipeline (header tip %d, bodies through %d) - deferring getheaders", localTip, cont))
-		return nil
 	}
 	if ShouldDeferHeaderSyncWhileBodiesLag(localTip, peerStartHeight, bodiesBehind) {
 		cont := int64(-1)
@@ -57,7 +60,6 @@ func DownloadHeaders(ctx context.Context, w *MsgWriter, p chain.Params, j *store
 			cont = bs.ContiguousRawHeight()
 		}
 		applog.Line("headers", fmt.Sprintf("prioritizing block download (header tip %d, peer height %d, contiguous bodies through %d); deferring getheaders this session", localTip, peerStartHeight, cont))
-		return nil
 	}
 	maxRounds := headersSyncMaxRounds(localTip, peerStartHeight, bodiesBehind)
 	if localTip > 0 && bodiesBehind {
@@ -460,7 +462,10 @@ func storeInboundBlockBody(bs *BlockStoreCtx, payload []byte, heightHint int64) 
 	}
 	got := pow.BlockHashLE(payload[:80])
 	height = heightHint
-	if height < 0 && bs.Journal != nil {
+	downloadFirst := BodiesBehindHeaders(bs)
+	// In download-first IBD we can stage raw bytes without knowing the exact
+	// height. Avoid expensive HeaderJournal hash->height scans while downloading.
+	if height < 0 && !downloadFirst && bs.Journal != nil {
 		if ht, err := bs.Journal.HeightByBlockHashLE(got); err == nil {
 			height = ht
 		}
@@ -471,7 +476,15 @@ func storeInboundBlockBody(bs *BlockStoreCtx, payload []byte, heightHint int64) 
 	if bs.rawBodyPresent(got, height) {
 		return height, false
 	}
-	if err := bs.StoreValidatedBlockAtHeight(got, payload, height); err != nil {
+	// During download-first IBD, keep getdata/download independent from consensus/chain insertion.
+	// Stage raw bytes + contiguous coverage now; full validation happens later during connect.
+	var err error
+	if downloadFirst {
+		err = bs.StageDownloadedBlockAtHeight(got, payload, height)
+	} else {
+		err = bs.StoreValidatedBlockAtHeight(got, payload, height)
+	}
+	if err != nil {
 		return height, false
 	}
 	return height, true
@@ -526,16 +539,20 @@ func applyGetDataRefill(w *MsgWriter, pending map[[32]byte]struct{}, hashHeights
 	if len(hashes) == 0 {
 		return 0, nil
 	}
+	// If the refiller returns a mismatched (hashes, heights) length, only use the
+	// portion where heights are known. Writing synthetic "-1" heights into the
+	// map forces expensive HeaderJournal hash->height scans later.
+	if len(heights) < len(hashes) {
+		hashes = hashes[:len(heights)]
+	}
 	fresh := make([]wire.InvEntry, 0, len(hashes))
 	for i, h := range hashes {
 		if _, already := pending[h]; already {
 			continue
 		}
-		ht := int64(-1)
-		if i < len(heights) {
-			ht = heights[i]
-		}
-		if hashHeights != nil {
+		ht := heights[i]
+		// Only set the mapping when height is known.
+		if hashHeights != nil && ht >= 0 {
 			hashHeights[h] = ht
 		}
 		pending[h] = struct{}{}
@@ -558,14 +575,14 @@ func applyGetDataRefill(w *MsgWriter, pending map[[32]byte]struct{}, hashHeights
 
 func wantsMissingRaw(bs *BlockStoreCtx, wants [][32]byte, heights []int64, hashHeights map[[32]byte]int64) (still [][32]byte, stillHeights []int64) {
 	for i, h := range wants {
-		height := hashHeights[h]
-		if height < 0 && heights != nil && i < len(heights) {
-			height = heights[i]
-		}
-		if height < 0 && bs.Journal != nil {
-			if ht, err := bs.Journal.HeightByBlockHashLE(h); err == nil {
+		height := int64(-1)
+		if hashHeights != nil {
+			if ht, ok := hashHeights[h]; ok {
 				height = ht
 			}
+		}
+		if height < 0 && heights != nil && i < len(heights) {
+			height = heights[i]
 		}
 		if bs.Raw == nil || !bs.rawBodyPresent(h, height) {
 			still = append(still, h)
@@ -589,12 +606,15 @@ func fetchAndStoreRawBlocksBatchInv(ctx context.Context, w *MsgWriter, p chain.P
 	if bs == nil || bs.Raw == nil || len(wants) == 0 {
 		return 0, nil
 	}
+	ctx, cancel := context.WithCancel(ctx)
+	defer cancel()
+
 	pending := make(map[[32]byte]struct{}, len(wants))
 	entries := make([]wire.InvEntry, 0, len(wants))
 	for _, h := range wants {
-		height := hashHeights[h]
-		if height < 0 && bs.Journal != nil {
-			if ht, err := bs.Journal.HeightByBlockHashLE(h); err == nil {
+		height := int64(-1)
+		if hashHeights != nil {
+			if ht, ok := hashHeights[h]; ok {
 				height = ht
 			}
 		}
@@ -628,6 +648,120 @@ func fetchAndStoreRawBlocksBatchInv(ctx context.Context, w *MsgWriter, p chain.P
 	requested := len(entries)
 	var ignoredCmds []string
 	maxReads := 500 * requested
+
+	var storedAtomic atomic.Int64
+	var stubRejectsAtomic atomic.Int64
+
+	// Decouple socket read-loop from block storage/validation.
+	// Without this, a slow StoreValidatedBlockAtHeight can stall message reads and
+	// cause getdata refill/starvation.
+	workerCount := syncLanes
+	if workerCount < 1 {
+		workerCount = 1
+	}
+	jobQueueCap := syncLanes * 32
+	if jobQueueCap < 64 {
+		jobQueueCap = 64
+	}
+	if jobQueueCap > 512 {
+		jobQueueCap = 512
+	}
+	type storeJob struct {
+		got     [32]byte
+		height  int64
+		payload []byte
+	}
+	jobs := make(chan storeJob, jobQueueCap)
+
+	type storeResult struct {
+		got       [32]byte
+		height    int64
+		stored    bool
+		stub       bool
+		fatalErr  error
+	}
+	results := make(chan storeResult, jobQueueCap)
+
+	var workersWG sync.WaitGroup
+	var fatalMu sync.Mutex
+	var fatalErr error
+	setFatal := func(err error) {
+		if err == nil {
+			return
+		}
+		fatalMu.Lock()
+		if fatalErr == nil {
+			fatalErr = err
+			cancel()
+		}
+		fatalMu.Unlock()
+	}
+
+	var consumerWG sync.WaitGroup
+	consumerWG.Add(1)
+	go func() {
+		defer consumerWG.Done()
+		for res := range results {
+			if res.fatalErr != nil {
+				setFatal(res.fatalErr)
+				continue
+			}
+			if res.stub {
+				stubRejectsAtomic.Add(1)
+				continue
+			}
+			if res.stored {
+				storedAtomic.Add(1)
+				notifyBlockFromPeer(bs, w.PeerAddr, res.got)
+				if hooks != nil && hooks.OnStored != nil {
+					hooks.OnStored(res.height)
+				}
+			}
+		}
+	}()
+
+	workersWG.Add(workerCount)
+	for wid := 0; wid < workerCount; wid++ {
+		go func(workerID int) {
+			defer workersWG.Done()
+			for job := range jobs {
+				if ctx.Err() != nil {
+					return
+				}
+				var err error
+				// If bodies are still behind headers, treat getdata as "download-only":
+				// stage raw bytes and defer full validation/ConnectBlock until ordered connect.
+				if bs != nil && BodiesBehindHeaders(bs) {
+					err = bs.StageDownloadedBlockAtHeight(job.got, job.payload, job.height)
+				} else {
+					err = bs.StoreValidatedBlockAtHeight(job.got, job.payload, job.height)
+				}
+				if err == nil {
+					select {
+					case results <- storeResult{got: job.got, height: job.height, stored: true}:
+					case <-ctx.Done():
+						return
+					}
+					continue
+				}
+				// Undersized stub blocks are a common transient mismatch; treat as non-fatal.
+				if strings.Contains(err.Error(), "too short") {
+					select {
+					case results <- storeResult{stub: true}:
+					case <-ctx.Done():
+						return
+					}
+					continue
+				}
+				applog.Line("block", fmt.Sprintf("batched block store %x… (worker %d) failed: %v%s", job.got[:4], workerID, err, consensus.LegacySubsidyBugHint(err)))
+				select {
+				case results <- storeResult{fatalErr: err}:
+				case <-ctx.Done():
+				}
+				return
+			}
+		}(wid)
+	}
 	enqueueRefill := func() error {
 		added, err := applyGetDataRefill(w, pending, hashHeights, invType, hooks)
 		if err != nil {
@@ -640,6 +774,11 @@ func fetchAndStoreRawBlocksBatchInv(ctx context.Context, w *MsgWriter, p chain.P
 		return nil
 	}
 	if err := enqueueRefill(); err != nil {
+		cancel()
+		close(jobs)
+		workersWG.Wait()
+		close(results)
+		consumerWG.Wait()
 		return 0, err
 	}
 	batchDL := blockBatchDeadline(ctx, syncLanes, bs)
@@ -663,10 +802,13 @@ func fetchAndStoreRawBlocksBatchInv(ctx context.Context, w *MsgWriter, p chain.P
 		close(abortBatch)
 		hardTimer.Stop()
 	}()
+	var ctxErr error
+READLOOP:
 	for i := 0; i < maxReads && len(pending) > 0; i++ {
 		select {
 		case <-ctx.Done():
-			return stored, ctx.Err()
+			ctxErr = ctx.Err()
+			break READLOOP
 		default:
 		}
 		if time.Now().After(batchDL) {
@@ -678,12 +820,16 @@ func fetchAndStoreRawBlocksBatchInv(ctx context.Context, w *MsgWriter, p chain.P
 		_ = conn.SetReadDeadline(batchBlockReadDeadline(batchDL))
 		cmd, payload, err := readNextP2PMessage(ctx, conn, p.Magic, batchDL)
 		if err != nil {
-			return stored, err
+			ctxErr = err
+			cancel()
+			break READLOOP
 		}
 		switch cmd {
 		case "ping":
 			if err := w.Write("pong", payload); err != nil {
-				return stored, err
+				ctxErr = err
+				cancel()
+				break READLOOP
 			}
 		case "block":
 			if len(payload) < 80 {
@@ -698,7 +844,7 @@ func fetchAndStoreRawBlocksBatchInv(ctx context.Context, w *MsgWriter, p chain.P
 					}
 				}
 				if ht, storedLate := storeInboundBlockBody(bs, payload, hint); storedLate {
-					stored++
+					storedAtomic.Add(1)
 					if hooks != nil && hooks.OnStored != nil && ht >= 0 {
 						hooks.OnStored(ht)
 					}
@@ -710,30 +856,26 @@ func fetchAndStoreRawBlocksBatchInv(ctx context.Context, w *MsgWriter, p chain.P
 				continue
 			}
 			height := hashHeights[got]
+			if hashHeights != nil {
+				if h, ok := hashHeights[got]; ok {
+					height = h
+				} else {
+					height = -1
+				}
+			} else {
+				height = -1
+			}
 			if height < 0 {
 				applog.Line("block", fmt.Sprintf("batched block %x… (%d B): no claim height; skipping", got[:4], len(payload)))
 				delete(pending, got)
 				continue
 			}
-			var err error
-			if height >= 0 {
-				err = bs.StoreValidatedBlockAtHeight(got, payload, height)
-			} else {
-				err = bs.StoreValidatedBlock(got, payload)
-			}
-			if err != nil {
-				applog.Line("block", fmt.Sprintf("batched block store %x…: %v%s", got[:4], err, consensus.LegacySubsidyBugHint(err)))
-				if strings.Contains(err.Error(), "too short") {
-					stubRejects++
-					delete(pending, got)
-				}
-				continue
-			}
-			notifyBlockFromPeer(bs, w.PeerAddr, got)
 			delete(pending, got)
-			stored++
-			if hooks != nil && hooks.OnStored != nil {
-				hooks.OnStored(height)
+			select {
+			case jobs <- storeJob{got: got, height: height, payload: payload}:
+			case <-ctx.Done():
+				ctxErr = ctx.Err()
+				break READLOOP
 			}
 			// Do not refresh the batch deadline on every body during forward IBD.
 			// Live: a peer delivered later heights, the 30s window kept sliding, the
@@ -743,11 +885,10 @@ func fetchAndStoreRawBlocksBatchInv(ctx context.Context, w *MsgWriter, p chain.P
 				batchDL = time.Now().Add(limit)
 				hardTimer.Reset(limit + 250*time.Millisecond)
 			}
-			if stored == 1 && requested <= 4 {
-				applog.Line("block", fmt.Sprintf("batched block %x… stored (%d B) height %d", got[:4], len(payload), height))
-			}
 			if err := enqueueRefill(); err != nil {
-				return stored, err
+				ctxErr = err
+				cancel()
+				break READLOOP
 			}
 		case "notfound":
 			nf, err := wire.DecodeInvPayload(payload)
@@ -760,14 +901,20 @@ func fetchAndStoreRawBlocksBatchInv(ctx context.Context, w *MsgWriter, p chain.P
 				}
 			}
 			if err := enqueueRefill(); err != nil {
-				return stored, err
+				ctxErr = err
+				cancel()
+				break READLOOP
 			}
 		case "reject":
 			rj, err := wire.DecodeRejectPayload(payload)
 			if err != nil {
-				return stored, fmt.Errorf("reject before block (malformed): %w", err)
+				ctxErr = fmt.Errorf("reject before block (malformed): %w", err)
+				cancel()
+				break READLOOP
 			}
-			return stored, fmt.Errorf("reject before block: %s", rj.String())
+			ctxErr = fmt.Errorf("reject before block: %s", rj.String())
+			cancel()
+			break READLOOP
 		default:
 			if isBenignBlockFetchNoise(cmd) {
 				continue
@@ -777,6 +924,26 @@ func fetchAndStoreRawBlocksBatchInv(ctx context.Context, w *MsgWriter, p chain.P
 			}
 		}
 	}
+
+	// Stop workers and wait for queued jobs.
+	close(jobs)
+	workersWG.Wait()
+	close(results)
+	consumerWG.Wait()
+
+	stored = int(storedAtomic.Load())
+	stubRejects = int(stubRejectsAtomic.Load())
+
+	fatalMu.Lock()
+	fErr := fatalErr
+	fatalMu.Unlock()
+	if fErr != nil {
+		return stored, fErr
+	}
+	if ctxErr != nil {
+		return stored, ctxErr
+	}
+
 	if stored == 0 && requested > 0 {
 		msg := fmt.Sprintf("batch incomplete: 0/%d block(s) stored", requested)
 		if len(pending) > 0 {

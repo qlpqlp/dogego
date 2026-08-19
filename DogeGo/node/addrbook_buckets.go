@@ -1,4 +1,4 @@
-// Copyright (c) 2026 Paulo Vidal (https://x.com/inevitable360, https://github.com/qlpqlp)
+﻿// Copyright (c) 2026 Paulo Vidal (https://x.com/inevitable360, https://github.com/qlpqlp)
 // Copyright (c) 2026 Dogecoin Foundation
 //
 // SPDX-License-Identifier: MIT
@@ -12,7 +12,7 @@ import (
 	"math"
 )
 
-// Core addrman bucket counts (src/addrman.h): 256 tried × 64 slots, 1024 new × 64 slots.
+// Core addrman bucket counts (src/addrman.h): 256 tried Ã- 64 slots, 1024 new Ã- 64 slots.
 const (
 	addrTriedBucketCount = 256
 	addrNewBucketCount   = 1024
@@ -154,7 +154,7 @@ func (b *AddrBook) trimNewBucketLocked(bucket, maxKeep int) {
 		before := rec.newRefCount()
 		b.removeNewRefLocked(rec, bucket, oldestSlot)
 		if rec.newRefCount() == before {
-			// Slot mismatch — drop all refs in this bucket for the addr.
+			// Slot mismatch â€” drop all refs in this bucket for the addr.
 			out := rec.NewRefs[:0]
 			for _, ref := range rec.NewRefs {
 				if ref.Bucket == bucket {

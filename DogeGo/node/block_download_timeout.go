@@ -1,4 +1,4 @@
-// Copyright (c) 2026 Paulo Vidal (https://x.com/inevitable360, https://github.com/qlpqlp)
+﻿// Copyright (c) 2026 Paulo Vidal (https://x.com/inevitable360, https://github.com/qlpqlp)
 // Copyright (c) 2026 Dogecoin Foundation
 //
 // SPDX-License-Identifier: MIT
@@ -51,7 +51,7 @@ func BlockDownloadTimeout(otherDownloadingPeers int, blockIntervalSec int64) tim
 // EffectiveBlockDownloadTimeout returns the in-flight batch window for progressive getdata.
 // Matches Core nCalculatedDlWindow (nPowTargetSpacing * (BASE + PER_PEER * other downloaders)).
 // Only the first ~1000 bodies keep a shorter cap so inv-only peers rotate; after that a 60s
-// cap was disconnecting peers that were still seeking ancient blocks (Core waits ~5–17 min).
+// cap was disconnecting peers that were still seeking ancient blocks (Core waits ~5â€“17 min).
 func EffectiveBlockDownloadTimeout(bs *BlockStoreCtx, syncLanes int) time.Duration {
 	others := syncLanes - 1
 	if others < 0 {
@@ -63,7 +63,7 @@ func EffectiveBlockDownloadTimeout(bs *BlockStoreCtx, syncLanes int) time.Durati
 		if cont < 1000 && d > earlyIBDBlockDownloadTimeout {
 			return earlyIBDBlockDownloadTimeout
 		}
-		// Core nCalculatedDlWindow grows to 17–60 minutes with many peers. Relays that
+		// Core nCalculatedDlWindow grows to 17â€“60 minutes with many peers. Relays that
 		// disconnect leave getdata claims in that window and freeze IBD at <1 blk/min.
 		if (ShouldDeferConnectForBodyDownload(bs) || ShouldPauseHeaderCatchUpForBodyIBD(bs, 0) || (cont >= 0 && cont < 500_000)) && d > bodyIBDBlockDownloadTimeout {
 			return bodyIBDBlockDownloadTimeout

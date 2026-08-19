@@ -84,3 +84,5 @@ Legacy `storage_mode` / `core_datadir` / `auto_import_core` settings are rejecte
 | **gettxoutproof** | 80-byte header Merkle proofs; auxpow-sized headers not supported in proofs. |
 
 See [ROADMAP.md](../ROADMAP.md) for the full parity checklist.
+
+format recognition only

@@ -1,4 +1,4 @@
-// Copyright (c) 2026 Paulo Vidal (https://x.com/inevitable360, https://github.com/qlpqlp)
+﻿// Copyright (c) 2026 Paulo Vidal (https://x.com/inevitable360, https://github.com/qlpqlp)
 // Copyright (c) 2026 Dogecoin Foundation
 //
 // SPDX-License-Identifier: MIT
@@ -40,10 +40,10 @@ type minerWindowScan struct {
 // BuildChainStats derives dashboard metrics from the local header journal and optional raw blocks.
 // chainActiveHint is Core chainActive (-1 unknown); storedBodiesHint is contiguous raw bodies (-1 unknown).
 // When light is true, cap header walks and body scans (used during IBD to avoid UI stalls) but still
-// scan stored coinbases so miner distribution can render from the tip’s ~24h header-time window.
+// scan stored coinbases so miner distribution can render from the tipâ€™s ~24h header-time window.
 func BuildChainStats(j *store.HeaderJournal, raw *store.RawBlockStore, addrVer byte, now time.Time, chainActiveHint, storedBodiesHint int64, light bool) map[string]any {
 	out := map[string]any{
-		"dogego_note": "Estimates from this node only. Hashrate uses tip difficulty × 2³² / 60s (Dogecoin target spacing). Miner/address stats scan stored raw blocks in a ~24h header-time window (capped).",
+		"dogego_note": "Estimates from this node only. Hashrate uses tip difficulty Ã- 2Â³Â² / 60s (Dogecoin target spacing). Miner/address stats scan stored raw blocks in a ~24h header-time window (capped).",
 	}
 	if j == nil {
 		out["error"] = "no journal"
@@ -120,8 +120,8 @@ func BuildChainStats(j *store.HeaderJournal, raw *store.RawBlockStore, addrVer b
 
 	windowTip := statsTip
 	scan := scanMinerWindow(j, raw, addrVer, windowTip, headerWalk, bodyScanCap)
-	// Headers/connect tip may sit ahead of stored bodies during IBD — fall back to the highest
-	// contiguous stored body so the chart still reflects that tip’s historical ~24h window.
+	// Headers/connect tip may sit ahead of stored bodies during IBD â€” fall back to the highest
+	// contiguous stored body so the chart still reflects that tipâ€™s historical ~24h window.
 	if scan.rawHits == 0 && storedBodies >= 0 && storedBodies < statsTip {
 		fb := scanMinerWindow(j, raw, addrVer, storedBodies, headerWalk, bodyScanCap)
 		if fb.rawHits > 0 {

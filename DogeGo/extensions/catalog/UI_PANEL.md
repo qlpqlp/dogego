@@ -1,4 +1,4 @@
-# Secure extension WebUI (`ui_panel`)
+﻿# Secure extension WebUI (`ui_panel`)
 
 Extensions **do not** ship HTML, JavaScript, or CSS into the dashboard. That keeps the node UI sandboxed.
 
@@ -6,7 +6,7 @@ Instead, an enabled extension with the `ui_panel` permission returns a **JSON `u
 
 ## How operators see it
 
-1. **Extensions** → open the extension card  
+1. **Extensions** â†’ open the extension card  
 2. Extension must be **Enabled**  
 3. **Extension workspace** card appears with a left **Menu** (Home / Tools / Settings / custom sections)
 
@@ -17,7 +17,7 @@ If an extension only returns a flat `summary` / `tools` list, the host **auto-pr
 - **Menu** can be collapsed (hide/show)
 - **Results** console collapses (especially on small screens)
 - Tool cards are collapsible; mark `advanced: true` to start closed
-- Tables support search + “show more” infinite scroll
+- Tables support search + â€œshow moreâ€ infinite scroll
 
 ## How authors add UI
 
@@ -99,7 +99,7 @@ Go helper: `extensions.DefaultWorkspaceUI(title, subtitle, tools)`.
 
 ### Allowed field types
 
-`text`, `number`, `textarea`, `select` (modern choice boxes — click cards, not a native dropdown), `switch` (preferred), `checkbox` (same modern toggle)
+`text`, `number`, `textarea`, `select` (modern choice boxes â€” click cards, not a native dropdown), `switch` (preferred), `checkbox` (same modern toggle)
 
 Optional field `hint` shows helper text under the control. Select `options` may include `icon` (Material Icons name).
 

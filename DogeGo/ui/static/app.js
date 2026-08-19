@@ -2534,6 +2534,10 @@
       storedText += " (+" + inflight.toLocaleString() + " in flight)";
     }
     set("ibd-phase-stored", storedText);
+    const blocksInFlight = Number(s.blocks_in_flight);
+    set("ibd-phase-in-flight", isFinite(blocksInFlight) ? blocksInFlight.toLocaleString() : "...");
+    const aheadContig = Number(s.raw_blocks_ahead_of_contiguous);
+    set("ibd-phase-ahead-of-contiguous", isFinite(aheadContig) && aheadContig > 0 ? aheadContig.toLocaleString() : "0");
     set("ibd-phase-headers", isFinite(tip) ? tip.toLocaleString() : "...");
     set("ibd-phase-download-rate", isFinite(dlRate) && dlRate > 0 ? dlRate.toFixed(1) + " blk/min" : "...");
     set("ibd-phase-connect-rate", isFinite(connRate) && connRate > 0 ? connRate.toFixed(1) + " blk/min" : "...");

@@ -218,9 +218,10 @@ func (b *AddrBook) placeTriedSlotLocked(r *AddrRecord) {
 	if occ := b.occupantTriedLocked(bk, slot); occ != nil && occ.Addr != r.Addr {
 		if occ.LastSeen <= r.LastSeen || b.isTerribleLocked(occ, r.LastSeen) {
 			b.clearTriedOccLocked(occ.TriedBucket, occ.TriedSlot, occ.Addr)
-			occ.Tried = false
 			occ.TriedSlot = -1
-			b.placeNewRefLocked(occ, "", true)
+			// Keep occ.Tried=true so a pure collision replacement doesn't turn into
+			// an immediate “extra” demotion. Cap enforcement (enforceTriedCapLocked)
+			// will handle reducing the tried population to the exact table size.
 		} else {
 			r.TriedBucket = bk
 			r.TriedSlot = -1

@@ -959,6 +959,7 @@ Optional **extensions** (no mainnet consensus fork). Third-party packages ship `
 - [x] **Operator UX:** **Settings external signer test** - `POST /api/signer-test` (HWI enumerate from form or saved `signer_cmd`; loopback only) - **S** (`ui/signer_probe.go`, Settings Advanced)
 - [x] **Operator UX:** **Receive HD keypool refill** - `POST /api/wallet/keypool-refill` (Core `keypoolrefill`; optional `new_size`; Address book toolbar + `hd_wallet` on GET `/api/wallet`; after wallet.dat import with pool-only rows) - **S** (`ui/wallet_keypool.go`, Receive tab)
 - [x] **Declined (out of scope):** Native USB/HID signer bridge without HWI subprocess - use HWI-compatible `signer_cmd` instead.
+- [x] **MVP:** **solo background miner mempool inclusion**
 
 ---
 

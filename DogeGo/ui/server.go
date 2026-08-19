@@ -16,6 +16,7 @@ import (
 	"io/fs"
 	"net"
 	"net/http"
+	"net/http/pprof"
 	"os"
 	"path/filepath"
 	"strconv"
@@ -225,6 +226,38 @@ func Start(ctx context.Context, cfg StartConfig) (baseURL string, err error) {
 	readAuth := func(w http.ResponseWriter, r *http.Request) bool {
 		return requireDashboardRead(w, r, webGate, cfg.EffectiveFile, cfg.ListenAddr)
 	}
+	// Local CPU profiling: expose standard Go pprof under the dashboard web server.
+	// Useful for diagnosing block download bottlenecks during IBD.
+	mux.HandleFunc("/debug/pprof/", func(w http.ResponseWriter, r *http.Request) {
+		if !readAuth(w, r) {
+			return
+		}
+		pprof.Index(w, r)
+	})
+	mux.HandleFunc("/debug/pprof/cmdline", func(w http.ResponseWriter, r *http.Request) {
+		if !readAuth(w, r) {
+			return
+		}
+		pprof.Cmdline(w, r)
+	})
+	mux.HandleFunc("/debug/pprof/profile", func(w http.ResponseWriter, r *http.Request) {
+		if !readAuth(w, r) {
+			return
+		}
+		pprof.Profile(w, r)
+	})
+	mux.HandleFunc("/debug/pprof/symbol", func(w http.ResponseWriter, r *http.Request) {
+		if !readAuth(w, r) {
+			return
+		}
+		pprof.Symbol(w, r)
+	})
+	mux.HandleFunc("/debug/pprof/trace", func(w http.ResponseWriter, r *http.Request) {
+		if !readAuth(w, r) {
+			return
+		}
+		pprof.Trace(w, r)
+	})
 	live := StartLiveFeed(ctx, cfg, 750*time.Millisecond)
 	mux.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
 		if r.URL.Path != "/" {

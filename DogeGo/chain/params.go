@@ -66,7 +66,7 @@ func ParamsFor(net Network) (Params, error) {
 			Net:                  RebootTestnet,
 			Magic:                Magic,
 			Port:                 Port,
-			DNSSeeds:             nil,
+			DNSSeeds:             []string{"seed.dogego.org"},
 			FixedPeers:           fp,
 			GenesisVer:           GenesisVer,
 			GenesisTime:          GenesisTime,

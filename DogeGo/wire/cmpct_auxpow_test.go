@@ -1,4 +1,4 @@
-// Copyright (c) 2026 Paulo Vidal (https://x.com/inevitable360, https://github.com/qlpqlp)
+﻿// Copyright (c) 2026 Paulo Vidal (https://x.com/inevitable360, https://github.com/qlpqlp)
 // Copyright (c) 2026 Dogecoin Foundation
 //
 // SPDX-License-Identifier: MIT
@@ -22,7 +22,7 @@ func TestBuildHeaderAndShortIDsFromBlock_rejectsAuxpow(t *testing.T) {
 }
 
 func TestReconstructBlockFromCmpct_rejectsAuxpow(t *testing.T) {
-	// Synthetic HeaderAndShortIDs with AuxPoW version bit — reconstruct must refuse
+	// Synthetic HeaderAndShortIDs with AuxPoW version bit â€” reconstruct must refuse
 	// (cmpct cannot carry the aux blob). Use a minimal valid coinbase as prefilled tx 0.
 	var coin bytes.Buffer
 	_ = binary.Write(&coin, binary.LittleEndian, int32(1))

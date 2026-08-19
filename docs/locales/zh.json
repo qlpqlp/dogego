@@ -9,6 +9,11 @@
   },
   "skip": "跳转到内容",
   "beta": "Beta",
+  "reviewBanner": {
+    "title": "代码正在审查",
+    "body": "DogeGo 处于测试阶段；此代码库正在审查中。行为可能仍会变化。",
+    "dismissAria": "关闭"
+  },
   "nav": {
     "home": "DogeGo 首页",
     "openMenu": "打开菜单",
@@ -686,6 +691,17 @@
       }
     },
     "downloadLink": "下载",
+    "sha256Label": "SHA256",
+    "copySha": "Copy",
+    "copiedSha": "Copied",
+    "copyShaAria": "Copy SHA256 checksum",
+    "badgeStable": "Stable",
+    "badgePrerelease": "Pre-release",
+    "checksumPending": "Loading checksum…",
+    "checksumUnavailable": "Checksum not published",
+    "readyBodyPlain": "Latest {version} from {source}. Verify SHA256 below before installing.",
+    "readyBodyPrereleasePlain": "Latest pre-release {version} from {source}. Verify SHA256 below before installing.",
+    "soonBodyPlain": "No GitHub Release published yet. Build from source below.",
     "buildTitle": "从源码构建",
     "buildEditorTitle": "bash · dogego",
     "buildCode": "git clone https://github.com/qlpqlp/dogego.git\ncd dogego/DogeGo\ngo build -o dogego ./cmd/dogego\n./dogego",

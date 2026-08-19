@@ -1,4 +1,4 @@
-// Copyright (c) 2026 Paulo Vidal (https://x.com/inevitable360, https://github.com/qlpqlp)
+﻿// Copyright (c) 2026 Paulo Vidal (https://x.com/inevitable360, https://github.com/qlpqlp)
 // Copyright (c) 2026 Dogecoin Foundation
 //
 // SPDX-License-Identifier: MIT
@@ -548,7 +548,7 @@ func TestShouldPauseHeaderCatchUpForBodyIBDWaitsForAssumeValid(t *testing.T) {
 	if got := headerBodyIBDPauseMinTip(bs); got != 5_050_000 {
 		t.Fatalf("pause min tip=%d want 5050000", got)
 	}
-	// Pinning AV does not unlock pause early — local tip must still reach that height.
+	// Pinning AV does not unlock pause early â€” local tip must still reach that height.
 	bs.AssumeValid.PinResolvedHeight(5_050_000)
 	if ShouldPauseHeaderCatchUpForBodyIBD(bs, 0) {
 		t.Fatal("resolved assumevalid still requires tip >= AV height before pausing headers")
@@ -657,7 +657,7 @@ func TestIBDBodyFetchWindowKeepsAllPeersBusy(t *testing.T) {
 		want = int64(blockDownloadWindow)
 	}
 	if win != want {
-		t.Fatalf("fetch window=%d want %d (peers×fat getdata into RAM, cap %d)", win, want, maxIBDFetchWindow)
+		t.Fatalf("fetch window=%d want %d (peersÃ-fat getdata into RAM, cap %d)", win, want, maxIBDFetchWindow)
 	}
 	inflated := ibdBodyFetchWindow(bs, 125)
 	wantCap := int64(maxBlockAssistWorkers+1) * int64(ibdGetDataBatch)
@@ -665,7 +665,7 @@ func TestIBDBodyFetchWindowKeepsAllPeersBusy(t *testing.T) {
 		wantCap = int64(maxIBDFetchWindow)
 	}
 	if inflated != wantCap {
-		t.Fatalf("inflated lane count window=%d want %d (clamped lanes×batch, cap %d)", inflated, wantCap, maxIBDFetchWindow)
+		t.Fatalf("inflated lane count window=%d want %d (clamped lanesÃ-batch, cap %d)", inflated, wantCap, maxIBDFetchWindow)
 	}
 	hi := forwardIBDStripeTipFor(bs, 55_658, 600_000, workers)
 	if hi != 55_658+win-1 {

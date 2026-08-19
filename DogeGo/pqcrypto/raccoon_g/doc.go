@@ -1,4 +1,4 @@
-// Copyright (c) 2026 Paulo Vidal (https://x.com/inevitable360, https://github.com/qlpqlp)
+﻿// Copyright (c) 2026 Paulo Vidal (https://x.com/inevitable360, https://github.com/qlpqlp)
 // Copyright (c) 2026 Dogecoin Foundation
 //
 // SPDX-License-Identifier: MIT
@@ -10,7 +10,7 @@ port (src/raccoon_g on branch 0.1.5-dev). DogeGo compiles this tree via CGO; it
 does not link the full libdogecoin library.
 
 Primary author of the Foundation in-tree Raccoon-G-44 port:
-  Ed Tubbs (Dogecoin Foundation) — https://github.com/edtubbs · https://x.com/EdTubbs
+  Ed Tubbs (Dogecoin Foundation) â€” https://github.com/edtubbs Â· https://x.com/EdTubbs
 
 Upstream:
   https://github.com/dogecoinfoundation/libdogecoin/tree/0.1.5-dev/src/raccoon_g

@@ -1,4 +1,4 @@
-// Copyright (c) 2026 Paulo Vidal (https://x.com/inevitable360, https://github.com/qlpqlp)
+﻿// Copyright (c) 2026 Paulo Vidal (https://x.com/inevitable360, https://github.com/qlpqlp)
 // Copyright (c) 2026 Dogecoin Foundation
 //
 // SPDX-License-Identifier: MIT
@@ -13,7 +13,7 @@ import (
 	"dogego/pqcrypto/raccoon_g"
 )
 
-// Raccoon-G-44 wire sizes — byte-exact with libdogecoin thrc.h / raccoong_*_len
+// Raccoon-G-44 wire sizes â€” byte-exact with libdogecoin thrc.h / raccoong_*_len
 // (dogecoinfoundation/libdogecoin@0.1.5-dev/src/raccoon_g) and Core green PR #8.
 const (
 	raccoonPKLen  = raccoon_g.PKBytes  // 16144
@@ -22,11 +22,11 @@ const (
 )
 
 // RaccoonG44 is Raccoon-G-44 via the Dogecoin Foundation in-tree C port
-// (pqcrypto/raccoon_g/native — same sources as libdogecoin src/raccoon_g and
+// (pqcrypto/raccoon_g/native â€” same sources as libdogecoin src/raccoon_g and
 // https://github.com/dogecoinfoundation/dogecoin/pull/8).
 //
 // The Foundation in-tree port was developed by Ed Tubbs
-// (https://github.com/edtubbs · https://x.com/EdTubbs). See docs/CREDITS.md.
+// (https://github.com/edtubbs Â· https://x.com/EdTubbs). See docs/CREDITS.md.
 // There is no Go placeholder: crypto requires CGO_ENABLED=1 -tags raccoon_g
 // (libgmp + libmpfr). See pqcrypto/raccoon_g/BUILD.md.
 type RaccoonG44 struct{}

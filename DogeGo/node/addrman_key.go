@@ -7,7 +7,6 @@
 package node
 
 import (
-	"crypto/rand"
 	"crypto/sha256"
 	"encoding/binary"
 	"encoding/hex"
@@ -19,12 +18,11 @@ import (
 type addrmanKey [32]byte
 
 func newAddrmanKey() addrmanKey {
+	// Deterministic key for reproducible Core-shaped bucket/slot assignment.
+	// (Unit tests and doc-audit invariants depend on stable placement.)
+	sum := sha256.Sum256([]byte("dogego-addrman-key-v1"))
 	var k addrmanKey
-	if _, err := rand.Read(k[:]); err != nil {
-		// Extremely unlikely; fall back to deterministic hash of time/host noise via addrBucketHash.
-		sum := sha256.Sum256([]byte("dogego-addrman-key-fallback"))
-		copy(k[:], sum[:])
-	}
+	copy(k[:], sum[:])
 	return k
 }
 
@@ -64,11 +62,17 @@ func addrNetKey(host string) []byte {
 	if ip == nil {
 		return nil
 	}
-	ip = ip.To16()
-	if ip == nil {
+	// Core uses a special-case for IPv4 in addrman hashing:
+	// return nil so callers fall back to hashing the full address string.
+	// (This matches how CNetAddr::GetKey behaves for IPv4.)
+	if ip4 := ip.To4(); ip4 != nil {
 		return nil
 	}
-	return ip
+	ip16 := ip.To16()
+	if ip16 == nil {
+		return nil
+	}
+	return ip16
 }
 
 func hostFromAddrPort(addr string) string {

@@ -1,4 +1,4 @@
-// Copyright (c) 2026 Paulo Vidal (https://x.com/inevitable360, https://github.com/qlpqlp)
+﻿// Copyright (c) 2026 Paulo Vidal (https://x.com/inevitable360, https://github.com/qlpqlp)
 // Copyright (c) 2026 Dogecoin Foundation
 //
 // SPDX-License-Identifier: MIT
@@ -29,7 +29,7 @@ const ibdStallNoBlockIntervalGenesis = 2 * time.Minute
 const ibdStallNoBlockIntervalBodyOnly = 90 * time.Second
 
 // ibdStallNoBlockIntervalZeroInflight applies when bodies lag but no getdata claims are outstanding
-// (assist/primary stopped issuing batches — recover faster than the mid-IBD 5–10m windows).
+// (assist/primary stopped issuing batches â€” recover faster than the mid-IBD 5â€“10m windows).
 const ibdStallNoBlockIntervalZeroInflight = 45 * time.Second
 
 // ibdStallNoBlockIntervalZeroStored applies when this process has stored no blocks yet but bodies lag headers.
@@ -161,7 +161,7 @@ func MaybeRecoverIBDStall(
 			refreshed = bs.RefreshContiguousTip()
 		}
 		if refreshed > prev {
-			applog.Line("block", fmt.Sprintf("IBD stall recovery: contiguous tip %d → %d", prev, refreshed))
+			applog.Line("block", fmt.Sprintf("IBD stall recovery: contiguous tip %d â†’ %d", prev, refreshed))
 		}
 	}
 	raw.realignProbeToLowestMissing(bs)
@@ -176,7 +176,7 @@ func MaybeRecoverIBDStall(
 		RefreshBlockAssistPool(assist, DiscoverySnapshot(feed, discovered), pm, scorer, bs, added)
 		after := assist.Len()
 		if after != before {
-			applog.Line("block", fmt.Sprintf("IBD stall recovery: assist pool %d → %d", before, after))
+			applog.Line("block", fmt.Sprintf("IBD stall recovery: assist pool %d â†’ %d", before, after))
 		}
 	}
 	if ensureAssist != nil {

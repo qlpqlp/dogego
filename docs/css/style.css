@@ -1787,19 +1787,215 @@ body.site-sidebar-open {
 .platform-arch { margin: 0 0 0.65rem; font-size: 0.85rem; color: var(--text-dim); }
 
 .platform-link {
-  background: none;
-  border: none;
-  padding: 0;
-  font-family: inherit;
-  font-weight: 600;
-  font-size: 0.95rem;
-  color: var(--accent-dim);
-  cursor: pointer;
-  text-decoration: underline;
-  text-underline-offset: 2px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  margin-bottom: 0.85rem;
+  text-decoration: none;
+  text-underline-offset: 0;
 }
 
-.platform-link:hover { color: var(--accent); }
+.platform-link:hover { color: inherit; }
+
+.download-grid-status {
+  margin: 0 0 1.25rem;
+  padding: 0.75rem 1rem;
+  font-size: 0.92rem;
+  line-height: 1.5;
+  color: var(--text-muted);
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+}
+
+.download-grid-status[data-state="ready"] {
+  border-color: rgba(22, 163, 74, 0.28);
+  color: var(--text);
+}
+
+.download-grid-status[data-state="prerelease"] {
+  border-color: rgba(194, 166, 51, 0.35);
+  color: var(--text);
+}
+
+.download-grid-status[data-state="soon"] {
+  border-color: rgba(194, 166, 51, 0.28);
+}
+
+.platform-grid--loading .platform-card {
+  opacity: 0.92;
+}
+
+.platform-card-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 0.5rem;
+  margin-bottom: 0.35rem;
+}
+
+.platform-card-head .platform-icon {
+  margin-bottom: 0;
+}
+
+.platform-badges {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+  justify-content: flex-end;
+  max-width: 62%;
+}
+
+.platform-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.18rem 0.5rem;
+  border-radius: 999px;
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  line-height: 1.3;
+  white-space: nowrap;
+}
+
+.platform-badge-version {
+  background: rgba(194, 166, 51, 0.14);
+  color: var(--accent-dim);
+  border: 1px solid rgba(194, 166, 51, 0.28);
+  font-family: var(--mono);
+}
+
+.platform-badge-channel.platform-badge--stable {
+  background: rgba(22, 163, 74, 0.12);
+  color: #15803d;
+  border: 1px solid rgba(22, 163, 74, 0.28);
+}
+
+.platform-badge-channel.platform-badge--prerelease {
+  background: rgba(234, 88, 12, 0.12);
+  color: #c2410c;
+  border: 1px solid rgba(234, 88, 12, 0.28);
+}
+
+.platform-checksum {
+  margin-top: 0.15rem;
+  padding-top: 0.75rem;
+  border-top: 1px solid var(--border);
+}
+
+.platform-checksum-label {
+  display: block;
+  margin-bottom: 0.35rem;
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--text-dim);
+}
+
+.platform-checksum-row {
+  display: flex;
+  align-items: stretch;
+  gap: 0.45rem;
+  min-width: 0;
+}
+
+.platform-checksum-hash {
+  flex: 1;
+  min-width: 0;
+  margin: 0;
+  padding: 0.55rem 0.6rem;
+  font-family: var(--mono);
+  font-size: 0.68rem;
+  line-height: 1.45;
+  word-break: break-all;
+  overflow-wrap: anywhere;
+  background: var(--bg-input);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  color: var(--text-muted);
+  max-height: 4.5rem;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+.platform-checksum-hash--pending {
+  font-family: inherit;
+  font-size: 0.78rem;
+  font-style: italic;
+  word-break: normal;
+  overflow-wrap: normal;
+}
+
+.platform-checksum-copy {
+  flex-shrink: 0;
+  display: inline-flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.1rem;
+  min-width: 3.1rem;
+  padding: 0.35rem 0.45rem;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--surface);
+  color: var(--text-muted);
+  font-family: inherit;
+  font-size: 0.62rem;
+  font-weight: 700;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: background 0.15s, border-color 0.15s, color 0.15s;
+}
+
+.platform-checksum-copy .material-icons-round {
+  font-size: 1rem;
+}
+
+.platform-checksum-copy:hover {
+  background: var(--bg-input);
+  border-color: var(--accent-dim);
+  color: var(--text);
+}
+
+.platform-checksum-copy:focus-visible {
+  outline: 2px solid var(--doge-gold);
+  outline-offset: 2px;
+}
+
+.platform-checksum-copy.is-copied {
+  border-color: rgba(22, 163, 74, 0.45);
+  color: #15803d;
+  background: rgba(22, 163, 74, 0.08);
+}
+
+@media (max-width: 640px) {
+  .platform-badges {
+    max-width: 100%;
+    justify-content: flex-start;
+  }
+
+  .platform-card-head {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .platform-checksum-hash {
+    font-size: 0.64rem;
+    max-height: 5.5rem;
+  }
+
+  .platform-checksum-copy {
+    min-width: 2.75rem;
+    padding: 0.4rem 0.35rem;
+  }
+
+  .platform-checksum-copy-label {
+    display: none;
+  }
+}
 
 .build-box {
   background: var(--bg-card);

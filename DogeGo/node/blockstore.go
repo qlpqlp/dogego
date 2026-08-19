@@ -498,6 +498,38 @@ func (c *BlockStoreCtx) StoreValidatedBlockAtHeight(want [32]byte, payload []byt
 	return c.storeValidatedBlock(want, payload, height, height >= 0)
 }
 
+// StageDownloadedBlockAtHeight stages raw block bytes during download-first IBD.
+//
+// Unlike StoreValidatedBlockAtHeight, this intentionally skips expensive consensus
+// validation and ConnectBlock / chain insertion. The sequential/ordered connect stage
+// (e.g. FlushDeferredConnect / tryConnectContiguousFrontier) performs full validation later.
+//
+// This keeps getdata/socket processing independent from validation and connect.
+func (c *BlockStoreCtx) StageDownloadedBlockAtHeight(want [32]byte, payload []byte, height int64) error {
+	if c == nil || c.Raw == nil || len(payload) < 81 {
+		return fmt.Errorf("block store: missing store or payload")
+	}
+	if err := wire.ValidateBlockPayload(payload, want); err != nil {
+		return err
+	}
+	if c.rawBodyPresent(want, height) {
+		return nil
+	}
+	if height >= 0 {
+		if minB := store.MinRawBlockBytes(c.chainNet(), height); minB > 0 && len(payload) < minB {
+			return fmt.Errorf("raw block too short at height %d: %d bytes (need >= %d)", height, len(payload), minB)
+		}
+	}
+	if err := c.Raw.Put(want, payload); err != nil {
+		return err
+	}
+	// Download-first: update contiguous hole coverage without triggering heavy IBD hooks.
+	c.noteBlockStoredAtDeferred(height)
+	logStoredBlockSampled(c, height, want)
+	NoteBlockStored(height)
+	return nil
+}
+
 func (c *BlockStoreCtx) storeValidatedBlock(want [32]byte, payload []byte, knownHeight int64, trustHeight bool) error {
 	if c == nil || c.Raw == nil || len(payload) < 81 {
 		return fmt.Errorf("block store: missing store or payload")

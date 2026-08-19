@@ -1,4 +1,4 @@
-# Copyright (c) 2026 Paulo Vidal (https://x.com/inevitable360, https://github.com/qlpqlp)
+﻿# Copyright (c) 2026 Paulo Vidal (https://x.com/inevitable360, https://github.com/qlpqlp)
 # Copyright (c) 2026 Dogecoin Foundation
 # SPDX-License-Identifier: MIT
 # Milestone E mining cert: getmininginfo + getblocktemplate (Digishield bits, BIP22 longpoll)
@@ -96,7 +96,7 @@ if ($gbt) {
     $notes += "gbt_height=$($gbt.height)"
 }
 
-# Aux era: mainnet 371337, reboot testnet 158100 — use next height from tip.
+# Aux era: mainnet 371337, reboot testnet 158100 â€” use next height from tip.
 $net = if ($info -and $info.chain) { [string]$info.chain } else { "main" }
 $auxAct = if ($net -match "test") { 158100 } else { 371337 }
 $next = $blocks + 1

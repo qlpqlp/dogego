@@ -1,4 +1,4 @@
-/*
+﻿/*
 
  The MIT License (MIT)
 
@@ -26,7 +26,7 @@
 */
 
 /*
- * Raccoon-G-44 threshold core — skeleton. Keygen/sign/verify/HD-derive land
+ * Raccoon-G-44 threshold core â€” skeleton. Keygen/sign/verify/HD-derive land
  * in Sessions 6-7 and must produce byte-identical output to the upstream
  * Python reference (p-11/lattice-hd-wallets) for the committed KAT seeds.
  */
@@ -119,7 +119,7 @@ dogecoin_bool raccoong_xof_sample_q(uint64_t out[/* RACCOONG_N */],
 /**
  * @brief Challenge-polynomial expansion.
  *
- * Maps the 32-byte challenge digest `c_hash` to a τ-weight ternary
+ * Maps the 32-byte challenge digest `c_hash` to a Ï„-weight ternary
  * polynomial in {-1, 0, +1}^256 (exactly RACCOONG_TAU non-zero
  * coefficients).  Used by both `thrc_sign` and `thrc_verify`.
  *
@@ -204,8 +204,8 @@ dogecoin_bool raccoong_hash_vec(uint8_t out[RACCOONG_C_HASH_BYTES],
      *   return xof.read(crh)                            # 32 bytes
      *
      * The `_hdr24` "i" and "j" fields are 3-byte little-endian, so the
-     * primitive only supports dat_len < 2^24 and v_len < 2^24 / 7 ≈ 2.4M
-     * — well above any Raccoon-G-44 call site (largest is k*n = 2304).
+     * primitive only supports dat_len < 2^24 and v_len < 2^24 / 7 â‰ˆ 2.4M
+     * â€” well above any Raccoon-G-44 call site (largest is k*n = 2304).
      */
     const unsigned q_byt = (RACCOONG_LOG_Q + 7u) / 8u;     /* 7 */
     if (dat_len > 0xFFFFFFu) return false;
@@ -311,7 +311,7 @@ dogecoin_bool raccoong_buff_mu(uint8_t out[RACCOONG_C_HASH_BYTES],
  * as already living in NTT domain (uniform random in either basis), so the
  * output is consumable directly by `raccoong_mul_mat_vec_ntt`.
  *
- * @param[out] A Output k×ell matrix in NTT domain.
+ * @param[out] A Output kÃ-ell matrix in NTT domain.
  * @param[in] A_seed Public matrix seed (16 bytes).
  * @return true on success, false on null inputs.
  */
@@ -412,7 +412,7 @@ dogecoin_bool raccoong_vec_rshift(polyr* r, const polyr* a, unsigned shift,
  * Inputs must already be in NTT domain. Output is in NTT domain.
  *
  * @param[out] out Output k-vector in NTT domain.
- * @param[in] A k×ell matrix in NTT domain.
+ * @param[in] A kÃ-ell matrix in NTT domain.
  * @param[in] v ell-vector in NTT domain.
  * @return true on success, false on null inputs.
  */
@@ -519,7 +519,7 @@ cleanup_locals:
 cleanup:
     // Wipe secret-derived BSS slots. A depends only on the public A_seed and
     // is left intact. s_poly, e1_poly, s_ntt and t_ntt (the pre-addition
-    // intermediate A·s, which together with the public t reveals e1) are all
+    // intermediate AÂ·s, which together with the public t reveals e1) are all
     // secret-derived and must be cleared.
     dogecoin_mem_zero(s_poly, sizeof(s_poly));
     dogecoin_mem_zero(e1_poly, sizeof(e1_poly));
@@ -533,7 +533,7 @@ cleanup:
  *   - `A_seed_out` (16 bytes)        = SHAKE256(_hdr8('A') + key, 16)
  *   - `t_out[k]`  (k polyrs in [0,q)) = vec_intt(A_ntt * vec_ntt(s)) + e1
  *
- * No rshift / nu_t rounding is applied — the unrounded shape is the canonical
+ * No rshift / nu_t rounding is applied â€” the unrounded shape is the canonical
  * HD-wallet variant (preserves additive linearity for non-hardened child
  * derivation).
  *
@@ -913,7 +913,7 @@ static int32_t center_qw(uint16_t x)
     return v;
 }
 
-// `_check_bounds(z, h)` from upstream: ||(z, 2^nu_w · h)||_2 <= B2_z.
+// `_check_bounds(z, h)` from upstream: ||(z, 2^nu_w Â· h)||_2 <= B2_z.
 static dogecoin_bool check_bounds(const polyr z[RACCOONG_ELL],
                                   const uint16_t h[RACCOONG_K][RACCOONG_N])
 {
@@ -931,7 +931,7 @@ static dogecoin_bool check_bounds(const polyr z[RACCOONG_ELL],
             s2h += v * v;
         }
     }
-    // sum + (2^nu_w)^2 · s2h, then sqrt and compare to B2.
+    // sum + (2^nu_w)^2 Â· s2h, then sqrt and compare to B2.
     const double n2 = sqrt(s2z + ldexp(s2h, 2 * RACCOONG_NU_W));
     return (n2 <= raccoong_b2_bound()) ? true : false;
 }
@@ -939,7 +939,7 @@ static dogecoin_bool check_bounds(const polyr z[RACCOONG_ELL],
 // HD-wallet sign/verify (upstream `_sign_with_unrounded_public_key`):
 //
 // Replace `lshift(t, nu_t)` with `lshift(round(t, nu_t), nu_t)`, i.e.
-//   t̂ = (t + 2^(nu_t-1)) >> nu_t  (mod q_t),  then  t̂ << nu_t  (mod q).
+//   tÌ‚ = (t + 2^(nu_t-1)) >> nu_t  (mod q_t),  then  tÌ‚ << nu_t  (mod q).
 //
 // Since q_t = q >> nu_t = 16383 < 2^14 and nu_t = 35, the lshifted value is
 // < 2^49 < q, so no further mod-q reduction is needed after the shift.
@@ -1113,7 +1113,7 @@ static dogecoin_bool thrc_sign_internal(uint8_t c_hash_out[RACCOONG_C_HASH_BYTES
         goto cleanup;
     }
 
-    // --- 5. y = [A * z_ntt - 2^nu_t · c_ntt · NTT(t)]_nu_w.
+    // --- 5. y = [A * z_ntt - 2^nu_t Â· c_ntt Â· NTT(t)]_nu_w.
     static polyr y_vec[RACCOONG_K];
     if (!raccoong_mul_mat_vec_ntt(y_vec,
                                   (const polyr (*)[RACCOONG_ELL])A_ntt,

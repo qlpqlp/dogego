@@ -1,4 +1,4 @@
-// Copyright (c) 2026 Paulo Vidal (https://x.com/inevitable360, https://github.com/qlpqlp)
+﻿// Copyright (c) 2026 Paulo Vidal (https://x.com/inevitable360, https://github.com/qlpqlp)
 // Copyright (c) 2026 Dogecoin Foundation
 //
 // SPDX-License-Identifier: MIT
@@ -38,7 +38,7 @@ func MinRawBlockBytes(net chain.Network, height int64) int {
 }
 
 // HasStoredBody reports whether rawblocks/ has an adequate payload for hashLE.
-// Uses locator Uncompressed / file Stat size — never a full Get — so IBD claim planning stays cheap.
+// Uses locator Uncompressed / file Stat size â€” never a full Get â€” so IBD claim planning stays cheap.
 func (s *RawBlockStore) HasStoredBody(hashLE [32]byte, minBytes int) bool {
 	if s == nil {
 		return false

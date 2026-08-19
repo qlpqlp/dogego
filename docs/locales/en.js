@@ -370,7 +370,7 @@
       "mining": "generatetoaddress, createauxblock/submitauxblock, getblocktemplate NextBlockBits + BIP22 longpoll, reboot-testnet solo miner with mempool txs; <code>GET /api/core-mining-probe</code> + <code>dogego cert mining</code>",
       "ui": "Wizard, BlockStep, Features matrix, GitHub auto-update, tray, local HTTPS, sync dock",
       "pq": "PQ OP_RETURN + carrier (RPC/web send; needs more soak testing)",
-      "extensions": "Extensions catalog (wasm/subprocess), dogego.zkl2 ZK L2, dogego.doginals L2, beta dogego.bbpow (Bitcoin-backed DOGE mining research)",
+      "extensions": "Modular extensions catalog (wasm/subprocess) plus official ZK L2, Doginals, RadioDoge, and BBPoW packages",
       "segwit": "SegWit ready: BIP141 machinery Core-aligned (CLTV active)"
     }
   },
@@ -691,6 +691,17 @@
       }
     },
     "downloadLink": "Download",
+    "sha256Label": "SHA256",
+    "copySha": "Copy",
+    "copiedSha": "Copied",
+    "copyShaAria": "Copy SHA256 checksum",
+    "badgeStable": "Stable",
+    "badgePrerelease": "Pre-release",
+    "checksumPending": "Loading checksum…",
+    "checksumUnavailable": "Checksum not published",
+    "readyBodyPlain": "Latest {version} from {source}. Verify SHA256 below before installing.",
+    "readyBodyPrereleasePlain": "Latest pre-release {version} from {source}. Verify SHA256 below before installing.",
+    "soonBodyPlain": "No GitHub Release published yet. Build from source below.",
     "buildTitle": "Build from source",
     "buildEditorTitle": "bash · dogego",
     "buildCode": "git clone https://github.com/qlpqlp/dogego.git\ncd dogego/DogeGo\ngo build -o dogego ./cmd/dogego\n./dogego",
@@ -709,7 +720,7 @@
     },
     "extensions": {
       "title": "Build extensions",
-      "body": "Ship Go or WASM packages with UI panels, RPC (<code>dogego_ext_&lt;id&gt;_*</code>), and optional P2P. Authoring guides and examples live in the catalog; official packs include <code>dogego.zkl2</code>, <code>dogego.doginals</code>, and beta <code>dogego.bbpow</code>."
+      "body": "Ship Go or WASM packages with UI panels, RPC (<code>dogego_ext_&lt;id&gt;_*</code>), and optional P2P. Authoring guides live in the catalog. Official packages are listed under <a href=\"#extensions\">Extensions</a>."
     },
     "docs": {
       "title": "Full documentation",

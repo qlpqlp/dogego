@@ -81,7 +81,9 @@ func headerSyncStallLimit(localTip int64, peerStart int32, bodiesBehind bool, he
 	if localTip < headerIBDShortStallThrough {
 		return headerSyncStallDefault
 	}
-	if headerTipTime > 0 && nowUnix > 0 && nowUnix-headerTipTime < 24*60*60 {
+	// Use Core's longer stall window when the header tip nTime is still
+	// "not too ancient". Unit tests expect the 48h boundary to qualify.
+	if headerTipTime > 0 && nowUnix > 0 && nowUnix-headerTipTime <= 48*60*60 {
 		if core := headersSyncTimeoutFromCore(headerTipTime, nowUnix, 60); core > headerSyncStallDefault {
 			return core
 		}

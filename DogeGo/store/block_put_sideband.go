@@ -30,6 +30,11 @@ type BlockPutSideband struct {
 	Network         chain.Network
 	ContiguousHeight func() int64
 	Pool            MempoolBlockPruner
+	// ShouldLookupHeight can be used to skip HeaderJournal hash->height scans
+	// during download-first IBD (where we already know height via the claim
+	// planner and don't want to serialize/block on journal lookups per Put).
+	// When nil, height lookups are enabled.
+	ShouldLookupHeight func() bool
 	// CollectMempoolConfirmed samples pooled txs in the block before mempool prune (optional).
 	CollectMempoolConfirmed func(blockRaw []byte, blockHeight int64) []MempoolConfirmFeeSample
 	RecordMempoolConfirmed  func(blockHeight int64, samples []MempoolConfirmFeeSample)
@@ -44,7 +49,7 @@ func (b *BlockPutSideband) AfterPut(hashLE [32]byte, raw []byte) {
 		return
 	}
 	height := int64(-1)
-	if b.Journal != nil {
+	if b.Journal != nil && (b.ShouldLookupHeight == nil || b.ShouldLookupHeight()) {
 		if h, err := b.Journal.HeightByBlockHashLE(hashLE); err == nil {
 			height = h
 		}

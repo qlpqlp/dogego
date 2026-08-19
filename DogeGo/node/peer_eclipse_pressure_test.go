@@ -1,4 +1,4 @@
-// Copyright (c) 2026 Paulo Vidal (https://x.com/inevitable360, https://github.com/qlpqlp)
+﻿// Copyright (c) 2026 Paulo Vidal (https://x.com/inevitable360, https://github.com/qlpqlp)
 // Copyright (c) 2026 Dogecoin Foundation
 //
 // SPDX-License-Identifier: MIT
@@ -101,7 +101,7 @@ func TestEclipseInboundPressureSoak(t *testing.T) {
 		}
 		if hostPortGroup16(v) != hostPortGroup16("1.2.3.10:22556") && attackerLeft >= 2 {
 			// Prefer crowded group when still over-represented.
-			t.Logf("victim %s (attackers left %d) — acceptable if group counts tied", v, attackerLeft)
+			t.Logf("victim %s (attackers left %d) â€” acceptable if group counts tied", v, attackerLeft)
 		}
 	}
 }

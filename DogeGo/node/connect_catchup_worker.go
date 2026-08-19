@@ -1,4 +1,4 @@
-// Copyright (c) 2026 Paulo Vidal (https://x.com/inevitable360, https://github.com/qlpqlp)
+﻿// Copyright (c) 2026 Paulo Vidal (https://x.com/inevitable360, https://github.com/qlpqlp)
 // Copyright (c) 2026 Dogecoin Foundation
 //
 // SPDX-License-Identifier: MIT
@@ -44,7 +44,7 @@ func MaybeSaveIBDUtxoSnapshot(bs *BlockStoreCtx, utxo *store.UtxoCache, chainDir
 	if bs != nil && ShouldPauseHeaderCatchUpForBodyIBD(bs, 0) && height < 50_000 {
 		interval = 128
 	}
-	// IBD optimize: keep the UTXO set in RAM longer (Core -dbcache style) — fewer utxo.cache flushes.
+	// IBD optimize: keep the UTXO set in RAM longer (Core -dbcache style) â€” fewer utxo.cache flushes.
 	if bs != nil && bs.IBDOptimize && ShouldPauseHeaderCatchUpForBodyIBD(bs, 0) {
 		interval = 1024
 		if height < 50_000 {

@@ -1,4 +1,4 @@
-//go:build windows || linux || (darwin && cgo)
+﻿//go:build windows || linux || (darwin && cgo)
 
 package desktop
 
@@ -205,7 +205,7 @@ func runSystrayBlocking(cfg TrayConfig, icon []byte) {
 			}
 		}()
 	}, func() {
-		// onExit runs from Quit / WM_DESTROY — keep it short so the native loop can finish.
+		// onExit runs from Quit / WM_DESTROY â€” keep it short so the native loop can finish.
 		go doShutdown()
 	})
 }

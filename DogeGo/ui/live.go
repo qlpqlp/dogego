@@ -10,6 +10,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"math"
 	"net/http"
 	"strings"
 	"sync"
@@ -401,6 +402,47 @@ func overlayP2PProgressOnSummary(sum, p2p map[string]any) {
 	}
 	if v, ok := prog["blocks_stored_ibd"]; ok {
 		sum["blocks_stored_ibd"] = v
+	}
+	// Recompute sync_eta during lightweight overlays so it doesn't stay stuck
+	// on stale values while blocks_per_minute updates frequently during IBD.
+	//
+	// BuildSummaryMap is intentionally throttled because it can block on heavy
+	// I/O (raw header/body sync), so sync_eta may otherwise lag behind the
+	// current download rate for tens of seconds.
+	toInt64 := func(v any) (int64, bool) {
+		switch x := v.(type) {
+		case int64:
+			return x, true
+		case int:
+			return int64(x), true
+		case float64:
+			return int64(x), true
+		default:
+			return 0, false
+		}
+	}
+	toFloat64 := func(v any) (float64, bool) {
+		switch x := v.(type) {
+		case float64:
+			return x, true
+		case int:
+			return float64(x), true
+		case int64:
+			return float64(x), true
+		default:
+			return 0, false
+		}
+	}
+	tip, okTip := toInt64(sum["tip_height"])
+	chainActive, okCA := toInt64(sum["chain_active_height"])
+	contiguousH, okCont := toInt64(sum["contiguous_raw_height"])
+	rate, okRate := toFloat64(sum["blocks_per_minute"])
+	if okTip && okCA && okCont && okRate {
+		if !math.IsNaN(rate) && !math.IsInf(rate, 0) && rate > 0 {
+			behind := rpc.BlocksBehindHeaders(tip, chainActive, contiguousH)
+			sum["blocks_behind_headers"] = behind
+			sum["sync_eta"] = rpc.FormatSyncETA(behind, rate)
+		}
 	}
 }
 

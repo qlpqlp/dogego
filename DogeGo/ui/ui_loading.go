@@ -1,4 +1,4 @@
-// Copyright (c) 2026 Paulo Vidal (https://x.com/inevitable360, https://github.com/qlpqlp)
+﻿// Copyright (c) 2026 Paulo Vidal (https://x.com/inevitable360, https://github.com/qlpqlp)
 // Copyright (c) 2026 Dogecoin Foundation
 //
 // SPDX-License-Identifier: MIT
@@ -7,33 +7,33 @@
 package ui
 
 // ApplyUILoadingFlags sets dogego_ui_loading* fields for the sync dock / Overview.
-// Priority: warming → connect/replay (only when download is not the main work) → wallet_scan.
-// During body/header IBD, connect lag is background work — do not sticky-override the dock
+// Priority: warming â†’ connect/replay (only when download is not the main work) â†’ wallet_scan.
+// During body/header IBD, connect lag is background work â€” do not sticky-override the dock
 // with "Building UTXO cache" (operators already see connect lag in the metrics strip).
 func ApplyUILoadingFlags(summary map[string]any, warming bool) {
 	if summary == nil {
 		return
 	}
 	if warming {
-		setUILoading(summary, "warming", "Loading local data…")
+		setUILoading(summary, "warming", "Loading local dataâ€¦")
 		return
 	}
 	downloadActive := syncDownloadActive(summary)
 	if lag, ok := int64FromAny(summary["dogego_connect_lag"]); ok && lag > 64 && !downloadActive {
-		setUILoading(summary, "utxo_cache", "Connecting blocks…")
+		setUILoading(summary, "utxo_cache", "Connecting blocksâ€¦")
 		return
 	}
 	if lag, ok := int64FromAny(summary["dogego_stored_bodies_ahead_connect"]); ok && lag > 64 && !downloadActive {
-		setUILoading(summary, "snapshot_replay", "Connecting stored bodies…")
+		setUILoading(summary, "snapshot_replay", "Connecting stored bodiesâ€¦")
 		return
 	}
 	ibd := summary["initialblockdownload"] == true || summary["ibd_active"] == true
 	if !ibd && (summary["scanning"] == true || summary["wallet_listtransactions_scan_pending"] == true) {
-		setUILoading(summary, "wallet_scan", "Scanning wallet history…")
+		setUILoading(summary, "wallet_scan", "Scanning wallet historyâ€¦")
 		return
 	}
 	if !ibd && summary["needs_rescan"] == true && summary["wallet_scan_index_ok"] != true {
-		setUILoading(summary, "wallet_scan", "Building wallet scan index…")
+		setUILoading(summary, "wallet_scan", "Building wallet scan indexâ€¦")
 		return
 	}
 	clearUILoading(summary)

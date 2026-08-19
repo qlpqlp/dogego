@@ -1,4 +1,4 @@
-// Copyright (c) 2026 Paulo Vidal (https://x.com/inevitable360, https://github.com/qlpqlp)
+﻿// Copyright (c) 2026 Paulo Vidal (https://x.com/inevitable360, https://github.com/qlpqlp)
 // Copyright (c) 2026 Dogecoin Foundation
 //
 // SPDX-License-Identifier: MIT
@@ -59,7 +59,7 @@ func (c *BlockStoreCtx) noteBlockStoredAtInner(height int64, notify bool) {
 		c.extendContiguousForwardLocked()
 	}
 	// height > contiguous+1: parallel getdata may land ahead of the hole.
-	// Do not rescan from genesis — that hashed+stated every stored height on
+	// Do not rescan from genesis â€” that hashed+stated every stored height on
 	// each file and froze every download lane. Coverage moves when the hole fills.
 	if notify && c.onContiguousAdvance != nil && c.contiguousTip >= 0 && c.contiguousTip != prev {
 		notifyCont = c.contiguousTip
@@ -254,9 +254,9 @@ func (c *BlockStoreCtx) RampReplayContiguousFromDisk() int64 {
 	}
 	cont := c.ContiguousRawHeight()
 	if start >= 0 && cont > start {
-		applog.Line("block", fmt.Sprintf("replay ramp: contiguous %d → %d (disk advance)", start, cont))
+		applog.Line("block", fmt.Sprintf("replay ramp: contiguous %d â†’ %d (disk advance)", start, cont))
 	} else if start < 0 && cont >= 0 {
-		applog.Line("block", fmt.Sprintf("replay ramp: contiguous → %d (disk advance)", cont))
+		applog.Line("block", fmt.Sprintf("replay ramp: contiguous â†’ %d (disk advance)", cont))
 	}
 	return cont
 }
@@ -337,7 +337,7 @@ func (c *BlockStoreCtx) maybeClampBundledContiguousFromDisk() int64 {
 	cont := c.contiguousTip
 	c.contiguousMu.Unlock()
 	if prev >= 0 && cont >= 0 && cont < prev {
-		applog.Line("recovery", fmt.Sprintf("bundled contiguous clamp %d → %d from disk probe", prev, cont))
+		applog.Line("recovery", fmt.Sprintf("bundled contiguous clamp %d â†’ %d from disk probe", prev, cont))
 	}
 	return cont
 }

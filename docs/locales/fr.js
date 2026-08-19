@@ -9,6 +9,11 @@
   },
   "skip": "Aller au contenu",
   "beta": "Bêta",
+  "reviewBanner": {
+    "title": "Code sous examen",
+    "body": "DogeGo est en version bêta ; ce codebase est en cours de revue. Le comportement peut encore changer.",
+    "dismissAria": "Fermer"
+  },
   "nav": {
     "home": "Accueil DogeGo",
     "openMenu": "Ouvrir le menu",
@@ -686,6 +691,17 @@
       }
     },
     "downloadLink": "Télécharger",
+    "sha256Label": "SHA256",
+    "copySha": "Copy",
+    "copiedSha": "Copied",
+    "copyShaAria": "Copy SHA256 checksum",
+    "badgeStable": "Stable",
+    "badgePrerelease": "Pre-release",
+    "checksumPending": "Loading checksum…",
+    "checksumUnavailable": "Checksum not published",
+    "readyBodyPlain": "Latest {version} from {source}. Verify SHA256 below before installing.",
+    "readyBodyPrereleasePlain": "Latest pre-release {version} from {source}. Verify SHA256 below before installing.",
+    "soonBodyPlain": "No GitHub Release published yet. Build from source below.",
     "buildTitle": "Compiler depuis les sources",
     "buildEditorTitle": "bash · dogego",
     "buildCode": "git clone https://github.com/qlpqlp/dogego.git\ncd dogego/DogeGo\ngo build -o dogego ./cmd/dogego\n./dogego",
