@@ -53,6 +53,9 @@
       err.walletLocked = body.wallet_locked === true;
       throw err;
     }
+    if (typeof global.DogeGoApplyWalletUnlockState === "function") {
+      global.DogeGoApplyWalletUnlockState(body);
+    }
     return body;
   }
 
@@ -65,6 +68,9 @@
     const body = await r.json().catch(() => ({}));
     if (!r.ok) {
       throw new Error(body.error || ("HTTP " + r.status));
+    }
+    if (typeof global.DogeGoApplyWalletUnlockState === "function") {
+      global.DogeGoApplyWalletUnlockState(body);
     }
     return body;
   }

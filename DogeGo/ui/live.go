@@ -19,6 +19,7 @@ import (
 
 	"dogego/rpc"
 	"dogego/store"
+	"dogego/wallet"
 )
 
 // LiveFeed serves dashboard API responses from a background refresh loop so sync never blocks HTTP.
@@ -278,6 +279,11 @@ func (f *LiveFeed) commitLiveP2P(cfg StartConfig) {
 	if len(p2pB) > 0 && json.Unmarshal(p2pB, &p2) == nil {
 		overlayP2PProgressOnSummary(sum, p2)
 	}
+	if cfg.StorageSummary != nil {
+		if st := cfg.StorageSummary(); st != nil {
+			mergeStorageSummary(sum, st)
+		}
+	}
 	sumB, _ := json.Marshal(sum)
 	live := map[string]any{
 		"ok":                 true,
@@ -347,6 +353,10 @@ func overlayP2PProgressOnSummary(sum, p2p map[string]any) {
 		return
 	}
 	delete(sum, "from_disk_snapshot")
+	// Connection counts live on the P2P snapshot and must refresh even when
+	// BuildSummaryMap is deferred during IBD (otherwise Overview/Analytics stay at 0
+	// peers while the node is actively dialing).
+	overlayP2PConnectionCounts(sum, p2p)
 	if act, ok := p2p["dogego_sync_activity"]; ok && act != nil {
 		sum["dogego_sync_activity"] = act
 		if m, ok := act.(map[string]any); ok {
@@ -377,6 +387,14 @@ func overlayP2PProgressOnSummary(sum, p2p map[string]any) {
 	}
 	if v, ok := prog["blocks_per_minute"]; ok {
 		sum["blocks_per_minute"] = v
+	}
+	if v, ok := prog["headers_per_minute"]; ok {
+		sum["headers_per_minute"] = v
+		sum["dogego_headers_per_minute"] = v
+	}
+	if v, ok := prog["contiguous_blocks_per_minute"]; ok {
+		sum["contiguous_blocks_per_minute"] = v
+		sum["dogego_contiguous_blocks_per_minute"] = v
 	}
 	if v, ok := prog["in_flight_batches"]; ok {
 		sum["in_flight_batches"] = v
@@ -436,13 +454,67 @@ func overlayP2PProgressOnSummary(sum, p2p map[string]any) {
 	tip, okTip := toInt64(sum["tip_height"])
 	chainActive, okCA := toInt64(sum["chain_active_height"])
 	contiguousH, okCont := toInt64(sum["contiguous_raw_height"])
-	rate, okRate := toFloat64(sum["blocks_per_minute"])
+	// Prefer hole-fill rate for ETA: staged/ingest BPM can spike to thousands while
+	// contiguous coverage crawls, which made ETA look like ~20k blk/min that never landed.
+	rate, okRate := toFloat64(sum["contiguous_blocks_per_minute"])
+	if !okRate || rate <= 0 {
+		rate, okRate = toFloat64(sum["blocks_per_minute"])
+	}
 	if okTip && okCA && okCont && okRate {
 		if !math.IsNaN(rate) && !math.IsInf(rate, 0) && rate > 0 {
 			behind := rpc.BlocksBehindHeaders(tip, chainActive, contiguousH)
 			sum["blocks_behind_headers"] = behind
 			sum["sync_eta"] = rpc.FormatSyncETA(behind, rate)
 		}
+	}
+}
+
+func overlayP2PConnectionCounts(sum, p2p map[string]any) {
+	if sum == nil || p2p == nil {
+		return
+	}
+	toInt := func(v any) (int, bool) {
+		switch x := v.(type) {
+		case int:
+			return x, true
+		case int32:
+			return int(x), true
+		case int64:
+			return int(x), true
+		case float64:
+			return int(x), true
+		default:
+			return 0, false
+		}
+	}
+	outN, haveOut := toInt(p2p["connections_outbound"])
+	inN, haveIn := toInt(p2p["connections_inbound"])
+	if haveOut {
+		sum["connections_out"] = outN
+	}
+	if haveIn {
+		sum["connections_in"] = inN
+	}
+	if total, ok := toInt(p2p["connections_total"]); ok {
+		if !haveOut && !haveIn {
+			sum["connections_out"] = total
+			sum["connections_in"] = 0
+		}
+	}
+	if v, ok := p2p["p2p_connectivity"].(string); ok && v != "" {
+		sum["p2p_connectivity"] = v
+	}
+	if v, ok := p2p["health"].(string); ok && v != "" {
+		sum["p2p_health"] = v
+	}
+	if v, ok := p2p["health_message"].(string); ok {
+		sum["relay_note"] = v
+	}
+	if v, ok := p2p["inbound_hint"].(string); ok {
+		sum["inbound_hint"] = v
+	}
+	if v, ok := p2p["initialblockdownload"].(bool); ok {
+		sum["initialblockdownload"] = v
 	}
 }
 
@@ -731,6 +803,48 @@ func cloneSummaryMap(sum map[string]any) map[string]any {
 		return nil
 	}
 	return out
+}
+
+// PatchWalletEncryptionStatus updates cached /api/summary wallet lock fields immediately
+// after walletpassphrase / walletlock so the dashboard does not keep showing "Locked"
+// until the next full BuildSummaryMap (often deferred during IBD).
+func (f *LiveFeed) PatchWalletEncryptionStatus(w *wallet.Disk) {
+	if f == nil || w == nil {
+		return
+	}
+	f.mu.Lock()
+	defer f.mu.Unlock()
+	if len(f.summaryJSON) == 0 {
+		return
+	}
+	var sum map[string]any
+	if json.Unmarshal(f.summaryJSON, &sum) != nil || sum == nil {
+		return
+	}
+	attachWalletEncryptionStatus(sum, w)
+	if !w.IsEncrypted() || !w.IsUnlocked() {
+		delete(sum, "wallet_unlocked_until")
+	}
+	sumB, err := json.Marshal(sum)
+	if err != nil {
+		return
+	}
+	f.summaryJSON = sumB
+	storeJSONAtomic(&f.summaryAtomic, sumB)
+	if len(f.liveJSON) == 0 {
+		return
+	}
+	var live map[string]any
+	if json.Unmarshal(f.liveJSON, &live) != nil || live == nil {
+		return
+	}
+	live["summary"] = sum
+	liveB, err := json.Marshal(live)
+	if err != nil {
+		return
+	}
+	f.liveJSON = liveB
+	storeJSONAtomic(&f.liveAtomic, liveB)
 }
 
 // RememberAnalytics stores a slim analytics summary for /api/live and disk snapshot.

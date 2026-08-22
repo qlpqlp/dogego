@@ -83,3 +83,48 @@ func TestRealignProbeToConnectFrontier(t *testing.T) {
 		t.Fatalf("nextProbe=%d want 0", rawFill.nextProbe)
 	}
 }
+
+func TestRealignProbeToConnectFrontierSkipsDeepIBDCollapse(t *testing.T) {
+	dir := t.TempDir()
+	g80, err := pow.Header80()
+	if err != nil {
+		t.Fatal(err)
+	}
+	genesisRaw := store.MakeTestBlockRaw(t, g80[:])
+	j, err := store.OpenHeaderJournal(filepath.Join(dir, "headers.bin"), genesisRaw[:80])
+	if err != nil {
+		t.Fatal(err)
+	}
+	// Build a deep header tip so BodiesBehindHeaders / defer-connect stay true.
+	prev := append([]byte(nil), genesisRaw[:80]...)
+	for i := 0; i < 3000; i++ {
+		h := append([]byte(nil), prev...)
+		ph := pow.BlockHashLE(prev)
+		copy(h[4:36], ph[:])
+		h[76] ^= byte((i % 250) + 1)
+		if err := j.AppendHeaders([][]byte{h}); err != nil {
+			t.Fatal(err)
+		}
+		prev = h
+	}
+	rs, err := store.OpenRawBlockStore(dir)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := rs.Put(pow.BlockHashLE(genesisRaw[:80]), genesisRaw); err != nil {
+		t.Fatal(err)
+	}
+	params, err := chain.ParamsFor(chain.RebootTestnet)
+	if err != nil {
+		t.Fatal(err)
+	}
+	bs := NewBlockStoreCtx(j, nil, params, rs, nil, store.NewUtxoCache())
+	bs.RefreshContiguousTip()
+	var rawFill progressiveRawState
+	rawFill.chainDir = dir
+	rawFill.nextProbe = 50_000
+	rawFill.realignProbeToConnectFrontier(bs, 1)
+	if rawFill.nextProbe != 50_000 {
+		t.Fatalf("deep IBD realign collapsed nextProbe to %d; want 50000", rawFill.nextProbe)
+	}
+}

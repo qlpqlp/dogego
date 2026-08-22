@@ -70,6 +70,7 @@ The node must be running for payment links; `dogego open --url %1` is invoked by
 
 ### Overview
 - **Update available** banner when GitHub Releases has a newer version (dismissible; rechecks daily).
+- **Low disk space** banner when free space on the datadir volume is **1 GiB or less**: pauses full-block download, optional tray/desktop notification; download resumes automatically once more than 1 GiB is free ([OPERATOR.md](OPERATOR.md)).
 - Blockchain sync: header tip vs **contiguous block bodies** (chainActive); hero shows **Downloading headers**, **Downloading blocks**, or **Synced** with a Core-style status line.
 - IBD live stats when catching up: blocks behind, blk/min, **estimated time left**, mempool txs, workers, assist pool.
 - DGR (DogeGo relay CGNAT) strip when enabled.
@@ -202,7 +203,9 @@ See also [CORE_PARITY_GAPS.md](CORE_PARITY_GAPS.md) § Web dashboard mapping.
 | `GET /api/docs/resolve?base=…&href=…` | Resolve a markdown link relative to the open document |
 | `GET /api/docs/files` | List of embedded markdown paths |
 | `GET /api/guide` | Legacy alias - same guide sections are merged into `/api/docs` |
-| `GET /api/summary` | Overview, periodic poll (wallet rescan / scan-index hints when wallet enabled) |
+| `GET /api/summary` | Overview, periodic poll (wallet rescan / scan-index hints when wallet enabled; includes `dogego_disk_pressure`) |
+| `GET /api/disk/status` | Datadir volume free/used + body-fetch pause state |
+| `POST /api/disk/continue` | Resume full-block download after a low-disk pause (loopback; blocked at or below 1 GiB free; normally auto-resumes above 1 GiB) |
 | `GET /api/p2p` | Overview → Network P2P card (peers, addrbook tried/new, **`addrman_info`**, BIP152 HB, IBD assist) |
 | `GET /api/analytics/summary` | Analytics tab (KPIs, chainstats, metric timeline, reorg events/summary, top UTXO holders; `?light=1` during IBD) |
 | `GET /api/analytics/metrics.csv` | Analytics timeline CSV export |

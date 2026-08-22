@@ -12,6 +12,7 @@ import (
 	"time"
 
 	"dogego/consensus"
+	"dogego/diskspace"
 	"dogego/netfw"
 	"dogego/rpc"
 )
@@ -425,6 +426,11 @@ func BuildSummaryMap(cfg StartConfig) (map[string]any, error) {
 	summary["dogego_firewall_alert"] = fa
 	if fa.Active {
 		summary["dogego_firewall_warning"] = fa.Message
+	}
+	dp := diskspace.Current()
+	summary["dogego_disk_pressure"] = dp
+	if dp.Active {
+		summary["dogego_disk_pressure_warning"] = dp.Message
 	}
 	if p2pSnap != nil {
 		if v, ok := p2pSnap["primary_peer"].(string); ok {

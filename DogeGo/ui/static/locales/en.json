@@ -774,6 +774,8 @@
       "walletLockedText": "Wallet file is encrypted. Unlock spend keys to send or use extensions that need wallet_rpc.",
       "walletUnlockBtn": "Unlock wallet",
       "storage": "Storage",
+      "diskWarn": "Low disk space",
+      "diskContinue": "Continue download",
       "firewallWarn": "Firewall - action needed",
       "firewallCopy": "Copy the OS-specific commands below into a terminal with admin rights:",
       "firewallDismiss": "Dismiss",

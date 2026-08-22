@@ -8,6 +8,7 @@ package node
 
 import (
 	"strings"
+	"time"
 
 	"dogego/chain"
 	"dogego/consensus"
@@ -15,31 +16,33 @@ import (
 	"dogego/wire"
 )
 
-// IBD body download: many sockets like Core, fat getdata like ltcd, bodies staged in RAM
-// then flushed to disk off the P2P read path.
+// IBD body download: adaptive multi-peer scheduler (Core parallelism + earned fat getdata).
+// Bodies stage in RAM write-behind, then flush to disk off the P2P read path.
 //
-// Core MAX_BLOCKS_IN_TRANSIT_PER_PEER=16 is sized for ~1MB Bitcoin blocks. Early Dogecoin
-// bodies are hundreds of bytes; 16-inv getdata leaves the TCP window empty. Live DogeGo
-// already reached ~2000â€“4000 blk/min when getdata stayed fat and the hole kept moving.
+// Core MAX_BLOCKS_IN_TRANSIT_PER_PEER=16 is the safe start. Early Dogecoin bodies are
+// hundreds of bytes, so proven-fast peers may rise toward ibdPeerInFlightMax (256).
+// Slow / stalling peers drop to 4–8 so they cannot bury contiguous+1 (head-of-line).
 //
-// Claim planning used to Open headers.bin (or parse headers/manifest.json) and Stat
-// rawblocks/ once per height Ã- every lane. That pegged CPU at ~90 blk/min and starved
-// the dashboard. Hashes come from the journal window cache; missing heights are claimed
-// without disk probes (duplicate getdata is cheap â€” fetch skips bodies already in RAM).
-//
-// ltcd: one sync peer, getdata up to MaxInvPerMsg, refill when pending < 10, 3m stall.
-// DogeGo: many peers, 500-inv getdata into RAM, refill at half-full, 2s hole stall,
-// disk writers drain the RAM queue.
+// Global in-flight is capped at maxIBDFetchWindow (4096) across all lanes. The contiguous
+// hole always uses a Core-sized 16-inv getdata; ahead lanes use their per-peer budget.
 const (
 	progressiveBatchSize    = 16 // near-tip / inv (Core MAX_BLOCKS_IN_TRANSIT_PER_PEER)
 	progressiveBatchSizeMax = 32 // scaled cap near tip when several lanes share inv load
-	ibdGetDataBatch         = 1000
+	// ibdGetDataBatch is the hard per-peer ceiling during body IBD (adaptive max).
+	ibdGetDataBatch = 256
+	// Adaptive per-peer in-flight budgets (blocks outstanding to one peer).
+	ibdPeerInFlightInitial   = 16
+	ibdPeerInFlightSlowFloor = 4
+	ibdPeerInFlightSlow      = 8
+	ibdPeerInFlightFast      = 64
+	ibdPeerInFlightMax       = 256 // == ibdGetDataBatch
 	// minInFlightBlocks matches ltcd netsync: send the next getdata when requested
 	// blocks on that peer drop below this, so the TCP pipe does not drain between batches.
-	minInFlightBlocks          = 10
-	tipBackfillDeferGap        = 512
-	blockDownloadWindow        = 1024  // Core validation.h BLOCK_DOWNLOAD_WINDOW (floor)
-	maxIBDFetchWindow          = 16384 // RAM lookahead; disk flush trails this
+	minInFlightBlocks   = 10
+	tipBackfillDeferGap = 512
+	blockDownloadWindow = 1024 // Core validation.h BLOCK_DOWNLOAD_WINDOW (floor)
+	// maxIBDFetchWindow is the global in-flight height cap across all lanes.
+	maxIBDFetchWindow = 4096
 	// forwardIBDParallelWindow is the boundary where the forward (header-led)
 	// body gap is considered "deep IBD" for connect deferral decisions.
 	// Keep it aligned with Core's smaller download window so unit tests and
@@ -50,6 +53,8 @@ const (
 	headersSyncRoundsBodiesLag = 2   // max getheaders rounds when peer â‰¤ tip but bodies still behind
 	minBlockAssistWorkers      = 3
 	maxBlockAssistWorkers      = 24
+	// Delivery EWMA window for raising/lowering per-peer in-flight budgets.
+	ibdPeerDeliveryWindow = 20 * time.Second
 )
 
 // EffectiveProgressiveBatchSize scales getdata batch size with parallel sync lanes (Core: more in-flight per peer when several links download).
@@ -109,6 +114,24 @@ func ShouldPauseHeaderCatchUpForBodyIBD(bs *BlockStoreCtx, peerStart int32) bool
 	return ShouldDeferHeaderSyncWhileBodiesLag(tip, peerStart, true)
 }
 
+// ShouldRunDedicatedHeaderDespiteBodyPause keeps one headers-only peer alive when local
+// header tip still trails the network, even while body peers stay getdata-focused.
+// Without this, pause latched after assumevalid and left tip slightly behind peers forever.
+func ShouldRunDedicatedHeaderDespiteBodyPause(bs *BlockStoreCtx, peerStart int32) bool {
+	if bs == nil || bs.Journal == nil || peerStart <= 0 {
+		return false
+	}
+	if !ShouldPauseHeaderCatchUpForBodyIBD(bs, peerStart) {
+		return false
+	}
+	tip, err := bs.Journal.TipHeight()
+	if err != nil || tip < 0 {
+		return true
+	}
+	// More than one headers message (~2000) behind the best peer start height.
+	return int64(peerStart) > tip+2000
+}
+
 // headerBodyIBDPauseMinTip is the header tip height required before deep body IBD may pause getheaders.
 // With assumevalid configured, keep headers moving until that height (or resolution) so ConnectBlock can
 // skip scripts on buried history - matching Core IBD where AV unlocks after headers include the hash.
@@ -162,9 +185,11 @@ func shouldRefillGetData(pending int) bool {
 }
 
 // getdataRefillThreshold is ltcd minInFlightBlocks (10) for Core-sized 16-block getdata.
+// Fat IBD batches refill at 1/4 remaining so the peer send buffer never drains (ltcd
+// refills at 10 of ~500). Half-full was too late once 24 lanes shared one window.
 func getdataRefillThreshold(batchCap int) int {
 	if batchCap >= 64 {
-		th := batchCap / 2
+		th := batchCap / 4
 		if th < minInFlightBlocks {
 			return minInFlightBlocks
 		}
@@ -178,8 +203,7 @@ func shouldRefillGetDataAt(pending, batchCap int) bool {
 }
 
 // ibdBodyFetchWindow is how far ahead of the contiguous hole getdata may run.
-// Bodies live in the RAM write-behind first, so a few thousand heights of lookahead
-// do not stall the hole on NTFS. Cap at maxIBDFetchWindow; never follow inflated lane IDs.
+// Cap at maxIBDFetchWindow (4096). Prefer workers × initial budget, never inflated lane IDs.
 func ibdBodyFetchWindow(bs *BlockStoreCtx, workers int) int64 {
 	if workers < 1 {
 		workers = maxBlockAssistWorkers
@@ -189,9 +213,13 @@ func ibdBodyFetchWindow(bs *BlockStoreCtx, workers int) int64 {
 	}
 	batch := EffectiveProgressiveBatchSizeForIBD(bs, workers)
 	if batch < 1 {
-		batch = progressiveBatchSize
+		batch = ibdPeerInFlightInitial
 	}
 	win := int64(workers) * int64(batch)
+	// Deep IBD: allow the full global window so 16–24 peers × adaptive budgets stay busy.
+	if bs != nil && (ShouldDeferConnectForBodyDownload(bs) || ShouldPauseHeaderCatchUpForBodyIBD(bs, 0)) {
+		win = int64(maxIBDFetchWindow)
+	}
 	if win < int64(blockDownloadWindow) {
 		win = int64(blockDownloadWindow)
 	}
@@ -213,9 +241,10 @@ func shouldPipelineGetData(bs *BlockStoreCtx) bool {
 	return ShouldDeferConnectForBodyDownload(bs) || ShouldPauseHeaderCatchUpForBodyIBD(bs, 0)
 }
 
-// EffectiveProgressiveBatchSizeForIBD sizes getdata during body IBD.
-// Download-first uses fat getdata into RAM (ltcd fetchHeaderBlocks, capped below 1000-inv
-// hangs). tryFetchMissingBatches refills when pending drops below getdataRefillThreshold.
+// EffectiveProgressiveBatchSizeForIBD sizes the default getdata claim during body IBD.
+// Deep IBD starts at Core's 16; per-peer adaptive budgets (via progressiveRawState) may
+// raise individual lanes toward ibdPeerInFlightMax. tryFetchMissingBatches refills when
+// pending drops below getdataRefillThreshold(peerBudget).
 func EffectiveProgressiveBatchSizeForIBD(bs *BlockStoreCtx, syncLanes int) int {
 	n := EffectiveProgressiveBatchSize(syncLanes)
 	if bs == nil {
@@ -224,12 +253,12 @@ func EffectiveProgressiveBatchSizeForIBD(bs *BlockStoreCtx, syncLanes int) int {
 	cont := bs.ContiguousRawHeight()
 	if ShouldDeferConnectForBodyDownload(bs) || ShouldPauseHeaderCatchUpForBodyIBD(bs, 0) {
 		if cont < 32 {
-			if n > 8 {
-				return 8
+			if n > ibdPeerInFlightSlow {
+				return ibdPeerInFlightSlow
 			}
 			return n
 		}
-		return ibdGetDataBatch
+		return ibdPeerInFlightInitial
 	}
 	if cont >= 1000 {
 		return n
@@ -272,16 +301,27 @@ func EffectiveBlockSyncWorkersOpt(maxOutbound, configured int, ibdOptimize bool)
 		}
 	}
 	if ibdOptimize {
-		// Prefer saturating outbound capacity for bodies during IBD (headers-first + parallel getdata).
-		boost := maxOutbound
-		if boost < minBlockAssistWorkers+2 {
-			boost = minBlockAssistWorkers + 2
+		// Saturate body-download lanes: each assist pulls an adaptive 16–256 getdata.
+		// Leave one outbound slot for headers/relay when the budget is small; with a
+		// Core-or-larger outbound cap, run the full assist pool (up to 24).
+		target := maxOutbound - 1
+		if target < minBlockAssistWorkers+2 {
+			target = minBlockAssistWorkers + 2
 		}
-		if boost > n {
-			n = boost
+		if maxOutbound >= 16 {
+			target = maxBlockAssistWorkers
+		}
+		if target > n {
+			n = target
 		}
 		if n > maxBlockAssistWorkers {
 			n = maxBlockAssistWorkers
+		}
+		if maxOutbound > 1 && n > maxOutbound-1 {
+			n = maxOutbound - 1
+			if n < minBlockAssistWorkers {
+				n = minBlockAssistWorkers
+			}
 		}
 	}
 	return n
@@ -632,6 +672,152 @@ func forwardIBDStripeTipFor(bs *BlockStoreCtx, lowMissing, tip int64, workers in
 		hi = tip
 	}
 	return hi
+}
+
+// chunkLaneForWorker maps a sync/relay lane ID onto the parallel chunk worker space
+// [0, workers). Lane 0 stays 0 (frontier preference). Relay IDs (>=workers) map onto
+// ahead-only lanes 1..workers-1 so they keep pulling fat getdata toward tip.
+func chunkLaneForWorker(workerID, workers int) int {
+	if workers < 1 {
+		return 0
+	}
+	if workerID < 0 {
+		return 0
+	}
+	if workerID < workers {
+		return workerID
+	}
+	if workers == 1 {
+		return 0
+	}
+	return 1 + (workerID % (workers - 1))
+}
+
+// lane0AliveLocked reports whether the primary body lane currently has a peer address.
+func (s *progressiveRawState) lane0AliveLocked() bool {
+	if s == nil || s.laneAddr == nil {
+		return false
+	}
+	return s.laneAddr[0] != ""
+}
+
+// holeFillBatchSize is how many heights the hole-owning lane may claim from contiguous+1.
+// Always Core-sized (16): burying the tip behind a fat ahead queue caused ~2 contiguous
+// blk/min with 10k+ wasted in-flight claims. Ahead lanes keep adaptive 16–256 budgets.
+func (s *progressiveRawState) holeFillBatchSize(lowMissing int64, batchCap int) int {
+	_ = lowMissing
+	if batchCap < 1 {
+		batchCap = progressiveBatchSize
+	}
+	if batchCap > progressiveBatchSize {
+		return progressiveBatchSize
+	}
+	return batchCap
+}
+
+// mayClaimContiguousHole reports whether this lane may ask for contiguous+1.
+// Lane 0 owns the hole when alive and actively downloading; after soft-stall, a dead
+// primary, or an idle lane-0 owner with a free hole, any lane may reclaim it so gap-fill
+// cannot stall while assists only scrape ahead remnants.
+//
+// Critical: the peer that just soft-stalled the hole must not re-claim it. Live mainnet
+// hung when lane 0 soft-released contiguous+1 then immediately re-grabbed it forever
+// while assists only filled ahead remnants.
+func (s *progressiveRawState) mayClaimContiguousHole(workerID, workers int, lowMissing int64, inFlight map[int64][32]byte) bool {
+	if lowMissing < 0 {
+		return false
+	}
+	if _, busy := inFlight[lowMissing]; busy {
+		return false
+	}
+	chunkLane := chunkLaneForWorker(workerID, workers)
+	s.mu.Lock()
+	lane0Alive := s.lane0AliveLocked()
+	softOpen := s.softStallFrontier >= 0 && s.softStallFrontier == lowMissing
+	staller := s.lastStallPeer
+	self := ""
+	if s.laneAddr != nil {
+		self = s.laneAddr[workerID]
+	}
+	lane0Active := false
+	if s.laneDownloadSince != nil {
+		if since, ok := s.laneDownloadSince[0]; ok && time.Since(since) < blockStallingTimeoutBodyIBD {
+			lane0Active = true
+		}
+	}
+	s.mu.Unlock()
+	if softOpen {
+		if staller != "" && self != "" && self == staller {
+			return false
+		}
+		return true
+	}
+	if chunkLane == 0 {
+		return true
+	}
+	if !lane0Alive || !lane0Active {
+		return true
+	}
+	return false
+}
+
+// shouldUseParallelBatchChunks reports whether deep body IBD should assign each peer a
+// disjoint ~getdata-sized height chunk (no duplicate asks) instead of collapsing all
+// lanes onto the contiguous hole.
+func shouldUseParallelBatchChunks(bs *BlockStoreCtx, lowMissing int64) bool {
+	if bs == nil || lowMissing < 0 {
+		return false
+	}
+	if ConnectBodyGapHeight(bs) >= 0 {
+		return false
+	}
+	if bs.Journal == nil {
+		return false
+	}
+	tip, err := bs.Journal.TipHeight()
+	if err != nil || tip < 0 {
+		return false
+	}
+	cont := bs.ContiguousRawHeight()
+	gap := tip - cont
+	if cont < 0 {
+		gap = tip + 1
+	}
+	// Tiny early Dogecoin bodies: parallel getdata from genesis as soon as more than
+	// one Core-sized window of work exists. Sequential fill only when nearly caught up.
+	if gap > int64(blockDownloadWindow)/2 {
+		return true
+	}
+	if cont < 32 {
+		return false
+	}
+	return shouldFillContiguousFrontierFirst(bs, lowMissing) || ShouldDeferConnectForBodyDownload(bs)
+}
+
+// syncBatchChunkBounds assigns lane workerID a disjoint getdata chunk of batchSize heights
+// within [lowMissing, tip]. slotOffset selects the next round-robin chunk for that lane
+// (0 = first chunk for this worker, 1 = workerID+workerCount, …) so a peer that finishes
+// ~1000 blocks can immediately claim the next free 1000 without colliding with others.
+func syncBatchChunkBounds(lowMissing, tip int64, workerID, workerCount, batchSize, slotOffset int) (lo, hi int64, ok bool) {
+	if tip < 0 || lowMissing < 0 || lowMissing > tip || workerCount < 1 || batchSize < 1 {
+		return 0, 0, false
+	}
+	if workerID < 0 || workerID >= workerCount {
+		return 0, 0, false
+	}
+	if slotOffset < 0 {
+		slotOffset = 0
+	}
+	slot := workerID + slotOffset*workerCount
+	lo = lowMissing + int64(slot)*int64(batchSize)
+	if lo > tip {
+		return 0, 0, false
+	}
+	hi = lo + int64(batchSize) - 1
+	if hi > tip {
+		hi = tip
+	}
+	return lo, hi, true
 }
 
 // syncStripeBounds assigns each parallel downloader a contiguous height sub-range of [lowMissing, tip]

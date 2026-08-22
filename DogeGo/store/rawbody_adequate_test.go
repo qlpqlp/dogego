@@ -14,6 +14,30 @@ import (
 	"dogego/pow"
 )
 
+func TestLikelyHasBodyUsesLocatorWithoutStat(t *testing.T) {
+	dir := t.TempDir()
+	g80, err := pow.Header80()
+	if err != nil {
+		t.Fatal(err)
+	}
+	genesisRaw := MakeTestBlockRaw(t, g80[:])
+	raw, err := OpenRawBlockStore(dir)
+	if err != nil {
+		t.Fatal(err)
+	}
+	hash := pow.BlockHashLE(genesisRaw[:80])
+	if raw.LikelyHasBody(hash, 80) {
+		t.Fatal("empty store should not report body")
+	}
+	if err := raw.Put(hash, genesisRaw); err != nil {
+		t.Fatal(err)
+	}
+	_ = raw.Flush()
+	if !raw.LikelyHasBody(hash, 80) {
+		t.Fatal("locator-backed body should be visible without Stat")
+	}
+}
+
 func TestHasStoredBodyRejectsMainnetStub(t *testing.T) {
 	dir := t.TempDir()
 	g80, err := pow.Header80()

@@ -122,11 +122,14 @@ func TestEffectiveBlockSyncWorkers(t *testing.T) {
 	if g := EffectiveBlockSyncWorkers(8, 99); g != maxBlockAssistWorkers {
 		t.Fatalf("cap: got %d", g)
 	}
-	if g := EffectiveBlockSyncWorkersOpt(8, 0, true); g != 8 {
-		t.Fatalf("ibd optimize auto from maxoutbound 8: got %d want 8", g)
+	if g := EffectiveBlockSyncWorkersOpt(8, 0, true); g != 7 {
+		t.Fatalf("ibd optimize auto from maxoutbound 8: got %d want 7 (outbound-1)", g)
 	}
-	if g := EffectiveBlockSyncWorkersOpt(3, 0, true); g != 5 {
-		t.Fatalf("ibd optimize floor boost: got %d want 5", g)
+	if g := EffectiveBlockSyncWorkersOpt(3, 0, true); g != 3 {
+		t.Fatalf("ibd optimize respects tiny outbound: got %d want 3", g)
+	}
+	if g := EffectiveBlockSyncWorkersOpt(32, 0, true); g != maxBlockAssistWorkers {
+		t.Fatalf("ibd optimize full pool at outbound 32: got %d want %d", g, maxBlockAssistWorkers)
 	}
 	if g := EffectiveBlockSyncWorkersOpt(8, 4, true); g != 4 {
 		t.Fatalf("explicit workers ignore optimize boost: got %d", g)
@@ -468,6 +471,101 @@ func TestSyncStripeBounds(t *testing.T) {
 	}
 }
 
+func TestSyncBatchChunkBoundsDisjoint(t *testing.T) {
+	const batch = 1000
+	const workers = 4
+	low, tip := int64(100), int64(100+workers*batch-1)
+	seen := map[int64]int{}
+	for w := 0; w < workers; w++ {
+		lo, hi, ok := syncBatchChunkBounds(low, tip, w, workers, batch, 0)
+		if !ok {
+			t.Fatalf("worker %d: expected chunk", w)
+		}
+		wantLo := low + int64(w)*batch
+		wantHi := wantLo + batch - 1
+		if lo != wantLo || hi != wantHi {
+			t.Fatalf("worker %d got %d..%d want %d..%d", w, lo, hi, wantLo, wantHi)
+		}
+		for h := lo; h <= hi; h++ {
+			if prev, clash := seen[h]; clash {
+				t.Fatalf("height %d claimed by lanes %d and %d", h, prev, w)
+			}
+			seen[h] = w
+		}
+	}
+	// After finishing first chunk, lane 0 takes the next free 1000 (slot 1).
+	lo, hi, ok := syncBatchChunkBounds(low, tip+batch, 0, workers, batch, 1)
+	if !ok || lo != low+int64(workers)*batch || hi != lo+batch-1 {
+		t.Fatalf("lane0 refill chunk got %d..%d ok=%v", lo, hi, ok)
+	}
+}
+
+func TestChunkLaneForWorker(t *testing.T) {
+	if got := chunkLaneForWorker(0, 6); got != 0 {
+		t.Fatalf("lane0=%d", got)
+	}
+	if got := chunkLaneForWorker(5, 6); got != 5 {
+		t.Fatalf("assist=%d", got)
+	}
+	if got := chunkLaneForWorker(6, 6); got < 1 || got > 5 {
+		t.Fatalf("relay mapped to ahead lane, got %d", got)
+	}
+	if got := chunkLaneForWorker(7, 6); got < 1 || got > 5 {
+		t.Fatalf("relay2 mapped to ahead lane, got %d", got)
+	}
+}
+
+func TestMayClaimContiguousHoleSoftOpen(t *testing.T) {
+	s := &progressiveRawState{
+		laneAddr: map[int]string{
+			0: "1.2.3.4:22556",
+			1: "5.6.7.8:22556",
+		},
+		softStallFrontier: 100,
+		lastStallPeer:     "1.2.3.4:22556",
+		laneDownloadSince: map[int]time.Time{0: time.Now()},
+	}
+	inFlight := map[int64][32]byte{}
+	if s.mayClaimContiguousHole(0, 6, 100, inFlight) {
+		t.Fatal("soft-stall peer must not re-claim the hole")
+	}
+	if !s.mayClaimContiguousHole(1, 6, 100, inFlight) {
+		t.Fatal("assist must reclaim hole after soft-stall")
+	}
+	s.softStallFrontier = -1
+	s.lastStallPeer = ""
+	if s.mayClaimContiguousHole(1, 6, 100, inFlight) {
+		t.Fatal("assist must not steal hole while lane0 alive+active and no soft-stall")
+	}
+	delete(s.laneDownloadSince, 0)
+	if !s.mayClaimContiguousHole(1, 6, 100, inFlight) {
+		t.Fatal("assist must reclaim hole when lane0 is idle")
+	}
+	if !s.mayClaimContiguousHole(0, 6, 100, inFlight) {
+		t.Fatal("lane0 owns hole")
+	}
+}
+
+func TestHoleFillBatchSize(t *testing.T) {
+	s := &progressiveRawState{softStallFrontier: -1}
+	if got := s.holeFillBatchSize(100, ibdGetDataBatch); got != progressiveBatchSize {
+		t.Fatalf("hole batch=%d want %d", got, progressiveBatchSize)
+	}
+	s.softStallFrontier = 100
+	if got := s.holeFillBatchSize(100, ibdGetDataBatch); got != progressiveBatchSize {
+		t.Fatalf("soft-stall hole batch=%d want %d", got, progressiveBatchSize)
+	}
+	if got := s.holeFillBatchSize(200, 8); got != 8 {
+		t.Fatalf("hole batch must not exceed peer budget, got %d", got)
+	}
+}
+
+func TestShouldRunDedicatedHeaderDespiteBodyPause(t *testing.T) {
+	if ShouldRunDedicatedHeaderDespiteBodyPause(nil, 100) {
+		t.Fatal("nil")
+	}
+}
+
 func TestCapBodyDownloadTipDuringReplay(t *testing.T) {
 	p, _ := chain.ParamsFor(chain.RebootTestnet)
 	utxo := store.NewUtxoCache()
@@ -586,13 +684,13 @@ func TestEffectiveProgressiveBatchSizeForIBDDeepBodyPause(t *testing.T) {
 	bs := NewBlockStoreCtx(j, nil, p, rs, nil, nil)
 	bs.SeedContiguousTip(616)
 	got := EffectiveProgressiveBatchSizeForIBD(bs, 8)
-	if got != ibdGetDataBatch {
-		t.Fatalf("batch size during download-first body IBD got %d want %d (fat getdata into RAM)", got, ibdGetDataBatch)
+	if got != ibdPeerInFlightInitial {
+		t.Fatalf("batch size during download-first body IBD got %d want %d (adaptive start)", got, ibdPeerInFlightInitial)
 	}
 	bs.SeedContiguousTip(3085)
 	got2 := EffectiveProgressiveBatchSizeForIBD(bs, 6)
-	if got2 != ibdGetDataBatch {
-		t.Fatalf("batch at height 3085 during download-first got %d want %d", got2, ibdGetDataBatch)
+	if got2 != ibdPeerInFlightInitial {
+		t.Fatalf("batch at height 3085 during download-first got %d want %d", got2, ibdPeerInFlightInitial)
 	}
 }
 
@@ -618,11 +716,14 @@ func TestGetdataRefillThresholdFatBatch(t *testing.T) {
 	if !shouldRefillGetDataAt(minInFlightBlocks-1, progressiveBatchSize) {
 		t.Fatal("below ltcd minInFlightBlocks must refill to hide getdata RTT")
 	}
-	if getdataRefillThreshold(ibdGetDataBatch) != ibdGetDataBatch/2 {
-		t.Fatalf("fat-batch threshold=%d want %d", getdataRefillThreshold(ibdGetDataBatch), ibdGetDataBatch/2)
+	if getdataRefillThreshold(ibdGetDataBatch) != ibdGetDataBatch/4 {
+		t.Fatalf("max-peer-budget threshold=%d want %d", getdataRefillThreshold(ibdGetDataBatch), ibdGetDataBatch/4)
 	}
-	if getdataRefillThreshold(256) != 128 {
-		t.Fatalf("256-inv threshold=%d want 128 (refill at half-full)", getdataRefillThreshold(256))
+	if getdataRefillThreshold(256) != 64 {
+		t.Fatalf("256-inv threshold=%d want 64 (refill at quarter-full)", getdataRefillThreshold(256))
+	}
+	if getdataRefillThreshold(ibdPeerInFlightFast) != ibdPeerInFlightFast/4 {
+		t.Fatalf("fast-peer threshold=%d want %d", getdataRefillThreshold(ibdPeerInFlightFast), ibdPeerInFlightFast/4)
 	}
 }
 
@@ -649,23 +750,12 @@ func TestIBDBodyFetchWindowKeepsAllPeersBusy(t *testing.T) {
 	bs.SeedContiguousTip(55_657)
 	const workers = 12
 	win := ibdBodyFetchWindow(bs, workers)
-	want := int64(workers * ibdGetDataBatch)
-	if want > int64(maxIBDFetchWindow) {
-		want = int64(maxIBDFetchWindow)
-	}
-	if want < int64(blockDownloadWindow) {
-		want = int64(blockDownloadWindow)
-	}
-	if win != want {
-		t.Fatalf("fetch window=%d want %d (peersÃ-fat getdata into RAM, cap %d)", win, want, maxIBDFetchWindow)
+	if win != int64(maxIBDFetchWindow) {
+		t.Fatalf("fetch window=%d want %d (global adaptive IBD cap)", win, maxIBDFetchWindow)
 	}
 	inflated := ibdBodyFetchWindow(bs, 125)
-	wantCap := int64(maxBlockAssistWorkers+1) * int64(ibdGetDataBatch)
-	if wantCap > int64(maxIBDFetchWindow) {
-		wantCap = int64(maxIBDFetchWindow)
-	}
-	if inflated != wantCap {
-		t.Fatalf("inflated lane count window=%d want %d (clamped lanesÃ-batch, cap %d)", inflated, wantCap, maxIBDFetchWindow)
+	if inflated != int64(maxIBDFetchWindow) {
+		t.Fatalf("inflated lane count window=%d want %d", inflated, maxIBDFetchWindow)
 	}
 	hi := forwardIBDStripeTipFor(bs, 55_658, 600_000, workers)
 	if hi != 55_658+win-1 {
@@ -791,7 +881,7 @@ func TestShouldDeferConnectForBodyDownload(t *testing.T) {
 	}
 }
 
-func TestClaimBatchFatDownloadFirstIBD(t *testing.T) {
+func TestClaimBatchAdaptiveDownloadFirstIBD(t *testing.T) {
 	p, err := chain.ParamsFor(chain.MainnetDogecoin)
 	if err != nil {
 		t.Fatal(err)
@@ -819,15 +909,54 @@ func TestClaimBatchFatDownloadFirstIBD(t *testing.T) {
 	s.SetSyncParallelism(8)
 	b, ok := s.claimBatch(bs, 0)
 	if !ok {
-		t.Fatal("expected fat claim")
+		t.Fatal("expected claim")
 	}
-	if len(b.heights) != ibdGetDataBatch {
-		t.Fatalf("claimed %d want %d (torrent-sized getdata)", len(b.heights), ibdGetDataBatch)
+	// Hole-owning lane starts at Core-sized 16 (adaptive raises proven-fast peers later).
+	if len(b.heights) != ibdPeerInFlightInitial {
+		t.Fatalf("claimed %d want %d (adaptive initial / hole fill)", len(b.heights), ibdPeerInFlightInitial)
 	}
 	if b.heights[0] != 2001 {
 		t.Fatalf("first height %d want 2001", b.heights[0])
 	}
-	if b.heights[len(b.heights)-1] != 2000+int64(ibdGetDataBatch) {
-		t.Fatalf("last height %d want %d", b.heights[len(b.heights)-1], 2000+int64(ibdGetDataBatch))
+	if b.heights[len(b.heights)-1] != 2000+int64(ibdPeerInFlightInitial) {
+		t.Fatalf("last height %d want %d", b.heights[len(b.heights)-1], 2000+int64(ibdPeerInFlightInitial))
+	}
+}
+
+func TestPeerInFlightBudget(t *testing.T) {
+	s := &progressiveRawState{
+		syncWorkers: 8,
+		laneAddr:    map[int]string{0: "1.2.3.4:22556", 1: "5.6.7.8:22556"},
+	}
+	if got := s.peerInFlightBudget(nil, 0); got != ibdPeerInFlightInitial {
+		t.Fatalf("unknown peer budget=%d want %d", got, ibdPeerInFlightInitial)
+	}
+	s.mu.Lock()
+	s.lastStallPeer = "1.2.3.4:22556"
+	s.lastStallAt = time.Now()
+	s.mu.Unlock()
+	if got := s.peerInFlightBudget(nil, 0); got != ibdPeerInFlightSlowFloor {
+		t.Fatalf("stalling peer budget=%d want %d", got, ibdPeerInFlightSlowFloor)
+	}
+	if got := s.peerInFlightBudget(nil, 1); got != ibdPeerInFlightInitial {
+		t.Fatalf("other peer should stay initial, got %d", got)
+	}
+	s.mu.Lock()
+	s.lastStallPeer = ""
+	s.lastStallAt = time.Time{}
+	now := time.Now()
+	// ~25 blk/sec over the window → max budget.
+	s.laneDelivery = map[int][]laneDeliverySample{
+		1: {{at: now.Add(-2 * time.Second), n: 50}},
+	}
+	s.mu.Unlock()
+	if got := s.peerInFlightBudget(nil, 1); got != ibdPeerInFlightMax {
+		t.Fatalf("fast peer budget=%d want %d", got, ibdPeerInFlightMax)
+	}
+	s.mu.Lock()
+	s.laneDelivery[1] = []laneDeliverySample{{at: now.Add(-10 * time.Second), n: 5}}
+	s.mu.Unlock()
+	if got := s.peerInFlightBudget(nil, 1); got != ibdPeerInFlightSlow {
+		t.Fatalf("slow peer budget=%d want %d", got, ibdPeerInFlightSlow)
 	}
 }

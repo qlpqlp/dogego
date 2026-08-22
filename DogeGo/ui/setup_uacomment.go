@@ -20,6 +20,49 @@ import (
 )
 
 func registerSetupUAComment(mux *http.ServeMux) {
+	mux.HandleFunc("/api/setup/wallet-status", func(w http.ResponseWriter, r *http.Request) {
+		if !isLoopback(r) {
+			http.Error(w, "forbidden", http.StatusForbidden)
+			return
+		}
+		if r.Method != http.MethodGet && r.Method != http.MethodPost {
+			http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
+			return
+		}
+		var req setupWalletBackupRequest
+		if r.Method == http.MethodPost {
+			if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+				http.Error(w, "invalid JSON", http.StatusBadRequest)
+				return
+			}
+		} else {
+			req.DataDir = strings.TrimSpace(r.URL.Query().Get("datadir"))
+			req.Network = strings.TrimSpace(r.URL.Query().Get("network"))
+		}
+		if req.NoWallet {
+			w.Header().Set("Content-Type", "application/json; charset=utf-8")
+			_ = json.NewEncoder(w).Encode(map[string]any{"exists": false, "encrypted": false, "nowallet": true})
+			return
+		}
+		exists, err := setupWalletExists(req.DataDir, req.Network)
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusBadRequest)
+			return
+		}
+		out := map[string]any{"exists": exists, "encrypted": false, "unlocked": false, "hd": false}
+		if !exists {
+			w.Header().Set("Content-Type", "application/json; charset=utf-8")
+			_ = json.NewEncoder(w).Encode(out)
+			return
+		}
+		st, err := setupWalletStatus(req.DataDir, req.Network)
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusBadRequest)
+			return
+		}
+		w.Header().Set("Content-Type", "application/json; charset=utf-8")
+		_ = json.NewEncoder(w).Encode(st)
+	})
 	mux.HandleFunc("/api/setup/node-tip-preview", func(w http.ResponseWriter, r *http.Request) {
 		if !isLoopback(r) {
 			http.Error(w, "forbidden", http.StatusForbidden)
@@ -53,9 +96,14 @@ func registerSetupUAComment(mux *http.ServeMux) {
 			http.Error(w, err.Error(), http.StatusBadRequest)
 			return
 		}
-		addr, err := wallet.PreviewNodeTipFromPath(wpath, p.PubkeyHashAddrID)
+		addr, err := wallet.PreviewNodeTipFromPathWithPassphrase(wpath, p.PubkeyHashAddrID, req.WalletPassphrase)
 		if err != nil {
-			http.Error(w, err.Error(), http.StatusInternalServerError)
+			status := http.StatusBadRequest
+			msg := err.Error()
+			if strings.Contains(strings.ToLower(msg), "hd wallet") {
+				msg = "HD wallet required for node tip preview (unlock encrypted wallet with passphrase, or turn off tip publishing)"
+			}
+			http.Error(w, msg, status)
 			return
 		}
 		w.Header().Set("Content-Type", "application/json; charset=utf-8")
@@ -63,7 +111,7 @@ func registerSetupUAComment(mux *http.ServeMux) {
 	})
 }
 
-func applySetupUACommentTip(f *config.File) error {
+func applySetupUACommentTip(f *config.File, walletPassphrase string) error {
 	if f == nil {
 		return fmt.Errorf("nil config")
 	}
@@ -89,7 +137,7 @@ func applySetupUACommentTip(f *config.File) error {
 		if err != nil {
 			return err
 		}
-		addr, err := wallet.EnableNodeTipFromPath(wpath, p.PubkeyHashAddrID)
+		addr, err := wallet.EnableNodeTipFromPathWithPassphrase(wpath, p.PubkeyHashAddrID, walletPassphrase)
 		if err != nil {
 			return err
 		}

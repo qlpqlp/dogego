@@ -55,6 +55,9 @@ func enrichIBDProgressSnapshot(snap map[string]interface{}, j *store.HeaderJourn
 	if bs == nil || j == nil || bs.Raw == nil {
 		return
 	}
+	if rate := RecentHeadersPerMinute(); rate > 0 {
+		snap["headers_per_minute"] = rate
+	}
 	tip, _, err := j.SyncTipFromDisk()
 	if err != nil || tip < 0 {
 		return

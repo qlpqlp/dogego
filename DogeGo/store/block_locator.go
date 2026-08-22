@@ -12,7 +12,6 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
-	"strings"
 )
 
 // blockLocator is a fixed-size on-disk pointer into rawblocks/ (bundled or per-file+zstd).
@@ -63,12 +62,10 @@ func writeBlockLocator(locatorRoot string, hashLE [32]byte, loc blockLocator) er
 	if err := os.MkdirAll(filepath.Dir(path), 0o700); err != nil {
 		return err
 	}
-	tmp := path + ".tmp"
 	payload := encodeBlockLocator(loc)
-	if err := os.WriteFile(tmp, payload[:], 0o600); err != nil {
-		return err
-	}
-	return os.Rename(tmp, path)
+	// Direct write: locators are 21 bytes and rebuildable from blk*.dat. Avoiding
+	// tmp+rename halves NTFS create/rename traffic during IBD (was capping ~50 loc/min).
+	return os.WriteFile(path, payload[:], 0o600)
 }
 
 func readBlockLocator(locatorRoot string, hashLE [32]byte) (blockLocator, bool, error) {
@@ -116,11 +113,13 @@ func countBlockLocators(locatorRoot string) (int, error) {
 			return nil
 		}
 		name := info.Name()
-		if len(name) == 64 && strings.IndexFunc(name, func(c rune) bool {
-			return (c >= '0' && c <= '9') || (c >= 'a' && c <= 'f')
-		}) == len(name) {
-			n++
+		if len(name) != 64 {
+			return nil
 		}
+		if _, decErr := hex.DecodeString(name); decErr != nil {
+			return nil
+		}
+		n++
 		return nil
 	})
 	return n, err

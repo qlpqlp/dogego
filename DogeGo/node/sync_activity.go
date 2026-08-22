@@ -80,6 +80,7 @@ func syncActivityNote(kind, msg string) {
 
 // NoteHeadersAppended records validated header batches.
 func NoteHeadersAppended(count int, tip int64) {
+	recordHeadersAppended(count)
 	msg := fmt.Sprintf("Validated %d headers (local tip height %d)", count, tip)
 	syncActivityNote("headers", msg)
 	applog.Line("headers", msg)

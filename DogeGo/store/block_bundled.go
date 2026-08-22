@@ -11,7 +11,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
-	"sort"
+	"testing"
 	"time"
 )
 
@@ -26,40 +26,41 @@ func (s *RawBlockStore) putBundled(hashLE [32]byte, raw []byte) error {
 	if err != nil {
 		return err
 	}
-	loc, err := s.appendBundledRecord(rec, uint32(len(raw)))
+	s.bundledAppendMu.Lock()
+	loc, err := s.appendBundledRecordLocked(rec, uint32(len(raw)))
+	s.bundledAppendMu.Unlock()
 	if err != nil {
 		return err
 	}
 	return writeBlockLocator(s.locatorRoot(), hashLE, loc)
 }
 
-func (s *RawBlockStore) appendBundledRecord(rec []byte, uncompressed uint32) (blockLocator, error) {
+func (s *RawBlockStore) appendBundledRecordLocked(rec []byte, uncompressed uint32) (blockLocator, error) {
 	fileNum, offset, err := s.pickBundledAppendSlot(int64(len(rec)))
 	if err != nil {
 		return blockLocator{}, err
 	}
-	path := bundledBlkPath(s.dir, fileNum)
-	f, err := os.OpenFile(path, os.O_RDWR|os.O_CREATE, 0o600)
+	f, err := s.openBundledAppendLocked(fileNum, offset)
 	if err != nil {
 		return blockLocator{}, err
 	}
-	if _, err := f.Seek(offset, 0); err != nil {
-		_ = f.Close()
-		return blockLocator{}, err
-	}
 	if _, err := f.Write(rec); err != nil {
-		_ = f.Close()
+		_ = s.closeBundledAppendLocked()
 		return blockLocator{}, err
 	}
 	// Do not fsync every block (Core buffers blk*.dat writes). Sync only when rotating
 	// to a new file so IBD is not disk-bound on slow HDDs/Windows.
 	if offset == 0 {
 		if err := f.Sync(); err != nil {
-			_ = f.Close()
+			_ = s.closeBundledAppendLocked()
 			return blockLocator{}, err
 		}
 	}
-	_ = f.Close()
+	s.noteBundledAppend(fileNum, offset, len(rec))
+	if testing.Testing() {
+		// Tests delete TempDir while the process still holds the handle on Windows.
+		_ = s.closeBundledAppendLocked()
+	}
 	flags := uint8(0)
 	if s.opts.Zstd {
 		flags |= blockLocatorFlagZstd
@@ -73,46 +74,100 @@ func (s *RawBlockStore) appendBundledRecord(rec []byte, uncompressed uint32) (bl
 	}, nil
 }
 
-func (s *RawBlockStore) pickBundledAppendSlot(need int64) (fileNum uint32, offset int64, err error) {
-	entries, err := os.ReadDir(s.dir)
-	if err != nil {
-		return 0, 0, err
+func (s *RawBlockStore) openBundledAppendLocked(fileNum uint32, offset int64) (*os.File, error) {
+	if s.bundledFile != nil && s.bundledFileNum == fileNum {
+		if _, err := s.bundledFile.Seek(offset, 0); err != nil {
+			_ = s.closeBundledAppendLocked()
+		} else {
+			return s.bundledFile, nil
+		}
 	}
+	_ = s.closeBundledAppendLocked()
+	path := bundledBlkPath(s.dir, fileNum)
+	f, err := os.OpenFile(path, os.O_RDWR|os.O_CREATE, 0o600)
+	if err != nil {
+		return nil, err
+	}
+	if _, err := f.Seek(offset, 0); err != nil {
+		_ = f.Close()
+		return nil, err
+	}
+	s.bundledFile = f
+	s.bundledFileNum = fileNum
+	return f, nil
+}
+
+func (s *RawBlockStore) closeBundledAppendLocked() error {
+	if s.bundledFile == nil {
+		return nil
+	}
+	err := s.bundledFile.Close()
+	s.bundledFile = nil
+	return err
+}
+
+// Close releases the cached bundled append handle (tests / shutdown).
+func (s *RawBlockStore) Close() error {
+	if s == nil {
+		return nil
+	}
+	s.bundledAppendMu.Lock()
+	err := s.closeBundledAppendLocked()
+	s.bundledAppendMu.Unlock()
+	return err
+}
+
+func (s *RawBlockStore) pickBundledAppendSlot(need int64) (fileNum uint32, offset int64, err error) {
+	if need < 0 {
+		need = 0
+	}
+	if s.bundledTipValid {
+		if s.bundledTipSize+need <= maxBundledFileBytes {
+			return s.bundledTipNum, s.bundledTipSize, nil
+		}
+		return s.bundledTipNum + 1, 0, nil
+	}
+	// Probe blk00000.dat, blk00001.dat, … only. Never ReadDir(rawblocks/) — after a
+	// perfile→bundled upgrade that directory can hold 200k+ leftover *.bin files and a
+	// single ReadDir stalls every Put (live: 0 blk/min with peers still in-flight).
 	var tipNum uint32
 	var tipSize int64 = -1
-	for _, e := range entries {
-		if e.IsDir() {
-			continue
+	for n := uint32(0); n < 100000; n++ {
+		fi, stErr := os.Stat(bundledBlkPath(s.dir, n))
+		if stErr != nil {
+			if os.IsNotExist(stErr) {
+				break
+			}
+			return 0, 0, stErr
 		}
-		name := e.Name()
-		if len(name) != 12 || name[:3] != "blk" || filepath.Ext(name) != ".dat" {
-			continue
-		}
-		var n uint32
-		if _, err := fmt.Sscanf(name, "blk%05d.dat", &n); err != nil {
-			continue
-		}
-		fi, err := e.Info()
-		if err != nil {
-			continue
-		}
-		if n >= tipNum {
-			tipNum = n
-			tipSize = fi.Size()
-		}
+		tipNum = n
+		tipSize = fi.Size()
 	}
-	if tipSize >= 0 {
-		if fi, err := os.Stat(bundledBlkPath(s.dir, tipNum)); err == nil {
-			tipSize = fi.Size()
-		}
-	}
+	s.bundledTipValid = true
 	if tipSize < 0 {
+		s.bundledTipNum = 0
+		s.bundledTipSize = 0
 		return 0, 0, nil
 	}
+	s.bundledTipNum = tipNum
+	s.bundledTipSize = tipSize
 	if tipSize+need <= maxBundledFileBytes {
 		return tipNum, tipSize, nil
 	}
 	return tipNum + 1, 0, nil
+}
+
+func (s *RawBlockStore) noteBundledAppend(fileNum uint32, offset int64, recordLen int) {
+	next := offset + int64(recordLen)
+	if !s.bundledTipValid || fileNum > s.bundledTipNum {
+		s.bundledTipValid = true
+		s.bundledTipNum = fileNum
+		s.bundledTipSize = next
+		return
+	}
+	if fileNum == s.bundledTipNum && next > s.bundledTipSize {
+		s.bundledTipSize = next
+	}
 }
 
 func (s *RawBlockStore) getViaLocator(hashLE [32]byte) ([]byte, error) {
@@ -159,7 +214,14 @@ func (s *RawBlockStore) putPerFile(hashLE [32]byte, raw []byte) error {
 		if err := os.WriteFile(path, data, 0o600); err != nil {
 			return err
 		}
-		return removeBlockLocator(s.locatorRoot(), hashLE)
+		// Keep a locator so IBD claim planning can skip already-stored heights without
+		// Stat'ing every .bin (skipDisk used to re-getdata orphans and pack the window).
+		loc := blockLocator{
+			FileNum:      perFileLocatorNum,
+			RecordLen:    uint32(len(data)),
+			Uncompressed: uint32(len(raw)),
+		}
+		return writeBlockLocator(s.locatorRoot(), hashLE, loc)
 	}
 	if err := os.WriteFile(tmp, data, 0o600); err != nil {
 		return err
@@ -174,20 +236,24 @@ func (s *RawBlockStore) putPerFile(hashLE [32]byte, raw []byte) error {
 	if err := os.Rename(tmp, path); err != nil {
 		return err
 	}
-	if s.opts.Zstd {
-		loc := blockLocator{
-			FileNum:      perFileLocatorNum,
-			RecordLen:    uint32(len(data)),
-			Uncompressed: uint32(len(raw)),
-			Flags:        blockLocatorFlagZstd,
-		}
-		return writeBlockLocator(s.locatorRoot(), hashLE, loc)
+	loc := blockLocator{
+		FileNum:      perFileLocatorNum,
+		RecordLen:    uint32(len(data)),
+		Uncompressed: uint32(len(raw)),
 	}
-	return removeBlockLocator(s.locatorRoot(), hashLE)
+	if s.opts.Zstd {
+		loc.Flags = blockLocatorFlagZstd
+	}
+	return writeBlockLocator(s.locatorRoot(), hashLE, loc)
 }
 
 func (s *RawBlockStore) readPerFileLocator(hashLE [32]byte, loc blockLocator) ([]byte, error) {
-	b, err := os.ReadFile(s.pathFor(hashLE))
+	_ = loc
+	path, ok := s.resolvePerFilePath(hashLE)
+	if !ok {
+		return nil, fmt.Errorf("block not in store")
+	}
+	b, err := os.ReadFile(path)
 	if err != nil {
 		return nil, err
 	}
@@ -201,7 +267,11 @@ func (s *RawBlockStore) getPerFile(hashLE [32]byte) ([]byte, error) {
 	if loc, ok, err := readBlockLocator(s.locatorRoot(), hashLE); err == nil && ok && loc.FileNum == perFileLocatorNum {
 		return s.readPerFileLocator(hashLE, loc)
 	}
-	b, err := os.ReadFile(s.pathFor(hashLE))
+	path, ok := s.resolvePerFilePath(hashLE)
+	if !ok {
+		return nil, fmt.Errorf("block not in store")
+	}
+	b, err := os.ReadFile(path)
 	if err != nil {
 		return nil, err
 	}
@@ -304,25 +374,15 @@ func (s *RawBlockStore) GetByContiguousHeight(height int64) ([]byte, error) {
 }
 
 func listBundledBlkFiles(rawDir string) ([]uint32, error) {
-	entries, err := os.ReadDir(rawDir)
-	if err != nil {
-		return nil, err
-	}
 	var out []uint32
-	for _, e := range entries {
-		if e.IsDir() {
-			continue
-		}
-		name := e.Name()
-		if len(name) != 12 || name[:3] != "blk" || filepath.Ext(name) != ".dat" {
-			continue
-		}
-		var n uint32
-		if _, err := fmt.Sscanf(name, "blk%05d.dat", &n); err != nil {
-			continue
+	for n := uint32(0); n < 100000; n++ {
+		if _, err := os.Stat(bundledBlkPath(rawDir, n)); err != nil {
+			if os.IsNotExist(err) {
+				break
+			}
+			return nil, err
 		}
 		out = append(out, n)
 	}
-	sort.Slice(out, func(i, j int) bool { return out[i] < out[j] })
 	return out, nil
 }

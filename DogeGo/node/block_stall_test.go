@@ -66,6 +66,15 @@ func TestBlockStallingTimeoutNearTipIsTwoSeconds(t *testing.T) {
 	}
 }
 
+func TestBlockStallingTimeoutBodyIBDIsLonger(t *testing.T) {
+	if blockStallingTimeoutBodyIBD < 5*time.Second {
+		t.Fatalf("body IBD stall timeout %v too short (causes lane thrash)", blockStallingTimeoutBodyIBD)
+	}
+	if blockStallingTimeoutBodyIBD <= blockStallingTimeout {
+		t.Fatalf("body IBD stall %v should exceed near-tip %v", blockStallingTimeoutBodyIBD, blockStallingTimeout)
+	}
+}
+
 func TestMaybePenalizeStallingPeerCancelsActiveGetdata(t *testing.T) {
 	bs := &BlockStoreCtx{}
 	bs.contiguousMu.Lock()

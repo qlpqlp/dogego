@@ -198,8 +198,8 @@
       if (isFinite(behind) && behind > 0) parts.push(behind.toLocaleString() + " behind");
       const eta = resolveSyncEta(s, { phase });
       if (eta) parts.push("~" + eta);
-      const rate = Number(s.blocks_per_minute);
-      if (isFinite(rate) && rate > 0) parts.push(rate.toFixed(1) + " blk/min");
+      const rateTxt = (global.DogeGoFormatSyncDownloadRate && global.DogeGoFormatSyncDownloadRate(s)) || "";
+      if (rateTxt) parts.push(rateTxt);
       if (s.dogego_body_ibd_header_paused) parts.push("headers paused");
       sub = parts.join(" · ") || (s.sync_status_line || "");
     } else if (s.headers_syncing) {
@@ -288,6 +288,7 @@
     el.classList.remove("ui-pending");
     el.removeAttribute("aria-busy");
     el.querySelectorAll(":scope > .ui-skel-bar").forEach((n) => n.remove());
+    el.style.removeProperty("font-size");
     el.textContent = text;
     if (global.DogeGoFormat && global.DogeGoFormat.clearCompactStat) {
       // Strip tip state after text set only when not a compact target.
@@ -306,8 +307,9 @@
   function setCompactMetric(id, n, opts) {
     const el = $(id);
     if (!el) return;
+    el.style.removeProperty("font-size");
     if (global.DogeGoFormat && global.DogeGoFormat.setCompactStat) {
-      global.DogeGoFormat.setCompactStat(el, n, opts);
+      global.DogeGoFormat.setCompactStat(el, n, Object.assign({}, opts, { fit: false }));
       return;
     }
     const x = Number(n);
@@ -401,7 +403,6 @@
     const active = chainActiveHeight(s);
     const cont = Number(s.contiguous_raw_height);
     const behind = Number(s.blocks_behind_headers);
-    const rate = Number(s.blocks_per_minute);
     if (active >= 0 && isFinite(tip)) {
       const connEl = $("sync-dock-connected");
       if (connEl && global.DogeGoFormat) {
@@ -426,34 +427,38 @@
     } else {
       setMetric("sync-dock-connected", "...");
     }
-    if (isFinite(cont)) setCompactMetric("sync-dock-stored", cont, { integer: true });
+    if (isFinite(cont)) setCompactMetric("sync-dock-stored", cont, { integer: true, fit: false });
     else setMetric("sync-dock-stored", "...");
-    if (isFinite(behind) && behind > 0) setCompactMetric("sync-dock-behind", behind, { integer: true });
+    if (isFinite(behind) && behind > 0) setCompactMetric("sync-dock-behind", behind, { integer: true, fit: false });
     else setMetric("sync-dock-behind", "0");
-    const bodyLag = Number(s.dogego_body_lag_headers);
-    if (isFinite(bodyLag) && bodyLag > 0) setCompactMetric("sync-dock-body-lag", bodyLag, { integer: true });
-    else setMetric("sync-dock-body-lag", "0");
-    const cpProbe = Number(s.dogego_checkpoint_probe);
-    if (isFinite(cpProbe) && cpProbe >= 0) setCompactMetric("sync-dock-checkpoint", cpProbe, { integer: true });
-    else setMetric("sync-dock-checkpoint", "...");
     const pool = Number(s.assist_peer_pool);
     setMetric("sync-dock-assist-pool", isFinite(pool) && pool > 0 ? String(pool) : "0");
-    setMetric("sync-dock-rate", isFinite(rate) && rate > 0 ? rate.toFixed(1) + " blk/min" : "...");
+    const rateTxt = (global.DogeGoFormatSyncDownloadRate && global.DogeGoFormatSyncDownloadRate(s)) || "";
+    setMetric("sync-dock-rate", rateTxt || "...");
+    let diskN = Number(s.chain_bytes_total);
+    if (!isFinite(diskN) || diskN <= 0) {
+      const parts = [s.headers_bytes, s.rawblocks_bytes, s.txindex_bytes, s.utxo_bytes]
+        .map(Number).filter((n) => isFinite(n) && n > 0);
+      if (parts.length) diskN = parts.reduce((a, b) => a + b, 0);
+    }
+    if (isFinite(diskN) && diskN > 0 && global.DogeGoFmtBytes) {
+      setMetric("sync-dock-disk", global.DogeGoFmtBytes(diskN) + (s.disk_bytes_approx ? " ≈" : ""));
+    } else {
+      setMetric("sync-dock-disk", "...");
+    }
     const boost = formatConnectCatchUpBoost(s);
     const boostWrap = $("sync-dock-connect-boost-wrap");
     if (boostWrap) boostWrap.hidden = !boost;
     setMetric("sync-dock-connect-boost", boost || "...");
     setMetric("sync-dock-eta", resolveSyncEta(s, labels));
+    const etaEl = $("sync-dock-eta");
+    if (etaEl) etaEl.title = etaEl.textContent || "";
     const out = Number(s.connections_out) || 0;
     const inn = Number(s.connections_in) || 0;
     setMetric("sync-dock-peers", out + "/" + inn);
     const mp = Number(s.mempool_txs);
-    if (isFinite(mp)) setCompactMetric("sync-dock-mempool", mp, { integer: true });
+    if (isFinite(mp)) setCompactMetric("sync-dock-mempool", mp, { integer: true, fit: false });
     else setMetric("sync-dock-mempool", "0");
-    const txp = Number(s.transactions_processed);
-    if (isFinite(txp) && txp >= 0) setCompactMetric("sync-dock-tx-processed", txp, { integer: true, requireNonNeg: true });
-    else setMetric("sync-dock-tx-processed", "...");
-    updateOperatorCertMetric();
     if (global.DogeGoApplyUtxoReplayUI) global.DogeGoApplyUtxoReplayUI(s);
     if (logsOpen) loadLogs();
   }

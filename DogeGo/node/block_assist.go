@@ -166,7 +166,6 @@ func runBlockAssistSession(ctx context.Context, conn net.Conn, addr string, p ch
 	sessionBlocks := 0
 	sessionStart := time.Now()
 	lastBodyAt := sessionStart
-	var lastBodyPump time.Time
 	defer func() {
 		if raw != nil {
 			raw.ReleaseLaneInFlight(laneID)
@@ -186,32 +185,9 @@ func runBlockAssistSession(ctx context.Context, conn net.Conn, addr string, p ch
 		if !raw.bodiesDownloadActive(bs) {
 			return
 		}
-		if n, err := MaybePumpLaneBodyIBDDownload(ctx, w, p, bs, raw, laneID, scorer, book, &lastBodyPump); err != nil {
-			if IsBenignShutdownErr(err) {
-				return
-			}
-			if errors.Is(err, ErrBlockDownloadStall) || errors.Is(err, ErrBlockDownloadTimeout) {
-				applog.Line("block", "block-assist disconnect: "+err.Error())
-				return
-			}
-			if shouldRotatePeerForStubBlock(err) {
-				penalizeStubBlockPeer(scorer, book, addr)
-				applog.Line("block", fmt.Sprintf("block-assist %s sent undersized block stub - disconnecting", addr))
-				return
-			}
-			penalizeBlockPeer(scorer, book, addr, sessionFailureHardFromFetchErr(err) || shouldRotatePeerForForwardIBDFetch(err, blockFetchWantHeight(bs)))
-			if sessionFailureHardFromFetchErr(err) || shouldRotatePeerForForwardIBDFetch(err, blockFetchWantHeight(bs)) || shouldRedialPrimaryForAncientFetch(err, blockFetchWantHeight(bs)) {
-				applog.Line("block", fmt.Sprintf("block-assist %s cannot serve blocks (%v) - disconnecting", addr, err))
-				return
-			}
-			applog.Line("block", "block-assist fetch: "+err.Error())
-			return
-		} else if n > 0 {
-			sessionBlocks += n
-			lastBodyAt = time.Now()
-		}
-		drainAssistInboundFor(conn, p.Magic, w, &ping, blockAssistDrainTimeout, bs)
-		ping.maybePing(w)
+		// Single scheduler: progressive getdata owns refill. The old dual path
+		// (MaybePumpLaneBodyIBDDownload + tryFetchMissingBatches) double-claimed and
+		// raced the same lane. Primary still uses MaybePumpBodyIBDDownload for chatter.
 		n, err := raw.tryFetchMissingBatches(ctx, w, p, bs, laneID, IdleFetchBatchesPerRound(bs), scorer, book)
 		if err != nil {
 			if IsBenignShutdownErr(err) {
@@ -237,7 +213,12 @@ func runBlockAssistSession(ctx context.Context, conn net.Conn, addr string, p ch
 		if n > 0 {
 			sessionBlocks += n
 			lastBodyAt = time.Now()
+			if scorer != nil {
+				scorer.NoteBlocksDelivered(addr, n)
+			}
 		}
+		drainAssistInboundFor(conn, p.Magic, w, &ping, blockAssistDrainTimeout, bs)
+		ping.maybePing(w)
 		if n == 0 && !raw.bodiesDownloadActive(bs) {
 			return
 		}

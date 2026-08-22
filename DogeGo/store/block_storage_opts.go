@@ -87,10 +87,35 @@ func saveBlockStorageManifest(rawDir string, opts BlockStorageOpts) error {
 	return os.Rename(tmp, blockStorageManifestPath(rawDir))
 }
 
-// ResolveBlockStorageOpts merges config opts with an existing on-disk manifest (manifest wins).
+// ResolveBlockStorageOpts merges config opts with an existing on-disk manifest.
+// The manifest normally wins so a datadir keeps a stable layout, but config may
+// upgrade perfile → bundled (and optionally enable zstd). Old *.bin bodies stay
+// readable via Has/Get fallbacks; new Puts append Core-style blk*.dat.
 func ResolveBlockStorageOpts(requested BlockStorageOpts, rawDir string) BlockStorageOpts {
-	if onDisk, ok := loadBlockStorageManifest(rawDir); ok {
-		return onDisk
+	requested = NormalizeBlockStorageOpts(requested)
+	onDisk, ok := loadBlockStorageManifest(rawDir)
+	if !ok {
+		return requested
 	}
-	return NormalizeBlockStorageOpts(requested)
+	if onDisk.Layout == BlockLayoutPerFile && requested.Layout == BlockLayoutBundled {
+		return requested
+	}
+	if onDisk.Layout == BlockLayoutBundled && requested.Layout == BlockLayoutBundled && requested.Zstd && !onDisk.Zstd {
+		return requested
+	}
+	return onDisk
+}
+
+// BlockStorageUpgrade reports whether Resolve would change an existing manifest.
+func BlockStorageUpgrade(requested BlockStorageOpts, rawDir string) (from, to BlockStorageOpts, upgrading bool) {
+	requested = NormalizeBlockStorageOpts(requested)
+	onDisk, ok := loadBlockStorageManifest(rawDir)
+	if !ok {
+		return BlockStorageOpts{}, requested, false
+	}
+	resolved := ResolveBlockStorageOpts(requested, rawDir)
+	if onDisk.Layout == resolved.Layout && onDisk.Zstd == resolved.Zstd {
+		return onDisk, resolved, false
+	}
+	return onDisk, resolved, true
 }

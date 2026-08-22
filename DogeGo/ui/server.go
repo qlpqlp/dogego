@@ -223,6 +223,7 @@ func Start(ctx context.Context, cfg StartConfig) (baseURL string, err error) {
 	})
 	registerTLSRoutes(mux, cfg)
 	registerFirewallRoutes(mux)
+	registerDiskPressureRoutes(mux)
 	readAuth := func(w http.ResponseWriter, r *http.Request) bool {
 		return requireDashboardRead(w, r, webGate, cfg.EffectiveFile, cfg.ListenAddr)
 	}
@@ -284,6 +285,12 @@ func Start(ctx context.Context, cfg StartConfig) (baseURL string, err error) {
 		if !readAuth(w, r) {
 			return
 		}
+		light := r.URL.Query().Get("light") == "1"
+		if !light && cfg.ChainIBDSync != nil {
+			if snap := cfg.ChainIBDSync(); snap.IBD {
+				light = true
+			}
+		}
 		dbPath := filepath.Join(cfg.ChainDataDir, "dogego_analytics.db")
 		var detail *analytics.SideDetail
 		var err error
@@ -307,11 +314,17 @@ func Start(ctx context.Context, cfg StartConfig) (baseURL string, err error) {
 		}
 		tip, hdrCount, _ := journalTipForDashboard(cfg.Journal)
 		chainActive := rpc.ActiveChainBlockHeight(cfg.Journal, cfg.RawBlocks)
+		storedBodies := contiguousHeightForAPI(cfg)
 		rbLive := 0
-		if cfg.RawBlocks != nil {
-			if n, err := cfg.RawBlocks.Count(); err == nil {
+		// Never Walk 200k+ per-file *.bin during IBD — FastCount/scan hangs the Analytics tab
+		// and used to block peer list refresh (peers were gated on this endpoint succeeding).
+		if !light && cfg.RawBlocks != nil {
+			if n, err := cfg.RawBlocks.FastCount(); err == nil {
 				rbLive = n
 			}
+		}
+		if rbLive <= 0 && storedBodies >= 0 {
+			rbLive = int(storedBodies) + 1
 		}
 		out := map[string]interface{}{
 			"chain_data_dir":       cfg.ChainDataDir,
@@ -323,12 +336,10 @@ func Start(ctx context.Context, cfg StartConfig) (baseURL string, err error) {
 			"chain_active_height":  chainActive,
 			"headers_count":        hdrCount,
 			"rawblocks_live_count": rbLive,
+			"light":                light,
 		}
-		if storedBodies := contiguousHeightForAPI(cfg); storedBodies >= 0 {
+		if storedBodies >= 0 {
 			out["stored_bodies_height"] = storedBodies
-			if rbLive <= 0 {
-				out["rawblocks_live_count"] = int(storedBodies) + 1
-			}
 		}
 		if rawBin != nil {
 			out["rawblocks_analytics_count"] = *rawBin
@@ -352,20 +363,16 @@ func Start(ctx context.Context, cfg StartConfig) (baseURL string, err error) {
 		out["max_block_weight"] = consensus.MaxBlockWeight
 		if cfg.Journal != nil {
 			ca, sb := chainStatsHints(cfg)
-			light := r.URL.Query().Get("light") == "1"
-			if !light && cfg.ChainIBDSync != nil {
-				if snap := cfg.ChainIBDSync(); snap.IBD {
-					light = true
-				}
-			}
 			out["chainstats"] = BuildChainStats(cfg.Journal, cfg.RawBlocks, cfg.PubkeyHashAddrID, time.Now(), ca, sb, light)
 		}
-		if cfg.UtxoCache != nil {
+		if !light && cfg.UtxoCache != nil {
 			if u := cfg.UtxoCache(); u != nil {
 				pub, sh, _ := chainVersions(cfg.Network)
 				out["top_utxo_holders"] = BuildTopUtxoHolders(u, cfg.Journal, cfg.AddrIndex, pub, sh, topUtxoHolderLimit)
 			}
 		}
+		// StorageSummary is cheap when cached (and uses CachedBytesOnDisk during IBD).
+		// Always attach it so Analytics "Chain disk" is not blank under light=1.
 		if cfg.StorageSummary != nil {
 			if st := cfg.StorageSummary(); st != nil {
 				out["storage"] = st
@@ -1478,7 +1485,7 @@ func Start(ctx context.Context, cfg StartConfig) (baseURL string, err error) {
 		}
 		live.writeMempool(w)
 	})
-	registerWalletUnlockRoutes(mux, cfg, webGate)
+	registerWalletUnlockRoutes(mux, cfg, webGate, live)
 	registerWalletEncryptRoutes(mux, cfg, webGate)
 	registerWalletSendRoute(mux, cfg, webGate)
 	registerWalletTxFlightRoutes(mux, cfg, webGate)

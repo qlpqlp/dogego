@@ -21,9 +21,10 @@ import (
 )
 
 type setupWalletBackupRequest struct {
-	DataDir  string `json:"datadir"`
-	Network  string `json:"network"`
-	NoWallet bool   `json:"nowallet"`
+	DataDir          string `json:"datadir"`
+	Network          string `json:"network"`
+	NoWallet         bool   `json:"nowallet"`
+	WalletPassphrase string `json:"wallet_passphrase,omitempty"`
 }
 
 func ensureSetupWallet(dataDir, network string) (walletPath string, err error) {
@@ -55,6 +56,52 @@ func ensureSetupWallet(dataDir, network string) (walletPath string, err error) {
 		return "", err
 	}
 	return wpath, nil
+}
+
+// setupWalletStatus reports whether an existing wallet.json is encrypted / HD (for setup UI).
+func setupWalletStatus(dataDir, network string) (map[string]any, error) {
+	wpath, err := ensureSetupWallet(dataDir, network)
+	if err != nil {
+		return nil, err
+	}
+	net, err := chain.ParseNetwork(strings.TrimSpace(network))
+	if err != nil {
+		return nil, err
+	}
+	p, err := chain.ParamsFor(net)
+	if err != nil {
+		return nil, err
+	}
+	w, err := wallet.LoadOrCreate(wpath, p.PubkeyHashAddrID)
+	if err != nil {
+		return nil, err
+	}
+	return map[string]any{
+		"exists":    true,
+		"encrypted": w.IsEncrypted(),
+		"unlocked":  w.IsUnlocked(),
+		"hd":        w.HDEnabled(),
+		"address":   w.Address(),
+		"path":      wpath,
+	}, nil
+}
+
+// unlockSetupWalletPath unlocks an encrypted wallet for setup tip/save when a passphrase is given.
+func unlockSetupWalletPath(wpath string, addrVer byte, passphrase string) error {
+	w, err := wallet.LoadOrCreate(wpath, addrVer)
+	if err != nil {
+		return err
+	}
+	if !w.IsEncrypted() {
+		return nil
+	}
+	if strings.TrimSpace(passphrase) == "" {
+		return fmt.Errorf("wallet passphrase required (encrypted wallet.json already exists under this datadir)")
+	}
+	if err := w.Unlock(passphrase, 600); err != nil {
+		return fmt.Errorf("wallet unlock failed: %w", err)
+	}
+	return nil
 }
 
 func setupWalletExists(dataDir, network string) (bool, error) {

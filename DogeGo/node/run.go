@@ -27,6 +27,7 @@ import (
 	"dogego/chain"
 	"dogego/config"
 	"dogego/consensus"
+	"dogego/diskspace"
 	"dogego/extensions"
 	"dogego/httptls"
 	"dogego/mempool"
@@ -333,11 +334,21 @@ func Run(ctx context.Context, cfg Config) error {
 		if blockOpts.Layout == "" {
 			blockOpts = store.DefaultBlockStorageOpts()
 		}
+		rawDir := filepath.Join(chainRoot, "rawblocks")
+		if from, to, up := store.BlockStorageUpgrade(blockOpts, rawDir); up {
+			applog.Line("block", fmt.Sprintf("block storage upgrade %s/zstd=%v → %s/zstd=%v (legacy per-file bodies stay readable under rawblocks/legacy/; new blocks append bundled)",
+				from.Layout, from.Zstd, to.Layout, to.Zstd))
+		}
 		if rb, err := store.OpenRawBlockStoreWithOpts(chainRoot, blockOpts); err != nil {
 			fmt.Fprintf(os.Stderr, "raw blocks dir: %v\n", err)
 		} else {
 			rbStore = rb
 			rbStore.ReconcileCountCacheFromDisk()
+			// Skip a full rawblocks *.bin Walk at startup during hybrid IBD — it saturates
+			// NTFS and freezes bundled Puts. blk*.dat size is enough until legacy migrate.
+			if !rbStore.HasLegacyPerFileBodies() {
+				go rbStore.RefreshPayloadBytes()
+			}
 		}
 		if !cfg.NoTxIndex {
 			if ix, err := store.OpenTxIndexWithOpts(chainRoot, cfg.TxIndexEmbedTx); err != nil {
@@ -441,6 +452,14 @@ func Run(ctx context.Context, cfg Config) error {
 						m.MempoolBytes = int64(pool.TotalBytes())
 					}
 					hB, rB, tB, total := analytics.ChainStoreBytes(chainDataAbs)
+					// Prefer live RawBlockStore sizes when the background leftover walk finished
+					// (avoids a second full *.bin tree walk on the analytics ticker during IBD).
+					if rbStore != nil {
+						if cheap, err := rbStore.CachedBytesOnDisk(5 * time.Minute); err == nil {
+							rB = cheap
+							total = hB + rB + tB + analytics.SubdirSizeIfExists(filepath.Join(chainDataAbs, "utxo.cache"))
+						}
+					}
 					m.HeadersBytes, m.RawBlocksBytes, m.TxIndexBytes, m.ChainDataBytes = hB, rB, tB, total
 					if rbStore != nil && j != nil {
 						if tip, err := j.TipHeight(); err == nil && tip >= 0 {
@@ -496,6 +515,13 @@ func Run(ctx context.Context, cfg Config) error {
 	var walletSendBridge *ui.WalletSendBridge
 	var walletTxsBridge *ui.WalletTxsBridge
 	var rawFill progressiveRawState
+	if cfg.FullNode {
+		diskspace.Start(chainRoot, func(paused bool) {
+			rawFill.mu.Lock()
+			rawFill.diskPressurePaused = paused
+			rawFill.mu.Unlock()
+		})
+	}
 	var bodyReplay bodyReplayTracker
 	var blockStore *BlockStoreCtx
 	var assistRegistry *AssistPeerRegistry
@@ -1036,7 +1062,9 @@ func Run(ctx context.Context, cfg Config) error {
 	}
 	if rbStore != nil && blockStore != nil {
 		diskContig := int64(-1)
-		if tip, err := rbStore.ProbeBundledContiguousTip(); err == nil {
+		if tip := store.ReconcileBundledContiguousTip(j, rbStore, cfg.Network); tip >= 0 {
+			diskContig = tip
+		} else if tip, err := rbStore.ProbeBundledContiguousTip(); err == nil {
 			diskContig = tip
 		} else {
 			applog.Line("block", "bundled contiguous probe: "+err.Error())
@@ -1045,13 +1073,23 @@ func Run(ctx context.Context, cfg Config) error {
 			if fixed, err := store.ReconcileRawBlockSyncCheckpoint(chainRoot, diskContig); err != nil {
 				applog.Line("block", "reconcile rawblocks_sync: "+err.Error())
 			} else if fixed {
-				applog.Line("block", fmt.Sprintf("reconciled rawblocks_sync.json to bundled disk tip %d", diskContig))
+				applog.Line("block", fmt.Sprintf("reconciled rawblocks_sync.json to disk body tip %d", diskContig))
+			}
+			// Raise a falsely clamped checkpoint after perfile→bundled upgrade (probe-only tip).
+			if cp, err := store.LoadRawBlockSyncCheckpoint(chainRoot); err == nil && cp.ContiguousRawHeight < diskContig {
+				cp.ContiguousRawHeight = diskContig
+				cp.NextProbeHeight = diskContig + 1
+				if err := store.SaveRawBlockSyncCheckpoint(chainRoot, cp); err != nil {
+					applog.Line("block", "raise rawblocks_sync: "+err.Error())
+				} else {
+					applog.Line("block", fmt.Sprintf("raised rawblocks_sync.json contiguous coverage to %d", diskContig))
+				}
 			}
 			blockStore.maybeClampBundledContiguousFromDisk()
 		}
 		if cp, err := store.LoadRawBlockSyncCheckpoint(chainRoot); err == nil && cp.ContiguousRawHeight >= 0 {
 			seed := cp.ContiguousRawHeight
-			if diskContig >= 0 && seed > diskContig {
+			if diskContig > seed {
 				seed = diskContig
 			}
 			if blockStore.TrySeedContiguousFromCheckpoint(seed) {
@@ -1728,16 +1766,21 @@ func Run(ctx context.Context, cfg Config) error {
 							StartBlockAssistWorkers(ctx, d, assistCandidates, &primaryExclude, p, subVer, localServices, blockStore, &rawFill, blockSyncWorkers(), blockPeerScorer, assistRegistry, activeAddrBook(peerMgr, bootstrapAddrBook))
 						}
 					}
-					if ShouldPauseHeaderCatchUpForBodyIBD(blockStore, headerPeer.startHeight()) {
+					if ShouldPauseHeaderCatchUpForBodyIBD(blockStore, headerPeer.startHeight()) &&
+						!ShouldRunDedicatedHeaderDespiteBodyPause(blockStore, headerPeer.startHeight()) {
 						reconcileHeaderCatchUpPending(blockStore, &headerCatchUpPending, &rawFill)
 						applog.Line("headers", "forward block IBD owns pipeline - dedicated header sync deferred until bodies catch up")
 					} else {
+						if ShouldPauseHeaderCatchUpForBodyIBD(blockStore, headerPeer.startHeight()) {
+							applog.Line("headers", "body IBD active but local headers trail network - keeping dedicated header peer")
+						}
 						dedicatedEnv := DedicatedHeaderSyncEnv{
 							Ctx: ctx, Params: p, Journal: j, Aux: auxJ, FeeFilters: peerFeeFilters,
 							BlockStore: blockStore, RawBackfill: cfg.RawBlockBackfill, RawFill: &rawFill,
 							DiscoveryFeed: discoveryFeed, Scorer: blockPeerScorer, AddrBook: activeAddrBook(peerMgr, bootstrapAddrBook),
 							OnYieldOrDone: func() {
-								if ShouldPauseHeaderCatchUpForBodyIBD(blockStore, 0) {
+								if ShouldPauseHeaderCatchUpForBodyIBD(blockStore, 0) &&
+									!ShouldRunDedicatedHeaderDespiteBodyPause(blockStore, NetworkPeerStartHeight(peerFromHandshake, peerMgr)) {
 									reconcileHeaderCatchUpPending(blockStore, &headerCatchUpPending, &rawFill)
 									return
 								}
@@ -1922,8 +1965,12 @@ func Run(ctx context.Context, cfg Config) error {
 	}
 	kickHeaderSyncRecovery := func(force bool) bool {
 		if blockStore != nil && ShouldPauseHeaderCatchUpForBodyIBD(blockStore, 0) {
-			reconcileHeaderCatchUpPending(blockStore, &headerCatchUpPending, &rawFill)
-			return false
+			peerH := NetworkPeerStartHeight(peerFromHandshake, peerMgr)
+			if !ShouldRunDedicatedHeaderDespiteBodyPause(blockStore, peerH) {
+				reconcileHeaderCatchUpPending(blockStore, &headerCatchUpPending, &rawFill)
+				return false
+			}
+			// Local tip still trails network: allow headers-only recovery alongside body IBD.
 		}
 		if !force && ShouldDeferBackgroundHeaderSync() {
 			return false

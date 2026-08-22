@@ -21,9 +21,9 @@ import (
 // present immediately, and drain to disk on a worker pool (Core keeps blocks in memory
 // too; its blk*.dat append is just cheaper than one file per height).
 const (
-	ibdWriteBehindMaxBytes = 256 << 20 // 256 MiB RAM ingest buffer during per-file IBD
-	ibdWriteBehindWorkers  = 8
-	ibdWriteBehindQueue    = 32768
+	ibdWriteBehindMaxBytes = 512 << 20 // 512 MiB RAM ingest buffer during per-file IBD
+	ibdWriteBehindWorkers  = 16
+	ibdWriteBehindQueue    = 65536
 )
 
 type ibdWriteJob struct {
@@ -33,6 +33,7 @@ type ibdWriteJob struct {
 
 type ibdWriteBehind struct {
 	s        *RawBlockStore
+	bundled  bool
 	mu       sync.Mutex
 	cond     *sync.Cond
 	staged   map[[32]byte][]byte
@@ -44,14 +45,24 @@ type ibdWriteBehind struct {
 }
 
 func newIBDWriteBehind(s *RawBlockStore) *ibdWriteBehind {
+	workers := ibdWriteBehindWorkers
+	bundled := s != nil && s.opts.Layout == BlockLayoutBundled
+	if bundled {
+		// Append offsets are serialized by bundledAppendMu inside putBundled. Multiple
+		// flushers still help: locator WriteFile was the NTFS bottleneck (~50 loc/min with
+		// one worker) while blk*.dat append stayed nearly idle. Keep a modest pool so
+		// locator creates run in parallel after each append.
+		workers = 8
+	}
 	wb := &ibdWriteBehind{
-		s:      s,
-		staged: make(map[[32]byte][]byte),
-		q:      make(chan ibdWriteJob, ibdWriteBehindQueue),
-		stop:   make(chan struct{}),
+		s:       s,
+		bundled: bundled,
+		staged:  make(map[[32]byte][]byte),
+		q:       make(chan ibdWriteJob, ibdWriteBehindQueue),
+		stop:    make(chan struct{}),
 	}
 	wb.cond = sync.NewCond(&wb.mu)
-	for i := 0; i < ibdWriteBehindWorkers; i++ {
+	for i := 0; i < workers; i++ {
 		wb.wg.Add(1)
 		go wb.worker()
 	}
@@ -66,6 +77,19 @@ func (wb *ibdWriteBehind) has(hash [32]byte) bool {
 	_, ok := wb.staged[hash]
 	wb.mu.Unlock()
 	return ok
+}
+
+func (wb *ibdWriteBehind) queuedBytes() int64 {
+	if wb == nil {
+		return 0
+	}
+	wb.mu.Lock()
+	n := wb.bytes
+	wb.mu.Unlock()
+	if n < 0 {
+		return 0
+	}
+	return n
 }
 
 func (wb *ibdWriteBehind) size(hash [32]byte) (int, bool) {
@@ -160,7 +184,14 @@ func (wb *ibdWriteBehind) worker() {
 				return
 			}
 			wb.inflight.Add(1)
-			err := wb.s.putPerFile(job.hash, job.raw)
+			var err error
+			if wb.bundled {
+				// putBundled takes bundledAppendMu itself — never hold RawBlockStore.mu
+				// across NTFS writes (claim/Get would freeze for the whole Put).
+				err = wb.s.putBundled(job.hash, job.raw)
+			} else {
+				err = wb.s.putPerFile(job.hash, job.raw)
+			}
 			wb.inflight.Add(-1)
 			if err != nil {
 				if writeBehindGiveUp(err) {
@@ -192,6 +223,9 @@ func (wb *ibdWriteBehind) Flush() {
 		n := len(wb.staged)
 		wb.mu.Unlock()
 		if n == 0 && wb.inflight.Load() == 0 && len(wb.q) == 0 {
+			if wb.bundled && wb.s != nil {
+				_ = wb.s.Close()
+			}
 			return
 		}
 		time.Sleep(2 * time.Millisecond)

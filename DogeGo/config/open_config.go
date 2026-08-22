@@ -58,6 +58,7 @@ func loadConfigFile(path string) (File, error) {
 	if err != nil {
 		return File{}, err
 	}
+	b = stripUTF8BOM(b)
 	var c File
 	if err := json.Unmarshal(b, &c); err != nil {
 		return File{}, err

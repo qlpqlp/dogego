@@ -46,8 +46,13 @@ func MeasureContiguousBodiesOnDisk(j *HeaderJournal, raw *RawBlockStore, net cha
 	return h
 }
 
-// ReconcileBundledContiguousTip returns the conservative bundled body tip when blk scan and
-// header/locator measurement disagree (operator recovery or partial locator drift).
+// ReconcileBundledContiguousTip returns readable body coverage for bundled (or hybrid) stores.
+//
+// ProbeBundledContiguousTip only scans blk*.dat. After a perfile→bundled upgrade, leftover
+// *.bin bodies remain readable via HasStoredBody; preferring probe alone falsely rewinds
+// contiguous coverage (e.g. ~200k → a few thousand). When legacy *.bin exist, journal
+// measurement wins. Pure bundled stores keep the conservative min(probe, measured) behavior
+// so torn blk tails still clamp.
 func ReconcileBundledContiguousTip(j *HeaderJournal, raw *RawBlockStore, net chain.Network) int64 {
 	if j == nil || raw == nil {
 		return -1
@@ -60,10 +65,13 @@ func ReconcileBundledContiguousTip(j *HeaderJournal, raw *RawBlockStore, net cha
 	switch {
 	case probe < 0 && measured < 0:
 		return -1
-	case probe < 0:
-		return measured
 	case measured < 0:
 		return probe
+	case probe < 0:
+		return measured
+	case raw.HasLegacyPerFileBodies():
+		// Extend from bundled tip through leftover *.bin (avoid full genesis rescan).
+		return MeasureContiguousBodiesOnDisk(j, raw, net, probe, 0)
 	case measured < probe:
 		return measured
 	default:

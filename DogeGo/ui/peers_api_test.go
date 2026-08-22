@@ -93,3 +93,33 @@ func TestApplyPeersActionAdd(t *testing.T) {
 		t.Fatalf("rpc %s %#v", sawMethod, sawParams)
 	}
 }
+
+func TestBuildPeersDashboardResponseFallsBackToP2PCounts(t *testing.T) {
+	cfg := StartConfig{
+		RPCInvoke: func(method string, params []json.RawMessage) map[string]interface{} {
+			switch method {
+			case "getpeerinfo":
+				return map[string]interface{}{"result": nil}
+			case "getaddednodeinfo":
+				return map[string]interface{}{"result": []any{}}
+			default:
+				t.Fatalf("method %q", method)
+				return nil
+			}
+		},
+		P2PSnapshot: func() map[string]any {
+			return map[string]any{
+				"connections_outbound": 8,
+				"connections_inbound":  1,
+				"connections_total":    9,
+			}
+		},
+	}
+	out := BuildPeersDashboardResponse(cfg)
+	if out["connections_outbound"] != 8 || out["connections_inbound"] != 1 {
+		t.Fatalf("fallback counts: %#v", out)
+	}
+	if out["connections_total"] != 9 {
+		t.Fatalf("total=%v", out["connections_total"])
+	}
+}

@@ -277,11 +277,11 @@
       },
       "ibd": {
         "title": "Parallel block download",
-        "body": "Faster, more stable multi-peer IBD: block-assist workers, height striping, auto UTXO dbcache, and Core-style IBD focus so download stays productive through long syncs."
+        "body": "Faster, more stable multi-peer IBD: adaptive per-peer in-flight (16 to 256), hole-first getdata, auto UTXO dbcache, and Core-style IBD focus. Low disk space (1 GiB or less free) pauses body download with an Overview banner and optional tray notification; download resumes automatically once more than 1 GiB is free."
       },
       "tray": {
         "title": "System tray & notifications",
-        "body": "Optional tray icon: open dashboard, check/download/install updates with SHA256 verify, and native OS notifications when a new GitHub release is detected."
+        "body": "Optional tray icon: open dashboard, check/download/install updates with SHA256 verify, native OS notifications for new GitHub releases, and low-disk warnings when full block download pauses."
       },
       "extensions": {
         "title": "Modular extension platform",
@@ -327,7 +327,7 @@
     "live": {
       "sync": {
         "title": "Chain sync & IBD",
-        "body": "Headers-first sync with parallel body download, auto <code>dbcache</code>, IBD optimize (default on), journal recovery, and a sync dock with recent download rate and assist pool metrics."
+        "body": "Headers-first sync with parallel body download, adaptive peer budgets (16 to 256 in flight), auto <code>dbcache</code>, IBD optimize (default on), low-disk pause with dashboard Continue, journal recovery, and a sync dock with recent download rate and assist pool metrics."
       },
       "consensus": {
         "title": "Validation & mempool",
@@ -361,14 +361,14 @@
     "doneTitle": "Major milestones",
     "done": {
       "p2p": "CGNAT / classic / both, DGR relay phases 1-4, UPnP, multi-peer IBD, BIP152 v1 HB + offline soak cert, addrman buckets + slot indices + eclipse-pressure eviction",
-      "ibd": "Headers-first body IBD, IBD optimize + auto dbcache, UTXO snapshot replay/quarantine, connect catch-up, stall recovery",
+      "ibd": "Headers-first body IBD, adaptive peer budgets, IBD optimize + auto dbcache, low-disk pause, UTXO snapshot replay/quarantine, connect catch-up, stall recovery",
       "consensus": "Scrypt PoW, AuxPoW CAuxPow check, Milestone A differentials, 1059/1059 legacy script corpus, mainnet field evidence",
       "store": "Header segments, bundled+zstd raw blocks, UTXO cache crash quarantine/tmp purge, crash/corruption recovery suite",
       "mempool": "58-template offline corpus, BIP125 RBF (PaysForRBF descendant conflict fees), submitpackage CPFP package feerate, package DAG property tests, live testmempoolaccept, 24/24 stateful reboottestnet map (offline)",
       "rpc": "180+ JSON-RPC, OpenRPC, ZMQ, 17 live Features cert gates (mining GBT/aux + PQ), <code>dogego cert</code> offline / operator / pq / wallet-import / bip152-soak",
       "wallet": "BIP44 HD wallet, fill-to-target keypoolrefill, Core wallet.dat pool replay, encrypt/unlock, coin control, HWI signer_cmd + mocksigner e2e, OS autostart",
       "mining": "generatetoaddress, createauxblock/submitauxblock, getblocktemplate NextBlockBits + BIP22 longpoll, reboot-testnet solo miner with mempool txs; <code>GET /api/core-mining-probe</code> + <code>dogego cert mining</code>",
-      "ui": "Wizard, BlockStep, Features matrix, GitHub auto-update, tray, local HTTPS, sync dock",
+      "ui": "Wizard, BlockStep, Features matrix, GitHub auto-update, tray, low-disk banner, local HTTPS, sync dock",
       "pq": "PQ OP_RETURN + carrier (RPC/web send; needs more soak testing)",
       "extensions": "Modular extensions catalog (wasm/subprocess) plus official ZK L2, Doginals, RadioDoge, and BBPoW packages",
       "segwit": "SegWit ready: BIP141 machinery Core-aligned (CLTV active)"

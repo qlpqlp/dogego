@@ -216,10 +216,15 @@ func TestClaimBatch_frontierFirstPipelinesNextLane(t *testing.T) {
 	}
 	b, ok := s.claimBatch(bs, 2)
 	if !ok || len(b.heights) == 0 {
-		t.Fatalf("lane 2 should pipeline the next 16 after in-flight, ok=%v n=%d", ok, len(b.heights))
+		t.Fatalf("lane 2 should claim a disjoint ahead chunk, ok=%v n=%d", ok, len(b.heights))
 	}
-	if b.heights[0] != a.hi+1 {
-		t.Fatalf("lane 2 first height %d want %d (Core download window, not idle behind lane 0)", b.heights[0], a.hi+1)
+	for _, h := range b.heights {
+		if h >= a.lo && h <= a.hi {
+			t.Fatalf("lane 2 height %d overlaps lane 0 %d..%d", h, a.lo, a.hi)
+		}
+	}
+	if b.heights[0] <= a.lo {
+		t.Fatalf("lane 2 first height %d should be ahead of lane 0 start %d", b.heights[0], a.lo)
 	}
 }
 
@@ -448,5 +453,90 @@ func TestClaimBatch_skipsBusyMiddleKeepsLaterHeights(t *testing.T) {
 	}
 	if !foundLater {
 		t.Fatalf("truncated at busy height 2 instead of claiming later holes: %v", b.heights)
+	}
+}
+
+func TestClaimBatch_freeHoleNotSkippedByAheadInFlight(t *testing.T) {
+	// Regression: claimBatch used to set lowMissing = min(inFlight). With the contiguous
+	// hole free and only ahead heights claimed, that skipped the hole forever.
+	p, err := chain.ParamsFor(chain.MainnetDogecoin)
+	if err != nil {
+		t.Fatal(err)
+	}
+	g80, err := pow.Header80FromParams(p)
+	if err != nil {
+		t.Fatal(err)
+	}
+	dir := t.TempDir()
+	j, err := store.OpenHeaderChain(dir, g80[:])
+	if err != nil {
+		t.Fatal(err)
+	}
+	appendFakeHeaderChain(t, j, g80[:], 4000)
+	rs, err := store.OpenRawBlockStore(dir)
+	if err != nil {
+		t.Fatal(err)
+	}
+	bs := NewBlockStoreCtx(j, nil, p, rs, nil, nil)
+	bs.SeedContiguousTip(1000)
+	var s progressiveRawState
+	s.SetSyncParallelism(8)
+	s.inFlight = make(map[int64][32]byte)
+	s.inFlightLane = make(map[int64]int)
+	// Ahead claims only — hole at 1001 is free.
+	for h := int64(1002); h <= 1002+200; h++ {
+		s.inFlight[h] = [32]byte{}
+		s.inFlightLane[h] = 1
+	}
+	b, ok := s.claimBatch(bs, 0)
+	if !ok {
+		t.Fatal("expected claim of free contiguous hole")
+	}
+	if b.heights[0] != 1001 {
+		t.Fatalf("first height %d want 1001 (hole must not be skipped for min ahead in-flight)", b.heights[0])
+	}
+}
+
+func TestClaimBatch_prunesStaleInFlightBelowContiguous(t *testing.T) {
+	p, err := chain.ParamsFor(chain.MainnetDogecoin)
+	if err != nil {
+		t.Fatal(err)
+	}
+	g80, err := pow.Header80FromParams(p)
+	if err != nil {
+		t.Fatal(err)
+	}
+	dir := t.TempDir()
+	j, err := store.OpenHeaderChain(dir, g80[:])
+	if err != nil {
+		t.Fatal(err)
+	}
+	appendFakeHeaderChain(t, j, g80[:], 3000)
+	rs, err := store.OpenRawBlockStore(dir)
+	if err != nil {
+		t.Fatal(err)
+	}
+	bs := NewBlockStoreCtx(j, nil, p, rs, nil, nil)
+	bs.SeedContiguousTip(2000)
+	var s progressiveRawState
+	s.SetSyncParallelism(4)
+	s.inFlight = map[int64][32]byte{50: {}, 100: {}, 2001: {}}
+	s.inFlightLane = map[int64]int{50: 2, 100: 2, 2001: 3}
+	b, ok := s.claimBatch(bs, 0)
+	if !ok {
+		t.Fatal("expected claim")
+	}
+	if _, ok := s.inFlight[50]; ok {
+		t.Fatal("stale in-flight below contiguous must be pruned")
+	}
+	if _, ok := s.inFlight[100]; ok {
+		t.Fatal("stale in-flight below contiguous must be pruned")
+	}
+	if b.heights[0] != 2001 && b.heights[0] != 2002 {
+		// 2001 may still be held by another lane; first free hole is then 2002.
+		if _, busy := s.inFlight[2001]; busy && b.heights[0] == 2002 {
+			return
+		}
+		t.Fatalf("first height %d; want frontier near 2001", b.heights[0])
 	}
 }

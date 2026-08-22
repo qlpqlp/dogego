@@ -316,7 +316,8 @@ DogeGo is a **single-process Go full node**: P2P sync, consensus validation, per
 
 | Package | Role |
 |---------|------|
-| `node/` | Headers-first IBD, block-assist, multi-peer relay, web `/api/summary` |
+| `node/` | Headers-first IBD, adaptive multi-peer body download, disk-space pause, web `/api/summary` |
+| `diskspace/` | Datadir volume monitor (pause bodies at ≤1 GiB free, auto-resume above) |
 | `consensus/` | Header/block checks, script VM, mempool policy vectors |
 | `store/` | Header journal, raw blocks (bundled/zstd), UTXO cache |
 | `rpc/` | Core-shaped JSON-RPC subset + operator `dogego_*` methods |

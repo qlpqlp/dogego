@@ -112,12 +112,17 @@
     if (slash) slash.hidden = false;
   }
 
-  function setChartPending(wrapId, pending) {
+  function setChartPending(wrapId, pending, msg) {
     const wrap = $(wrapId);
     if (!wrap) return;
     wrap.classList.toggle("ui-chart-pending", !!pending);
-    if (pending) wrap.setAttribute("aria-busy", "true");
-    else wrap.removeAttribute("aria-busy");
+    if (pending) {
+      wrap.setAttribute("aria-busy", "true");
+      wrap.setAttribute("data-pending-msg", msg || "Still indexing…");
+    } else {
+      wrap.removeAttribute("aria-busy");
+      wrap.removeAttribute("data-pending-msg");
+    }
   }
 
   const TABS = ["overview", "send", "receive", "transactions", "blockstep", "explorer", "mempool", "analytics", "features", "docs", "console", "extensions", "settings"];
@@ -296,6 +301,33 @@
     }
     return x.toFixed(i === 0 ? 0 : 1) + " " + u[i];
   }
+
+  function formatBlkRate(n, unit) {
+    if (!isFinite(n) || n <= 0) return "";
+    const u = unit || "blk/min";
+    if (n >= 10000) return (n / 1000).toFixed(1) + "k " + u;
+    if (n >= 1000) return (n / 1000).toFixed(2) + "k " + u;
+    return n.toFixed(1) + " " + u;
+  }
+
+  function formatSyncDownloadRate(s) {
+    if (!s) return "";
+    const hdrCatch = s.headers_syncing === true || s.dogego_header_catch_up_pending === true;
+    const hdr = Number(s.headers_per_minute || s.dogego_headers_per_minute);
+    const dl = Number(s.blocks_per_minute);
+    const stored = Number(s.contiguous_blocks_per_minute || s.dogego_contiguous_blocks_per_minute);
+    if (hdrCatch && isFinite(hdr) && hdr > 0) return formatBlkRate(hdr, "hdr/min");
+    const parts = [];
+    if (isFinite(dl) && dl > 0) parts.push(formatBlkRate(dl, "blk/min"));
+    else if (isFinite(hdr) && hdr > 0) parts.push(formatBlkRate(hdr, "hdr/min"));
+    if (isFinite(stored) && stored > 0 && (!isFinite(dl) || Math.abs(stored - dl) > Math.max(10, dl * 0.15))) {
+      parts.push(formatBlkRate(stored, "stored/min"));
+    }
+    return parts.join(" · ");
+  }
+  window.DogeGoFormatBlkRate = formatBlkRate;
+  window.DogeGoFormatSyncDownloadRate = formatSyncDownloadRate;
+  window.DogeGoFmtBytes = fmtBytes;
 
   function fmtDate(ts) {
     if (!ts) return "...";
@@ -1559,7 +1591,7 @@
       message: "Enter your wallet passphrase to sign and send (Core walletpassphrase).",
     });
     if (!ok) return false;
-    await refreshWalletPanelAsync(refreshGen);
+    await refreshWalletPanelAsync(refreshGen, { force: true });
     validateSendForm();
     return !!(lastWalletSnap && lastWalletSnap.unlocked !== false);
   }
@@ -1675,9 +1707,14 @@
       partial.encrypted = s.wallet_encrypted;
       partial.unlocked = !!s.wallet_unlocked;
       partial.private_keys_enabled = s.wallet_private_keys_enabled !== false;
-      if (s.wallet_unlocked_until != null) partial.unlocked_until = s.wallet_unlocked_until;
+      if (partial.unlocked && s.wallet_unlocked_until != null) {
+        partial.unlocked_until = s.wallet_unlocked_until;
+      }
     }
     const merged = Object.assign({}, lastWalletSnap || {}, partial);
+    if (typeof s.wallet_encrypted === "boolean" && !partial.unlocked) {
+      delete merged.unlocked_until;
+    }
     if (partial.enabled && partial.address) {
       if ($("recv-addr")) $("recv-addr").textContent = partial.address;
       renderRecvQR(partial.address);
@@ -1918,9 +1955,10 @@
     void startWalletRescan(false);
   }
 
-  async function refreshWalletPanelAsync(gen) {
-    if (walletPanelInFlight) return;
-    if (shouldDeferWalletPoll(lastSummary)) return;
+  async function refreshWalletPanelAsync(gen, opts) {
+    const force = !!(opts && opts.force);
+    if (walletPanelInFlight && !force) return;
+    if (!force && shouldDeferWalletPoll(lastSummary)) return;
     walletPanelInFlight = true;
     try {
       const rWal = await fetchAPI("/api/wallet", WALLET_API_TIMEOUT_MS);
@@ -1958,6 +1996,35 @@
     } finally {
       walletPanelInFlight = false;
     }
+  }
+
+  // Apply unlock/lock API JSON immediately so topbar/settings do not stay "Locked"
+  // while IBD defers GET /api/wallet or while live summary cache is still stale.
+  function applyWalletUnlockState(body) {
+    if (!body || typeof body !== "object") return;
+    const base = lastWalletSnap || { enabled: true };
+    const wal = Object.assign({}, base, {
+      encrypted: body.encrypted !== false,
+      unlocked: body.unlocked === true,
+      private_keys_enabled: body.private_keys_enabled !== false,
+    });
+    if (wal.unlocked && body.unlocked_until != null) {
+      wal.unlocked_until = body.unlocked_until;
+    } else {
+      delete wal.unlocked_until;
+    }
+    lastWalletSnap = wal;
+    if (lastSummary) {
+      lastSummary.wallet_encrypted = !!wal.encrypted;
+      lastSummary.wallet_unlocked = !!wal.unlocked;
+      lastSummary.wallet_private_keys_enabled = wal.private_keys_enabled !== false;
+      if (wal.unlocked && wal.unlocked_until != null) {
+        lastSummary.wallet_unlocked_until = wal.unlocked_until;
+      } else {
+        delete lastSummary.wallet_unlocked_until;
+      }
+    }
+    applyWalletPanelData(wal, lastSummary);
   }
 
   function updateWalletLockedOverviewBanner(wal) {
@@ -2985,7 +3052,6 @@
     }
     const ibdLive = $("sync-ibd-live");
     const behind = Number(s.blocks_behind_headers);
-    const rate = Number(s.blocks_per_minute);
     const inflight = Number(s.in_flight_batches);
     const workers = Number(s.sync_workers);
     const showIbd = s.ibd_active === true || (isFinite(behind) && behind > 32 && pct < 100);
@@ -2994,8 +3060,8 @@
     if (behindEl) behindEl.textContent = isFinite(behind) && behind > 0 ? behind.toLocaleString() : "0";
     const rateEl = $("sync-rate");
     if (rateEl) {
-      if (isFinite(rate) && rate > 0) rateEl.textContent = rate.toFixed(1) + " blk/min";
-      else rateEl.textContent = "...";
+      const txt = formatSyncDownloadRate(s);
+      rateEl.textContent = txt || "...";
     }
     const inflightEl = $("sync-inflight");
     if (inflightEl) inflightEl.textContent = isFinite(inflight) ? String(inflight) : "...";
@@ -3034,9 +3100,10 @@
     const connRateEl = $("sync-connect-rate");
     if (connRateEl) {
       const cr = Number(s.dogego_connect_blocks_per_minute);
-      connRateEl.textContent = isFinite(cr) && cr > 0 ? cr.toFixed(1) + " blk/min" : "...";
+      connRateEl.textContent = isFinite(cr) && cr > 0 ? formatBlkRate(cr, "blk/min") : "...";
     }
     applyIbdPhaseCard(s);
+    applyTopbarLiveMetrics(s);
     applyUtxoReplayUI(s);
     applyOverviewResumeCard(s);
     applyOverviewCoreCards(s);
@@ -6852,10 +6919,36 @@
     bindAnAddrCells(wrap);
   }
 
+  function chainDiskTotalBytes(s, st, lastSample) {
+    s = s || {};
+    st = st || {};
+    const direct = pickNum(s.chain_bytes_total, st.chain_bytes_total);
+    const headersB = pickNum(s.headers_bytes, st.headers_bytes);
+    const rawB = pickNum(s.rawblocks_bytes, st.rawblocks_bytes);
+    const txB = pickNum(s.txindex_bytes, st.txindex_bytes);
+    const utxoB = pickNum(s.utxo_bytes, st.utxo_bytes);
+    let parts = 0;
+    let haveParts = false;
+    [headersB, rawB, txB, utxoB].forEach((n) => {
+      if (n != null) { parts += n; haveParts = true; }
+    });
+    // Prefer live component sum over a stale analytics timeline sample (was showing ~144MB
+    // while headers alone were already ~4GB).
+    if (haveParts && parts > 0) {
+      if (direct != null && direct >= parts) return direct;
+      return parts;
+    }
+    if (direct != null) return direct;
+    const timeline = lastSample && lastSample.chain_data_bytes;
+    if (timeline != null && headersB != null && Number(timeline) + 1024 * 1024 < headersB) {
+      return headersB; // timeline under-counted headers
+    }
+    return pickNum(timeline);
+  }
+
   function fillAnalyticsStorage(j, summary) {
     const netEl = $("an-network");
     const diskEl = $("an-disk-total");
-    const chipsEl = $("an-disk-chips");
     const s = summary || lastSummary || {};
     const st = (j && j.storage) || {};
     const lastSample = j && j.metric_timeline && j.metric_timeline.length
@@ -6868,20 +6961,55 @@
     if (s.node_mode === "spv") {
       setUIPending(diskEl, false);
       diskEl.textContent = "SPV";
-      renderMetricChips(chipsEl, [{ text: "No block bodies", tone: "muted" }]);
+      lastAnDiskChips = [{ text: "No block bodies", tone: "muted", bytes: 0 }];
+      renderDiskBreakdownChips();
       return;
     }
-    const chainTotal = pickNum(s.chain_bytes_total, st.chain_bytes_total, lastSample && lastSample.chain_data_bytes);
+    const chainTotal = chainDiskTotalBytes(s, st, lastSample);
     setUIPending(diskEl, false);
     diskEl.textContent = chainTotal != null ? fmtBytes(chainTotal) : "...";
     const chips = [];
     const headersB = pickNum(s.headers_bytes, st.headers_bytes, lastSample && lastSample.headers_bytes);
     const rawB = pickNum(s.rawblocks_bytes, st.rawblocks_bytes, lastSample && lastSample.rawblocks_bytes);
     const txB = pickNum(s.txindex_bytes, st.txindex_bytes, lastSample && lastSample.txindex_bytes);
-    if (headersB != null) chips.push({ text: "headers " + fmtBytes(headersB) });
-    if (rawB != null) chips.push({ text: "rawblocks " + fmtBytes(rawB) });
-    if (txB != null) chips.push({ text: "tx index " + fmtBytes(txB) });
-    renderMetricChips(chipsEl, chips);
+    const utxoB = pickNum(s.utxo_bytes, st.utxo_bytes);
+    if (headersB != null) chips.push({ text: "headers " + fmtBytes(headersB), bytes: headersB });
+    if (rawB != null) chips.push({ text: "rawblocks " + fmtBytes(rawB), bytes: rawB });
+    if (txB != null) chips.push({ text: "tx index " + fmtBytes(txB), bytes: txB });
+    if (utxoB != null) chips.push({ text: "utxo " + fmtBytes(utxoB), bytes: utxoB });
+    lastAnDiskChips = chips;
+    renderDiskBreakdownChips();
+  }
+
+  let lastAnDiskChips = [];
+
+  function biggestDiskChip(chips) {
+    let biggest = null;
+    for (const c of chips || []) {
+      if (!biggest || (Number(c.bytes) || 0) > (Number(biggest.bytes) || 0)) biggest = c;
+    }
+    return biggest;
+  }
+
+  function renderDiskBreakdownChips() {
+    const diskCard = $("an-disk-breakdown-card");
+    const chipsEl = $("an-disk-chips");
+    const btn = $("an-disk-expand");
+    if (!chipsEl) return;
+    const open = !!(diskCard && diskCard.classList.contains("is-expanded"));
+    const chips = lastAnDiskChips || [];
+    if (open) {
+      renderMetricChips(chipsEl, chips);
+    } else {
+      const one = biggestDiskChip(chips);
+      renderMetricChips(chipsEl, one ? [one] : []);
+    }
+    if (btn) {
+      btn.setAttribute("aria-expanded", open ? "true" : "false");
+      btn.title = open ? "Collapse" : "Expand";
+      const icon = btn.querySelector(".material-icons-round");
+      if (icon) icon.textContent = "expand_more";
+    }
   }
 
   function updateOverviewTipLabel(s) {
@@ -6988,9 +7116,10 @@
     const rangeH = Number($("an-timeline-range")?.value ?? 24);
     const samples = filterTimelineSamples(j.metric_timeline, rangeH);
     if (!samples || !samples.length || typeof Chart === "undefined") {
-      setChartPending("an-disk-chart-wrap", false);
-      setChartPending("an-mempool-chart-wrap", false);
-      setChartPending("an-blocksize-chart-wrap", false);
+      const emptyMsg = "Still indexing… samples appear as the node runs.";
+      setChartPending("an-disk-chart-wrap", true, emptyMsg);
+      setChartPending("an-mempool-chart-wrap", true, emptyMsg);
+      setChartPending("an-blocksize-chart-wrap", true, emptyMsg);
       return;
     }
 
@@ -7361,10 +7490,11 @@
           sigAnMiners = "";
           chartAnMiners = destroyChart(chartAnMiners);
         }
-        setChartPending("an-miners-chart-wrap", false);
+        const emptyMsg = minerDistributionEmptyMessage(cs) || "Still indexing…";
+        setChartPending("an-miners-chart-wrap", true, emptyMsg);
         if (minersEmpty) {
-          minersEmpty.hidden = false;
-          minersEmpty.textContent = minerDistributionEmptyMessage(cs);
+          minersEmpty.hidden = true;
+          minersEmpty.textContent = "";
         }
       }
     }
@@ -7392,7 +7522,7 @@
       }
       setChartPending("an-header-dt-wrap", false);
     } else {
-      setChartPending("an-header-dt-wrap", false);
+      setChartPending("an-header-dt-wrap", true, "Still indexing… header timing unlocks after enough headers.");
     }
 
     renderReorgAnalytics(j);
@@ -7798,6 +7928,21 @@
     }
   }
 
+  let expandedPeerKeys = new Set();
+
+  function peerUAComment(row) {
+    const direct = String(row.uacomment || row.ua_comment || "").trim();
+    if (direct) return direct;
+    const ua = String(row.subver || "").trim();
+    const m = ua.match(/\(([^)]*)\)\s*\/?\s*$/);
+    return m && m[1] ? String(m[1]).trim() : "";
+  }
+
+  function peerExpandKey(row, idx) {
+    if (row.id != null) return "id:" + String(row.id);
+    return "addr:" + String(row.addr || idx);
+  }
+
   function renderAnalyticsPeers(data) {
     const summaryEl = $("an-peers-summary");
     const wrap = $("an-peers-wrap");
@@ -7809,11 +7954,13 @@
     const peers = (data && data.peers) || [];
     const p2p = (data && data.p2p) || {};
     const dgr = (data && data.dgr) || {};
+    const snapOut = Number(data && data.connections_outbound != null ? data.connections_outbound : p2p.connections_outbound) || 0;
+    const snapIn = Number(data && data.connections_inbound != null ? data.connections_inbound : p2p.connections_inbound) || 0;
     if (summaryEl) {
       const parts = [];
       const mode = p2p.p2p_connectivity || p2p.p2p_mode || "";
       if (mode) parts.push("<span class=\"label\">" + escapeHtml(i18n("pages.analytics.peersDgrMode")) + " <strong>" + escapeHtml(String(mode)) + "</strong></span>");
-      parts.push("<span class=\"label\">Out <strong>" + escapeHtml(String(data.connections_outbound != null ? data.connections_outbound : peers.filter((p) => !p.inbound).length)) + "</strong> · In <strong>" + escapeHtml(String(data.connections_inbound != null ? data.connections_inbound : peers.filter((p) => p.inbound).length)) + "</strong></span>");
+      parts.push("<span class=\"label\">Out <strong>" + escapeHtml(String(data && data.connections_outbound != null ? data.connections_outbound : peers.filter((p) => !p.inbound).length)) + "</strong> · In <strong>" + escapeHtml(String(data && data.connections_inbound != null ? data.connections_inbound : peers.filter((p) => p.inbound).length)) + "</strong></span>");
       const addedN = Array.isArray(data.added_nodes) ? data.added_nodes.length : 0;
       if (addedN) parts.push("<span class=\"label\">Manual <strong>" + escapeHtml(String(addedN)) + "</strong></span>");
       if (dgr.enabled) {
@@ -7832,7 +7979,18 @@
     if (!peers.length) {
       wrap.hidden = true;
       wrap.innerHTML = "";
-      if (empty) empty.hidden = false;
+      if (empty) {
+        empty.hidden = false;
+        if (data && data.error) {
+          empty.textContent = String(data.error);
+        } else if (data && data.note) {
+          empty.textContent = String(data.note);
+        } else if (snapOut + snapIn > 0) {
+          empty.textContent = "Connected peers: " + (snapOut + snapIn) + " (peer detail list refreshing…)";
+        } else {
+          empty.textContent = i18n("pages.analytics.peersEmpty");
+        }
+      }
       return;
     }
     if (empty) empty.hidden = true;
@@ -7845,7 +8003,10 @@
     });
     const discLbl = i18n("pages.analytics.peerDisconnect") || "Disconnect";
     wrap.innerHTML = sorted.map((row, idx) => {
+      const key = peerExpandKey(row, idx);
+      const open = expandedPeerKeys.has(key);
       const ua = String(row.subver || "").trim();
+      const comment = peerUAComment(row);
       const note = String(row.dogego_note || "").trim();
       const dir = peerDirectionLabel(row);
       const dirCls = row.inbound ? "inbound" : "outbound";
@@ -7858,25 +8019,32 @@
             "<span class=\"material-icons-round\" aria-hidden=\"true\">link_off</span> " + escapeHtml(discLbl) +
           "</button></div>"
         : "";
-      return "<article class=\"an-peer-card\">" +
+      return "<article class=\"an-peer-card" + (open ? " is-expanded" : "") + "\" data-peer-key=\"" + escapeHtml(key) + "\">" +
         "<div class=\"an-peer-card-head\">" +
           "<span class=\"an-peer-dir " + dirCls + "\">" + escapeHtml(dir) + "</span>" +
           "<span class=\"an-peer-id label\">#" + escapeHtml(String(row.id != null ? row.id : idx + 1)) + "</span>" +
-          "<span class=\"an-peer-ping\">" + escapeHtml(peerPingLabel(row)) + "</span>" +
+          "<button type=\"button\" class=\"btn btn-ghost btn-sm an-expand-btn an-peer-expand\" aria-expanded=\"" + (open ? "true" : "false") + "\" title=\"Peer details\">" +
+            "<span class=\"material-icons-round\" aria-hidden=\"true\">" + (open ? "expand_less" : "expand_more") + "</span>" +
+            "<span class=\"an-expand-label\">" + (open ? "Less" : "More") + "</span>" +
+          "</button>" +
         "</div>" +
         "<div class=\"an-peer-addr mono\" title=\"" + escapeHtml(addr) + "\">" + escapeHtml(addr) + "</div>" +
-        (local ? "<div class=\"an-peer-local label\">local " + escapeHtml(local) + "</div>" : "") +
-        "<div class=\"an-peer-stats\">" +
-          "<div class=\"an-peer-stat\"><span class=\"label\">Role</span><strong>" + escapeHtml(peerRoleLabel(row)) + "</strong></div>" +
-          "<div class=\"an-peer-stat\"><span class=\"label\">Type</span><strong class=\"mono\">" + escapeHtml(String(row.connection_type || "…")) + "</strong></div>" +
-          "<div class=\"an-peer-stat\"><span class=\"label\">Start</span><strong>" + escapeHtml(row.startingheight != null ? Number(row.startingheight).toLocaleString() : "…") + "</strong></div>" +
-          "<div class=\"an-peer-stat\"><span class=\"label\">Synced</span><strong>" + escapeHtml(row.synced_blocks != null ? Number(row.synced_blocks).toLocaleString() : "…") + "</strong></div>" +
-          "<div class=\"an-peer-stat an-peer-stat-wide\"><span class=\"label\">Traffic</span><strong class=\"mono\">" + escapeHtml(peerTrafficLabel(row)) + "</strong></div>" +
-        "</div>" +
-        (note ? "<p class=\"an-peer-note label\">" + escapeHtml(note) + "</p>" : "") +
         (ua ? "<p class=\"an-peer-ua mono\" title=\"" + escapeHtml(ua) + "\">" + escapeHtml(ua) + "</p>" : "") +
-        (flags ? "<div class=\"an-peer-flags\">" + flags + "</div>" : "") +
-        actions +
+        (comment ? "<p class=\"an-peer-uacomment label\">uacomment <strong class=\"mono\">" + escapeHtml(comment) + "</strong></p>" : "") +
+        "<div class=\"an-peer-details\"" + (open ? "" : " hidden") + ">" +
+          (local ? "<div class=\"an-peer-local label\">local " + escapeHtml(local) + "</div>" : "") +
+          "<div class=\"an-peer-stats\">" +
+            "<div class=\"an-peer-stat\"><span class=\"label\">Role</span><strong>" + escapeHtml(peerRoleLabel(row)) + "</strong></div>" +
+            "<div class=\"an-peer-stat\"><span class=\"label\">Type</span><strong class=\"mono\">" + escapeHtml(String(row.connection_type || "…")) + "</strong></div>" +
+            "<div class=\"an-peer-stat\"><span class=\"label\">Start</span><strong>" + escapeHtml(row.startingheight != null ? Number(row.startingheight).toLocaleString() : "…") + "</strong></div>" +
+            "<div class=\"an-peer-stat\"><span class=\"label\">Synced</span><strong>" + escapeHtml(row.synced_blocks != null ? Number(row.synced_blocks).toLocaleString() : "…") + "</strong></div>" +
+            "<div class=\"an-peer-stat\"><span class=\"label\">Ping</span><strong>" + escapeHtml(peerPingLabel(row)) + "</strong></div>" +
+            "<div class=\"an-peer-stat an-peer-stat-wide\"><span class=\"label\">Traffic</span><strong class=\"mono\">" + escapeHtml(peerTrafficLabel(row)) + "</strong></div>" +
+          "</div>" +
+          (note ? "<p class=\"an-peer-note label\">" + escapeHtml(note) + "</p>" : "") +
+          (flags ? "<div class=\"an-peer-flags\">" + flags + "</div>" : "") +
+          actions +
+        "</div>" +
         "</article>";
     }).join("");
   }
@@ -7888,8 +8056,14 @@
       return;
     }
     const errEl = $("an-peers-err");
+    const ctrl = typeof AbortController !== "undefined" ? new AbortController() : null;
+    const timer = ctrl ? setTimeout(() => ctrl.abort(), 8000) : null;
     try {
-      const r = await fetch("/api/peers", { cache: "no-store", credentials: "same-origin" });
+      const r = await fetch("/api/peers", {
+        cache: "no-store",
+        credentials: "same-origin",
+        signal: ctrl ? ctrl.signal : undefined,
+      });
       if (!r.ok) throw new Error("HTTP " + r.status);
       const data = await r.json();
       data._loadedAt = now;
@@ -7900,6 +8074,8 @@
         errEl.hidden = false;
         errEl.textContent = i18n("pages.analytics.peersLoadFailed") + " (" + (e.message || e) + ")";
       }
+    } finally {
+      if (timer) clearTimeout(timer);
     }
   }
 
@@ -8038,6 +8214,9 @@
 
   async function loadAnalyticsPanel(force) {
     const now = Date.now();
+    // Peers are independent of the analytics Pebble catalog — never gate them on
+    // /api/analytics/summary (that endpoint can stall during IBD while peers are fine).
+    void loadAnalyticsPeers(!!force || !lastAnalyticsPeersCache);
     if (!force && now - lastAnalyticsLoadAt < ANALYTICS_REFRESH_MS) {
       if (lastAnalyticsJson) renderAnalyticsDashboard(lastAnalyticsJson, lastSummary);
       return;
@@ -8050,12 +8229,12 @@
     lastAnalyticsLoadAt = now;
     const st = $("an-live-status");
     if (st && !analyticsHydrated) wait(st, "Loading analytics…", { inline: true });
-    setChartPending("an-miners-chart-wrap", !analyticsHydrated);
-    setChartPending("an-sync-chart-wrap", !analyticsHydrated);
-    setChartPending("an-header-dt-wrap", !analyticsHydrated);
-    setChartPending("an-disk-chart-wrap", !analyticsHydrated);
-    setChartPending("an-mempool-chart-wrap", !analyticsHydrated);
-    setChartPending("an-blocksize-chart-wrap", !analyticsHydrated);
+    setChartPending("an-miners-chart-wrap", !analyticsHydrated, "Still indexing…");
+    setChartPending("an-sync-chart-wrap", !analyticsHydrated, "Still indexing…");
+    setChartPending("an-header-dt-wrap", !analyticsHydrated, "Still indexing…");
+    setChartPending("an-disk-chart-wrap", !analyticsHydrated, "Still indexing…");
+    setChartPending("an-mempool-chart-wrap", !analyticsHydrated, "Still indexing…");
+    setChartPending("an-blocksize-chart-wrap", !analyticsHydrated, "Still indexing…");
     const minersEmpty = $("an-miners-empty");
     if (minersEmpty && !analyticsHydrated) {
       minersEmpty.hidden = false;
@@ -8074,7 +8253,6 @@
       const j = await r.json();
       lastAnalyticsJson = j;
       renderAnalyticsDashboard(j, lastSummary);
-      void loadAnalyticsPeers(true);
     } catch (e) {
       if (st) st.textContent = "Failed to load analytics: " + e.message;
       setChartPending("an-miners-chart-wrap", false);
@@ -8190,6 +8368,9 @@
       p.classList.toggle("active", on);
     });
     setNavOpen(false);
+    const mainEl = document.querySelector("main");
+    if (mainEl) mainEl.scrollTop = 0;
+    window.scrollTo(0, 0);
     if (!opts.preserveHash) {
       const curHash = (location.hash || "").replace(/^#/, "");
       if (curHash !== tab && !curHash.startsWith(tab + "/")) {
@@ -8880,6 +9061,38 @@
     return fetch(path, opts);
   }
 
+  function overlayLiveP2POnSummary(s, p2) {
+    if (!s) return s;
+    if (!p2) return s;
+    if (p2.connections_outbound != null) s.connections_out = p2.connections_outbound;
+    if (p2.connections_inbound != null) s.connections_in = p2.connections_inbound;
+    const prog = p2.ibd_progress;
+    if (prog && typeof prog === "object") {
+      if (prog.blocks_per_minute != null) s.blocks_per_minute = prog.blocks_per_minute;
+      if (prog.contiguous_blocks_per_minute != null) {
+        s.contiguous_blocks_per_minute = prog.contiguous_blocks_per_minute;
+        s.dogego_contiguous_blocks_per_minute = prog.contiguous_blocks_per_minute;
+      }
+      if (prog.headers_per_minute != null) {
+        s.headers_per_minute = prog.headers_per_minute;
+        s.dogego_headers_per_minute = prog.headers_per_minute;
+      }
+      if (prog.in_flight_batches != null) s.in_flight_batches = prog.in_flight_batches;
+      if (prog.sync_workers != null) s.sync_workers = prog.sync_workers;
+      if (prog.blocks_stored_ibd != null) s.blocks_stored_ibd = prog.blocks_stored_ibd;
+      if (prog.contiguous_raw_height != null) {
+        s.contiguous_raw_height = prog.contiguous_raw_height;
+        s.dogego_contiguous_raw_height = prog.contiguous_raw_height;
+      }
+    }
+    return s;
+  }
+
+  function applyTopbarLiveMetrics(s) {
+    // Sync rate and disk were removed from the top bar; keep hook for callers.
+    void s;
+  }
+
   async function fetchLiveDashboard(gen) {
     try {
       const rLive = await fetchAPI("/api/live", LIVE_API_TIMEOUT_MS);
@@ -9011,7 +9224,7 @@
       const live = await fetchLiveDashboard(gen);
       if (gen !== refreshGen) return;
       if (!live || !live.summary) throw new Error(live && live.summary_error ? live.summary_error : "dashboard not ready");
-      const s = live.summary;
+      const s = overlayLiveP2POnSummary(live.summary, live.p2p);
       const p2snap = live.p2p || null;
       lastSummary = s;
       if (live.analytics_summary && !lastAnalyticsJson) {
@@ -9087,8 +9300,8 @@
       pushSpark(sparkTip, s.tip_height);
       pushSpark(sparkSync, pctOv);
       pushSpark(sparkMempool, s.mempool_txs);
-      const pOut = Number(s.connections_out) || 0;
-      const pIn = Number(s.connections_in) || 0;
+      const pOut = Number((p2snap && p2snap.connections_outbound != null) ? p2snap.connections_outbound : s.connections_out) || 0;
+      const pIn = Number((p2snap && p2snap.connections_inbound != null) ? p2snap.connections_inbound : s.connections_in) || 0;
       pushSpark(sparkPeers, pOut + pIn);
       pushSpark(sparkPeersOut, pOut);
       pushSpark(sparkPeersIn, pIn);
@@ -9118,6 +9331,29 @@
         } else {
           storageAlert.hidden = true;
           storageAlertTxt.textContent = "";
+        }
+      }
+      const diskAlert = s.dogego_disk_pressure;
+      const diskBox = $("ov-disk-alert");
+      const diskTxt = $("ov-disk-alert-text");
+      const diskAdvice = $("ov-disk-alert-advice");
+      const diskContinue = $("ov-disk-continue");
+      if (diskBox && diskTxt) {
+        const showDisk = diskAlert && diskAlert.active;
+        if (showDisk) {
+          diskBox.hidden = false;
+          diskTxt.textContent = diskAlert.message || s.dogego_disk_pressure_warning || "Datadir volume is nearly full.";
+          if (diskAdvice) {
+            diskAdvice.textContent = diskAlert.advice || "Free space, enlarge the volume (VM/virtual disk), or upgrade the drive.";
+          }
+          if (diskContinue) {
+            diskContinue.hidden = !(diskAlert.continue_allowed && diskAlert.paused);
+          }
+        } else {
+          diskBox.hidden = true;
+          diskTxt.textContent = "";
+          if (diskAdvice) diskAdvice.textContent = "";
+          if (diskContinue) diskContinue.hidden = true;
         }
       }
       const fwAlert = s.dogego_firewall_alert;
@@ -9272,8 +9508,14 @@
         }
       }
 
-      const cout = s.connections_out != null ? String(s.connections_out) : "0";
-      const cin = s.connections_in != null ? String(s.connections_in) : "0";
+      const cout = String(
+        (p2snap && p2snap.connections_outbound != null) ? p2snap.connections_outbound
+          : (s.connections_out != null ? s.connections_out : 0)
+      );
+      const cin = String(
+        (p2snap && p2snap.connections_inbound != null) ? p2snap.connections_inbound
+          : (s.connections_in != null ? s.connections_in : 0)
+      );
       ["ov-conn-out", "ov-conn-out-net", "ov-hero-peers-out"].forEach((id) => { if ($(id)) $(id).textContent = cout; });
       ["ov-conn-in", "ov-conn-in-net", "ov-hero-peers-in"].forEach((id) => { if ($(id)) $(id).textContent = cin; });
       if ($("ov-relay-note")) $("ov-relay-note").textContent = s.relay_note || "";
@@ -9288,8 +9530,13 @@
       if ($("mine-req")) $("mine-req").textContent = s.mine_requested ? "on" : "off";
 
       const pan = document.getElementById("panel-analytics");
-      if (pan && pan.classList.contains("active") && Date.now() - lastAnalyticsLoadAt >= ANALYTICS_REFRESH_MS) {
-        void loadAnalyticsPanel(false);
+      if (pan && pan.classList.contains("active")) {
+        if (Date.now() - lastAnalyticsLoadAt >= ANALYTICS_REFRESH_MS) {
+          void loadAnalyticsPanel(false);
+        } else {
+          // Keep peer cards live even when analytics catalog refresh is deferred/stalled.
+          void loadAnalyticsPeers(false);
+        }
       }
       maybePollOverviewCoreProbes();
       maybePollOverviewCoreStatus();
@@ -9718,7 +9965,8 @@
       if (footEl) footEl.hidden = true;
       return;
     }
-    totalEl.textContent = s.chain_bytes_total != null ? fmtBytes(s.chain_bytes_total) : "...";
+    const diskTotal = chainDiskTotalBytes(s, {}, null);
+    totalEl.textContent = diskTotal != null ? fmtBytes(diskTotal) : "...";
     const logical = Number(s.blocks_logical_bytes) || 0;
     const stored = Number(s.blocks_stored_payload_bytes) || 0;
     const layout = (s.block_layout || "perfile").toLowerCase();
@@ -9727,6 +9975,7 @@
     if (s.headers_bytes != null) chips.push({ text: "headers " + fmtBytes(s.headers_bytes) });
     if (s.rawblocks_bytes != null) chips.push({ text: "rawblocks " + fmtBytes(s.rawblocks_bytes) });
     if (s.txindex_bytes != null) chips.push({ text: "tx index " + fmtBytes(s.txindex_bytes) });
+    if (s.utxo_bytes != null) chips.push({ text: "utxo " + fmtBytes(s.utxo_bytes) });
     chips.push({ text: layout + (zstdOn ? " + zstd" : ""), tone: "accent" });
     if (logical > 0 && stored > 0) {
       chips.push({ text: fmtBytes(stored) + " on disk", tone: "accent" });
@@ -14438,7 +14687,7 @@
       message: "Enter your wallet passphrase to unlock spend keys (Core walletpassphrase).",
     });
     if (ok) {
-      await refreshWalletPanelAsync(refreshGen);
+      await refreshWalletPanelAsync(refreshGen, { force: true });
       validateSendForm();
     }
   });
@@ -14448,7 +14697,7 @@
       message: "Enter your wallet passphrase to unlock spend keys (Core walletpassphrase).",
     });
     if (ok) {
-      await refreshWalletPanelAsync(refreshGen);
+      await refreshWalletPanelAsync(refreshGen, { force: true });
       validateSendForm();
     }
   });
@@ -14459,7 +14708,7 @@
       if (window.DogeGoWalletPassphrase && window.DogeGoWalletPassphrase.lock) {
         await window.DogeGoWalletPassphrase.lock();
       }
-      await refreshWalletPanelAsync(refreshGen);
+      await refreshWalletPanelAsync(refreshGen, { force: true });
       validateSendForm();
     } catch (e) {
       const msg = $("st-wallet-flags-msg");
@@ -14531,6 +14780,54 @@
     if (disc) {
       const addr = disc.getAttribute("data-addr");
       if (addr) void peersAction("disconnect", addr);
+      return;
+    }
+    const peerExp = ev.target && ev.target.closest && ev.target.closest(".an-peer-expand");
+    if (peerExp) {
+      const card = peerExp.closest(".an-peer-card");
+      if (!card) return;
+      const key = card.getAttribute("data-peer-key") || "";
+      const open = !card.classList.contains("is-expanded");
+      card.classList.toggle("is-expanded", open);
+      const details = card.querySelector(".an-peer-details");
+      if (details) details.hidden = !open;
+      peerExp.setAttribute("aria-expanded", open ? "true" : "false");
+      const icon = peerExp.querySelector(".material-icons-round");
+      if (icon) icon.textContent = open ? "expand_less" : "expand_more";
+      const lab = peerExp.querySelector(".an-expand-label");
+      if (lab) lab.textContent = open ? "Less" : "More";
+      if (key) {
+        if (open) expandedPeerKeys.add(key);
+        else expandedPeerKeys.delete(key);
+      }
+      return;
+    }
+    const sectionExp = ev.target && ev.target.closest && ev.target.closest(".an-expand-btn, .an-disk-chevron");
+    if (sectionExp && sectionExp.id) {
+      const map = {
+        "an-disk-expand": { card: "an-disk-breakdown-card", disk: true },
+        "an-forks-expand": { card: "an-forks-card", body: "an-forks-body" },
+        "an-reorg-expand": { card: "an-reorg-card", body: "an-reorg-body" },
+      };
+      const cfg = map[sectionExp.id];
+      if (!cfg) return;
+      const card = $(cfg.card);
+      if (!card) return;
+      const open = !card.classList.contains("is-expanded");
+      card.classList.toggle("is-expanded", open);
+      if (cfg.disk) {
+        renderDiskBreakdownChips();
+        return;
+      }
+      const body = $(cfg.body);
+      if (!body) return;
+      body.hidden = !open;
+      sectionExp.setAttribute("aria-expanded", open ? "true" : "false");
+      sectionExp.title = open ? "Collapse" : "Expand";
+      const icon = sectionExp.querySelector(".material-icons-round");
+      if (icon) icon.textContent = open ? "expand_less" : "expand_more";
+      const lab = sectionExp.querySelector(".an-expand-label");
+      if (lab) lab.textContent = open ? "Collapse" : "Expand";
     }
   });
   $("ov-lan-pair") && $("ov-lan-pair").addEventListener("click", () => {
@@ -14584,6 +14881,26 @@
       if (el) el.hidden = true;
       await refresh();
     } catch (_) { /* ignore */ }
+  });
+  $("ov-disk-continue") && $("ov-disk-continue").addEventListener("click", async () => {
+    const btn = $("ov-disk-continue");
+    if (btn) btn.disabled = true;
+    try {
+      const res = await fetch("/api/disk/continue", { method: "POST", credentials: "same-origin" });
+      const data = await res.json().catch(() => ({}));
+      if (!data || !data.ok) {
+        const err = (data && data.error) || "Could not resume body download";
+        if (typeof showToast === "function") showToast(err, "warn");
+        else window.alert(err);
+      } else if (typeof showToast === "function") {
+        showToast("Full block download resumed. Watch free space.", "ok");
+      }
+      await refresh();
+    } catch (e) {
+      if (typeof showToast === "function") showToast(String(e && e.message ? e.message : e), "warn");
+    } finally {
+      if (btn) btn.disabled = false;
+    }
   });
   $("update-banner-download") && $("update-banner-download").addEventListener("click", async () => {
     const btn = $("update-banner-download");
@@ -14838,4 +15155,5 @@
   window.DogeGoRefresh = refresh;
   window.DogeGoLastWallet = () => lastWalletSnap;
   window.DogeGoSyncTopbarLock = () => syncTopbarLockButton(lastWalletSnap);
+  window.DogeGoApplyWalletUnlockState = applyWalletUnlockState;
 })();

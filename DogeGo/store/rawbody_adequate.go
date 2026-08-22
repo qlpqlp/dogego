@@ -1,4 +1,4 @@
-﻿// Copyright (c) 2026 Paulo Vidal (https://x.com/inevitable360, https://github.com/qlpqlp)
+// Copyright (c) 2026 Paulo Vidal (https://x.com/inevitable360, https://github.com/qlpqlp)
 // Copyright (c) 2026 Dogecoin Foundation
 //
 // SPDX-License-Identifier: MIT
@@ -37,8 +37,43 @@ func MinRawBlockBytes(net chain.Network, height int64) int {
 	return 80
 }
 
+// LikelyHasBody reports whether a body is already staged in RAM or recorded in the locator
+// without Stat'ing the payload file. Used during download-first claim planning so lanes do
+// not re-getdata heights already stored ahead of the contiguous hole (NTFS Stat was too
+// expensive to call per height, but blind skipDisk re-claimed disk-present orphans).
+func (s *RawBlockStore) LikelyHasBody(hashLE [32]byte, minBytes int) bool {
+	if s == nil {
+		return false
+	}
+	if minBytes <= 0 {
+		minBytes = 80
+	}
+	if s.writeBehind != nil {
+		if n, ok := s.writeBehind.size(hashLE); ok && n >= minBytes {
+			return true
+		}
+	}
+	s.mu.Lock()
+	loc, ok, err := readBlockLocator(s.locatorRoot(), hashLE)
+	s.mu.Unlock()
+	if err != nil || !ok {
+		// Claim planning must not Stat leftover hash.bin under a 200k-file hybrid tree.
+		// Heights already covered sit at/below contiguous tip (skipped via contSkip).
+		// Ahead orphans without a locator are cheap to re-getdata; fetch skips if present.
+		return false
+	}
+	if loc.Uncompressed >= uint32(minBytes) {
+		return true
+	}
+	if loc.RecordLen >= uint32(minBytes) {
+		return true
+	}
+	// Per-file locators may omit Uncompressed; presence still means Put already succeeded.
+	return loc.FileNum == perFileLocatorNum
+}
+
 // HasStoredBody reports whether rawblocks/ has an adequate payload for hashLE.
-// Uses locator Uncompressed / file Stat size â€” never a full Get â€” so IBD claim planning stays cheap.
+// Uses locator Uncompressed / file Stat size — never a full Get — so IBD claim planning stays cheap.
 func (s *RawBlockStore) HasStoredBody(hashLE [32]byte, minBytes int) bool {
 	if s == nil {
 		return false
@@ -60,13 +95,16 @@ func (s *RawBlockStore) storedPayloadSize(hashLE [32]byte) (int, bool) {
 			return n, true
 		}
 	}
-	path := s.pathFor(hashLE)
 	s.mu.Lock()
 	loc, ok, err := readBlockLocator(s.locatorRoot(), hashLE)
 	s.mu.Unlock()
 	if err == nil && ok {
 		if loc.FileNum == perFileLocatorNum {
-			fi, err := os.Stat(path)
+			p, found := s.resolvePerFilePath(hashLE)
+			if !found {
+				return 0, false
+			}
+			fi, err := os.Stat(p)
 			if err != nil {
 				return 0, false
 			}
@@ -85,7 +123,11 @@ func (s *RawBlockStore) storedPayloadSize(hashLE [32]byte) (int, bool) {
 		}
 		return 0, false
 	}
-	fi, err := os.Stat(path)
+	p, found := s.resolvePerFilePath(hashLE)
+	if !found {
+		return 0, false
+	}
+	fi, err := os.Stat(p)
 	if err != nil {
 		return 0, false
 	}

@@ -23,7 +23,7 @@ func TestApplySetupUACommentTipBeforeEncrypt(t *testing.T) {
 		Network:  "testnet",
 		UACommentUseNodeTip: &on,
 	}
-	if err := applySetupUACommentTip(&f); err != nil {
+	if err := applySetupUACommentTip(&f, ""); err != nil {
 		t.Fatalf("apply before encrypt: %v", err)
 	}
 	if f.UACommentTipAddress == "" {
@@ -53,8 +53,14 @@ func TestApplySetupUACommentTipAfterEncryptFails(t *testing.T) {
 		Network:             "testnet",
 		UACommentUseNodeTip: &on,
 	}
-	if err := applySetupUACommentTip(&f); err == nil {
+	if err := applySetupUACommentTip(&f, ""); err == nil {
 		t.Fatal("expected error applying node tip after wallet encryption without unlock")
+	}
+	if err := applySetupUACommentTip(&f, "test-pass"); err != nil {
+		t.Fatalf("apply with passphrase: %v", err)
+	}
+	if f.UACommentTipAddress == "" {
+		t.Fatal("expected tip after unlock")
 	}
 }
 

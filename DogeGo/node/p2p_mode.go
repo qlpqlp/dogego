@@ -21,7 +21,7 @@ const (
 // Default P2P peer limits (Core uses 8 outbound within 125 maxconnections; DogeGo defaults
 // higher so IBD can run many parallel getdata sockets like a fast Core/ltcd sync).
 const (
-	defaultMaxOutbound = 16
+	defaultMaxOutbound = 32
 	defaultMaxInbound  = 16
 )
 

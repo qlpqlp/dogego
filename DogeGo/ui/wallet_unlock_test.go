@@ -46,7 +46,7 @@ func TestWalletUnlockAPI(t *testing.T) {
 
 	mux := http.NewServeMux()
 	cfg := StartConfig{Wallet: w2}
-	registerWalletUnlockRoutes(mux, cfg, nil)
+	registerWalletUnlockRoutes(mux, cfg, nil, nil)
 	srv := httptest.NewServer(mux)
 	defer srv.Close()
 

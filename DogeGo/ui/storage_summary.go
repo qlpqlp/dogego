@@ -22,9 +22,10 @@ func mergeStorageSummary(summary map[string]any, sm map[string]interface{}) {
 			"native_tx_index", "native_txindex_legacy_files", "native_txindex_v2_files",
 			"native_contiguous_body_height",
 			"chain_bytes_total", "headers_bytes", "rawblocks_bytes", "txindex_bytes",
-			"blocks_logical_bytes", "blocks_stored_payload_bytes",
+			"utxo_bytes", "blocks_logical_bytes", "blocks_stored_payload_bytes",
 			"compression_ratio", "compression_savings_pct",
-			"block_layout", "block_zstd":
+			"block_layout", "block_zstd", "disk_bytes_approx",
+			"volume_free_bytes", "volume_total_bytes", "volume_used_percent":
 			summary[k] = v
 		default:
 			summary["storage_"+k] = v

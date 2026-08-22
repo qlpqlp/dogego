@@ -207,6 +207,14 @@
             <strong data-i18n="pages.overview.storage">Storage</strong>
             <span id="ov-storage-alert-text"></span>
           </div>
+          <div id="ov-disk-alert" class="alert warn" role="alert" hidden aria-live="polite">
+            <div class="alert-head" style="display:flex;align-items:flex-start;justify-content:space-between;gap:0.75rem;flex-wrap:wrap">
+              <strong data-i18n="pages.overview.diskWarn">Low disk space</strong>
+              <button type="button" class="btn btn-sm btn-primary" id="ov-disk-continue" data-i18n="pages.overview.diskContinue" hidden>Continue download</button>
+            </div>
+            <p id="ov-disk-alert-text"></p>
+            <p class="muted" id="ov-disk-alert-advice"></p>
+          </div>
           <div id="ov-firewall-alert" class="alert warn" role="alert" hidden aria-live="polite">
             <div class="alert-head" style="display:flex;align-items:flex-start;justify-content:space-between;gap:0.75rem;flex-wrap:wrap">
               <strong data-i18n="pages.overview.firewallWarn">Firewall - action needed</strong>
@@ -1472,9 +1480,12 @@
           <div class="card"><h2>Stored blocks</h2><div class="stat stat-fit ui-pending" id="an-raw" data-ui-pending aria-busy="true"><span class="ui-skel-bar" aria-hidden="true"></span></div></div>
           <div class="card"><h2>Network</h2><div class="stat stat-fit stat-compact ui-pending" id="an-network" data-ui-pending aria-busy="true"><span class="ui-skel-bar" aria-hidden="true"></span></div></div>
           <div class="card"><h2>Chain disk</h2><div class="stat stat-fit stat-compact ui-pending" id="an-disk-total" data-ui-pending aria-busy="true"><span class="ui-skel-bar" aria-hidden="true"></span></div></div>
-          <div class="card card-span-2">
+          <div class="card an-disk-breakdown-card" id="an-disk-breakdown-card">
             <h2>Disk breakdown</h2>
             <div class="metric-chip-row" id="an-disk-chips" aria-label="Disk breakdown"></div>
+            <button type="button" class="an-disk-chevron" id="an-disk-expand" aria-expanded="false" aria-controls="an-disk-chips" title="Expand">
+              <span class="material-icons-round" aria-hidden="true">expand_more</span>
+            </button>
           </div>
           <div class="card"><h2>Hashrate</h2><div class="stat stat-fit stat-compact ui-pending" id="an-hashrate" title="" data-ui-pending aria-busy="true"><span class="ui-skel-bar" aria-hidden="true"></span></div></div>
           <div class="card"><h2>Mempool</h2><div class="stat stat-fit ui-pending" id="an-mempool" data-ui-pending aria-busy="true"><span class="ui-skel-bar" aria-hidden="true"></span></div></div>
@@ -1544,17 +1555,17 @@
           <div class="card card-span-2">
             <h2>Chain data on disk (this node)</h2>
             <p class="label">Headers + raw blocks + tx index under your chain folder ... sampled every ~25s while the node runs.</p>
-            <div class="chart-wrap timeline ui-chart-pending" id="an-disk-chart-wrap" data-ui-pending aria-busy="true"><canvas id="chart-disk-size"></canvas></div>
+            <div class="chart-wrap timeline ui-chart-pending" id="an-disk-chart-wrap" data-ui-pending data-pending-msg="Still indexing…" aria-busy="true"><canvas id="chart-disk-size"></canvas></div>
           </div>
           <div class="card">
             <h2>Mempool size</h2>
             <p class="label">Transaction count and serialized bytes in the local mempool.</p>
-            <div class="chart-wrap timeline ui-chart-pending" id="an-mempool-chart-wrap" data-ui-pending aria-busy="true"><canvas id="chart-mempool-size"></canvas></div>
+            <div class="chart-wrap timeline ui-chart-pending" id="an-mempool-chart-wrap" data-ui-pending data-pending-msg="Still indexing…" aria-busy="true"><canvas id="chart-mempool-size"></canvas></div>
           </div>
           <div class="card">
             <h2>Recent block size</h2>
             <p class="label">Full P2P payload size at chain tip when stored (weight limit reference below).</p>
-            <div class="chart-wrap timeline ui-chart-pending" id="an-blocksize-chart-wrap" data-ui-pending aria-busy="true"><canvas id="chart-block-size"></canvas></div>
+            <div class="chart-wrap timeline ui-chart-pending" id="an-blocksize-chart-wrap" data-ui-pending data-pending-msg="Still indexing…" aria-busy="true"><canvas id="chart-block-size"></canvas></div>
             <p class="chart-limit-line" id="an-block-limit-note">Dogecoin max block weight: -</p>
           </div>
         </div>
@@ -1562,133 +1573,149 @@
         <div class="grid">
           <div class="card card-wide">
             <h2>Sync progress</h2>
-            <div class="chart-wrap tall ui-chart-pending" id="an-sync-chart-wrap" data-ui-pending aria-busy="true"><canvas id="chart-sync"></canvas></div>
+            <div class="chart-wrap tall ui-chart-pending" id="an-sync-chart-wrap" data-ui-pending data-pending-msg="Still indexing…" aria-busy="true"><canvas id="chart-sync"></canvas></div>
             <p class="label" id="an-live-status" data-doge-wait data-doge-wait-inline data-doge-wait-msg="Loading analytics…"></p>
           </div>
           <div class="card card-wide">
             <h2>Miner distribution (24h window)</h2>
             <p class="label" id="an-miners-caption">Coinbase payout share in the tip’s ~24h header-time window (local raw blocks).</p>
-            <div class="chart-wrap tall ui-chart-pending" id="an-miners-chart-wrap" data-ui-pending aria-busy="true"><canvas id="chart-an-miners"></canvas></div>
+            <div class="chart-wrap tall ui-chart-pending" id="an-miners-chart-wrap" data-ui-pending data-pending-msg="Still indexing…" aria-busy="true"><canvas id="chart-an-miners"></canvas></div>
             <p class="label an-miners-empty" id="an-miners-empty" hidden>Loading miner distribution…</p>
           </div>
           <div class="card">
             <h2>Header timing</h2>
-            <div class="chart-wrap ui-chart-pending" id="an-header-dt-wrap" data-ui-pending aria-busy="true"><canvas id="chart-header-dt"></canvas></div>
+            <div class="chart-wrap ui-chart-pending" id="an-header-dt-wrap" data-ui-pending data-pending-msg="Still indexing…" aria-busy="true"><canvas id="chart-header-dt"></canvas></div>
           </div>
         </div>
 
-        <div class="card card-wide" id="an-forks-card">
-          <h2>Forks &amp; deployments</h2>
-          <p class="label">Live peer tip divergence, soft-fork (BIP9 / buried) deployments, and recent chain reorgs. Same machinery on mainnet and reboot testnet: each network has its own datadir and analytics DB.</p>
+        <div class="card card-wide an-collapsible-card" id="an-forks-card">
+          <div class="an-card-head-row">
+            <h2>Forks &amp; deployments</h2>
+            <button type="button" class="btn btn-ghost btn-sm an-expand-btn" id="an-forks-expand" aria-expanded="false" aria-controls="an-forks-body" title="Expand forks and deployments">
+              <span class="material-icons-round" aria-hidden="true">expand_more</span>
+              <span class="an-expand-label">Expand</span>
+            </button>
+          </div>
+          <p class="label">Live peer tip divergence, soft-fork deployments, and recent reorgs on this node.</p>
           <div class="an-kpi an-reorg-kpi" id="an-forks-kpi">
             <div class="card"><h2>Local tip</h2><div class="stat stat-fit stat-compact" id="an-forks-local">-</div></div>
             <div class="card"><h2>Peers aligned</h2><div class="stat stat-fit" id="an-forks-aligned">0</div></div>
             <div class="card"><h2>Tip diverged</h2><div class="stat stat-fit" id="an-forks-diverged">0</div></div>
             <div class="card"><h2>Peers ahead</h2><div class="stat stat-fit" id="an-forks-ahead">0</div></div>
           </div>
-          <div class="an-forks-glossary" id="an-forks-glossary"></div>
-          <h3 class="card-section-title">Peer tip divergence</h3>
-          <p class="label">Compares each peer’s last known header tip to this node. <strong>Diverged</strong> = same height, different tip hash (competing fork tip).</p>
-          <div class="an-indexer-table-wrap" id="an-forks-peers-wrap">
-            <table class="data" id="an-forks-peers-table">
-              <thead>
-                <tr>
-                  <th>Peer</th>
-                  <th>Status</th>
-                  <th>Height</th>
-                  <th>Δ</th>
-                  <th>Tip hash</th>
-                  <th>Detail</th>
-                </tr>
-              </thead>
-              <tbody id="an-forks-peers-tbody"></tbody>
-            </table>
+          <div class="an-collapsible-body" id="an-forks-body" hidden>
+            <div class="an-forks-glossary" id="an-forks-glossary"></div>
+            <h3 class="card-section-title">Peer tip divergence</h3>
+            <p class="label">Compares each peer’s last known header tip to this node. <strong>Diverged</strong> = same height, different tip hash (competing fork tip).</p>
+            <div class="an-indexer-table-wrap" id="an-forks-peers-wrap">
+              <table class="data" id="an-forks-peers-table">
+                <thead>
+                  <tr>
+                    <th>Peer</th>
+                    <th>Status</th>
+                    <th>Height</th>
+                    <th>Δ</th>
+                    <th>Tip hash</th>
+                    <th>Detail</th>
+                  </tr>
+                </thead>
+                <tbody id="an-forks-peers-tbody"></tbody>
+              </table>
+            </div>
+            <p class="label" id="an-forks-peers-empty" hidden>No peers connected, or tip hashes not observed yet (exchange headers after connect).</p>
+            <h3 class="card-section-title">Soft-fork deployments</h3>
+            <p class="label">Buried (BIP34/65/66) and BIP9 soft forks at the local tip via <code>getdeploymentinfo</code>. Hard forks are not scheduled here; watch lasting tip divergence + reject spam.</p>
+            <div class="an-indexer-table-wrap" id="an-forks-dep-wrap">
+              <table class="data" id="an-forks-dep-table">
+                <thead>
+                  <tr>
+                    <th>Name</th>
+                    <th>Type</th>
+                    <th>Active</th>
+                    <th>BIP9 status</th>
+                    <th>Signal / threshold</th>
+                    <th>Notes</th>
+                  </tr>
+                </thead>
+                <tbody id="an-forks-dep-tbody"></tbody>
+              </table>
+            </div>
+            <h3 class="card-section-title">Recent reorg events</h3>
+            <p class="label">Heavier-fork elections recorded while analytics is enabled. Full charts and miner correlation are in <em>Chain reorgs</em> below.</p>
+            <div class="an-indexer-table-wrap" id="an-forks-reorg-wrap">
+              <table class="data" id="an-forks-reorg-table">
+                <thead>
+                  <tr>
+                    <th>When</th>
+                    <th>Fork at</th>
+                    <th>Depth</th>
+                    <th>Old tip</th>
+                    <th>Work Δ</th>
+                    <th>AuxPoW</th>
+                    <th></th>
+                  </tr>
+                </thead>
+                <tbody id="an-forks-reorg-tbody"></tbody>
+              </table>
+            </div>
+            <p class="label" id="an-forks-reorg-empty" hidden>No reorgs recorded yet on this chain folder.</p>
+            <pre id="an-forks-detail" class="pre-out" hidden></pre>
+            <p class="label err-inline" id="an-forks-err" hidden></p>
           </div>
-          <p class="label" id="an-forks-peers-empty" hidden>No peers connected, or tip hashes not observed yet (exchange headers after connect).</p>
-          <h3 class="card-section-title">Soft-fork deployments</h3>
-          <p class="label">Buried (BIP34/65/66) and BIP9 soft forks at the local tip via <code>getdeploymentinfo</code>. Hard forks are not scheduled here; watch lasting tip divergence + reject spam.</p>
-          <div class="an-indexer-table-wrap" id="an-forks-dep-wrap">
-            <table class="data" id="an-forks-dep-table">
-              <thead>
-                <tr>
-                  <th>Name</th>
-                  <th>Type</th>
-                  <th>Active</th>
-                  <th>BIP9 status</th>
-                  <th>Signal / threshold</th>
-                  <th>Notes</th>
-                </tr>
-              </thead>
-              <tbody id="an-forks-dep-tbody"></tbody>
-            </table>
-          </div>
-          <h3 class="card-section-title">Recent reorg events</h3>
-          <p class="label">Heavier-fork elections recorded while analytics is enabled. Full charts and miner correlation are in <em>Chain reorgs</em> below.</p>
-          <div class="an-indexer-table-wrap" id="an-forks-reorg-wrap">
-            <table class="data" id="an-forks-reorg-table">
-              <thead>
-                <tr>
-                  <th>When</th>
-                  <th>Fork at</th>
-                  <th>Depth</th>
-                  <th>Old tip</th>
-                  <th>Work Δ</th>
-                  <th>AuxPoW</th>
-                  <th></th>
-                </tr>
-              </thead>
-              <tbody id="an-forks-reorg-tbody"></tbody>
-            </table>
-          </div>
-          <p class="label" id="an-forks-reorg-empty" hidden>No reorgs recorded yet on this chain folder.</p>
-          <pre id="an-forks-detail" class="pre-out" hidden></pre>
-          <p class="label err-inline" id="an-forks-err" hidden></p>
         </div>
 
-        <div class="card card-wide" id="an-reorg-card">
-          <h2 data-i18n="pages.analytics.reorgTitle">Chain reorgs</h2>
-          <p class="label" data-i18n="pages.analytics.reorgHint">Recorded when this node elects a heavier fork and truncates the header tip. Includes displaced miners, AuxPoW, and UTC hour for correlation. Persists in dogego_analytics.db (mainnet and testnet each have their own chain folder).</p>
+        <div class="card card-wide an-collapsible-card" id="an-reorg-card">
+          <div class="an-card-head-row">
+            <h2 data-i18n="pages.analytics.reorgTitle">Chain reorgs</h2>
+            <button type="button" class="btn btn-ghost btn-sm an-expand-btn" id="an-reorg-expand" aria-expanded="false" aria-controls="an-reorg-body" title="Expand chain reorgs">
+              <span class="material-icons-round" aria-hidden="true">expand_more</span>
+              <span class="an-expand-label">Expand</span>
+            </button>
+          </div>
+          <p class="label" data-i18n="pages.analytics.reorgHint">Recorded when this node elects a heavier fork and truncates the header tip. Includes displaced miners, AuxPoW, and UTC hour for correlation.</p>
           <div class="an-kpi an-reorg-kpi" id="an-reorg-kpi">
             <div class="card"><h2>Total reorgs</h2><div class="stat stat-fit" id="an-reorg-total">0</div></div>
             <div class="card"><h2>Max depth</h2><div class="stat stat-fit" id="an-reorg-max-depth">0</div></div>
             <div class="card"><h2>AuxPoW involved</h2><div class="stat stat-fit" id="an-reorg-auxpow">0</div></div>
             <div class="card"><h2>Last reorg</h2><div class="stat stat-fit stat-compact" id="an-reorg-last">-</div></div>
           </div>
-          <div class="an-reorg-charts grid">
-            <div class="card">
-              <h3 class="card-section-title">Depth by event</h3>
-              <div class="chart-wrap" id="an-reorg-depth-wrap"><canvas id="chart-reorg-depth"></canvas></div>
+          <div class="an-collapsible-body" id="an-reorg-body" hidden>
+            <div class="an-reorg-charts grid">
+              <div class="card">
+                <h3 class="card-section-title">Depth by event</h3>
+                <div class="chart-wrap" id="an-reorg-depth-wrap"><canvas id="chart-reorg-depth"></canvas></div>
+              </div>
+              <div class="card">
+                <h3 class="card-section-title">By hour (UTC)</h3>
+                <div class="chart-wrap" id="an-reorg-hour-wrap"><canvas id="chart-reorg-hour"></canvas></div>
+              </div>
+              <div class="card card-wide">
+                <h3 class="card-section-title">Miners on displaced tips</h3>
+                <p class="label">Coinbase P2PKH addresses that lost blocks in recorded reorgs (correlation hint, not proof of cause).</p>
+                <div class="chart-wrap tall" id="an-reorg-miners-wrap"><canvas id="chart-reorg-miners"></canvas></div>
+                <p class="label" id="an-reorg-miners-empty" hidden>No displaced miner addresses captured yet (bodies missing or non-P2PKH).</p>
+              </div>
             </div>
-            <div class="card">
-              <h3 class="card-section-title">By hour (UTC)</h3>
-              <div class="chart-wrap" id="an-reorg-hour-wrap"><canvas id="chart-reorg-hour"></canvas></div>
+            <div class="an-indexer-table-wrap" id="an-reorg-table-wrap" hidden>
+              <table class="data" id="an-reorg-table">
+                <thead>
+                  <tr>
+                    <th>#</th>
+                    <th>When (UTC)</th>
+                    <th>Fork</th>
+                    <th>Depth</th>
+                    <th>Old tip</th>
+                    <th>AuxPoW</th>
+                    <th>Displaced miners</th>
+                    <th></th>
+                  </tr>
+                </thead>
+                <tbody id="an-reorg-tbody"></tbody>
+              </table>
             </div>
-            <div class="card card-wide">
-              <h3 class="card-section-title">Miners on displaced tips</h3>
-              <p class="label">Coinbase P2PKH addresses that lost blocks in recorded reorgs (correlation hint, not proof of cause).</p>
-              <div class="chart-wrap tall" id="an-reorg-miners-wrap"><canvas id="chart-reorg-miners"></canvas></div>
-              <p class="label" id="an-reorg-miners-empty" hidden>No displaced miner addresses captured yet (bodies missing or non-P2PKH).</p>
-            </div>
+            <p class="label" id="an-reorg-empty">No reorgs recorded yet on this node. Events appear after a live fork election while analytics is enabled.</p>
+            <pre id="an-reorg-detail" class="pre-out" hidden></pre>
           </div>
-          <div class="an-indexer-table-wrap" id="an-reorg-table-wrap" hidden>
-            <table class="data" id="an-reorg-table">
-              <thead>
-                <tr>
-                  <th>#</th>
-                  <th>When (UTC)</th>
-                  <th>Fork</th>
-                  <th>Depth</th>
-                  <th>Old tip</th>
-                  <th>AuxPoW</th>
-                  <th>Displaced miners</th>
-                  <th></th>
-                </tr>
-              </thead>
-              <tbody id="an-reorg-tbody"></tbody>
-            </table>
-          </div>
-          <p class="label" id="an-reorg-empty">No reorgs recorded yet on this node. Events appear after a live fork election while analytics is enabled.</p>
-          <pre id="an-reorg-detail" class="pre-out" hidden></pre>
         </div>
 
         <p class="stack-gap-sm"><button type="button" class="btn" id="an-refresh-now"><span class="material-icons-round" aria-hidden="true">refresh</span> Refresh</button></p>
@@ -1702,6 +1729,15 @@
             <h1 data-i18n="pages.console.title">Console</h1>
             <p data-i18n="pages.console.subtitle">JSON-RPC against this node (loopback only) and the in-memory activity log.</p>
           </div>
+        </div>
+        <div class="card card-wide">
+          <h2 data-i18n="pages.console.activityLog">Activity log</h2>
+          <div class="toolbar console-log-toolbar">
+            <label class="switch switch-compact"><span data-i18n="pages.console.autoScroll">Auto-scroll</span><input type="checkbox" id="log-autoscroll" checked role="switch" /></label>
+            <button type="button" class="btn" id="log-refresh"><span class="material-icons-round" aria-hidden="true">refresh</span> <span data-i18n="common.refresh">Refresh</span></button>
+          </div>
+          <div class="log-view" id="log-view" data-doge-wait data-doge-wait-compact data-doge-wait-msg="Tailing node logs…"></div>
+          <p class="label" id="dbg-relay-note"></p>
         </div>
         <div class="card card-wide rpc-console-card">
           <h2 data-i18n="pages.console.coreProbesTitle">Operator probes (this node)</h2>
@@ -1744,15 +1780,6 @@
             <span class="label" id="rpc-status" aria-live="polite"></span>
           </div>
           <pre id="rpc-out" class="pre-out rpc-out">...</pre>
-        </div>
-        <div class="card card-wide">
-          <h2 data-i18n="pages.console.activityLog">Activity log</h2>
-          <div class="toolbar console-log-toolbar">
-            <label class="switch switch-compact"><span data-i18n="pages.console.autoScroll">Auto-scroll</span><input type="checkbox" id="log-autoscroll" checked role="switch" /></label>
-            <button type="button" class="btn" id="log-refresh"><span class="material-icons-round" aria-hidden="true">refresh</span> <span data-i18n="common.refresh">Refresh</span></button>
-          </div>
-          <div class="log-view" id="log-view" data-doge-wait data-doge-wait-compact data-doge-wait-msg="Tailing node logs…"></div>
-          <p class="label" id="dbg-relay-note"></p>
         </div>
       </section>
 
@@ -2533,16 +2560,13 @@
         <div><span class="label" data-i18n="syncDock.connected">Connected</span><strong id="sync-dock-connected" class="ui-pending" data-ui-pending aria-busy="true"><span class="ui-skel-bar" aria-hidden="true"></span></strong></div>
         <div><span class="label" data-i18n="syncDock.storedBodies">Stored bodies</span><strong id="sync-dock-stored" class="ui-pending" data-ui-pending aria-busy="true"><span class="ui-skel-bar" aria-hidden="true"></span></strong></div>
         <div><span class="label" data-i18n="syncDock.behindHeaders">Behind headers</span><strong id="sync-dock-behind" class="ui-pending" data-ui-pending aria-busy="true"><span class="ui-skel-bar" aria-hidden="true"></span></strong></div>
-        <div><span class="label" data-i18n="syncDock.bodyLag">Body lag</span><strong id="sync-dock-body-lag" class="ui-pending" data-ui-pending aria-busy="true"><span class="ui-skel-bar" aria-hidden="true"></span></strong></div>
-        <div><span class="label" data-i18n="syncDock.checkpoint">Checkpoint</span><strong id="sync-dock-checkpoint" class="ui-pending" data-ui-pending aria-busy="true"><span class="ui-skel-bar" aria-hidden="true"></span></strong></div>
         <div><span class="label" data-i18n="syncDock.assistPool">Assist pool</span><strong id="sync-dock-assist-pool" class="ui-pending" data-ui-pending aria-busy="true"><span class="ui-skel-bar" aria-hidden="true"></span></strong></div>
         <div><span class="label" data-i18n="syncDock.downloadRate">Download rate</span><strong id="sync-dock-rate" class="ui-pending" data-ui-pending aria-busy="true"><span class="ui-skel-bar" aria-hidden="true"></span></strong></div>
+        <div><span class="label" data-i18n="syncDock.chainDisk">Chain disk</span><strong id="sync-dock-disk" class="ui-pending" data-ui-pending aria-busy="true"><span class="ui-skel-bar" aria-hidden="true"></span></strong></div>
         <div id="sync-dock-connect-boost-wrap" hidden><span class="label" data-i18n="syncDock.connectBoost">Connect boost</span><strong id="sync-dock-connect-boost">...</strong></div>
         <div><span class="label" data-i18n="syncDock.eta">ETA</span><strong id="sync-dock-eta" class="ui-pending" data-ui-pending aria-busy="true"><span class="ui-skel-bar" aria-hidden="true"></span></strong></div>
         <div><span class="label" data-i18n="syncDock.peersOutIn">Peers out/in</span><strong id="sync-dock-peers" class="ui-pending" data-ui-pending aria-busy="true"><span class="ui-skel-bar" aria-hidden="true"></span></strong></div>
         <div><span class="label" data-i18n="syncDock.mempool">Mempool</span><strong id="sync-dock-mempool" class="ui-pending" data-ui-pending aria-busy="true"><span class="ui-skel-bar" aria-hidden="true"></span></strong></div>
-        <div><span class="label" data-i18n="syncDock.txProcessed">Tx processed</span><strong id="sync-dock-tx-processed" class="ui-pending" data-ui-pending aria-busy="true"><span class="ui-skel-bar" aria-hidden="true"></span></strong></div>
-        <div><span class="label" data-i18n="syncDock.operatorCert">Operator cert</span><strong id="sync-dock-operator-cert" class="ui-pending" data-ui-pending aria-busy="true"><span class="ui-skel-bar" aria-hidden="true"></span></strong></div>
         <div id="sync-dock-utxo-replay-wrap" hidden><span class="label" data-i18n="syncDock.utxoReplay">UTXO replay</span><strong id="sync-dock-utxo-replay">...</strong></div>
       </div>
       <div class="sync-dock-actions">

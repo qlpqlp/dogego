@@ -38,6 +38,21 @@ type RawBlockStore struct {
 	writeBehind   *ibdWriteBehind
 	// fileCount is -1 until first Count/FastCount refresh; then maintained on Put/Remove.
 	fileCount atomic.Int64
+	// payloadBytes is on-disk rawblocks size; filled by a background walk then incremented on Put.
+	payloadBytes      atomic.Int64
+	payloadBytesReady atomic.Bool
+	payloadWalkOnce   sync.Once
+	// bundledTip caches the highest blkNNNNN.dat append tip so Put never ReadDir's a hybrid
+	// rawblocks/ tree that still contains hundreds of thousands of leftover hash.bin files.
+	bundledTipValid bool
+	bundledTipNum   uint32
+	bundledTipSize  int64
+	// bundledAppendMu serializes blk*.dat appends without holding s.mu across disk I/O
+	// (otherwise claim planning / Get starve while one Put OpenFile+Write runs on NTFS).
+	bundledAppendMu      sync.Mutex
+	bundledFile          *os.File
+	bundledFileNum       uint32
+	legacyMigrateStarted atomic.Bool
 }
 
 // OpenRawBlockStore creates datadir/rawblocks with default per-file layout.
@@ -53,14 +68,24 @@ func OpenRawBlockStoreWithOpts(datadir string, requested BlockStorageOpts) (*Raw
 		return nil, err
 	}
 	opts := ResolveBlockStorageOpts(requested, d)
+	// Persist upgrades immediately so the dashboard/layout matches new Puts even before
+	// the first block arrives (old per-file bodies remain readable).
+	if from, to, up := BlockStorageUpgrade(requested, d); up {
+		_ = saveBlockStorageManifest(d, to)
+		_ = from
+	}
 	s := &RawBlockStore{
 		dir:       d,
 		opts:      opts,
 		readCache: newRawBlockReadCache(rawBlockReadCacheMax),
 	}
 	s.fileCount.Store(-1)
-	if opts.Layout != BlockLayoutBundled && !testing.Testing() {
+	if !testing.Testing() {
+		// Per-file: many workers. Bundled: single flusher (append offsets must be serial).
 		s.writeBehind = newIBDWriteBehind(s)
+	}
+	if opts.Layout == BlockLayoutBundled && !testing.Testing() {
+		s.StartLegacyPerFileBinMigration()
 	}
 	return s, nil
 }
@@ -68,9 +93,6 @@ func OpenRawBlockStoreWithOpts(datadir string, requested BlockStorageOpts) (*Raw
 // EnableWriteBehind starts RAM staging + async disk flush (on by default outside tests).
 func (s *RawBlockStore) EnableWriteBehind() {
 	if s == nil || s.writeBehind != nil {
-		return
-	}
-	if s.StorageOpts().Layout == BlockLayoutBundled {
 		return
 	}
 	s.writeBehind = newIBDWriteBehind(s)
@@ -150,6 +172,21 @@ func (s *RawBlockStore) pathFor(hashLE [32]byte) string {
 	return filepath.Join(s.dir, name+".bin")
 }
 
+// HasLegacyPerFileBodies reports leftover hash.bin payloads after a bundled upgrade
+// (still in rawblocks/ root or already moved under rawblocks/legacy/).
+func (s *RawBlockStore) HasLegacyPerFileBodies() bool {
+	if s == nil {
+		return false
+	}
+	s.mu.Lock()
+	dir := s.dir
+	s.mu.Unlock()
+	if dirHasHashBin(filepath.Join(dir, legacyPerFileSubdir)) {
+		return true
+	}
+	return dirHasHashBin(dir)
+}
+
 func (s *RawBlockStore) ensureManifestLocked() error {
 	if s.manifestOK {
 		return nil
@@ -194,18 +231,17 @@ func (s *RawBlockStore) Put(hashLE [32]byte, raw []byte) error {
 	on := s.indexingOn
 	deferIdx := s.deferIndexing
 	sb := s.sideband
-	useBehind := s.writeBehind != nil && layout != BlockLayoutBundled && !writeBehindTestHooksActive()
+	useBehind := s.writeBehind != nil && !writeBehindTestHooksActive()
 	var putErr error
-	if layout == BlockLayoutBundled {
-		// Bundled blk*.dat appends share one file offset; keep the mutex.
-		putErr = s.putBundled(hashLE, raw)
-		s.mu.Unlock()
-	} else if useBehind {
+	if useBehind {
 		s.mu.Unlock()
 		if had {
 			return nil
 		}
 		putErr = s.writeBehind.stage(hashLE, raw)
+	} else if layout == BlockLayoutBundled {
+		s.mu.Unlock()
+		putErr = s.putBundled(hashLE, raw)
 	} else {
 		// Per-file IBD: do not hold s.mu across WriteFile/Rename. Parallel getdata
 		// lanes were serializing on NTFS while the contiguous hole sat idle.
@@ -217,6 +253,7 @@ func (s *RawBlockStore) Put(hashLE [32]byte, raw []byte) error {
 	}
 	if !had {
 		s.bumpFileCount(1)
+		s.bumpPayloadBytes(int64(len(raw)))
 		s.InvalidateCompressionStatsCache()
 		s.InvalidateBytesOnDiskCache()
 	}
@@ -243,14 +280,19 @@ func (s *RawBlockStore) Put(hashLE [32]byte, raw []byte) error {
 func (s *RawBlockStore) hasLocked(hashLE [32]byte) bool {
 	if loc, ok, err := readBlockLocator(s.locatorRoot(), hashLE); err == nil && ok {
 		if loc.FileNum == perFileLocatorNum {
-			_, err := os.Stat(s.pathFor(hashLE))
-			return err == nil
+			_, found := s.resolvePerFilePath(hashLE)
+			return found
 		}
 		_, err := os.Stat(bundledBlkPath(s.dir, loc.FileNum))
 		return err == nil
 	}
-	_, err := os.Stat(s.pathFor(hashLE))
-	return err == nil
+	// Bundled IBD: never Stat hash.bin on a hybrid rawblocks/ tree (can be 200k+ files).
+	// Leftover per-file bodies are still readable via Get's fallback for connect.
+	if s.opts.Layout == BlockLayoutBundled {
+		return false
+	}
+	_, found := s.resolvePerFilePath(hashLE)
+	return found
 }
 
 // Remove deletes a stored block (locator and optional per-file copy).
@@ -261,17 +303,24 @@ func (s *RawBlockStore) Remove(hashLE [32]byte) error {
 		had = true
 	}
 	_ = removeBlockLocator(s.locatorRoot(), hashLE)
-	path := s.pathFor(hashLE)
+	root := s.pathFor(hashLE)
+	legacy := s.legacyPathFor(hashLE)
 	s.mu.Unlock()
-	if _, err := os.Stat(path); err == nil {
-		if err := os.Remove(path); err != nil {
+	removed := false
+	for _, path := range []string{root, legacy} {
+		if _, err := os.Stat(path); err == nil {
+			if err := os.Remove(path); err != nil {
+				return err
+			}
+			removed = true
+		} else if err != nil && !os.IsNotExist(err) {
 			return err
 		}
-	} else if err != nil && !os.IsNotExist(err) {
-		return err
 	}
-	if had {
-		s.bumpFileCount(-1)
+	if had || removed {
+		if had {
+			s.bumpFileCount(-1)
+		}
 		s.InvalidateCompressionStatsCache()
 		s.InvalidateBytesOnDiskCache()
 	}
@@ -315,7 +364,14 @@ func (s *RawBlockStore) getLocked(hashLE [32]byte) ([]byte, error) {
 		}
 		return s.getViaLocator(hashLE)
 	}
+	// Bundled layout normally requires a locator. After a perfile→bundled upgrade,
+	// leftover hash.bin bodies still sit on disk and HasStoredBody finds them via Stat.
+	// Fall back to the per-file payload so ConnectTip does not stall with
+	// "block not in store" while contiguous coverage already includes those heights.
 	if s.opts.Layout == BlockLayoutBundled {
+		if b, err := s.getPerFile(hashLE); err == nil {
+			return b, nil
+		}
 		return nil, fmt.Errorf("block not in store")
 	}
 	return s.getPerFile(hashLE)
@@ -340,6 +396,11 @@ func (s *RawBlockStore) Flush() error {
 	return nil
 }
 
+// PayloadBytesReady is true after the background rawblocks size walk has finished.
+func (s *RawBlockStore) PayloadBytesReady() bool {
+	return s != nil && s.payloadBytesReady.Load()
+}
+
 func (s *RawBlockStore) bumpFileCount(delta int64) {
 	for {
 		cur := s.fileCount.Load()
@@ -354,6 +415,127 @@ func (s *RawBlockStore) bumpFileCount(delta int64) {
 			return
 		}
 	}
+}
+
+func (s *RawBlockStore) bumpPayloadBytes(delta int64) {
+	if s == nil || delta == 0 || !s.payloadBytesReady.Load() {
+		return
+	}
+	if s.opts.Layout == BlockLayoutBundled {
+		return
+	}
+	next := s.payloadBytes.Add(delta)
+	if next < 0 {
+		s.payloadBytes.Store(0)
+	}
+}
+
+// BytesOnDisk sums rawblocks payload bytes. Bundled IBD stats blk*.dat (O(chunk files)).
+// Leftover hybrid hash.bin files are counted once in the background so the dashboard
+// never Walks hundreds of thousands of per-file bodies on the UI/RPC path.
+func (s *RawBlockStore) BytesOnDisk() (int64, error) {
+	if s == nil {
+		return 0, nil
+	}
+	blk, err := s.sumBlkDatBytes()
+	if err != nil {
+		return 0, err
+	}
+	if s.payloadBytesReady.Load() {
+		leftover := s.payloadBytes.Load()
+		if leftover < 0 {
+			leftover = 0
+		}
+		blk += leftover
+	}
+	if s.writeBehind != nil {
+		blk += s.writeBehind.queuedBytes()
+	}
+	return blk, nil
+}
+
+// RefreshPayloadBytes runs the leftover .bin size walk once (call from node startup, not the UI path).
+func (s *RawBlockStore) RefreshPayloadBytes() {
+	s.ensurePayloadBytes()
+}
+
+func (s *RawBlockStore) ensurePayloadBytes() {
+	if s == nil {
+		return
+	}
+	s.payloadWalkOnce.Do(func() {
+		total, err := s.scanBytesOnDisk()
+		if err != nil {
+			return
+		}
+		blk, _ := s.sumBlkDatBytes()
+		leftover := total - blk
+		if leftover < 0 {
+			leftover = 0
+		}
+		s.payloadBytes.Store(leftover)
+		s.payloadBytesReady.Store(true)
+	})
+}
+
+func (s *RawBlockStore) sumBlkDatBytes() (int64, error) {
+	s.mu.Lock()
+	root := s.dir
+	s.mu.Unlock()
+	if root == "" {
+		return 0, nil
+	}
+	var total int64
+	const maxBlkFiles = 20000
+	for i := uint32(0); i < maxBlkFiles; i++ {
+		st, err := os.Stat(bundledBlkPath(root, i))
+		if err != nil {
+			if os.IsNotExist(err) {
+				break
+			}
+			return 0, err
+		}
+		total += st.Size()
+	}
+	return total, nil
+}
+
+func (s *RawBlockStore) scanBytesOnDisk() (int64, error) {
+	s.mu.Lock()
+	root := s.dir
+	s.mu.Unlock()
+	var total int64
+	err := filepath.Walk(root, func(path string, info os.FileInfo, err error) error {
+		if err != nil {
+			return err
+		}
+		if info.IsDir() {
+			if info.Name() == "loc" {
+				return filepath.SkipDir
+			}
+			return nil
+		}
+		name := info.Name()
+		if filepath.Ext(name) == ".bin" || (len(name) >= 7 && name[:3] == "blk" && filepath.Ext(name) == ".dat") {
+			total += info.Size()
+		}
+		return nil
+	})
+	return total, err
+}
+
+type bytesOnDiskCache struct {
+	mu      sync.Mutex
+	scanned time.Time
+	ttl     time.Duration
+	bytes   int64
+	err     error
+}
+
+// CachedBytesOnDisk returns on-disk rawblocks bytes without blocking IBD on a tree walk.
+func (s *RawBlockStore) CachedBytesOnDisk(ttl time.Duration) (int64, error) {
+	_ = ttl
+	return s.BytesOnDisk()
 }
 
 func (s *RawBlockStore) scanFileCount() (int, error) {
@@ -440,68 +622,6 @@ func (s *RawBlockStore) FastCount() (int, error) {
 // Count returns how many blocks are stored (uses FastCount).
 func (s *RawBlockStore) Count() (int, error) {
 	return s.FastCount()
-}
-
-// BytesOnDisk sums rawblocks payload bytes (blk*.dat, *.bin, excluding tiny index files).
-func (s *RawBlockStore) BytesOnDisk() (int64, error) {
-	s.mu.Lock()
-	root := s.dir
-	s.mu.Unlock()
-	var total int64
-	err := filepath.Walk(root, func(path string, info os.FileInfo, err error) error {
-		if err != nil {
-			return err
-		}
-		if info.IsDir() {
-			if info.Name() == "loc" {
-				return filepath.SkipDir
-			}
-			return nil
-		}
-		name := info.Name()
-		if filepath.Ext(name) == ".bin" || (len(name) >= 7 && name[:3] == "blk" && filepath.Ext(name) == ".dat") {
-			total += info.Size()
-		}
-		return nil
-	})
-	return total, err
-}
-
-type bytesOnDiskCache struct {
-	mu      sync.Mutex
-	scanned time.Time
-	ttl     time.Duration
-	bytes   int64
-	err     error
-}
-
-// CachedBytesOnDisk returns BytesOnDisk results, refreshing when older than ttl.
-// getblockchaininfo uses this to avoid a full rawblocks tree walk on every RPC during IBD.
-func (s *RawBlockStore) CachedBytesOnDisk(ttl time.Duration) (int64, error) {
-	if s == nil {
-		return 0, nil
-	}
-	if ttl <= 0 {
-		ttl = 60 * time.Second
-	}
-	s.mu.Lock()
-	cache := s.bytesDisk
-	if cache == nil {
-		cache = &bytesOnDiskCache{ttl: ttl}
-		s.bytesDisk = cache
-	}
-	s.mu.Unlock()
-
-	cache.mu.Lock()
-	defer cache.mu.Unlock()
-	if time.Since(cache.scanned) < cache.ttl && cache.scanned.After(time.Time{}) {
-		return cache.bytes, cache.err
-	}
-	b, err := s.BytesOnDisk()
-	cache.bytes = b
-	cache.err = err
-	cache.scanned = time.Now()
-	return b, err
 }
 
 // InvalidateBytesOnDiskCache clears cached on-disk byte totals (after bulk import).

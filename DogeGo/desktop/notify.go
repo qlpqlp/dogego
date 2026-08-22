@@ -21,3 +21,16 @@ func NotifyUpdateAvailable(latestVersion, releaseURL string) {
 	}
 	platformNotify(title, body)
 }
+
+// NotifyDiskSpaceLow shows a native desktop notification when the datadir volume is nearly full.
+func NotifyDiskSpaceLow(message, advice string) {
+	title := "DogeGo: low disk space"
+	body := strings.TrimSpace(message)
+	if body == "" {
+		body = "The datadir drive is nearly full. Full block download is paused."
+	}
+	if a := strings.TrimSpace(advice); a != "" {
+		body += " " + a
+	}
+	platformNotify(title, body)
+}

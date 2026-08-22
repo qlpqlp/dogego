@@ -19,11 +19,11 @@ import (
 )
 
 const (
-	blockReconnectWindow      = 64
-	ibdConnectDeferInterval       = 256 // connect frontier at most this often during assume-valid bulk IBD
+	blockReconnectWindow           = 64
+	ibdConnectDeferInterval        = 256 // connect frontier at most this often during assume-valid bulk IBD
 	ibdConnectDeferIntervalDeepIBD = 64  // tighter during deep body IBD when header getheaders is paused
-	utxoSyncIntervalBulkIBD     = 512
-	utxoSyncIntervalNormal      = 64
+	utxoSyncIntervalBulkIBD        = 512
+	utxoSyncIntervalNormal         = 64
 )
 
 func (c *BlockStoreCtx) noteBlockStoredAt(height int64) {
@@ -316,8 +316,10 @@ func (c *BlockStoreCtx) RevalidateContiguousTip() int64 {
 	return cont
 }
 
-// maybeClampBundledContiguousFromDisk lowers cached contiguous coverage when bundled blk*.dat
-// probe shows a torn tail below the in-memory tip (kill-mid-append recovery).
+// maybeClampBundledContiguousFromDisk lowers cached contiguous coverage when disk probe shows
+// a torn tail below the in-memory tip. Uses journal+HasStoredBody coverage so leftover per-file
+// *.bin after a bundled upgrade are not treated as missing (ProbeBundledContiguousTip alone
+// only sees blk*.dat and would falsely rewind ~200k to a few thousand).
 func (c *BlockStoreCtx) maybeClampBundledContiguousFromDisk() int64 {
 	if c == nil || c.Raw == nil {
 		return -1
@@ -325,8 +327,8 @@ func (c *BlockStoreCtx) maybeClampBundledContiguousFromDisk() int64 {
 	if c.Raw.StorageOpts().Layout != store.BlockLayoutBundled {
 		return c.ContiguousRawHeight()
 	}
-	diskTip, err := c.Raw.ProbeBundledContiguousTip()
-	if err != nil || diskTip < 0 {
+	diskTip := store.ReconcileBundledContiguousTip(c.Journal, c.Raw, c.chainNet())
+	if diskTip < 0 {
 		return c.ContiguousRawHeight()
 	}
 	c.contiguousMu.Lock()
@@ -337,7 +339,7 @@ func (c *BlockStoreCtx) maybeClampBundledContiguousFromDisk() int64 {
 	cont := c.contiguousTip
 	c.contiguousMu.Unlock()
 	if prev >= 0 && cont >= 0 && cont < prev {
-		applog.Line("recovery", fmt.Sprintf("bundled contiguous clamp %d â†’ %d from disk probe", prev, cont))
+		applog.Line("recovery", fmt.Sprintf("bundled contiguous clamp %d -> %d from disk probe", prev, cont))
 	}
 	return cont
 }

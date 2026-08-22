@@ -130,6 +130,14 @@ func TestRawBlockStoreGet(t *testing.T) {
 	}
 }
 
+func waitRawPayloadBytesReady(t *testing.T, rs *store.RawBlockStore) {
+	t.Helper()
+	rs.RefreshPayloadBytes()
+	if !rs.PayloadBytesReady() {
+		t.Fatal("payload bytes walk did not finish")
+	}
+}
+
 func TestRawBlockStoreBytesOnDisk(t *testing.T) {
 	dir := t.TempDir()
 	rs, err := store.OpenRawBlockStore(dir)
@@ -143,6 +151,7 @@ func TestRawBlockStoreBytesOnDisk(t *testing.T) {
 	if err := rs.Flush(); err != nil {
 		t.Fatal(err)
 	}
+	waitRawPayloadBytesReady(t, rs)
 	n, err := rs.BytesOnDisk()
 	if err != nil {
 		t.Fatal(err)
@@ -165,6 +174,7 @@ func TestRawBlockStoreCachedBytesOnDisk(t *testing.T) {
 	if err := rs.Flush(); err != nil {
 		t.Fatal(err)
 	}
+	waitRawPayloadBytesReady(t, rs)
 	n1, err := rs.CachedBytesOnDisk(time.Minute)
 	if err != nil {
 		t.Fatal(err)
@@ -183,6 +193,28 @@ func TestRawBlockStoreCachedBytesOnDisk(t *testing.T) {
 	}
 	if n3 != int64(len(raw)) {
 		t.Fatalf("after invalidate CachedBytesOnDisk %d want %d", n3, len(raw))
+	}
+}
+
+func TestRawBlockStoreBundledBytesOnDiskDoesNotNeedWalk(t *testing.T) {
+	dir := t.TempDir()
+	rs, err := store.OpenRawBlockStoreWithOpts(dir, store.BlockStorageOpts{Layout: store.BlockLayoutBundled})
+	if err != nil {
+		t.Fatal(err)
+	}
+	raw, h := store.TestMinimalBlock()
+	if err := rs.Put(h, raw); err != nil {
+		t.Fatal(err)
+	}
+	if err := rs.Flush(); err != nil {
+		t.Fatal(err)
+	}
+	n, err := rs.BytesOnDisk()
+	if err != nil {
+		t.Fatal(err)
+	}
+	if n <= 0 {
+		t.Fatalf("bundled BytesOnDisk %d want blk*.dat size immediately", n)
 	}
 }
 

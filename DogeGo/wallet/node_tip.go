@@ -6,9 +6,28 @@
 
 package wallet
 
-import "fmt"
+import (
+	"fmt"
+	"strings"
+)
 
 const nodeTipLabel = "node tip"
+
+func unlockDiskForNodeTip(w *Disk, passphrase string) error {
+	if w == nil {
+		return fmt.Errorf("nil wallet")
+	}
+	if !w.IsEncrypted() {
+		return nil
+	}
+	if strings.TrimSpace(passphrase) == "" {
+		return fmt.Errorf("wallet passphrase required (encrypted wallet.json already exists)")
+	}
+	if err := w.Unlock(passphrase, 600); err != nil {
+		return fmt.Errorf("wallet unlock failed: %w", err)
+	}
+	return nil
+}
 
 // NodeTipEnabled reports whether the dedicated node-tip HD key is tracked for spends.
 func (w *Disk) NodeTipEnabled() bool {
@@ -66,8 +85,17 @@ func (w *Disk) EnableNodeTip() (string, error) {
 
 // PreviewNodeTipFromPath opens or creates wallet.json and returns the node-tip address.
 func PreviewNodeTipFromPath(path string, addrVer byte) (string, error) {
+	return PreviewNodeTipFromPathWithPassphrase(path, addrVer, "")
+}
+
+// PreviewNodeTipFromPathWithPassphrase unlocks an encrypted wallet when needed, then previews the tip.
+// Unlock is in-memory on this load only; passphrase must be passed on the same call as derive.
+func PreviewNodeTipFromPathWithPassphrase(path string, addrVer byte, passphrase string) (string, error) {
 	w, err := LoadOrCreate(path, addrVer)
 	if err != nil {
+		return "", err
+	}
+	if err := unlockDiskForNodeTip(w, passphrase); err != nil {
 		return "", err
 	}
 	return w.PreviewNodeTipAddress()
@@ -75,8 +103,16 @@ func PreviewNodeTipFromPath(path string, addrVer byte) (string, error) {
 
 // EnableNodeTipFromPath enables node-tip tracking on an existing wallet file.
 func EnableNodeTipFromPath(path string, addrVer byte) (string, error) {
+	return EnableNodeTipFromPathWithPassphrase(path, addrVer, "")
+}
+
+// EnableNodeTipFromPathWithPassphrase unlocks an encrypted wallet when needed, then enables the tip.
+func EnableNodeTipFromPathWithPassphrase(path string, addrVer byte, passphrase string) (string, error) {
 	w, err := LoadOrCreate(path, addrVer)
 	if err != nil {
+		return "", err
+	}
+	if err := unlockDiskForNodeTip(w, passphrase); err != nil {
 		return "", err
 	}
 	return w.EnableNodeTip()

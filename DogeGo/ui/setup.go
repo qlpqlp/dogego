@@ -250,11 +250,11 @@ func RunSetupWizard(ctx context.Context, listenAddr string, seed config.File, sa
 						return
 					}
 				}
-				if err := applySetupUACommentTip(&mainnet); err != nil {
+				if err := applySetupUACommentTip(&mainnet, req.WalletPassphrase); err != nil {
 					http.Error(w, "mainnet uacomment: "+err.Error(), http.StatusBadRequest)
 					return
 				}
-				if err := applySetupUACommentTip(&testnet); err != nil {
+				if err := applySetupUACommentTip(&testnet, req.WalletPassphrase); err != nil {
 					http.Error(w, "testnet uacomment: "+err.Error(), http.StatusBadRequest)
 					return
 				}
@@ -327,7 +327,7 @@ func RunSetupWizard(ctx context.Context, listenAddr string, seed config.File, sa
 					http.Error(w, "wallet backup not prepared - download backup on the finish step first", http.StatusBadRequest)
 					return
 				}
-				if err := applySetupUACommentTip(&f); err != nil {
+				if err := applySetupUACommentTip(&f, req.WalletPassphrase); err != nil {
 					http.Error(w, err.Error(), http.StatusBadRequest)
 					return
 				}

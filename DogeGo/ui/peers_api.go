@@ -30,7 +30,10 @@ func BuildPeersDashboardResponse(cfg StartConfig) map[string]any {
 			}
 		} else if res := rpcOut["result"]; res != nil {
 			out["ok"] = true
-			out["peers"] = res
+			out["peers"] = normalizePeerInfoResult(res)
+		} else {
+			// Dispatch returns result:null when PeerInfo is not wired yet.
+			out["error"] = "peer info not ready yet"
 		}
 		addedOut := cfg.RPCInvoke("getaddednodeinfo", nil)
 		if errObj, ok := addedOut["error"].(map[string]interface{}); ok && errObj != nil {
@@ -47,6 +50,25 @@ func BuildPeersDashboardResponse(cfg StartConfig) map[string]any {
 	if cfg.P2PSnapshot != nil {
 		if snap := cfg.P2PSnapshot(); snap != nil {
 			out["p2p"] = snap
+			// Prefer live session counts from getpeerinfo; fall back to P2P snapshot
+			// so Analytics does not show "0 peers" while Overview already sees dials.
+			if peerListLen(out["peers"]) == 0 {
+				if v, ok := snapInt(snap["connections_outbound"]); ok {
+					out["connections_outbound"] = v
+				}
+				if v, ok := snapInt(snap["connections_inbound"]); ok {
+					out["connections_inbound"] = v
+				}
+				if v, ok := snapInt(snap["connections_total"]); ok {
+					out["connections_total"] = v
+				}
+				if cout, _ := out["connections_outbound"].(int); cout > 0 {
+					// Live dials exist; don't surface a hard empty/error state to Analytics.
+					delete(out, "error")
+					out["note"] = "Peers are connected; detailed peer rows are still warming up."
+					out["ok"] = true
+				}
+			}
 		}
 	}
 	if cfg.DGRSnapshot != nil {
@@ -54,11 +76,58 @@ func BuildPeersDashboardResponse(cfg StartConfig) map[string]any {
 			out["dgr"] = snap
 		}
 	}
-	countInbound, countOutbound := peerDirectionCounts(out["peers"])
-	out["connections_inbound"] = countInbound
-	out["connections_outbound"] = countOutbound
-	out["connections_total"] = countInbound + countOutbound
+	if peerListLen(out["peers"]) > 0 || out["connections_outbound"] == nil {
+		countInbound, countOutbound := peerDirectionCounts(out["peers"])
+		out["connections_inbound"] = countInbound
+		out["connections_outbound"] = countOutbound
+		out["connections_total"] = countInbound + countOutbound
+	} else if out["connections_total"] == nil {
+		cin, _ := out["connections_inbound"].(int)
+		cout, _ := out["connections_outbound"].(int)
+		out["connections_total"] = cin + cout
+	}
 	return out
+}
+
+func normalizePeerInfoResult(res any) any {
+	switch v := res.(type) {
+	case []map[string]interface{}:
+		out := make([]any, len(v))
+		for i := range v {
+			out[i] = v[i]
+		}
+		return out
+	case []any:
+		return v
+	default:
+		return []any{}
+	}
+}
+
+func peerListLen(peers any) int {
+	switch v := peers.(type) {
+	case []any:
+		return len(v)
+	case []map[string]interface{}:
+		return len(v)
+	default:
+		return 0
+	}
+}
+
+func snapInt(v any) (int, bool) {
+	switch x := v.(type) {
+	case int:
+		return x, true
+	case int32:
+		return int(x), true
+	case int64:
+		return int(x), true
+	case float64:
+		return int(x), true
+	default:
+		return 0, false
+	}
 }
 
 func peerDirectionCounts(peers any) (inbound, outbound int) {

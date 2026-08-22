@@ -173,7 +173,8 @@ func startConnectCatchUpWorker(ctx context.Context, bs *BlockStoreCtx, utxo *sto
 		for {
 			if ShouldDeferConnectForBodyDownload(bs) {
 				noteConnectDeferredForDownload(bs)
-				interval = 5 * time.Second
+				// Throttled parallel connect (was a hard skip — left chainActive stuck for days).
+				interval = 500 * time.Millisecond
 			} else if bs != nil && ShouldPauseHeaderCatchUpForBodyIBD(bs, 0) {
 				interval = 250 * time.Millisecond
 			} else {
@@ -186,9 +187,6 @@ func startConnectCatchUpWorker(ctx context.Context, bs *BlockStoreCtx, utxo *sto
 				return
 			case <-timer.C:
 			}
-			if ShouldDeferConnectForBodyDownload(bs) {
-				continue
-			}
 			if !connectCatchUpRunning.TryLock() {
 				continue
 			}
@@ -196,7 +194,7 @@ func startConnectCatchUpWorker(ctx context.Context, bs *BlockStoreCtx, utxo *sto
 			connectCatchUpRunning.Unlock()
 		}
 	}()
-	applog.Line("utxo", "connect catch-up worker started (download-first IBD: ConnectBlock after bodies catch headers)")
+	applog.Line("utxo", "connect catch-up worker started (download-first IBD: ConnectBlock throttled alongside getdata)")
 }
 
 // startIBDConnectWorkers runs connect catch-up as soon as blockStore/UTXO are ready (Core: validation alongside download).

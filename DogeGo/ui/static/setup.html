@@ -294,6 +294,14 @@
           </div>
         </div>
         <input type="checkbox" id="uacomment_use_node_tip" hidden aria-hidden="true" tabindex="-1" checked />
+        <div id="setup-wallet-unlock-block" class="setup-wallet-encrypt-block" hidden>
+          <p class="setup-section-title">Unlock existing wallet</p>
+          <p class="field-hint">This datadir already has an encrypted <code>wallet.json</code>. Enter its passphrase so setup can use that wallet (node tip / save). The node keeps using it after start.</p>
+          <div class="setup-field-grid">
+            <div class="form-field"><label for="setup_wallet_unlock_pass">Wallet passphrase</label><input id="setup_wallet_unlock_pass" type="password" autocomplete="current-password" /></div>
+          </div>
+          <p class="field-hint wallet-addr-mono" id="setup-wallet-unlock-status" hidden></p>
+        </div>
         <div class="card setup-preflight" id="setup-preflight" aria-live="polite">
           <div class="setup-preflight-head">
             <h2 data-i18n="wizard.preflightTitle">Automatic checks</h2>
@@ -717,6 +725,7 @@
             datadir: datadir,
             network: network,
             nowallet: $("nowallet").checked,
+            wallet_passphrase: setupWalletPassphrase(),
           }),
         });
         if (!r.ok) throw new Error(await r.text());
@@ -821,13 +830,12 @@
       function updateWalletBackupUI() {
         const section = $("setup-wallet-backup");
         const enabled = walletEnabled();
-        if (section) section.hidden = !enabled;
-        const encBlock = $("setup-wallet-encrypt-block");
-        if (encBlock) encBlock.hidden = !enabled;
+        // Re-setup with an existing encrypted wallet keeps that wallet; skip forced new backup.
+        if (section) section.hidden = !enabled || existingEncryptedWallet;
         updateWalletEncryptUI();
         const startBtn = $("setup-start-btn");
         const ack = $("setup-wallet-backup-ack");
-        const ready = !enabled || (walletBackupDownloaded && ack && ack.checked);
+        const ready = !enabled || existingEncryptedWallet || (walletBackupDownloaded && ack && ack.checked);
         if (startBtn) startBtn.disabled = enabled && !ready;
         const status = $("setup-wallet-backup-status");
         if (status && enabled) {
@@ -844,13 +852,68 @@
       }
 
       function walletEncryptEnabled() {
-        return walletEnabled() && $("setup_wallet_encrypt") && $("setup_wallet_encrypt").checked;
+        return walletEnabled() && !existingEncryptedWallet && $("setup_wallet_encrypt") && $("setup_wallet_encrypt").checked;
+      }
+
+      let existingEncryptedWallet = false;
+
+      function setupWalletPassphrase() {
+        if (existingEncryptedWallet) {
+          return (($("setup_wallet_unlock_pass") && $("setup_wallet_unlock_pass").value) || "").trim();
+        }
+        if (walletEncryptEnabled()) {
+          return (($("setup_wallet_pass") && $("setup_wallet_pass").value) || "").trim();
+        }
+        return "";
       }
 
       function updateWalletEncryptUI() {
+        const unlockBlock = $("setup-wallet-unlock-block");
+        const encryptBlock = $("setup-wallet-encrypt-block");
+        if (unlockBlock) unlockBlock.hidden = !(walletEnabled() && existingEncryptedWallet);
+        if (encryptBlock) encryptBlock.hidden = !(walletEnabled() && !existingEncryptedWallet);
         const on = walletEncryptEnabled();
         const fields = $("setup-wallet-pass-fields");
         if (fields) fields.hidden = !on;
+      }
+
+      async function refreshExistingWalletStatus() {
+        existingEncryptedWallet = false;
+        const statusEl = $("setup-wallet-unlock-status");
+        if (statusEl) {
+          statusEl.hidden = true;
+          statusEl.textContent = "";
+        }
+        if (!walletEnabled()) {
+          updateWalletEncryptUI();
+          return;
+        }
+        const datadir = ($("datadir") && $("datadir").value.trim()) || "";
+        if (!datadir) {
+          updateWalletEncryptUI();
+          return;
+        }
+        const networks = isDualInstanceMode() ? ["mainnet", "testnet"] : [($("network") && $("network").value) || "mainnet"];
+        try {
+          for (const net of networks) {
+            const r = await fetch("/api/setup/wallet-status", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ datadir: datadir, network: net, nowallet: false }),
+            });
+            if (!r.ok) continue;
+            const st = await r.json();
+            if (st && st.exists && st.encrypted) {
+              existingEncryptedWallet = true;
+              if (statusEl) {
+                statusEl.hidden = false;
+                statusEl.textContent = (st.address ? ("Existing wallet: " + st.address) : "Encrypted wallet.json found") + " (" + net + ")";
+              }
+              break;
+            }
+          }
+        } catch (_) {}
+        updateWalletEncryptUI();
       }
 
       async function downloadSetupWalletBackup() {
@@ -1394,6 +1457,7 @@
         if (isLast) {
           renderReview();
           updateWalletBackupUI();
+          void refreshExistingWalletStatus();
           updateAutostartPreflightVisibility();
           runAutostartPreflight();
           updateFounderPreflightVisibility();
@@ -1401,6 +1465,7 @@
         }
         updateSyncStepUI();
         updateDualInstanceUI();
+        if (step === 1 || step === 2) void refreshExistingWalletStatus();
         if (step === 2 && window.DogeGoControls) window.DogeGoControls.bindChoiceCards();
         if (step === 2) updateUACommentTipUI();
         if (step === 2) runPreflight();
@@ -1422,14 +1487,16 @@
           }
         }
         if (i === TOTAL - 1 && walletEnabled()) {
-          const ack = $("setup-wallet-backup-ack");
-          if (!walletBackupDownloaded) {
-            showMsg(t("wizard.backupPending"), "err");
-            return false;
-          }
-          if (!ack || !ack.checked) {
-            showMsg(t("wizard.backupAckRequired"), "err");
-            return false;
+          if (!existingEncryptedWallet) {
+            const ack = $("setup-wallet-backup-ack");
+            if (!walletBackupDownloaded) {
+              showMsg(t("wizard.backupPending"), "err");
+              return false;
+            }
+            if (!ack || !ack.checked) {
+              showMsg(t("wizard.backupAckRequired"), "err");
+              return false;
+            }
           }
           if (walletEncryptEnabled()) {
             const pass = ($("setup_wallet_pass") && $("setup_wallet_pass").value) || "";
@@ -1440,6 +1507,15 @@
             }
             if (pass !== confirm) {
               showMsg(t("wizard.walletPassMismatch"), "err");
+              return false;
+            }
+          }
+          if (existingEncryptedWallet && uaCommentPublishEnabled() && walletEnabled()) {
+            const pass = setupWalletPassphrase();
+            if (!pass) {
+              showMsg("Enter the existing wallet passphrase to unlock for node tip / setup.", "err");
+              const el = $("setup_wallet_unlock_pass");
+              if (el) el.focus();
               return false;
             }
           }
@@ -1753,7 +1829,9 @@
         body.permitbaremultisig = $("permitbaremultisig").checked;
         if (walletEncryptEnabled()) {
           body.wallet_encrypt = true;
-          body.wallet_passphrase = ($("setup_wallet_pass") && $("setup_wallet_pass").value) || "";
+          body.wallet_passphrase = setupWalletPassphrase();
+        } else if (existingEncryptedWallet) {
+          body.wallet_passphrase = setupWalletPassphrase();
         }
         body.webui_tls_local = wizardWebUITLSLocal;
         body.local_tls_trust_ca = wizardLocalTLSTrustCA;
@@ -1864,9 +1942,12 @@
       $("setup-wallet-backup-download") && $("setup-wallet-backup-download").addEventListener("click", downloadSetupWalletBackup);
       $("setup-wallet-backup-ack") && $("setup-wallet-backup-ack").addEventListener("change", updateWalletBackupUI);
       $("setup_wallet_encrypt") && $("setup_wallet_encrypt").addEventListener("change", updateWalletEncryptUI);
-      $("nowallet") && $("nowallet").addEventListener("change", () => { resetWalletBackupState(); updateUACommentTipUI(); });
-      $("datadir") && $("datadir").addEventListener("change", resetWalletBackupState);
+      $("setup_wallet_unlock_pass") && $("setup_wallet_unlock_pass").addEventListener("change", () => { if (uaCommentPublishEnabled()) void refreshNodeTipPreview(); });
+      $("setup_wallet_unlock_pass") && $("setup_wallet_unlock_pass").addEventListener("input", () => { if (uaCommentPublishEnabled()) void refreshNodeTipPreview(); });
+      $("nowallet") && $("nowallet").addEventListener("change", () => { resetWalletBackupState(); updateUACommentTipUI(); void refreshExistingWalletStatus(); });
+      $("datadir") && $("datadir").addEventListener("change", () => { resetWalletBackupState(); void refreshExistingWalletStatus(); });
       $("datadir") && $("datadir").addEventListener("input", () => { if (uaCommentPublishEnabled()) void refreshNodeTipPreview(); updateUACommentTipUI(); });
+      $("network") && $("network").addEventListener("change", () => { void refreshExistingWalletStatus(); });
       $("network") && $("network").addEventListener("change", () => { applySetupBranding(); resetWalletBackupState(); updateFounderPreflightVisibility(); if (uaCommentPublishEnabled()) void refreshNodeTipPreview(); updateUACommentTipUI(); });
       $("uacomment") && $("uacomment").addEventListener("input", updateUACommentTipUI);
       $("uacomment_tip_manual") && $("uacomment_tip_manual").addEventListener("input", updateUACommentTipUI);

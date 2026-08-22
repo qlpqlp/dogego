@@ -8,6 +8,8 @@ package store
 
 import (
 	"bytes"
+	"os"
+	"path/filepath"
 	"testing"
 
 	"dogego/pow"
@@ -121,6 +123,84 @@ func TestRawBlockStorePerFileZstd(t *testing.T) {
 	}
 	if !bytes.Equal(got, payload) {
 		t.Fatal("per-file zstd get mismatch")
+	}
+}
+
+func TestResolveBlockStorageOptsUpgradePerFileToBundled(t *testing.T) {
+	dir := t.TempDir()
+	rawDir := filepath.Join(dir, "rawblocks")
+	if err := os.MkdirAll(rawDir, 0o700); err != nil {
+		t.Fatal(err)
+	}
+	if err := saveBlockStorageManifest(rawDir, BlockStorageOpts{Layout: BlockLayoutPerFile, Zstd: false}); err != nil {
+		t.Fatal(err)
+	}
+	rawPer, err := OpenRawBlockStoreWithOpts(dir, BlockStorageOpts{Layout: BlockLayoutPerFile, Zstd: false})
+	if err != nil {
+		t.Fatal(err)
+	}
+	legacy, hash := TestMinimalBlock()
+	if err := rawPer.Put(hash, legacy); err != nil {
+		t.Fatal(err)
+	}
+	from, to, up := BlockStorageUpgrade(BlockStorageOpts{Layout: BlockLayoutBundled, Zstd: true}, rawDir)
+	if !up || from.Layout != BlockLayoutPerFile || to.Layout != BlockLayoutBundled || !to.Zstd {
+		t.Fatalf("upgrade detect from=%+v to=%+v up=%v", from, to, up)
+	}
+	raw, err := OpenRawBlockStoreWithOpts(dir, BlockStorageOpts{Layout: BlockLayoutBundled, Zstd: true})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if raw.StorageOpts().Layout != BlockLayoutBundled || !raw.StorageOpts().Zstd {
+		t.Fatalf("opts %+v", raw.StorageOpts())
+	}
+	got, err := raw.Get(hash)
+	if err != nil || !bytes.Equal(got, legacy) {
+		t.Fatalf("legacy per-file must remain readable after upgrade: err=%v", err)
+	}
+	// New puts go bundled while legacy hash still resolves.
+	h80 := append([]byte(nil), legacy[:80]...)
+	ph := pow.BlockHashLE(h80)
+	copy(h80[4:36], ph[:])
+	h80[76] ^= 0x2a
+	next := MakeTestBlockRaw(t, h80)
+	id := pow.BlockHashLE(next[:80])
+	if err := raw.Put(id, next); err != nil {
+		t.Fatal(err)
+	}
+	if !raw.Has(hash) || !raw.Has(id) {
+		t.Fatal("both legacy per-file and new bundled body must Has")
+	}
+	onDisk, ok := loadBlockStorageManifest(rawDir)
+	if !ok || onDisk.Layout != BlockLayoutBundled || !onDisk.Zstd {
+		t.Fatalf("manifest after upgrade %+v ok=%v", onDisk, ok)
+	}
+}
+
+func TestRawBlockStoreBundledWriteBehind(t *testing.T) {
+	dir := t.TempDir()
+	raw, err := OpenRawBlockStoreWithOpts(dir, BlockStorageOpts{Layout: BlockLayoutBundled, Zstd: false})
+	if err != nil {
+		t.Fatal(err)
+	}
+	raw.EnableWriteBehind()
+	payload, hash := TestMinimalBlock()
+	if err := raw.Put(hash, payload); err != nil {
+		t.Fatal(err)
+	}
+	if !raw.Has(hash) {
+		t.Fatal("staged body must Has immediately")
+	}
+	got, err := raw.Get(hash)
+	if err != nil || !bytes.Equal(got, payload) {
+		t.Fatalf("read-through staged: err=%v", err)
+	}
+	if err := raw.Flush(); err != nil {
+		t.Fatal(err)
+	}
+	got2, err := raw.Get(hash)
+	if err != nil || !bytes.Equal(got2, payload) {
+		t.Fatalf("after flush: err=%v", err)
 	}
 }
 

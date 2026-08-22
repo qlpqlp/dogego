@@ -248,6 +248,8 @@ DogeGo uses **headers-first IBD** like Core: headers in `headers.bin`, full bloc
 
 **Download rate on the dashboard:** `blocks_per_minute` is a **recent ~10 minute** window (not the lifetime mean since IBD started). Lifetime average is exposed as `dogego_blocks_per_minute_lifetime` / `blocks_per_minute_lifetime` on raw sync snapshots. Effective auto `dbcache` appears as `dogego_dbcache_mb` once the node has started.
 
+**Low disk space (full node):** DogeGo polls free space on the datadir volume about every 30 seconds. When free space is **1 GiB or less**, the Overview shows a warning banner, an optional tray/desktop notification fires, and **full block body download pauses**. Headers can still advance. Download resumes automatically once more than 1 GiB is free (after freeing space, enlarging a VM/virtual disk, or upgrading the drive). Status: `dogego_disk_pressure` on `GET /api/summary` / `GET /api/live`, and `GET /api/disk/status`.
+
 **Header sync recovery:** After a force-kill, DogeGo repairs torn segment tails and drops stale `headers/seg/*.bin.tmp` on startup (legacy `headers.bin` monolith is repaired the same way when present). If peer header timestamps jump far ahead of your local tip (partial mainnet sync), DogeGo **auto-rewinds** to the last 240-block boundary and retries `getheaders`. If you see `bad nBits` at a retarget height, let that rewind run or delete `mainnet/headers.bin` and resync. Reboot **testnet** is the path DogeGo exercises most.
 
 **Dashboard:** Overview + **Sync** tab show body-sync %, blocks behind, blk/min, estimated time left, mempool count, and a one-line status (same data as `GET /api/summary`).

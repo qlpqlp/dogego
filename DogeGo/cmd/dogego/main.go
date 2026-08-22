@@ -27,6 +27,7 @@ import (
 	"dogego/config"
 	"dogego/consensus"
 	"dogego/desktop"
+	"dogego/diskspace"
 	"dogego/launch"
 	"dogego/httptls"
 	"dogego/indexer"
@@ -398,6 +399,9 @@ func runNodeMode(args []string, defaultNodeMode string) {
 			}
 		})
 		updateChecker.Start(ctx)
+	}
+	if desktop.InteractiveSession() {
+		diskspace.SetNotify(desktop.NotifyDiskSpaceLow)
 	}
 	if !merged.NoWebUI && desktop.InteractiveSession() {
 		startConsoleHideRetry()

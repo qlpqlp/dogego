@@ -253,12 +253,23 @@ func LoadFile(path string) (File, error) {
 	if err != nil {
 		return File{}, err
 	}
+	b = stripUTF8BOM(b)
 	var c File
 	if err := json.Unmarshal(b, &c); err != nil {
 		return File{}, err
 	}
 	normalizeLegacyUserAgent(&c, b)
 	return c, nil
+}
+
+// stripUTF8BOM removes a leading UTF-8 BOM (U+FEFF). Windows editors and PowerShell
+// Set-Content -Encoding utf8 often write one; encoding/json rejects it and LoadFirst
+// would silently skip the AppData config (falling back to HTTP, default workers, etc.).
+func stripUTF8BOM(b []byte) []byte {
+	if len(b) >= 3 && b[0] == 0xef && b[1] == 0xbb && b[2] == 0xbf {
+		return b[3:]
+	}
+	return b
 }
 
 // normalizeLegacyUserAgent maps deprecated "useragent" JSON into uacomment when present.

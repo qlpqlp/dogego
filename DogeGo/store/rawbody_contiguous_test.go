@@ -125,8 +125,9 @@ func TestReconcileBundledContiguousTipMeasuredAboveProbe(t *testing.T) {
 		t.Fatalf("measured=%d want 3", measured)
 	}
 	reconciled := ReconcileBundledContiguousTip(j, raw, chain.RebootTestnet)
-	if reconciled != probe {
-		t.Fatalf("reconciled=%d want conservative probe=%d (measured=%d)", reconciled, probe, measured)
+	// Hybrid leftover *.bin must count: probe alone would under-report after perfile→bundled upgrade.
+	if reconciled != measured {
+		t.Fatalf("reconciled=%d want measured=%d (probe=%d)", reconciled, measured, probe)
 	}
 }
 

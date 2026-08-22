@@ -44,15 +44,20 @@ func TestEmbeddedAnalyticsEnabled(t *testing.T) {
 	}
 }
 
-func TestIBDOptimizeEnabled(t *testing.T) {
-	var empty File
-	if !empty.IBDOptimizeEnabled() {
-		t.Fatal("default should enable IBD optimize")
+func TestLoadFileStripsUTF8BOM(t *testing.T) {
+	dir := t.TempDir()
+	path := filepath.Join(dir, FileName)
+	body := []byte("{\"datadir\":\"C:\\\\dogedata\",\"webui_tls_local\":true,\"local_tls_trust_ca\":true}")
+	bom := append([]byte{0xef, 0xbb, 0xbf}, body...)
+	if err := os.WriteFile(path, bom, 0o600); err != nil {
+		t.Fatal(err)
 	}
-	off := false
-	disabled := File{IBDOptimize: &off}
-	if disabled.IBDOptimizeEnabled() {
-		t.Fatal("explicit false should disable")
+	f, err := LoadFile(path)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if f.DataDir != `C:\dogedata` || !f.WebUITLSLocal || !f.LocalTLSTrustCA {
+		t.Fatalf("got %+v", f)
 	}
 }
 

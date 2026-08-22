@@ -32,7 +32,7 @@ func noteConnectDeferredForDownload(bs *BlockStoreCtx) {
 			tip, _ = bs.Journal.TipHeight()
 		}
 	}
-	applog.Line("utxo", fmt.Sprintf("download-first IBD: deferring ConnectBlock until bodies catch headers (bodies through %d, headers %d)", cont, tip))
+	applog.Line("utxo", fmt.Sprintf("download-first IBD: ConnectBlock runs throttled alongside getdata (bodies through %d, headers %d)", cont, tip))
 }
 
 func noteConnectResumedAfterDownload(bs *BlockStoreCtx) {
@@ -58,6 +58,11 @@ const (
 // EffectiveConnectCatchUpMinLag returns how far stored bodies may run ahead of chainActive
 // before dedicated connect catch-up runs (lower during deep forward body IBD).
 func EffectiveConnectCatchUpMinLag(bs *BlockStoreCtx) int64 {
+	if bs != nil && ShouldDeferConnectForBodyDownload(bs) {
+		// Download-first still connects in parallel (Core does). Start as soon as bodies
+		// cover chainActive+1 so chain tip is not stuck at a few thousand for the whole IBD.
+		return connectCatchUpMinLagFrontier
+	}
 	if bs != nil && ShouldPauseHeaderCatchUpForBodyIBD(bs, 0) {
 		if cont := bs.ContiguousRawHeight(); cont >= 0 && cont < 50_000 {
 			return connectCatchUpMinLagFrontier
@@ -85,10 +90,34 @@ func connectCatchUpBlocksPerIBDCall(bs *BlockStoreCtx) int {
 		return 8
 	}
 	paused := ShouldPauseHeaderCatchUpForBodyIBD(bs, 0)
+	deferred := ShouldDeferConnectForBodyDownload(bs)
 	lag := ConnectCatchUpLag(bs, bs.Utxo)
 	small := 4
-	if paused {
+	if paused || deferred {
 		small = 16
+	}
+	if deferred && lag > 1024 {
+		cap := 32
+		switch {
+		case lag > 8192:
+			cap = 128
+		case lag > 2048:
+			cap = 64
+		}
+		if !connectFrontierScriptsEnabled(bs) {
+			switch {
+			case lag > 8192:
+				cap = 512
+			case lag > 2048:
+				cap = 256
+			default:
+				cap = 128
+			}
+		}
+		if n := connectFrontierMaxSteps(bs); n > 0 && n < cap {
+			return n
+		}
+		return cap
 	}
 	if paused && lag > 512 {
 		if n := connectFrontierMaxSteps(bs); n > small {
@@ -164,7 +193,7 @@ func runConnectCatchUpStartupBurst(bs *BlockStoreCtx, utxo *store.UtxoCache) {
 	}
 	if ShouldDeferConnectForBodyDownload(bs) {
 		noteConnectDeferredForDownload(bs)
-		return
+		// Still burst-connect: live nodes were stuck at chainActive ~2k with 200k+ bodies stored.
 	}
 	lag := ConnectCatchUpLag(bs, utxo)
 	if lag < 2048 {
@@ -196,7 +225,7 @@ func runConnectCatchUpOnce(bs *BlockStoreCtx, utxo *store.UtxoCache) {
 	}
 	if ShouldDeferConnectForBodyDownload(bs) {
 		noteConnectDeferredForDownload(bs)
-		return
+		// Fall through: connect throttled in parallel with body download (Core-style).
 	}
 	if !BodiesBehindHeaders(bs) {
 		lag := ConnectCatchUpLag(bs, utxo)
@@ -220,6 +249,10 @@ func runConnectCatchUpOnce(bs *BlockStoreCtx, utxo *store.UtxoCache) {
 	}
 	before := utxo.TipHeight()
 	passes := connectCatchUpPasses(lag, bs)
+	if ShouldDeferConnectForBodyDownload(bs) && passes > 2 {
+		// Keep getdata ahead of ConnectBlock during download-first, but do not stall forever.
+		passes = 2
+	}
 	var err error
 	for i := 0; i < passes; i++ {
 		if err = bs.SyncUtxoCache(); err != nil {

@@ -38,13 +38,16 @@ func DirSizeBytes(root string) (int64, error) {
 }
 
 // ChainStoreBytes returns best-effort on-disk sizes for DogeGo chain data components.
+// total is the sum of the reported components (not a full datadir walk of wallet/analytics DBs).
 func ChainStoreBytes(chainRoot string) (headers, rawblocks, txindex, total int64) {
 	chainRoot = filepath.Clean(chainRoot)
-	total, _ = DirSizeBytes(chainRoot)
-	headers = fileSizeIfExists(filepath.Join(chainRoot, "headers.bin"))
+	headers = SubdirSizeIfExists(filepath.Join(chainRoot, "headers"))
+	headers += fileSizeIfExists(filepath.Join(chainRoot, "headers.bin"))
 	headers += fileSizeIfExists(filepath.Join(chainRoot, "headers_aux.bin"))
 	rawblocks, _ = DirSizeBytes(filepath.Join(chainRoot, "rawblocks"))
 	txindex, _ = DirSizeBytes(filepath.Join(chainRoot, "indexes", "tx"))
+	utxo := fileSizeIfExists(filepath.Join(chainRoot, "utxo.cache"))
+	total = headers + rawblocks + txindex + utxo
 	return headers, rawblocks, txindex, total
 }
 
