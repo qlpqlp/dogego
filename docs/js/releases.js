@@ -75,16 +75,6 @@
     return null;
   }
 
-  function findChecksumAsset(assets, assetName) {
-    if (!assetName) return null;
-    var want = (assetName + ".sha256").toLowerCase();
-    for (var i = 0; i < (assets || []).length; i++) {
-      var a = assets[i];
-      if (a.name && a.name.toLowerCase() === want && a.id) return a;
-    }
-    return null;
-  }
-
   function isGitHubRateLimited(resp) {
     return resp && (resp.status === 403 || resp.status === 429);
   }
@@ -160,27 +150,16 @@
     });
   }
 
-  function parseChecksumFile(text) {
-    var line = String(text || "").trim().split(/\s+/)[0] || "";
-    line = line.toLowerCase();
-    if (/^[a-f0-9]{64}$/.test(line)) return line;
+  // Prefer GitHub release asset digests from the JSON API (CORS-safe).
+  // Do not fetch .sha256 sidecar URLs: release-assets.githubusercontent.com has no CORS.
+  function digestFromAsset(asset) {
+    if (!asset) return "";
+    var d = String(asset.digest || "").trim();
+    if (!d) return "";
+    var m = /^sha256:([a-fA-F0-9]{64})$/.exec(d);
+    if (m) return m[1].toLowerCase();
+    if (/^[a-fA-F0-9]{64}$/.test(d)) return d.toLowerCase();
     return "";
-  }
-
-  // browser_download_url lives on github.com and is blocked by CORS from dogego.org.
-  // Download release asset bytes via api.github.com (same origin policy as release list).
-  function fetchChecksumViaAPI(owner, repo, assetId) {
-    if (!owner || !repo || !assetId) return Promise.resolve("");
-    var url = "https://api.github.com/repos/" + encodeURIComponent(owner) + "/" +
-      encodeURIComponent(repo) + "/releases/assets/" + assetId;
-    return fetch(url, {
-      headers: {
-        Accept: "application/octet-stream"
-      }
-    }).then(function (resp) {
-      if (!resp.ok) return "";
-      return resp.text();
-    }).then(parseChecksumFile).catch(function () { return ""; });
   }
 
   function mapRelease(rel, owner, repo) {
@@ -356,13 +335,12 @@
     PLATFORM_ASSETS.forEach(function (spec) {
       var asset = findAsset(release.assets, spec.asset);
       if (!asset) return;
-      var checksumAsset = findChecksumAsset(release.assets, spec.asset);
       rows.push({
         id: spec.id,
         label: t(spec.labelKey),
         fileName: asset.name,
         url: asset.browser_download_url,
-        checksumAssetId: checksumAsset ? checksumAsset.id : 0
+        digest: digestFromAsset(asset)
       });
     });
     return rows;
@@ -609,9 +587,7 @@
           link.rel = "noopener noreferrer";
         }
         var hash = state.checksums[match.id] || "";
-        if (match.checksumAssetId && !hash) {
-          setPlatformChecksum(card, "", true);
-        } else if (hash) {
+        if (hash) {
           setPlatformChecksum(card, hash, false);
         } else {
           setPlatformChecksum(card, "", false);
@@ -631,25 +607,12 @@
   }
 
   function loadChecksums(rel, rows) {
-    if (rel.checksums) {
-      rows.forEach(function (row) {
-        state.checksums[row.id] = rel.checksums[row.id] || "";
-      });
-      renderPlatformCardsReady(rel, rows);
-      return Promise.resolve();
-    }
-    var jobs = rows.map(function (row) {
-      if (!row.checksumAssetId) {
-        state.checksums[row.id] = "";
-        return Promise.resolve();
-      }
-      return fetchChecksumViaAPI(rel.owner, rel.repo, row.checksumAssetId).then(function (hash) {
-        state.checksums[row.id] = hash;
-      });
+    rows.forEach(function (row) {
+      var fromManifest = rel.checksums && rel.checksums[row.id];
+      state.checksums[row.id] = fromManifest || row.digest || "";
     });
-    return Promise.all(jobs).then(function () {
-      renderPlatformCardsReady(rel, rows);
-    });
+    renderPlatformCardsReady(rel, rows);
+    return Promise.resolve();
   }
 
   function render() {
