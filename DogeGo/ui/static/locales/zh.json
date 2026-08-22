@@ -49,7 +49,7 @@
     "features": "功能",
     "console": "控制台",
     "extensions": "扩展",
-    "extensionsGroup": "扩展",
+    "extensionsGroup": "配置",
     "home": "首页"
   },
   "wizard": {
@@ -807,6 +807,10 @@
       "subtitle": "本机节点的实时指标。",
       "chainWarn": "链警告",
       "storage": "存储",
+      "diskWarn": "磁盘空间不足",
+      "diskContinue": "继续下载",
+      "diskMessage": "datadir 卷可用空间为 1 GiB 或更少。完整区块下载已暂停。",
+      "diskAdvice": "释放空间、扩大卷（虚拟机/虚拟磁盘）或升级到更大磁盘。可用空间超过 1 GiB 后自动恢复。",
       "firewallWarn": "防火墙 - 需要操作",
       "firewallCopy": "复制到提升权限的命令提示符或 PowerShell（管理员）：",
       "searchPlaceholder": "高度、哈希、txid 或地址…",
@@ -1311,6 +1315,7 @@
     "checkpoint": "检查点",
     "assistPool": "辅助池",
     "downloadRate": "下载速率",
+    "chainDisk": "链磁盘",
     "eta": "预计时间",
     "peersOutIn": "出站/入站节点",
     "mempool": "内存池",

@@ -77,12 +77,12 @@ func (s *progressiveRawState) maybePenalizeDownloadTimeout(bs *BlockStoreCtx, sc
 	if lanes < 1 {
 		lanes = 1
 	}
-	limit := EffectiveBlockDownloadTimeout(bs, lanes)
 	now := time.Now()
 	for lane, since := range s.laneDownloadSince {
 		if laneFilter >= 0 && lane != laneFilter {
 			continue
 		}
+		limit := s.effectiveLaneDownloadTimeoutLocked(bs, lanes, lane)
 		if now.Sub(since) < limit {
 			continue
 		}

@@ -452,6 +452,18 @@ type getdataBatchHooks struct {
 	Refill   func(pending int) (hashes [][32]byte, heights []int64)
 	// RefillBelow requests more getdata when pending drops under this (0 = minInFlightBlocks).
 	RefillBelow int
+	// ProgressDownloadTimeout returns the in-flight window while this lane is still delivering (body IBD).
+	ProgressDownloadTimeout func() time.Duration
+}
+
+func batchDownloadLimit(bs *BlockStoreCtx, syncLanes int, hooks *getdataBatchHooks) time.Duration {
+	limit := EffectiveBlockDownloadTimeout(bs, syncLanes)
+	if hooks != nil && hooks.ProgressDownloadTimeout != nil {
+		if d := hooks.ProgressDownloadTimeout(); d > limit {
+			return d
+		}
+	}
+	return limit
 }
 
 // storeInboundBlockBody writes a full block if the header journal knows its height.
@@ -781,7 +793,7 @@ func fetchAndStoreRawBlocksBatchInv(ctx context.Context, w *MsgWriter, p chain.P
 		consumerWG.Wait()
 		return 0, err
 	}
-	batchDL := blockBatchDeadline(ctx, syncLanes, bs)
+	batchDL := time.Now().Add(batchDownloadLimit(bs, syncLanes, hooks))
 	abortBatch := make(chan struct{})
 	wakeRead := func() {
 		if conn != nil {
@@ -877,10 +889,14 @@ READLOOP:
 				ctxErr = ctx.Err()
 				break READLOOP
 			}
-			// Do not refresh the batch deadline on every body during forward IBD.
-			// Live: a peer delivered later heights, the 30s window kept sliding, the
-			// contiguous hole stayed in-flight, and stall never ran until ReadMessage returned.
-			if !ShouldDeferConnectForBodyDownload(bs) && !ShouldPauseHeaderCatchUpForBodyIBD(bs, 0) {
+			// During body IBD extend the batch window while blocks are still arriving.
+			if ShouldDeferConnectForBodyDownload(bs) || ShouldPauseHeaderCatchUpForBodyIBD(bs, 0) {
+				if hooks != nil && hooks.ProgressDownloadTimeout != nil {
+					limit := batchDownloadLimit(bs, syncLanes, hooks)
+					batchDL = time.Now().Add(limit)
+					hardTimer.Reset(limit + 250*time.Millisecond)
+				}
+			} else {
 				limit := EffectiveBlockDownloadTimeout(bs, syncLanes)
 				batchDL = time.Now().Add(limit)
 				hardTimer.Reset(limit + 250*time.Millisecond)

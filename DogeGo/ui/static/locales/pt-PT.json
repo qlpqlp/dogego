@@ -49,7 +49,7 @@
     "features": "Funcionalidades",
     "console": "Consola",
     "extensions": "Extensões",
-    "extensionsGroup": "Extensões",
+    "extensionsGroup": "Configurações",
     "home": "Início"
   },
   "wizard": {
@@ -807,6 +807,10 @@
       "subtitle": "Métricas do nó em tempo real nesta máquina.",
       "chainWarn": "Aviso da cadeia",
       "storage": "Armazenamento",
+      "diskWarn": "Pouco espaco em disco",
+      "diskContinue": "Continuar transferencia",
+      "diskMessage": "Pouco espaco livre no volume datadir (1 GiB ou menos). Transferencia de blocos completos em pausa.",
+      "diskAdvice": "Liberte espaco, aumente o volume (VM/disco virtual) ou use um disco maior. Retoma automaticamente acima de 1 GiB livres.",
       "firewallWarn": "Firewall - ação necessária",
       "firewallCopy": "Copiar para uma linha de comandos ou PowerShell elevada (Administrador):",
       "searchPlaceholder": "Altura, hash, txid ou endereço…",
@@ -1311,6 +1315,7 @@
     "checkpoint": "Checkpoint",
     "assistPool": "Pool assist",
     "downloadRate": "Taxa de download",
+    "chainDisk": "Disco da cadeia",
     "eta": "ETA",
     "peersOutIn": "Pares saída/entrada",
     "mempool": "Mempool",

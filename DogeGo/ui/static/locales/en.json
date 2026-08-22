@@ -84,7 +84,7 @@
     "lockDashboard": "Lock dashboard",
     "unlockDashboard": "Unlock dashboard",
     "extensions": "Extensions",
-    "extensionsGroup": "Extensions",
+    "extensionsGroup": "Configurations",
     "reportIssue": "Report issue"
   },
   "dashboard": {
@@ -776,6 +776,8 @@
       "storage": "Storage",
       "diskWarn": "Low disk space",
       "diskContinue": "Continue download",
+      "diskMessage": "Datadir volume has 1 GiB or less free. Full block download is paused.",
+      "diskAdvice": "Free space on this drive, enlarge the volume if this is a VM or virtual disk, or upgrade to a larger drive. Download resumes automatically once more than 1 GiB is free.",
       "firewallWarn": "Firewall - action needed",
       "firewallCopy": "Copy the OS-specific commands below into a terminal with admin rights:",
       "firewallDismiss": "Dismiss",
@@ -1328,6 +1330,7 @@
     "checkpoint": "Checkpoint",
     "assistPool": "Assist pool",
     "downloadRate": "Download rate",
+    "chainDisk": "Chain disk",
     "connectBoost": "Connect boost",
     "eta": "ETA",
     "peersOutIn": "Peers out/in",

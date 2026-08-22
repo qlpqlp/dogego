@@ -49,7 +49,7 @@
     "features": "Funktionen",
     "console": "Konsole",
     "extensions": "Erweiterungen",
-    "extensionsGroup": "Erweiterungen",
+    "extensionsGroup": "Konfiguration",
     "home": "Start"
   },
   "wizard": {
@@ -807,6 +807,10 @@
       "subtitle": "Live-Knotenmetriken von diesem Rechner.",
       "chainWarn": "Chain-Warnung",
       "storage": "Speicher",
+      "diskWarn": "Wenig Speicherplatz",
+      "diskContinue": "Download fortsetzen",
+      "diskMessage": "Datadir-Laufwerk hat 1 GiB oder weniger frei. Voller Block-Download ist pausiert.",
+      "diskAdvice": "Speicher freigeben, Volume vergroessern (VM/virtuelle Platte) oder groessere Festplatte nutzen. Download setzt automatisch fort, sobald mehr als 1 GiB frei sind.",
       "firewallWarn": "Firewall - Aktion erforderlich",
       "firewallCopy": "In eine erhöhte Eingabeaufforderung oder PowerShell (Administrator) kopieren:",
       "searchPlaceholder": "Höhe, Hash, Txid oder Adresse…",
@@ -1311,6 +1315,7 @@
     "checkpoint": "Checkpoint",
     "assistPool": "Assist-Pool",
     "downloadRate": "Downloadrate",
+    "chainDisk": "Chain-Speicher",
     "eta": "ETA",
     "peersOutIn": "Peers aus/ein",
     "mempool": "Mempool",

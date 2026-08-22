@@ -1406,7 +1406,12 @@ func (s *progressiveRawState) tryFetchMissingBatches(ctx context.Context, w *Msg
 			break
 		}
 		lanes := s.syncWorkerCount()
-		batchTimeout := EffectiveBlockDownloadTimeout(bs, lanes)
+		batchTimeout := time.Duration(0)
+		if !shouldPipelineGetData(bs) {
+			s.mu.Lock()
+			batchTimeout = s.effectiveLaneDownloadTimeoutLocked(bs, lanes, workerID)
+			s.mu.Unlock()
+		}
 		batchCtx, endBatch, started := s.startBatch(workerID, ctx, batchTimeout)
 		if !started {
 			break
@@ -1431,13 +1436,25 @@ func (s *progressiveRawState) tryFetchMissingBatches(ctx context.Context, w *Msg
 		var hooks *getdataBatchHooks
 		if shouldPipelineGetData(bs) {
 			budget := s.peerInFlightBudget(bs, workerID)
+			peerAddr := ""
+			if w != nil {
+				peerAddr = w.PeerAddr
+			}
 			hooks = &getdataBatchHooks{
 				RefillBelow: getdataRefillThreshold(budget),
+				ProgressDownloadTimeout: func() time.Duration {
+					s.mu.Lock()
+					defer s.mu.Unlock()
+					return s.effectiveLaneDownloadTimeoutLocked(bs, lanes, workerID)
+				},
 				OnStored: func(h int64) {
 					s.releaseInFlightHeight(h)
 					s.mu.Lock()
 					s.noteLaneBlockReceivedLocked(workerID)
 					s.mu.Unlock()
+					if scorer != nil && peerAddr != "" {
+						scorer.NoteBlocksDelivered(peerAddr, 1)
+					}
 				},
 				Refill: func(pending int) ([][32]byte, []int64) {
 					b := s.peerInFlightBudget(bs, workerID)
@@ -1464,6 +1481,9 @@ func (s *progressiveRawState) tryFetchMissingBatches(ctx context.Context, w *Msg
 			}
 			s.noteLaneDownloadProgressLocked(workerID)
 			s.mu.Unlock()
+			if hooks == nil && scorer != nil && w != nil && w.PeerAddr != "" {
+				scorer.NoteBlocksDelivered(w.PeerAddr, n)
+			}
 		}
 		if ferr != nil && (errors.Is(ferr, context.Canceled) || errors.Is(ferr, context.DeadlineExceeded)) {
 			s.mu.Lock()

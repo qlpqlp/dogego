@@ -418,6 +418,10 @@
         "title": "Fixed sync dock",
         "body": "Core-style footer during IBD: connected vs stored bodies, assist pool, recent download rate, connect lag, ETA, and expandable live logs - always visible while you browse tabs."
       },
+      "disk": {
+        "title": "Low disk space guard",
+        "body": "Monitors free space on the datadir volume (~every 30s). At <strong>1 GiB or less</strong>, the Overview banner and optional tray/desktop notification warn you, and full block body download <strong>pauses</strong> until more than 1 GiB is free again (auto-resumes after you free or enlarge the disk). Header sync can continue."
+      },
       "firewall": {
         "title": "Firewall & preflight",
         "body": "Setup wizard runs automatic checks for ports, CGNAT hints, and optional OS firewall rules. Copy-paste elevated commands appear on Overview when action is needed."

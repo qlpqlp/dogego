@@ -416,7 +416,11 @@
       },
       "syncdock": {
         "title": "Festes Sync-Dock",
-        "body": "Core-artige Fu�xleiste während IBD: verbundene vs. gespeicherte Bodies, Assist-Pool, Downloadrate, Verbindungslag, ETA und erweiterbare Live-Logs - immer sichtbar beim Tab-Wechsel."
+        "body": "Core-artige Fußleiste während IBD: verbundene vs. gespeicherte Bodies, Assist-Pool, Downloadrate, Verbindungslag, ETA und erweiterbare Live-Logs - immer sichtbar beim Tab-Wechsel."
+      },
+      "disk": {
+        "title": "Schutz bei wenig Speicherplatz",
+        "body": "Überwacht freien Speicher auf dem Datadir-Laufwerk (etwa alle 30 s). Bei <strong>1 GiB oder weniger</strong> warnen Dashboard-Banner und optionale Tray-/Desktop-Benachrichtigung; der Download voller Block-Bodies wird <strong>pausiert</strong>, bis wieder mehr als 1 GiB frei sind (setzt nach Freigabe oder Vergrößerung der Platte automatisch fort). Header-Sync kann weiterlaufen."
       },
       "firewall": {
         "title": "Firewall & Preflight",

@@ -15,11 +15,13 @@ import (
 )
 
 const (
-	blockPeerCooldownDial      = 45 * time.Second
+	blockPeerCooldownDial        = 45 * time.Second
 	blockPeerCooldownSession     = 3 * time.Minute
 	blockPeerCooldownReject      = 10 * time.Minute
 	blockPeerScoreSuccessWeight  = 10
 	blockPeerScoreFailurePenalty = 25
+	// blockPeerScoreRateWeight maps recent blk/sec (ibdPeerDeliveryWindow) to rank score.
+	blockPeerScoreRateWeight = 500
 )
 
 type blockPeerEntry struct {
@@ -30,6 +32,7 @@ type blockPeerEntry struct {
 	cooldownTo  time.Time
 	services    uint64
 	startHeight int32
+	deliveries  []laneDeliverySample
 }
 
 // BlockPeerScorer ranks dial targets for block download (Core-style prefer productive peers).
@@ -146,6 +149,44 @@ func (s *BlockPeerScorer) NotePeerHandshake(addr string, services uint64, startH
 	s.dirty = true
 }
 
+func (e *blockPeerEntry) trimDeliveriesLocked(now time.Time) {
+	if len(e.deliveries) == 0 {
+		return
+	}
+	cut := 0
+	for cut < len(e.deliveries) && now.Sub(e.deliveries[cut].at) > ibdPeerDeliveryWindow {
+		cut++
+	}
+	if cut > 0 {
+		e.deliveries = append([]laneDeliverySample(nil), e.deliveries[cut:]...)
+	}
+}
+
+func (e *blockPeerEntry) deliveryRateLocked(now time.Time) float64 {
+	e.trimDeliveriesLocked(now)
+	if len(e.deliveries) == 0 {
+		return 0
+	}
+	total := 0
+	for _, sm := range e.deliveries {
+		total += sm.n
+	}
+	elapsed := now.Sub(e.deliveries[0].at)
+	if elapsed < time.Second {
+		elapsed = time.Second
+	}
+	return float64(total) / elapsed.Seconds()
+}
+
+func (e *blockPeerEntry) refreshScoreFromDeliveriesLocked(now time.Time) {
+	rate := e.deliveryRateLocked(now)
+	score := int(rate * blockPeerScoreRateWeight)
+	if score > 10000 {
+		score = 10000
+	}
+	e.score = score
+}
+
 // NoteBlocksDelivered boosts peers that returned full block payloads.
 func (s *BlockPeerScorer) NoteBlocksDelivered(addr string, n int) {
 	if s == nil || addr == "" || n <= 0 {
@@ -154,12 +195,11 @@ func (s *BlockPeerScorer) NoteBlocksDelivered(addr string, n int) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 	e := s.entry(addr)
+	now := time.Now()
 	e.blocks += int64(n)
-	e.lastOK = time.Now()
-	e.score += n * blockPeerScoreSuccessWeight
-	if e.score > 10000 {
-		e.score = 10000
-	}
+	e.lastOK = now
+	e.deliveries = append(e.deliveries, laneDeliverySample{at: now, n: n})
+	e.refreshScoreFromDeliveriesLocked(now)
 	e.cooldownTo = time.Time{}
 	s.dirty = true
 }

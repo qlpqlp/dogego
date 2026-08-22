@@ -3556,6 +3556,7 @@
     if (primary) return primary;
     return shortenPeerLabel((s && s.peer) || "");
   }
+  window.DogeGoFormatTopbarPeer = formatTopbarPeer;
 
   function dgrHealthLabel(h) {
     const m = { ok: "OK", warming: "Warming up", starting: "Starting", degraded: "Needs attention", off: "Off" };
@@ -9342,9 +9343,9 @@
         const showDisk = diskAlert && diskAlert.active;
         if (showDisk) {
           diskBox.hidden = false;
-          diskTxt.textContent = diskAlert.message || s.dogego_disk_pressure_warning || "Datadir volume is nearly full.";
+          diskTxt.textContent = diskAlert.message || s.dogego_disk_pressure_warning || i18n("pages.overview.diskMessage");
           if (diskAdvice) {
-            diskAdvice.textContent = diskAlert.advice || "Free space, enlarge the volume (VM/virtual disk), or upgrade the drive.";
+            diskAdvice.textContent = diskAlert.advice || i18n("pages.overview.diskAdvice");
           }
           if (diskContinue) {
             diskContinue.hidden = !(diskAlert.continue_allowed && diskAlert.paused);
@@ -9420,13 +9421,14 @@
         }
       }
       if ($("rawblocks")) $("rawblocks").textContent = String(s.raw_blocks ?? "...");
-      const peerShort = formatTopbarPeer(s, p2snap);
+      window.DogeGoLastP2Snap = p2snap;
+      applySyncProgress(s);
       const peerShortEl = $("peer-short");
-      if (peerShortEl) {
+      if (peerShortEl && !peerShortEl.classList.contains("topbar-peer-short--sync")) {
+        const peerShort = formatTopbarPeer(s, p2snap);
         peerShortEl.textContent = peerShort;
         peerShortEl.title = peerShort !== "..." ? peerShort : "";
       }
-      applySyncProgress(s);
 
       fillP2PCard(s, p2snap);
       if (live.mempool) {
@@ -13139,7 +13141,6 @@
       { sel: "#st-sec-disable", icon: "lock_reset" },
       { sel: "#st-sec-save", icon: "save" },
       { sel: "#docs-md-close", icon: "close" },
-      { sel: "#ov-header-recover-btn", icon: "restore" },
       { sel: "#ov-log-toggle", icon: "terminal" },
       { sel: "#st-reindextx", icon: "manage_search" },
       { sel: "#st-reindexfilters", icon: "filter_alt" },
@@ -13179,8 +13180,6 @@
   }
   bindExplorerSearch("ov-ex-q", "ov-ex-go", "ov-ex-out", "ov-ex-form");
   bindExplorerSearch("lk-ex-q", "lk-ex-go", "lk-ex-out", "lk-ex-form");
-  $("ov-header-recover-btn") && $("ov-header-recover-btn").addEventListener("click", recoverHeaderJournal);
-
   $("ov-ex-clear") && $("ov-ex-clear").addEventListener("click", () => {
     if ($("ov-ex-q")) $("ov-ex-q").value = "";
     const o = $("ov-ex-out");

@@ -418,6 +418,10 @@
         "title": "Dock sync fixe",
         "body": "Barre de pied style Core pendant l'IBD : corps connectés vs stockés, pool d'assistance, débit de téléchargement, lag de connexion, ETA et journaux en direct extensibles - toujours visible en naviguant entre les onglets."
       },
+      "disk": {
+        "title": "Garde-fou espace disque",
+        "body": "Surveille l'espace libre sur le volume datadir (environ toutes les 30 s). À <strong>1 Gio ou moins</strong>, la bannière Vue d'ensemble et la notification tray/bureau optionnelle vous avertissent; le téléchargement des corps de blocs complets est <strong>en pause</strong> jusqu'à ce qu'il reste plus de 1 Gio libre (reprise automatique après libération ou agrandissement du disque). La sync des en-têtes peut continuer."
+      },
       "firewall": {
         "title": "Pare-feu et prévol",
         "body": "L'assistant exécute des vérifications automatiques des ports, indices CGNAT et règles pare-feu OS optionnelles. Des commandes élevées à copier-coller apparaissent sur Vue d'ensemble quand une action est nécessaire."

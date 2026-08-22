@@ -42,6 +42,28 @@ func (s *progressiveRawState) trimLaneDeliveryLocked(lane int, now time.Time) {
 	}
 }
 
+// effectiveLaneDownloadTimeoutLocked returns the in-flight window for one lane.
+// During body IBD the base cap is 30s; lanes with recent deliveries may use up to 90s
+// (still below Core's multi-minute window so disconnects do not freeze claims for long).
+func (s *progressiveRawState) effectiveLaneDownloadTimeoutLocked(bs *BlockStoreCtx, lanes, lane int) time.Duration {
+	base := EffectiveBlockDownloadTimeout(bs, lanes)
+	if base != bodyIBDBlockDownloadTimeout {
+		return base
+	}
+	if s != nil && s.laneDeliveryRateLocked(lane) > 0 {
+		others := lanes - 1
+		if others < 0 {
+			others = 0
+		}
+		core := BlockDownloadTimeout(others, 60)
+		if core > bodyIBDProgressDownloadTimeout {
+			return bodyIBDProgressDownloadTimeout
+		}
+		return core
+	}
+	return bodyIBDBlockDownloadTimeout
+}
+
 // laneDeliveryRateLocked returns blocks/sec delivered on lane over ibdPeerDeliveryWindow.
 func (s *progressiveRawState) laneDeliveryRateLocked(lane int) float64 {
 	if s == nil || s.laneDelivery == nil {

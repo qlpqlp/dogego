@@ -49,7 +49,7 @@
     "features": "機能",
     "console": "コンソール",
     "extensions": "拡張機能",
-    "extensionsGroup": "拡張機能",
+    "extensionsGroup": "設定",
     "home": "ホーム"
   },
   "wizard": {
@@ -807,6 +807,10 @@
       "subtitle": "このマシンからのライブノードメトリクス。",
       "chainWarn": "チェーン警告",
       "storage": "ストレージ",
+      "diskWarn": "ディスク容量不足",
+      "diskContinue": "ダウンロードを再開",
+      "diskMessage": "datadir ボリュームの空きが 1 GiB 以下です。完全ブロックのダウンロードは一時停止中です。",
+      "diskAdvice": "空き容量を確保するか、ボリュームを拡張（VM/仮想ディスク）するか、より大きなドライブに移行してください。1 GiB を超えると自動再開します。",
       "firewallWarn": "ファイアウォール - 対応が必要",
       "firewallCopy": "昇格したコマンドプロンプトまたは PowerShell（管理者）にコピー：",
       "searchPlaceholder": "高さ、ハッシュ、txid、またはアドレス…",
@@ -1311,6 +1315,7 @@
     "checkpoint": "チェックポイント",
     "assistPool": "アシストプール",
     "downloadRate": "ダウンロード速度",
+    "chainDisk": "チェーンディスク",
     "eta": "残り時間",
     "peersOutIn": "ピア 送信/受信",
     "mempool": "メモリプール",

@@ -418,6 +418,10 @@
         "title": "Dock sync fixo",
         "body": "Barra inferior estilo Core durante IBD: corpos ligados vs armazenados, pool assist, taxa de transferência, lag de ligação, ETA e logs em tempo real expansíveis - sempre visível ao navegar separadores."
       },
+      "disk": {
+        "title": "Proteção de espaço em disco",
+        "body": "Monitoriza o espaço livre no volume datadir (cerca de 30 s). Com <strong>1 GiB ou menos</strong>, o aviso no Painel e a notificação opcional na bandeja/ambiente de trabalho alertam-no; a transferência de corpos de bloco completos <strong>pausa</strong> até haver mais de 1 GiB livres (retoma automaticamente depois de libertar ou aumentar o disco). A sync de cabeçalhos pode continuar."
+      },
       "firewall": {
         "title": "Firewall e pré-voo",
         "body": "O assistente executa verificações automáticas de portas, dicas CGNAT e regras de firewall OS opcionais. Comandos elevados para copiar aparecem em Visão geral quando ação é necessária."

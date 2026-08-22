@@ -221,6 +221,38 @@
     return !!s;
   }
 
+  function formatTopbarSyncShort(s, labels) {
+    if (!s || !labels || labels.loading || labels.phase === "Up to date") return "";
+    const parts = [];
+    const rateTxt = (global.DogeGoFormatSyncDownloadRate && global.DogeGoFormatSyncDownloadRate(s)) || "";
+    if (rateTxt) parts.push(rateTxt);
+    const eta = resolveSyncEta(s, labels);
+    if (eta && eta !== "...") parts.push(eta);
+    const out = Number(s.connections_out) || 0;
+    const inn = Number(s.connections_in) || 0;
+    parts.push(out + "/" + inn);
+    return parts.length ? parts.join(" · ") : "";
+  }
+
+  function updateTopbarPeerShort(s, labels) {
+    const el = $("peer-short");
+    if (!el) return;
+    const syncShort = formatTopbarSyncShort(s, labels);
+    if (syncShort) {
+      el.textContent = syncShort;
+      el.title = syncShort;
+      el.classList.add("topbar-peer-short--sync");
+      return;
+    }
+    el.classList.remove("topbar-peer-short--sync");
+    const peerFn = global.DogeGoFormatTopbarPeer;
+    if (peerFn) {
+      const peerShort = peerFn(s, global.DogeGoLastP2Snap || {});
+      el.textContent = peerShort;
+      el.title = peerShort !== "..." ? peerShort : "";
+    }
+  }
+
   function setBodyPad(show, tall) {
     document.body.classList.toggle("sync-dock-visible", show);
     document.body.classList.toggle("sync-dock-expanded", show && tall);
@@ -460,6 +492,7 @@
     if (isFinite(mp)) setCompactMetric("sync-dock-mempool", mp, { integer: true, fit: false });
     else setMetric("sync-dock-mempool", "0");
     if (global.DogeGoApplyUtxoReplayUI) global.DogeGoApplyUtxoReplayUI(s);
+    updateTopbarPeerShort(s, labels);
     if (logsOpen) loadLogs();
   }
 
@@ -467,17 +500,13 @@
     const barBtn = $("sync-dock-bar-btn");
     if (barBtn) {
       barBtn.addEventListener("click", (e) => {
-        if (e.target.closest("#sync-dock-collapse") || e.target.closest("#sync-dock-logs-btn")) return;
+        if (e.target.closest("#sync-dock-logs-btn")) return;
         setExpanded(!expanded);
       });
     }
     $("sync-dock-logs-btn") && $("sync-dock-logs-btn").addEventListener("click", (e) => {
       e.stopPropagation();
       setLogsOpen(!logsOpen);
-    });
-    $("sync-dock-collapse") && $("sync-dock-collapse").addEventListener("click", (e) => {
-      e.stopPropagation();
-      collapseAll();
     });
   }
 
