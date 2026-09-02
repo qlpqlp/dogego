@@ -1,12 +1,13 @@
 # doginals-v1 protocol
 
-Overlay for DogeGo peers that enable `dogego.doginals`. Negotiated like other extension protocols via host `exthello` / `extack` (same machinery as `zkproof-v1`).
+Overlay for DogeGo peers that enable `dogego.doginals` (v0.4.0+). Negotiated via host `exthello` / `extack` (same machinery as `zkproof-v1`).
 
 ## Goals
 
 - Share **off-L1** asset metadata (NFT / token / image / collection) among DogeGo nodes  
 - Keep **L1 indexing** local (each node observes its own chain)  
-- Stay **observe-only** on consensus: no new opcodes, no soft/hard fork  
+- Expose **Doginals wallet** read APIs for wallets  
+- Stay **observe-only** on Dogecoin consensus: no new opcodes, no soft/hard fork  
 
 ## Commands
 
@@ -16,7 +17,7 @@ Overlay for DogeGo peers that enable `dogego.doginals`. Negotiated like other ex
 | `getdasset` | UTF-8 asset id | Request one asset |
 | `dasset` | JSON `Asset` object | Deliver asset |
 
-On peer connect, a node may send `dinv` with up to ~200 local ids. Receivers request missing ids with `getdasset`; owners reply with `dasset`.
+On peer connect (and about every 60s), a node may send `dinv` with up to ~200 local ids. Receivers request missing ids with `getdasset`; owners reply with `dasset`. Creating an asset (`putasset` / `mintl2`) also broadcasts `dinv`.
 
 ## L1 inscription record
 
@@ -32,6 +33,8 @@ Stored when an OP_RETURN (or compatible data carrier) is seen:
   "tick": "DOGE",
   "op": "mint",
   "amount": "1000",
+  "address": "D…",
+  "recipient": "",
   "content_type": "application/json",
   "text_preview": "…",
   "payload_hex": "…"
@@ -40,11 +43,20 @@ Stored when an OP_RETURN (or compatible data carrier) is seen:
 
 ### DRC-20 detection
 
-JSON payload with `"p":"drc-20"` (or `drc20`) and a non-empty `tick`. Ops: `deploy` / `mint` / `transfer` (lowercased). This is a **heuristic indexer**, not a full DRC-20 balance engine.
+JSON payload with `"p":"drc-20"` (or `drc20`) and a non-empty `tick`. Ops: `deploy` / `mint` / `transfer` (lowercased).
 
 ### Doginal-like detection
 
-Payload text contains `doginal`, starts with `ord`, or mentions `text/plain` / `image/` - classified as `doginal`. Other OP_RETURN data → `data`.
+Payload text contains `doginal`, starts with `ord`, or mentions `text/plain` / `image/` → `doginal`. Other OP_RETURN data → `data`.
+
+## Address ledger (`bal/`, `ah/`)
+
+When a DRC-20 event has an `address`, the indexer updates:
+
+- `bal/<addr>/<TICK>` → `{ tick, balance, transferable_balance, transfers_count }`  
+- `ah/<addr>/<id>` → history row (`Mint` / `Transfer` / …)
+
+`CreditL2Balance` (RPC `mintl2`) credits balances without an L1 tx (experimental L2).
 
 ## L2 asset record
 
@@ -68,11 +80,19 @@ If `id` is omitted, it is derived as `SHA256(kind|name|uri|content_b64|l1_inscri
 
 ## Token index (`tk/`)
 
-Each DRC-20 tick accumulates a `TokenSummary` (deploy max/lim, mint/transfer counts, last height). Not a full balance ledger.
+Each DRC-20 tick accumulates a `TokenSummary` (deploy max/lim, mint/transfer counts, last height).
 
-## Mint path (wallet_rpc)
+## HTTP API (extension-owned)
 
-`inscribe` builds OP_RETURN hex (<=80 B), then `createrawtransaction` -> `fundrawtransaction` -> `signrawtransactionwithwallet` -> optional `sendrawtransaction`. Requires extension Settings `wallet_rpc_enabled` and an unlocked wallet via authenticated DogeGo UI/RPC.
+Host mounts a **generic** gateway: `/api/ext/{extension.id}/…` → RPC `httphandle`.
+Doginals implements wallet read paths under `/api/ext/dogego.doginals/v1/*`. Core has **no** doginals-specific HTTP handlers. See [USER_GUIDE.md](USER_GUIDE.md).
+
+## Mint paths
+
+| Path | Mechanism |
+|------|-----------|
+| L1 `inscribe` | OP_RETURN ≤80 B → `createrawtransaction` → fund → sign → optional `sendrawtransaction` |
+| L2 `mintl2` | Local ledger credit + optional L2 asset + `dinv` broadcast |
 
 ## Storage
 
@@ -82,13 +102,16 @@ Pebble DB `doginals.db` under the extension data directory:
 |------------|-------|
 | `i/` | Inscription JSON |
 | `ih/` | Height → id index |
+| `x/` | Txid → id index |
 | `t/` | Tick → id (DRC-20) |
+| `tk/` | Token summary |
+| `bal/` | Address balances |
+| `ah/` | Address history |
 | `a/` | Asset JSON |
-| `m/` | Meta (`index_height`, …) |
+| `m/` | Meta (`index_height`, `config`, …) |
 
-## Non-goals (v0.1)
+## Non-goals / follow-ups
 
-- Full Ordinals/Doginals envelope parsing beyond OP_RETURN heuristics  
-- Token balance / UTXO-bound DRC-20 ledger  
-- Writing inscriptions to L1 from the extension  
-- Guaranteed global uniqueness of L2 ids across adversarial peers (trust your peer set)
+- Every exotic Ordinals tag (parent, metadata pointers, …) — body + content-type are indexed  
+- WebSocket event subscriptions  
+- Cryptographically anchored L2 consensus (L2 mint remains experimental gossip)

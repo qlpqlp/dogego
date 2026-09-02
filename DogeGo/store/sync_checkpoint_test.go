@@ -10,6 +10,7 @@ import (
 	"encoding/binary"
 	"os"
 	"path/filepath"
+	"sync"
 	"testing"
 
 	"dogego/pow"
@@ -51,9 +52,37 @@ func TestPurgeStaleRawBlockSyncTemps(t *testing.T) {
 	if err := os.WriteFile(tmp, []byte("{}"), 0o600); err != nil {
 		t.Fatal(err)
 	}
+	uniq := filepath.Join(dir, rawBlockSyncFile+".tmp.123.456")
+	if err := os.WriteFile(uniq, []byte("{}"), 0o600); err != nil {
+		t.Fatal(err)
+	}
 	n, err := PurgeStaleRawBlockSyncTemps(dir)
-	if err != nil || n != 1 {
+	if err != nil || n != 2 {
 		t.Fatalf("purge n=%d err=%v", n, err)
+	}
+}
+
+func TestSaveRawBlockSyncCheckpointConcurrent(t *testing.T) {
+	dir := t.TempDir()
+	var wg sync.WaitGroup
+	for i := 0; i < 32; i++ {
+		wg.Add(1)
+		go func(n int) {
+			defer wg.Done()
+			_ = SaveRawBlockSyncCheckpoint(dir, RawBlockSyncCheckpoint{NextProbeHeight: int64(n), ContiguousRawHeight: int64(n - 1)})
+		}(i + 1)
+	}
+	wg.Wait()
+	got, err := LoadRawBlockSyncCheckpoint(dir)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if got.NextProbeHeight < 1 {
+		t.Fatalf("checkpoint empty after concurrent saves: %+v", got)
+	}
+	matches, _ := filepath.Glob(filepath.Join(dir, rawBlockSyncFile+".tmp*"))
+	if len(matches) > 0 {
+		t.Fatalf("leftover tmp files: %v", matches)
 	}
 }
 

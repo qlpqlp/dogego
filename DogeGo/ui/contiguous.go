@@ -22,14 +22,14 @@ func contiguousHeightForAPI(cfg StartConfig) int64 {
 	if cfg.ContiguousRawHeight != nil {
 		return cfg.ContiguousRawHeight()
 	}
-	if cfg.Journal == nil || cfg.RawBlocks == nil {
+	if cfg.ActiveJournal() == nil || cfg.ActiveRawBlocks() == nil {
 		return -1
 	}
-	tip, _, err := journalTipForDashboard(cfg.Journal)
+	tip, _, err := journalTipForDashboard(cfg.ActiveJournal())
 	if err != nil || tip < 0 || tip > maxTipForContiguousScan {
 		return -1
 	}
-	if ch, err := store.ContiguousRawBodyHeight(cfg.Journal, cfg.RawBlocks); err == nil {
+	if ch, err := store.ContiguousRawBodyHeight(cfg.ActiveJournal(), cfg.ActiveRawBlocks()); err == nil {
 		return ch
 	}
 	return -1
@@ -44,8 +44,8 @@ func chainActiveHeightForAPI(cfg StartConfig, headerTip int64) int64 {
 		if cfg.UtxoCache != nil {
 			paths.Utxo = cfg.UtxoCache()
 		}
-		if cfg.Journal != nil && cfg.RawBlocks != nil {
-			return rpc.ActiveChainBlockHeight(cfg.Journal, cfg.RawBlocks, &paths)
+		if cfg.ActiveJournal() != nil && cfg.ActiveRawBlocks() != nil {
+			return rpc.ActiveChainBlockHeight(cfg.ActiveJournal(), cfg.ActiveRawBlocks(), &paths)
 		}
 		if paths.Utxo != nil && paths.Utxo.TipHeight() >= 0 {
 			tip := paths.Utxo.TipHeight()
@@ -63,20 +63,20 @@ func chainActiveHeightForAPI(cfg StartConfig, headerTip int64) int64 {
 			return snap.Blocks
 		}
 	}
-	if cfg.RawBlocks == nil {
+	if cfg.ActiveRawBlocks() == nil {
 		if headerTip >= 0 {
 			return headerTip
 		}
 		return 0
 	}
-	return rpc.ActiveChainBlockHeight(cfg.Journal, cfg.RawBlocks)
+	return rpc.ActiveChainBlockHeight(cfg.ActiveJournal(), cfg.ActiveRawBlocks())
 }
 
 // chainStatsHints returns (chainActive, storedBodies) for BuildChainStats / live cache.
 func chainStatsHints(cfg StartConfig) (chainActive, storedBodies int64) {
 	tip := int64(-1)
-	if cfg.Journal != nil {
-		tip, _, _ = journalTipForDashboard(cfg.Journal)
+	if cfg.ActiveJournal() != nil {
+		tip, _, _ = journalTipForDashboard(cfg.ActiveJournal())
 	}
 	return chainActiveHeightForAPI(cfg, tip), contiguousHeightForAPI(cfg)
 }

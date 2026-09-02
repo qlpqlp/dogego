@@ -406,7 +406,7 @@ func RunSetupWizard(ctx context.Context, listenAddr string, seed config.File, sa
 	}()
 
 	if openBrowser {
-		time.AfterFunc(400*time.Millisecond, func() { OpenURLLog(baseURL) })
+		OpenURLLog(baseURL)
 	} else if scheme == "https" {
 		fmt.Fprintf(os.Stderr, "DogeGo setup: open %s in your browser (use https://, not http://)\n", baseURL)
 	} else {

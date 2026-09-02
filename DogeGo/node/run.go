@@ -265,19 +265,10 @@ func Run(ctx context.Context, cfg Config) error {
 			ClearUncleanShutdown(chainRoot)
 		}
 	}()
-	j, err := store.OpenHeaderChain(chainRoot, g80[:])
-	if err != nil {
-		return err
-	}
-	h0, err := j.ReadHeaderAt(0)
-	if err != nil {
-		return fmt.Errorf("headers journal: read genesis: %w", err)
-	}
-	if !bytes.Equal(h0, g80[:]) {
-		return fmt.Errorf("%s: headers.bin genesis does not match this build's %s genesis (height 0 bytes differ). "+
-			"Peers will send headers that fail with 'bad prev'. Delete %q and restart, or use a -datadir that matches -network",
-			netSlug, netSlug, jpath)
-	}
+	// Header journal / raw stores open AFTER the web UI listens so conf→browser is not blocked
+	// by local chain data load (headers.bin, blk*.dat probe, indexes).
+	var j *store.HeaderJournal
+	lateUI := &ui.LateRefs{}
 	pool := mempool.New(5000)
 	pool.SetPolicy(cfg.MaxMempoolMB, cfg.MempoolExpiryHours)
 	pool.SetIncrementalRelayFeePerKB(consensus.IncrementalRelayFeePerKB())
@@ -329,83 +320,12 @@ func Run(ctx context.Context, cfg Config) error {
 	var txIx *store.TxIndex
 	var addrIx *store.AddrIndex
 	var filterIx *store.BlockFilterIndex
-	if cfg.FullNode {
-		blockOpts := cfg.BlockStorageOpts
-		if blockOpts.Layout == "" {
-			blockOpts = store.DefaultBlockStorageOpts()
-		}
-		rawDir := filepath.Join(chainRoot, "rawblocks")
-		if from, to, up := store.BlockStorageUpgrade(blockOpts, rawDir); up {
-			applog.Line("block", fmt.Sprintf("block storage upgrade %s/zstd=%v → %s/zstd=%v (legacy per-file bodies stay readable under rawblocks/legacy/; new blocks append bundled)",
-				from.Layout, from.Zstd, to.Layout, to.Zstd))
-		}
-		if rb, err := store.OpenRawBlockStoreWithOpts(chainRoot, blockOpts); err != nil {
-			fmt.Fprintf(os.Stderr, "raw blocks dir: %v\n", err)
-		} else {
-			rbStore = rb
-			rbStore.ReconcileCountCacheFromDisk()
-			// Skip a full rawblocks *.bin Walk at startup during hybrid IBD — it saturates
-			// NTFS and freezes bundled Puts. blk*.dat size is enough until legacy migrate.
-			if !rbStore.HasLegacyPerFileBodies() {
-				go rbStore.RefreshPayloadBytes()
-			}
-		}
-		if !cfg.NoTxIndex {
-			if ix, err := store.OpenTxIndexWithOpts(chainRoot, cfg.TxIndexEmbedTx); err != nil {
-				fmt.Fprintf(os.Stderr, "tx index dir: %v\n", err)
-			} else {
-				txIx = ix
-			}
-		}
-		var addrIxLocal *store.AddrIndex
-		if txIx != nil {
-			if ax, err := store.OpenAddrIndex(chainRoot); err != nil {
-				fmt.Fprintf(os.Stderr, "addr index dir: %v\n", err)
-			} else {
-				addrIxLocal = ax
-				addrIx = ax
-			}
-			if fx, err := store.OpenBlockFilterIndex(chainRoot); err != nil {
-				fmt.Fprintf(os.Stderr, "block filter index: %v\n", err)
-			} else {
-				filterIx = fx
-			}
-		}
-		if rbStore != nil {
-			rbStore.EnableTxIndexing(txIx, txIx != nil)
-			if addrIxLocal != nil && txIx != nil {
-				addrIxLocal.SetResolver(txIx, rbStore)
-				rbStore.EnableAddrIndexing(addrIxLocal, true)
-			}
-		}
-	}
-	localServices := chain.EffectiveP2PServices(p, filterIx != nil, cfg.DogeGoRelayCGNAT.AdvertiseServiceBit(), cfg.FullNode)
+	// Chain stores + wallet open after ui.Start (see below) so the dashboard opens first.
+	localServices := chain.EffectiveP2PServices(p, false, cfg.DogeGoRelayCGNAT.AdvertiseServiceBit(), cfg.FullNode)
 	var dgrMgr *dgr.Manager
 	var dgrAdvertiseP2P string
 	var disk *wallet.Disk
-	if cfg.EnableWallet {
-		wpath := filepath.Join(chainRoot, "wallet.json")
-		disk, err = wallet.LoadOrCreate(wpath, p.PubkeyHashAddrID)
-		if err != nil {
-			return fmt.Errorf("wallet: %w", err)
-		}
-		if cfg.Network == chain.MainnetDogecoin && !disk.IsEncrypted() {
-			applog.Line("wallet", "SECURITY: mainnet wallet.json is not encrypted; run encryptwallet before storing funds")
-		}
-		if cfg.EffectiveFile.UACommentUseNodeTipEnabled() && !disk.NodeTipEnabled() {
-			if _, err := disk.EnableNodeTip(); err != nil {
-				applog.Line("wallet", "node tip: "+err.Error())
-			}
-		}
-		runWalletAutoLock(ctx, disk)
-	}
 	var spvBloom *SPVBloomClient
-	if !cfg.FullNode && disk != nil {
-		spvBloom = NewSPVBloomClient(disk, p, j)
-		if spvBloom.Active() {
-			applog.Line("spv", "BIP37 wallet bloom filter ready (filtered-block sync against NODE_BLOOM peers)")
-		}
-	}
 	peerSlot := "Starting"
 	if cfg.Peer != "" {
 		peerSlot = "Connecting"
@@ -415,16 +335,10 @@ func Run(ctx context.Context, cfg Config) error {
 	if err != nil {
 		return err
 	}
-	ensureOSFirewall(cfg.Firewall, p2pSettings.Listen, int(p.Port))
+	// Firewall rules can prompt UAC / netsh and delay the dashboard. Do it after UI opens.
+	go ensureOSFirewall(cfg.Firewall, p2pSettings.Listen, int(p.Port))
+	// Open analytics after the web UI listens — Pebble open can delay the browser.
 	var analyticsStore *analytics.SharedStore
-	if analyticsOn {
-		analyticsStore, err = analytics.OpenShared(filepath.Join(chainDataAbs, "dogego_analytics.db"))
-		if err != nil {
-			applog.Line("indexer", "analytics shared store: "+err.Error())
-		} else {
-			defer func() { _ = analyticsStore.Close() }()
-		}
-	}
 	runtimeSvc := NewRuntimeServices(RuntimeServicesConfig{
 		Parent:   ctx,
 		Pool:     pool,
@@ -528,6 +442,7 @@ func Run(ctx context.Context, cfg Config) error {
 	var blockPeerScorer *BlockPeerScorer
 	var assistCandidates *BlockAssistCandidates
 	var discoveryFeed *PeerDiscoveryFeed
+	var discoveredPeers []string
 	var onChainTruncatedAfter func(int64)
 	var uiContiguous atomic.Int64
 	uiContiguous.Store(-1)
@@ -542,7 +457,7 @@ func Run(ctx context.Context, cfg Config) error {
 		return -1
 	}
 	chainWorkCache := NewChainWorkCache()
-	chainWorkCache.Warm(j)
+	// Warm after headers open (deferred below with lateUI).
 	var primaryCmpctHBFrom, primaryCmpctHBTo bool
 	chainRPC := "test"
 	if cfg.Network == chain.MainnetDogecoin {
@@ -576,6 +491,9 @@ func Run(ctx context.Context, cfg Config) error {
 	var cachedIBDAt int64
 	var cachedIBDMu sync.Mutex
 	coreIBDSnap := func() rpc.ChainIBDSnapshot {
+		if j == nil {
+			return rpc.ChainIBDSnapshot{}
+		}
 		now := time.Now().UnixNano()
 		cachedIBDMu.Lock()
 		defer cachedIBDMu.Unlock()
@@ -587,6 +505,9 @@ func Run(ctx context.Context, cfg Config) error {
 		return cachedIBD
 	}
 	headerSyncDiagFn := func() map[string]interface{} {
+		if j == nil {
+			return map[string]interface{}{"warming_up": true}
+		}
 		tip, ok := j.DiskTip()
 		if !ok {
 			return nil
@@ -614,6 +535,15 @@ func Run(ctx context.Context, cfg Config) error {
 			chainDisplay = "mainnet"
 		}
 		p2pSnap := func() map[string]any {
+			if j == nil {
+				return map[string]any{
+					"wired":        true,
+					"peer_dialing": true,
+					"warming_up":   true,
+					"connections_total": 0,
+					"connections_outbound": 0,
+				}
+			}
 			tipH, _ := j.DiskTip()
 			if tipH < 0 {
 				tipH, _, _ = j.SyncTipFromDisk()
@@ -624,8 +554,9 @@ func Run(ctx context.Context, cfg Config) error {
 				chainActive = ChainActiveHeight(j, rbStore, utxoCache, blockStore.ContiguousRawHeight)
 			}
 			extras := P2PExtrasFromNode(assistRegistry, blockPeerScorer, chainActive, cont, rawFill.syncWorkerCount(), dedicatedHeaderRunning(), DedicatedHeaderPeerAddr())
-			ibdProg := rawFill.snapshot()
-			enrichIBDProgressSnapshot(ibdProg, j, blockStore)
+			ibdProg := rawFill.snapshotForUI()
+			enrichIBDProgressSnapshotLight(ibdProg, j, blockStore)
+			appendIBDHoleDiagnostics(ibdProg, blockStore, &rawFill)
 			extras.IBDProgress = IBDProgressWithDiscoveryFeed(ibdProg, assistCandidates, discoveryFeed)
 			ibdSnap := coreIBDSnap()
 			mergeCoreIBDIntoProgress(extras.IBDProgress, ibdSnap)
@@ -708,6 +639,7 @@ func Run(ctx context.Context, cfg Config) error {
 			lowestMissing := int64(-1)
 			inFlightBatches := 0
 			bpm := 0.0
+			contigBPM := 0.0
 			if prog := extras.IBDProgress; prog != nil {
 				if v, ok := prog["lowest_missing_height"].(int64); ok {
 					lowestMissing = v
@@ -717,6 +649,9 @@ func Run(ctx context.Context, cfg Config) error {
 				}
 				if v, ok := prog["blocks_per_minute"].(float64); ok {
 					bpm = v
+				}
+				if v, ok := prog["contiguous_blocks_per_minute"].(float64); ok {
+					contigBPM = v
 				}
 			}
 			recHint := ""
@@ -746,6 +681,7 @@ func Run(ctx context.Context, cfg Config) error {
 				ChainActiveHeight:      chainActive,
 				ConnectLag:             connectLag,
 				ConnectBlocksPerMinute: connectBPM,
+				ContiguousBlocksPerMinute: contigBPM,
 				LowestMissing:          lowestMissing,
 				InFlightBatches:        inFlightBatches,
 				BlocksPerMinute:        bpm,
@@ -795,6 +731,7 @@ func Run(ctx context.Context, cfg Config) error {
 				return runtimeSvc.RPCListening(), runtimeSvc.RPCDispatchReady()
 			},
 			Journal:                  j,
+			Late:                     lateUI,
 			RawBlocks:                rbStore,
 			StorageSummary:           nativeStorageSummary(chainRoot, rbStore, txIx, contiguousForUI),
 			TxIndex:                  txIx,
@@ -845,6 +782,13 @@ func Run(ctx context.Context, cfg Config) error {
 			},
 			RPCInvoke: func(method string, params []json.RawMessage) map[string]interface{} {
 				if uiRPCInvoke == nil {
+					if method == "getpeerinfo" {
+						return map[string]interface{}{
+							"jsonrpc": "1.0",
+							"id":      1,
+							"result":  []interface{}{},
+						}
+					}
 					return map[string]interface{}{
 						"jsonrpc": "1.0",
 						"id":      1,
@@ -871,6 +815,124 @@ func Run(ctx context.Context, cfg Config) error {
 			if cfg.OnWebUIReady != nil {
 				go cfg.OnWebUIReady()
 			}
+			// Begin peer discovery while chain stores / UTXO load continue so the dashboard
+			// shows "Connecting to peers" and addrbook feed data before full P2P startup.
+			if discoveryFeed == nil {
+				discoveryFeed = NewPeerDiscoveryFeed(nil)
+			}
+			go func() {
+				applog.Line("net", "starting early peer discovery (DNS seeds + fixed seeds)")
+				addrs := p2p.DiscoverAddresses(ctx, p, func(msg string) { applog.Line("net", msg) })
+				discoveredPeers = addrs
+				for _, a := range addrs {
+					discoveryFeed.Note(a)
+				}
+			}()
+		}
+	}
+	// Load local chain data only after the dashboard is listening/opened.
+	{
+		oj, oerr := store.OpenHeaderChain(chainRoot, g80[:])
+		if oerr != nil {
+			return oerr
+		}
+		j = oj
+		lateUI.Journal.Store(j)
+		chainWorkCache.Warm(j)
+		h0, herr := j.ReadHeaderAt(0)
+		if herr != nil {
+			return fmt.Errorf("headers journal: read genesis: %w", herr)
+		}
+		if !bytes.Equal(h0, g80[:]) {
+			return fmt.Errorf("%s: headers.bin genesis does not match this build's %s genesis (height 0 bytes differ). "+
+				"Peers will send headers that fail with 'bad prev'. Delete %q and restart, or use a -datadir that matches -network",
+				netSlug, netSlug, jpath)
+		}
+	}
+	if cfg.FullNode {
+		blockOpts := cfg.BlockStorageOpts
+		if blockOpts.Layout == "" {
+			blockOpts = store.DefaultBlockStorageOpts()
+		}
+		rawDir := filepath.Join(chainRoot, "rawblocks")
+		if from, to, up := store.BlockStorageUpgrade(blockOpts, rawDir); up {
+			applog.Line("block", fmt.Sprintf("block storage upgrade %s/zstd=%v → %s/zstd=%v (legacy per-file bodies stay readable under rawblocks/legacy/; new blocks append bundled)",
+				from.Layout, from.Zstd, to.Layout, to.Zstd))
+		}
+		if rb, rerr := store.OpenRawBlockStoreWithOpts(chainRoot, blockOpts); rerr != nil {
+			fmt.Fprintf(os.Stderr, "raw blocks dir: %v\n", rerr)
+		} else {
+			rbStore = rb
+			lateUI.RawBlocks.Store(rbStore)
+			go func(raw *store.RawBlockStore) {
+				raw.ReconcileCountCacheFromDisk()
+				if !raw.HasLegacyPerFileBodies() {
+					raw.RefreshPayloadBytes()
+				}
+			}(rbStore)
+		}
+		if !cfg.NoTxIndex {
+			if ix, ierr := store.OpenTxIndexWithOpts(chainRoot, cfg.TxIndexEmbedTx); ierr != nil {
+				fmt.Fprintf(os.Stderr, "tx index dir: %v\n", ierr)
+			} else {
+				txIx = ix
+			}
+		}
+		var addrIxLocal *store.AddrIndex
+		if txIx != nil {
+			lateUI.TxIndex.Store(txIx)
+			if ax, aerr := store.OpenAddrIndex(chainRoot); aerr != nil {
+				fmt.Fprintf(os.Stderr, "addr index dir: %v\n", aerr)
+			} else {
+				addrIxLocal = ax
+				addrIx = ax
+				lateUI.AddrIndex.Store(addrIx)
+			}
+			if fx, ferr := store.OpenBlockFilterIndex(chainRoot); ferr != nil {
+				fmt.Fprintf(os.Stderr, "block filter index: %v\n", ferr)
+			} else {
+				filterIx = fx
+			}
+		}
+		if rbStore != nil {
+			rbStore.EnableTxIndexing(txIx, txIx != nil)
+			if addrIxLocal != nil && txIx != nil {
+				addrIxLocal.SetResolver(txIx, rbStore)
+				rbStore.EnableAddrIndexing(addrIxLocal, true)
+			}
+		}
+	}
+	localServices = chain.EffectiveP2PServices(p, filterIx != nil, cfg.DogeGoRelayCGNAT.AdvertiseServiceBit(), cfg.FullNode)
+	if cfg.EnableWallet {
+		wpath := filepath.Join(chainRoot, "wallet.json")
+		disk, err = wallet.LoadOrCreate(wpath, p.PubkeyHashAddrID)
+		if err != nil {
+			return fmt.Errorf("wallet: %w", err)
+		}
+		lateUI.Wallet.Store(disk)
+		if cfg.Network == chain.MainnetDogecoin && !disk.IsEncrypted() {
+			applog.Line("wallet", "SECURITY: mainnet wallet.json is not encrypted; run encryptwallet before storing funds")
+		}
+		if cfg.EffectiveFile.UACommentUseNodeTipEnabled() && !disk.NodeTipEnabled() {
+			if _, err := disk.EnableNodeTip(); err != nil {
+				applog.Line("wallet", "node tip: "+err.Error())
+			}
+		}
+		runWalletAutoLock(ctx, disk)
+	}
+	if !cfg.FullNode && disk != nil {
+		spvBloom = NewSPVBloomClient(disk, p, j)
+		if spvBloom.Active() {
+			applog.Line("spv", "BIP37 wallet bloom filter ready (filtered-block sync against NODE_BLOOM peers)")
+		}
+	}
+	if analyticsOn && analyticsStore == nil {
+		var aerr error
+		analyticsStore, aerr = analytics.OpenShared(filepath.Join(chainDataAbs, "dogego_analytics.db"))
+		if aerr != nil {
+			applog.Line("indexer", "analytics shared store: "+aerr.Error())
+		} else if analyticsStore != nil {
+			defer func() { _ = analyticsStore.Close() }()
 		}
 	}
 	var auxJ *store.HeaderAuxJournal
@@ -937,6 +999,7 @@ func Run(ctx context.Context, cfg Config) error {
 	lastAssistCandRefresh := time.Now()
 	lastGetAddrPoll := time.Now()
 	lastIBDStallRecover := time.Time{}
+	lastIBDThroughputBoost := time.Time{}
 	lastBodyIBDPump := time.Time{}
 	lastHeaderCatchUpResumeKick := time.Time{}
 	var bodyIBDHeaderWasPaused bool
@@ -1053,6 +1116,17 @@ func Run(ctx context.Context, cfg Config) error {
 		earlyChainName = "main"
 	}
 	ensureExtensionManager(cfg, &extMgr, chainDataAbs, j, rbStore, txIx, utxoCache)
+	activateEarlyChainRPC(earlyChainRPCEnv{
+		Cfg: cfg, RuntimeSvc: runtimeSvc, EarlyRPC: earlyRPC, ChainRPCPaths: &chainRPCPaths,
+		UIRPCInvoke: &uiRPCInvoke, ExtMgr: extMgr, ChainName: earlyChainName, J: j, AuxJ: auxJ, Pool: pool,
+		RbStore: rbStore, TxIx: txIx, FilterIx: filterIx, UtxoCache: utxoCache, BlockStore: blockStore,
+		TipWait: tipWait, RawFill: &rawFill, FeeHistory: feeHistory, ChainWorkCache: chainWorkCache,
+		ChainRoot: chainRoot, BaseDataAbs: baseDataAbs, ChainDataAbs: chainDataAbs, AnalyticsOn: analyticsOn,
+		BanMgr: banMgr, Orphans: orphans, PeerFeeFilters: peerFeeFilters, ContiguousForUI: contiguousForUI,
+		HeaderCatchUpPending: func() bool { return headerCatchUpPending.Load() },
+		SaveUtxoShutdown:     saveUtxoSnapshotOnShutdown,
+		Disk:                 disk, WIFVer: p.PrivKeyWIFVersion, PKHVer: p.PubkeyHashAddrID, SHVer: p.ScriptHashAddrID,
+	})
 	if cfg.FullNode && rbStore != nil {
 		if err := EnsureLocalGenesis(blockStore); err != nil {
 			applog.Line("block", "local genesis (chainparams): "+err.Error())
@@ -1062,30 +1136,69 @@ func Run(ctx context.Context, cfg Config) error {
 	}
 	if rbStore != nil && blockStore != nil {
 		diskContig := int64(-1)
-		if tip := store.ReconcileBundledContiguousTip(j, rbStore, cfg.Network); tip >= 0 {
-			diskContig = tip
-		} else if tip, err := rbStore.ProbeBundledContiguousTip(); err == nil {
-			diskContig = tip
-		} else {
-			applog.Line("block", "bundled contiguous probe: "+err.Error())
+		contigSeed := int64(-1)
+		if cp, err := store.LoadRawBlockSyncCheckpoint(chainRoot); err == nil && cp.ContiguousRawHeight >= 0 {
+			contigSeed = cp.ContiguousRawHeight
+			diskContig = contigSeed
 		}
-		if diskContig >= 0 {
-			if fixed, err := store.ReconcileRawBlockSyncCheckpoint(chainRoot, diskContig); err != nil {
+		// Resume IBD immediately from the last trusted checkpoint.
+		if contigSeed >= 0 && blockStore.TrySeedContiguousFromCheckpoint(contigSeed) {
+			applog.Line("block", fmt.Sprintf("resuming contiguous coverage from checkpoint height %d", contigSeed))
+		}
+		tipOK := contigSeed >= 0 && store.ContiguousTipSpotOK(j, rbStore, cfg.Network, contigSeed)
+		needFullVerify := needsUncleanRepair || contigSeed < 0 || !tipOK
+		go func(seed int64, full bool) {
+			var tip int64
+			if full {
+				applog.Line("block", "verifying bundled contiguous tip in background (P2P continues)")
+				tip = store.ReconcileBundledContiguousTipSeeded(j, rbStore, cfg.Network, seed)
+			} else {
+				applog.Line("block", "light contiguous tip check in background (skip full rescan)")
+				tip = store.LightVerifyBundledContiguousTip(j, rbStore, cfg.Network, seed)
+			}
+			if tip < 0 {
+				if p, err := rbStore.ProbeBundledContiguousTip(); err == nil {
+					tip = p
+				} else {
+					applog.Line("block", "bundled contiguous probe: "+err.Error())
+					return
+				}
+			}
+			if tip < 0 {
+				return
+			}
+			if fixed, err := store.ReconcileRawBlockSyncCheckpoint(chainRoot, tip); err != nil {
 				applog.Line("block", "reconcile rawblocks_sync: "+err.Error())
 			} else if fixed {
-				applog.Line("block", fmt.Sprintf("reconciled rawblocks_sync.json to disk body tip %d", diskContig))
+				applog.Line("block", fmt.Sprintf("reconciled rawblocks_sync.json to disk body tip %d", tip))
 			}
-			// Raise a falsely clamped checkpoint after perfile→bundled upgrade (probe-only tip).
-			if cp, err := store.LoadRawBlockSyncCheckpoint(chainRoot); err == nil && cp.ContiguousRawHeight < diskContig {
-				cp.ContiguousRawHeight = diskContig
-				cp.NextProbeHeight = diskContig + 1
+			if cp, err := store.LoadRawBlockSyncCheckpoint(chainRoot); err == nil && cp.ContiguousRawHeight < tip {
+				cp.ContiguousRawHeight = tip
+				cp.NextProbeHeight = tip + 1
 				if err := store.SaveRawBlockSyncCheckpoint(chainRoot, cp); err != nil {
 					applog.Line("block", "raise rawblocks_sync: "+err.Error())
 				} else {
-					applog.Line("block", fmt.Sprintf("raised rawblocks_sync.json contiguous coverage to %d", diskContig))
+					applog.Line("block", fmt.Sprintf("raised rawblocks_sync.json contiguous coverage to %d", tip))
 				}
 			}
-			blockStore.maybeClampBundledContiguousFromDisk()
+			prev := blockStore.ContiguousRawHeight()
+			// Refuse false rewinds: if the prior tip still has bodies, a low blk probe is not enough.
+			if tip >= 0 && prev >= 0 && tip < prev && store.ContiguousTipSpotOK(j, rbStore, cfg.Network, prev) {
+				applog.Line("block", fmt.Sprintf("background verify kept contiguous %d (disk probe %d under-counted; tip still present)", prev, tip))
+				tip = prev
+			}
+			blockStore.clampContiguousToDiskTip(tip)
+			if tip > prev {
+				_ = blockStore.TrySeedContiguousFromCheckpoint(tip)
+				applog.Line("block", fmt.Sprintf("background verify raised contiguous coverage to %d", tip))
+			} else if tip >= 0 && prev >= 0 && tip < prev {
+				applog.Line("block", fmt.Sprintf("background verify rewound contiguous coverage %d -> %d", prev, tip))
+			} else {
+				applog.Line("block", fmt.Sprintf("background verify confirmed contiguous coverage through %d", tip))
+			}
+		}(contigSeed, needFullVerify)
+		if diskContig >= 0 {
+			blockStore.clampContiguousToDiskTip(diskContig)
 		}
 		if cp, err := store.LoadRawBlockSyncCheckpoint(chainRoot); err == nil && cp.ContiguousRawHeight >= 0 {
 			seed := cp.ContiguousRawHeight
@@ -1093,7 +1206,7 @@ func Run(ctx context.Context, cfg Config) error {
 				seed = diskContig
 			}
 			if blockStore.TrySeedContiguousFromCheckpoint(seed) {
-				applog.Line("block", fmt.Sprintf("resuming contiguous coverage from checkpoint height %d", seed))
+				// Already logged above when contigSeed matched; keep idempotent for raise races.
 			}
 		}
 	}
@@ -1199,17 +1312,6 @@ func Run(ctx context.Context, cfg Config) error {
 			rawFill.realignProbeToConnectFrontier(blockStore, gap)
 		}
 	}
-	activateEarlyChainRPC(earlyChainRPCEnv{
-		Cfg: cfg, RuntimeSvc: runtimeSvc, EarlyRPC: earlyRPC, ChainRPCPaths: &chainRPCPaths,
-		UIRPCInvoke: &uiRPCInvoke, ExtMgr: extMgr, ChainName: earlyChainName, J: j, AuxJ: auxJ, Pool: pool,
-		RbStore: rbStore, TxIx: txIx, FilterIx: filterIx, UtxoCache: utxoCache, BlockStore: blockStore,
-		TipWait: tipWait, RawFill: &rawFill, FeeHistory: feeHistory, ChainWorkCache: chainWorkCache,
-		ChainRoot: chainRoot, BaseDataAbs: baseDataAbs, ChainDataAbs: chainDataAbs, AnalyticsOn: analyticsOn,
-		BanMgr: banMgr, Orphans: orphans, PeerFeeFilters: peerFeeFilters, ContiguousForUI: contiguousForUI,
-		HeaderCatchUpPending: func() bool { return headerCatchUpPending.Load() },
-		SaveUtxoShutdown:     saveUtxoSnapshotOnShutdown,
-		Disk:                 disk, WIFVer: p.PrivKeyWIFVersion, PKHVer: p.PubkeyHashAddrID, SHVer: p.ScriptHashAddrID,
-	})
 	startIBDConnectWorkers(ctx, blockStore, utxoCache, utxoQuarantinedOnStartup)
 	autoFilterRepair := autoRecoverFilterRepairFn(j, chainRoot, filterIx, txIx, rbStore)
 	if needsUncleanRepair {
@@ -1584,7 +1686,6 @@ func Run(ctx context.Context, cfg Config) error {
 		}
 	}
 
-	var discoveredPeers []string
 	discoveryFeed = NewPeerDiscoveryFeed(nil)
 	refreshPeerDiscovery := func() []string {
 		applog.Line("net", "refreshing peer discovery (DNS seeds + fixed seeds)")
@@ -1622,6 +1723,23 @@ func Run(ctx context.Context, cfg Config) error {
 		applog.Line("block", "pre-P2P block-assist armed (forward body IBD while headers connect)")
 	}
 	armPreP2PBlockAssist()
+	if cfg.FullNode && blockStore != nil {
+		StartIBDThroughputGovernor(IBDThroughputGovernorParams{
+			Ctx:        ctx,
+			BlockStore: blockStore,
+			Raw:        &rawFill,
+			PeerMgr:    peerMgr,
+			Assist:     &assistCandidates,
+			Feed:       discoveryFeed,
+			Discovered: &discoveredPeers,
+			Scorer:     blockPeerScorer,
+			Added:      func() []string { return addedNodes.List() },
+			Launch:     blockAssistLaunch,
+			RefreshDiscovery: refreshPeerDiscovery,
+			EnsureAssist:     ensureAssistPool,
+			PrimaryMW: func() *MsgWriter { return mw },
+		})
+	}
 	headerSyncViaDiscovery := cfg.Peer == ""
 	if cfg.Peer != "" {
 		discoveryFeed.Note(cfg.Peer)
@@ -2505,8 +2623,9 @@ func Run(ctx context.Context, cfg Config) error {
 				chainActive = ChainActiveHeight(j, rbStore, utxoCache, blockStore.ContiguousRawHeight)
 			}
 			extras := P2PExtrasFromNode(assistRegistry, blockPeerScorer, chainActive, cont, rawFill.syncWorkerCount(), dedicatedHeaderRunning(), DedicatedHeaderPeerAddr())
-			ibdProg := rawFill.snapshot()
-			enrichIBDProgressSnapshot(ibdProg, j, blockStore)
+			ibdProg := rawFill.snapshotForUI()
+			enrichIBDProgressSnapshotLight(ibdProg, j, blockStore)
+			appendIBDHoleDiagnostics(ibdProg, blockStore, &rawFill)
 			extras.IBDProgress = IBDProgressWithDiscoveryFeed(ibdProg, assistCandidates, discoveryFeed)
 			ibdSnap := coreIBDSnap()
 			mergeCoreIBDIntoProgress(extras.IBDProgress, ibdSnap)
@@ -3223,6 +3342,7 @@ func Run(ctx context.Context, cfg Config) error {
 		}
 		if cfg.FullNode && blockStore != nil && rawFill.bodiesDownloadActive(blockStore) {
 			MaybeRequestGetAddrDuringIBD(mw, peerMgr, true, &lastGetAddrPoll)
+			MaybeBoostIBDThroughput(mw, peerMgr, &rawFill, blockStore, assistCandidates, discoveryFeed, discoveredPeers, blockPeerScorer, addedNodes.List(), &lastIBDThroughputBoost, &lastAssistCandRefresh, blockAssistLaunch, refreshPeerDiscovery)
 			MaybeRecoverIBDStall(mw, peerMgr, &rawFill, blockStore, assistCandidates, discoveryFeed, discoveredPeers, blockPeerScorer, addedNodes.List(), &lastIBDStallRecover, blockAssistLaunch, refreshPeerDiscovery, ensureAssistPool)
 		}
 		if cfg.FullNode && rawFill.useShortReadDeadline() && assistCandidates == nil {
@@ -3305,6 +3425,8 @@ func Run(ctx context.Context, cfg Config) error {
 						if connectedAddr != "" {
 							if shouldRotatePeerForStubBlock(ferr) {
 								penalizeStubBlockPeer(blockPeerScorer, addrBookFromPeerMgr(peerMgr), connectedAddr)
+							} else if strings.Contains(ferr.Error(), "bad magic") {
+								penalizeWrongNetworkPeer(blockPeerScorer, addrBookFromPeerMgr(peerMgr), connectedAddr, ferr)
 							} else {
 								penalizeBlockPeer(blockPeerScorer, addrBookFromPeerMgr(peerMgr), connectedAddr, sessionFailureHardFromFetchErr(ferr))
 							}

@@ -42,21 +42,21 @@ func mergeP2PSummaryExtraFields(summary map[string]any, p2pSnap map[string]any) 
 
 // BuildSummaryMap assembles /api/summary JSON fields (may block; use LiveFeed for HTTP handlers).
 func BuildSummaryMap(cfg StartConfig) (map[string]any, error) {
-	if cfg.Journal == nil {
+	if cfg.ActiveJournal() == nil {
 		return nil, fmt.Errorf("no journal")
 	}
 	// Header sync appends on dedicated/background goroutines; always derive tip from headers.bin size.
-	tip, cnt, err1 := journalTipForDashboard(cfg.Journal)
+	tip, cnt, err1 := journalTipForDashboard(cfg.ActiveJournal())
 	if err1 != nil {
 		return nil, fmt.Errorf("journal read: %w", err1)
 	}
-	best, err := journalBestHashForDashboard(cfg.Journal)
+	best, err := journalBestHashForDashboard(cfg.ActiveJournal())
 	if err != nil {
 		return nil, fmt.Errorf("journal tip hash: %w", err)
 	}
 	gen := strings.TrimSpace(cfg.GenesisHash)
 	if gen == "" {
-		gen, err = cfg.Journal.GenesisHashHex()
+		gen, err = cfg.ActiveJournal().GenesisHashHex()
 		if err != nil {
 			return nil, err
 		}
@@ -71,14 +71,14 @@ func BuildSummaryMap(cfg StartConfig) (map[string]any, error) {
 	}
 	rb := 0
 	contiguousH := contiguousHeightForAPI(cfg)
-	if cfg.RawBlocks != nil {
-		if n, err := cfg.RawBlocks.FastCount(); err == nil {
+	if cfg.ActiveRawBlocks() != nil {
+		if n, err := cfg.ActiveRawBlocks().FastCount(); err == nil {
 			rb = n
 		}
-		rb = maybeReconcileRawBlockCount(cfg.RawBlocks, contiguousH, rb)
+		rb = maybeReconcileRawBlockCount(cfg.ActiveRawBlocks(), contiguousH, rb)
 	}
 	verProg := 1.0
-	if cfg.RawBlocks != nil && tip >= 0 {
+	if cfg.ActiveRawBlocks() != nil && tip >= 0 {
 		want := int(tip) + 1
 		have := int(contiguousH) + 1
 		if contiguousH < 0 {
@@ -262,7 +262,7 @@ func BuildSummaryMap(cfg StartConfig) (map[string]any, error) {
 	var chainWarnings []string
 	if !ibdActive {
 		if net, err := networkFromUISlug(cfg.Network); err == nil {
-			chainWarnings = consensus.ChainWarnings(cfg.Journal, net)
+			chainWarnings = consensus.ChainWarnings(cfg.ActiveJournal(), net)
 		}
 	}
 	ibdFlag := ibdActive
@@ -296,7 +296,7 @@ func BuildSummaryMap(cfg StartConfig) (map[string]any, error) {
 		"wallet_enabled":             walletLoaded(cfg),
 		"wallet_rpc_ready":           walletRPCReady(cfg),
 		"wallet_address_ready":       walletAddressReady(cfg),
-		"wallet_address":             walletAddr(cfg.Wallet),
+		"wallet_address":             walletAddr(cfg.ActiveWallet()),
 	}
 	if walletLoaded(cfg) {
 		if confirmed, immature, utxos, ok := walletBalanceFromUtxoCache(cfg); ok {
@@ -304,7 +304,7 @@ func BuildSummaryMap(cfg StartConfig) (map[string]any, error) {
 			summary["wallet_immature_balance"] = immature
 			summary["wallet_utxo_count"] = utxos
 		}
-		attachWalletEncryptionStatus(summary, cfg.Wallet)
+		attachWalletEncryptionStatus(summary, cfg.ActiveWallet())
 		attachWalletRescanStatus(summary, cfg)
 		attachWalletHistoryDeferStatus(summary, cfg)
 	}
@@ -401,14 +401,14 @@ func BuildSummaryMap(cfg StartConfig) (map[string]any, error) {
 	}
 	mergeIBDProgressDiagnostics(summary, ibdProg)
 	if !ibdActive {
-		if tv, ok := rpc.TxVerificationProgress(rpcChainFromUISlug(cfg.Network), cfg.Journal, cfg.TxIndex, chainActive); ok {
+		if tv, ok := rpc.TxVerificationProgress(rpcChainFromUISlug(cfg.Network), cfg.ActiveJournal(), cfg.ActiveTxIndex(), chainActive); ok {
 			summary["dogego_tx_verification_progress"] = tv
 		}
 	}
 	if chainActive >= 0 {
 		txProcessed := chainActive + 1
-		if cfg.TxIndex != nil {
-			if n, _, err := cfg.TxIndex.CachedStats(60 * time.Second); err == nil && n > 0 {
+		if cfg.ActiveTxIndex() != nil {
+			if n, _, err := cfg.ActiveTxIndex().CachedStats(60 * time.Second); err == nil && n > 0 {
 				txProcessed = int64(n)
 			}
 		}
@@ -544,6 +544,31 @@ func mergeIBDProgressDiagnostics(summary map[string]any, prog map[string]interfa
 	}
 	if v, ok := prog["connect_catch_up_interval_ms"].(int64); ok && v > 0 {
 		summary["dogego_connect_catch_up_interval_ms"] = v
+	}
+	if v, ok := prog["contiguous_blocks_per_minute"].(float64); ok && v > 0 {
+		summary["contiguous_blocks_per_minute"] = v
+		summary["dogego_contiguous_blocks_per_minute"] = v
+	}
+	if v, ok := prog["frontier_hole_height"].(int64); ok && v >= 0 {
+		summary["frontier_hole_height"] = v
+		summary["dogego_frontier_hole_height"] = v
+	} else if v, ok := prog["frontier_hole_height"].(float64); ok && v >= 0 {
+		summary["frontier_hole_height"] = int64(v)
+		summary["dogego_frontier_hole_height"] = int64(v)
+	}
+	if v, ok := prog["raw_blocks_in_flight_ahead"].(int64); ok && v > 0 {
+		summary["raw_blocks_in_flight_ahead"] = v
+		summary["dogego_raw_blocks_in_flight_ahead"] = v
+	} else if v, ok := prog["raw_blocks_in_flight_ahead"].(float64); ok && v > 0 {
+		summary["raw_blocks_in_flight_ahead"] = int64(v)
+		summary["dogego_raw_blocks_in_flight_ahead"] = int64(v)
+	}
+	if v, ok := prog["hole_blocked_sec"].(int64); ok && v > 0 {
+		summary["hole_blocked_sec"] = v
+		summary["dogego_hole_blocked_sec"] = v
+	} else if v, ok := prog["hole_blocked_sec"].(float64); ok && v > 0 {
+		summary["hole_blocked_sec"] = int64(v)
+		summary["dogego_hole_blocked_sec"] = int64(v)
 	}
 }
 

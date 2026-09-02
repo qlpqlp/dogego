@@ -205,7 +205,7 @@ func (s *Store) ExportBackup() (map[string]interface{}, error) {
 	}
 	payload := map[string]interface{}{
 		"extension":   ExtensionID,
-		"version":     "0.3.0",
+		"version":     "0.4.0",
 		"exported_at": time.Now().UTC().Format(time.RFC3339),
 		"config":      cfg,
 		"note":        "Restoring applies config only. Index/DB files already live under data/ and survive upgrades.",

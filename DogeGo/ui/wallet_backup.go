@@ -33,11 +33,11 @@ func registerWalletBackupRoutes(mux *http.ServeMux, cfg StartConfig, webGate *we
 			http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
 			return
 		}
-		if cfg.Wallet == nil {
+		if cfg.ActiveWallet() == nil {
 			http.Error(w, "wallet disabled", http.StatusBadRequest)
 			return
 		}
-		path := cfg.Wallet.Path()
+		path := cfg.ActiveWallet().Path()
 		if path == "" {
 			http.Error(w, "wallet path unknown", http.StatusInternalServerError)
 			return
@@ -63,14 +63,14 @@ func registerWalletBackupRoutes(mux *http.ServeMux, cfg StartConfig, webGate *we
 			return
 		}
 		w.Header().Set("Content-Type", "application/json; charset=utf-8")
-		if cfg.Wallet == nil {
+		if cfg.ActiveWallet() == nil {
 			w.WriteHeader(http.StatusBadRequest)
 			_ = json.NewEncoder(w).Encode(map[string]string{"error": "wallet disabled"})
 			return
 		}
 		switch r.Method {
 		case http.MethodGet:
-			st := cfg.Wallet.RotationState()
+			st := cfg.ActiveWallet().RotationState()
 			_ = json.NewEncoder(w).Encode(map[string]any{
 				"rotation": st,
 			})
@@ -94,7 +94,7 @@ func registerWalletBackupRoutes(mux *http.ServeMux, cfg StartConfig, webGate *we
 		action := strings.TrimSpace(strings.ToLower(body.Action))
 		switch action {
 		case "prepare":
-			addr, err := cfg.Wallet.BeginKeyRotation()
+			addr, err := cfg.ActiveWallet().BeginKeyRotation()
 			if err != nil {
 				writeWalletRotateErr(w, err)
 				return
@@ -107,10 +107,10 @@ func registerWalletBackupRoutes(mux *http.ServeMux, cfg StartConfig, webGate *we
 				"note":        "Send your full spendable balance to the new address, then run sweep and finalize.",
 			})
 		case "cancel":
-			cfg.Wallet.CancelKeyRotation()
+			cfg.ActiveWallet().CancelKeyRotation()
 			_ = json.NewEncoder(w).Encode(map[string]any{"ok": true})
 		case "sweep":
-			dest, ok := cfg.Wallet.PendingRotationAddress()
+			dest, ok := cfg.ActiveWallet().PendingRotationAddress()
 			if !ok {
 				w.WriteHeader(http.StatusBadRequest)
 				_ = json.NewEncoder(w).Encode(map[string]string{"error": "run prepare first"})
@@ -159,7 +159,7 @@ func registerWalletBackupRoutes(mux *http.ServeMux, cfg StartConfig, webGate *we
 				"ready_to_finalize": bal < 0.00001 && spendable == 0,
 			})
 		case "finalize":
-			archive, err := cfg.Wallet.FinalizeKeyRotation()
+			archive, err := cfg.ActiveWallet().FinalizeKeyRotation()
 			if err != nil {
 				writeWalletRotateErr(w, err)
 				return
@@ -167,7 +167,7 @@ func registerWalletBackupRoutes(mux *http.ServeMux, cfg StartConfig, webGate *we
 			_ = json.NewEncoder(w).Encode(map[string]any{
 				"ok":           true,
 				"archive_path": archive,
-				"new_address":  cfg.Wallet.DefaultAddress(),
+				"new_address":  cfg.ActiveWallet().DefaultAddress(),
 				"note":         "Old wallet archived. Delete the archive only after you confirm funds on the new address.",
 			})
 		case "remove_archive":

@@ -49,9 +49,9 @@ func TestWalletAPIEnvelopeRescanFields(t *testing.T) {
 func TestWalletAPIEnvelopeScanIndexOK(t *testing.T) {
 	cfg, _, spk := testWalletFastSetup(t)
 	addWalletFastUtxo(cfg.UtxoCache(), 9, 0, 1_000_000_000, 300, spk)
-	cfg.Wallet.SeedScannedTx([]wallet.ScannedTx{{
+	cfg.ActiveWallet().SeedScannedTx([]wallet.ScannedTx{{
 		TxID: "abcd1234abcd1234abcd1234abcd1234abcd1234abcd1234abcd1234abcd1234",
-		Category: "receive", Address: cfg.Wallet.Address(), AmountKoinu: 1_000_000_000,
+		Category: "receive", Address: cfg.ActiveWallet().Address(), AmountKoinu: 1_000_000_000,
 		BlockHeight: 300, Vout: 0,
 	}})
 	out := walletAPIEnvelope(cfg)

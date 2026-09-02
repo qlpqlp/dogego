@@ -30,7 +30,7 @@ const blockstepMaxTimelinePoints = 48
 
 // BlockStepMeta is returned by GET /api/blockstep/meta.
 func BlockStepMeta(cfg StartConfig) (map[string]any, int, string) {
-	j := cfg.Journal
+	j := cfg.ActiveJournal()
 	if j == nil {
 		return nil, 503, "header journal unavailable"
 	}
@@ -50,7 +50,7 @@ func BlockStepMeta(cfg StartConfig) (map[string]any, int, string) {
 	}
 	contig := contiguousHeightForAPI(cfg)
 	chainActive := chainActiveHeightForAPI(cfg, tip)
-	navHeight := blockstepNavigableHeight(tip, contig, chainActive, cfg.RawBlocks != nil)
+	navHeight := blockstepNavigableHeight(tip, contig, chainActive, cfg.ActiveRawBlocks() != nil)
 	var navTime int64
 	if navHeight >= 0 {
 		if h80, err := j.ReadHeaderAt(navHeight); err == nil {
@@ -75,10 +75,10 @@ func BlockStepMeta(cfg StartConfig) (map[string]any, int, string) {
 		"timeline_start":       genesisTS,
 		"timeline_end":         timelineEnd,
 		"timeline_start_label": "Dec 2013",
-		"has_raw_blocks":       cfg.RawBlocks != nil,
-		"has_tx_index":         cfg.TxIndex != nil,
-		"syncing":              cfg.RawBlocks != nil && contig >= 0 && contig < tip,
-		"indexing_note":        blockstepIndexingNote(cfg.RawBlocks, cfg.TxIndex, contig, tip, navHeight),
+		"has_raw_blocks":       cfg.ActiveRawBlocks() != nil,
+		"has_tx_index":         cfg.ActiveTxIndex() != nil,
+		"syncing":              cfg.ActiveRawBlocks() != nil && contig >= 0 && contig < tip,
+		"indexing_note":        blockstepIndexingNote(cfg.ActiveRawBlocks(), cfg.ActiveTxIndex(), contig, tip, navHeight),
 	}
 	return out, 0, ""
 }
@@ -761,21 +761,21 @@ func BlockStepAddressDetail(cfg StartConfig, address, hintTxid string, hintVout 
 	}
 	address = normalizeScanAddress(address, p.PubkeyHashAddrID, p.ScriptHashAddrID)
 	var scan map[string]any
-	if cfg.AddrIndex != nil && cfg.AddrIndex.HasAny() {
-		if indexed, err := ScanAddressFromIndex(cfg.AddrIndex, address, recvOffset, recvLimit, spendOffset, spendLimit); err == nil {
+	if cfg.ActiveAddrIndex() != nil && cfg.ActiveAddrIndex().HasAny() {
+		if indexed, err := ScanAddressFromIndex(cfg.ActiveAddrIndex(), address, recvOffset, recvLimit, spendOffset, spendLimit); err == nil {
 			scan = indexed
 			if recvOffset == 0 && strings.TrimSpace(hintTxid) != "" {
 				mergeHintOnlyForAddressIndexPage(scan, cfg, address, p.PubkeyHashAddrID, p.ScriptHashAddrID, hintTxid, hintVout)
 			}
 		}
 	}
-	if scan == nil && cfg.Wallet != nil {
+	if scan == nil && cfg.ActiveWallet() != nil {
 		if fast, ok := ScanAddressWalletFast(cfg, address, p.PubkeyHashAddrID, p.ScriptHashAddrID, recvOffset, recvLimit, spendOffset, spendLimit); ok {
 			scan = fast
 		}
 	}
 	if scan == nil {
-		legacy, err := ScanAddressInRawWindow(cfg.Journal, cfg.RawBlocks, cfg.TxIndex, p.PubkeyHashAddrID, p.ScriptHashAddrID, address, cfg.Pool, strings.TrimSpace(hintTxid), hintVout, cfg.UtxoCache)
+		legacy, err := ScanAddressInRawWindow(cfg.ActiveJournal(), cfg.ActiveRawBlocks(), cfg.ActiveTxIndex(), p.PubkeyHashAddrID, p.ScriptHashAddrID, address, cfg.Pool, strings.TrimSpace(hintTxid), hintVout, cfg.UtxoCache)
 		if err != nil {
 			return map[string]any{
 				"found":   false,
@@ -825,8 +825,8 @@ func mergeHintOnlyForAddressIndexPage(scan map[string]any, cfg StartConfig, addr
 	if n, ok := scan["total_received_koinu_window"].(int64); ok {
 		totalKoinu = n
 	}
-	mergeHintOutpoint(&hits, cfg.Journal, cfg.RawBlocks, cfg.TxIndex, cfg.Pool, hintTxid, hintVout, address, pubVer, scriptVer, &totalKoinu)
-	linkOutputSpendsFromIndex(hits, cfg.AddrIndex)
+	mergeHintOutpoint(&hits, cfg.ActiveJournal(), cfg.ActiveRawBlocks(), cfg.ActiveTxIndex(), cfg.Pool, hintTxid, hintVout, address, pubVer, scriptVer, &totalKoinu)
+	linkOutputSpendsFromIndex(hits, cfg.ActiveAddrIndex())
 	scan["matching_outputs"] = hits
 }
 
@@ -861,12 +861,12 @@ func registerBlockStepRoutes(mux *http.ServeMux, cfg StartConfig) {
 			writeBlockStepJSON(w, nil, 400, "invalid ts")
 			return
 		}
-		h, err := HeightAtUnix(cfg.Journal, ts)
+		h, err := HeightAtUnix(cfg.ActiveJournal(), ts)
 		if err != nil {
 			writeBlockStepJSON(w, nil, 500, err.Error())
 			return
 		}
-		h80, _ := cfg.Journal.ReadHeaderAt(h)
+		h80, _ := cfg.ActiveJournal().ReadHeaderAt(h)
 		writeBlockStepJSON(w, map[string]any{
 			"height": h,
 			"time":   headerTimeUnix(h80),
@@ -882,7 +882,7 @@ func registerBlockStepRoutes(mux *http.ServeMux, cfg StartConfig) {
 		fromTS, _ := strconv.ParseInt(q.Get("from"), 10, 64)
 		toTS, _ := strconv.ParseInt(q.Get("to"), 10, 64)
 		pts, _ := strconv.Atoi(q.Get("points"))
-		m, code, msg := BlockStepTimeline(cfg.Journal, cfg.RawBlocks, fromTS, toTS, pts)
+		m, code, msg := BlockStepTimeline(cfg.ActiveJournal(), cfg.ActiveRawBlocks(), fromTS, toTS, pts)
 		writeBlockStepJSON(w, m, code, msg)
 	})
 	mux.HandleFunc("/api/blockstep/block", func(w http.ResponseWriter, r *http.Request) {
@@ -890,7 +890,7 @@ func registerBlockStepRoutes(mux *http.ServeMux, cfg StartConfig) {
 			http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
 			return
 		}
-		m, code, msg := BlockStepBlockDetail(cfg.Journal, cfg.RawBlocks, cfg.TxIndex, cfg.Network, r.URL.Query().Get("height"), blockTxOffsetFromQuery(r.URL.Query()), blockTxLimitFromQuery(r.URL.Query()), contiguousHeightForAPI(cfg))
+		m, code, msg := BlockStepBlockDetail(cfg.ActiveJournal(), cfg.ActiveRawBlocks(), cfg.ActiveTxIndex(), cfg.Network, r.URL.Query().Get("height"), blockTxOffsetFromQuery(r.URL.Query()), blockTxLimitFromQuery(r.URL.Query()), contiguousHeightForAPI(cfg))
 		writeBlockStepJSON(w, m, code, msg)
 	})
 	mux.HandleFunc("/api/blockstep/tx", func(w http.ResponseWriter, r *http.Request) {
@@ -898,7 +898,7 @@ func registerBlockStepRoutes(mux *http.ServeMux, cfg StartConfig) {
 			http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
 			return
 		}
-		m, code, msg := BlockStepTxDetail(cfg.Network, cfg.Journal, cfg.RawBlocks, cfg.TxIndex, cfg.AddrIndex, cfg.Pool, r.URL.Query().Get("txid"))
+		m, code, msg := BlockStepTxDetail(cfg.Network, cfg.ActiveJournal(), cfg.ActiveRawBlocks(), cfg.ActiveTxIndex(), cfg.ActiveAddrIndex(), cfg.Pool, r.URL.Query().Get("txid"))
 		writeBlockStepJSON(w, m, code, msg)
 	})
 	mux.HandleFunc("/api/blockstep/address", func(w http.ResponseWriter, r *http.Request) {

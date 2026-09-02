@@ -193,7 +193,7 @@ func runConnectCatchUpStartupBurst(bs *BlockStoreCtx, utxo *store.UtxoCache) {
 	}
 	if ShouldDeferConnectForBodyDownload(bs) {
 		noteConnectDeferredForDownload(bs)
-		// Still burst-connect: live nodes were stuck at chainActive ~2k with 200k+ bodies stored.
+		return
 	}
 	lag := ConnectCatchUpLag(bs, utxo)
 	if lag < 2048 {
@@ -225,7 +225,23 @@ func runConnectCatchUpOnce(bs *BlockStoreCtx, utxo *store.UtxoCache) {
 	}
 	if ShouldDeferConnectForBodyDownload(bs) {
 		noteConnectDeferredForDownload(bs)
-		// Fall through: connect throttled in parallel with body download (Core-style).
+		// Do not hard-skip forever: Core keeps connecting under -assumevalid while
+		// downloading. Run a small AV connect pass so chainActive advances during IBD
+		// instead of a multi-million ConnectBlock cliff after bodies finish.
+		lag := ConnectCatchUpLag(bs, utxo)
+		if lag < 2048 {
+			return
+		}
+		before := utxo.TipHeight()
+		n := connectCatchUpBlocksPerIBDCall(bs)
+		if n > 64 {
+			n = 64 // keep getdata ahead of connect during download-first
+		}
+		_ = bs.SyncUtxoCacheBounded(n)
+		if after := utxo.TipHeight(); after > before {
+			RecordIBDConnectAdvance(after)
+		}
+		return
 	}
 	if !BodiesBehindHeaders(bs) {
 		lag := ConnectCatchUpLag(bs, utxo)

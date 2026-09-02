@@ -32,6 +32,7 @@ type SyncActivityInput struct {
 	ChainActiveHeight      int64
 	ConnectLag             int64
 	ConnectBlocksPerMinute float64
+	ContiguousBlocksPerMinute float64
 	LowestMissing          int64
 	NextProbe              int64
 	InFlightBatches        int
@@ -275,7 +276,12 @@ func syncActivityHeadline(in SyncActivityInput, secSince int64, lastKind, lastMs
 		if low < 0 {
 			low = in.ContiguousBodies + 1
 		}
+		holeBlocked := in.InFlightBatches > 0 && in.ContiguousBlocksPerMinute <= 0 &&
+			secSince >= 12 && in.BlocksPerMinute > 0
 		head := fmt.Sprintf("Downloading block bodies from height %d", low)
+		if holeBlocked {
+			head = fmt.Sprintf("Blocked at height %d", low)
+		}
 		var parts []string
 		if in.HeaderTip > 0 {
 			parts = append(parts, fmt.Sprintf("headers through %d", in.HeaderTip))
@@ -286,13 +292,25 @@ func syncActivityHeadline(in SyncActivityInput, secSince int64, lastKind, lastMs
 		if in.ContiguousBodies >= 0 {
 			parts = append(parts, fmt.Sprintf("stored through %d", in.ContiguousBodies))
 		}
+		if in.ContiguousBlocksPerMinute > 0 {
+			parts = append(parts, fmt.Sprintf("%.1f stored/min", in.ContiguousBlocksPerMinute))
+		}
 		if in.BlocksPerMinute > 0 {
-			parts = append(parts, fmt.Sprintf("%.1f blocks/min", in.BlocksPerMinute))
+			if in.ContiguousBlocksPerMinute > 0 && in.BlocksPerMinute > in.ContiguousBlocksPerMinute*1.15 {
+				parts = append(parts, fmt.Sprintf("%.1f ingest/min", in.BlocksPerMinute))
+			} else if in.ContiguousBlocksPerMinute <= 0 {
+				parts = append(parts, fmt.Sprintf("%.1f ingest/min", in.BlocksPerMinute))
+			} else {
+				parts = append(parts, fmt.Sprintf("%.1f blocks/min", in.BlocksPerMinute))
+			}
 		} else if lastFetch != "" {
 			parts = append(parts, lastFetch)
 		}
 		if in.InFlightBatches > 0 {
 			parts = append(parts, fmt.Sprintf("%d batch(es) in flight", in.InFlightBatches))
+		}
+		if holeBlocked {
+			parts = append(parts, "waiting for hole block (ahead bodies staged)")
 		}
 		if len(parts) > 0 {
 			detail = joinParts(detail, stringsJoin(parts, " · "))

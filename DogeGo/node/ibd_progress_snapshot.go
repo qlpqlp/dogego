@@ -12,6 +12,16 @@ import (
 
 // enrichIBDProgressSnapshot adds live block-sync fields for dashboard / P2P ibd_progress.
 func enrichIBDProgressSnapshot(snap map[string]interface{}, j *store.HeaderJournal, bs *BlockStoreCtx) {
+	enrichIBDProgressSnapshotOpts(snap, j, bs, true)
+}
+
+// enrichIBDProgressSnapshotLight skips lowest-missing disk walks so /api/live overlays stay
+// under the LiveFeed timeout (full gap scans during IBD were freezing peer/rate metrics).
+func enrichIBDProgressSnapshotLight(snap map[string]interface{}, j *store.HeaderJournal, bs *BlockStoreCtx) {
+	enrichIBDProgressSnapshotOpts(snap, j, bs, false)
+}
+
+func enrichIBDProgressSnapshotOpts(snap map[string]interface{}, j *store.HeaderJournal, bs *BlockStoreCtx, scanGaps bool) {
 	if snap == nil {
 		return
 	}
@@ -63,6 +73,13 @@ func enrichIBDProgressSnapshot(snap map[string]interface{}, j *store.HeaderJourn
 		return
 	}
 	cont := bs.ContiguousRawHeight()
+	if cont >= 0 && tip > cont {
+		snap["blocks_behind"] = tip - cont
+	}
+	bodyIBDEtaMinutes(snap, tip, cont)
+	if !scanGaps {
+		return
+	}
 	connectLag := int64(0)
 	if bs.Utxo != nil {
 		connectLag = ConnectCatchUpLag(bs, bs.Utxo)
@@ -81,10 +98,6 @@ func enrichIBDProgressSnapshot(snap map[string]interface{}, j *store.HeaderJourn
 			}
 		}
 	}
-	if cont >= 0 && tip > cont {
-		snap["blocks_behind"] = tip - cont
-	}
-	bodyIBDEtaMinutes(snap, tip, cont)
 }
 
 func bodyIBDEtaMinutes(snap map[string]interface{}, tip, cont int64) {

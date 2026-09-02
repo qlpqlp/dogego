@@ -327,7 +327,20 @@ func (c *BlockStoreCtx) maybeClampBundledContiguousFromDisk() int64 {
 	if c.Raw.StorageOpts().Layout != store.BlockLayoutBundled {
 		return c.ContiguousRawHeight()
 	}
-	diskTip := store.ReconcileBundledContiguousTip(c.Journal, c.Raw, c.chainNet())
+	// Use the cached tip only — ContiguousRawHeight() would recompute from genesis when unset.
+	c.contiguousMu.Lock()
+	seed := c.contiguousTip
+	c.contiguousMu.Unlock()
+	diskTip := store.ReconcileBundledContiguousTipSeeded(c.Journal, c.Raw, c.chainNet(), seed)
+	return c.clampContiguousToDiskTip(diskTip)
+}
+
+// clampContiguousToDiskTip applies a previously computed disk tip without re-probing blk*.dat.
+// Used at startup after ReconcileBundledContiguousTipSeeded so we do not pay for a second full scan.
+func (c *BlockStoreCtx) clampContiguousToDiskTip(diskTip int64) int64 {
+	if c == nil {
+		return -1
+	}
 	if diskTip < 0 {
 		return c.ContiguousRawHeight()
 	}

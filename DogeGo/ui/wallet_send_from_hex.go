@@ -22,7 +22,7 @@ import (
 func walletScriptSetFromTracked(tracked [][]byte, cfg StartConfig) (map[string][]byte, map[string]string) {
 	scriptSet := make(map[string][]byte, len(tracked))
 	addrByScript := make(map[string]string, len(tracked))
-	if cfg.Wallet == nil {
+	if cfg.ActiveWallet() == nil {
 		return scriptSet, addrByScript
 	}
 	pkh, sh, err := chainVersions(cfg.Network)
@@ -46,8 +46,8 @@ func walletLookupPrevOutput(cfg StartConfig, prevHash [32]byte, vout uint32) (va
 			return e.Value, e.PkScript, true
 		}
 	}
-	if cfg.TxIndex != nil && cfg.RawBlocks != nil {
-		prevTx, err := store.LoadIndexedTx(cfg.TxIndex, cfg.RawBlocks, mempool.TxIDDisplayHex(prevHash))
+	if cfg.ActiveTxIndex() != nil && cfg.ActiveRawBlocks() != nil {
+		prevTx, err := store.LoadIndexedTx(cfg.ActiveTxIndex(), cfg.ActiveRawBlocks(), mempool.TxIDDisplayHex(prevHash))
 		if err != nil {
 			return 0, nil, false
 		}
@@ -61,7 +61,7 @@ func walletLookupPrevOutput(cfg StartConfig, prevHash [32]byte, vout uint32) (va
 }
 
 func walletSendSpendFromHex(cfg StartConfig, hx string) (sendAddr string, sendAmt int64, feeKoinu int64, ok bool) {
-	if cfg.Wallet == nil {
+	if cfg.ActiveWallet() == nil {
 		return "", 0, 0, false
 	}
 	raw, err := hex.DecodeString(strings.TrimSpace(hx))
@@ -72,7 +72,7 @@ func walletSendSpendFromHex(cfg StartConfig, hx string) (sendAddr string, sendAm
 	if err != nil {
 		return "", 0, 0, false
 	}
-	tracked := cfg.Wallet.TrackedScripts()
+	tracked := cfg.ActiveWallet().TrackedScripts()
 	scriptSet, addrByScript := walletScriptSetFromTracked(tracked, cfg)
 	if len(scriptSet) == 0 {
 		return "", 0, 0, false
@@ -204,7 +204,7 @@ func walletSendEntryFromHex(cfg StartConfig, txid, hx string, blockHeight, tip i
 const walletSupplementMaxCandidates = 48
 
 func walletSupplementMissingSends(cfg StartConfig, entries []map[string]interface{}, scanned []wallet.ScannedTx, tip int64, kind string) []map[string]interface{} {
-	if cfg.Wallet == nil || len(scanned) == 0 {
+	if cfg.ActiveWallet() == nil || len(scanned) == 0 {
 		return entries
 	}
 	kind = strings.ToLower(strings.TrimSpace(kind))

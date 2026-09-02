@@ -25,17 +25,18 @@ func PurgeStaleRawBlockSyncTemps(chainDir string) (int, error) {
 	if chainDir == "" {
 		return 0, nil
 	}
-	tmp := filepath.Join(chainDir, rawBlockSyncFile+".tmp")
-	if _, err := os.Stat(tmp); err != nil {
-		if os.IsNotExist(err) {
-			return 0, nil
+	n := 0
+	matches, err := filepath.Glob(filepath.Join(chainDir, rawBlockSyncFile+".tmp*"))
+	if err != nil {
+		return 0, err
+	}
+	for _, tmp := range matches {
+		if err := os.Remove(tmp); err != nil && !os.IsNotExist(err) {
+			return n, err
 		}
-		return 0, err
+		n++
 	}
-	if err := os.Remove(tmp); err != nil {
-		return 0, err
-	}
-	return 1, nil
+	return n, nil
 }
 
 // ReconcileRawBlockSyncCheckpoint clamps a stale checkpoint to the on-disk contiguous frontier (Core-style auto-heal).

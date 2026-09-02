@@ -14,7 +14,7 @@ import (
 
 // walletLoaded reports whether a wallet.json instance is attached to this node.
 func walletLoaded(cfg StartConfig) bool {
-	return cfg.Wallet != nil
+	return cfg.ActiveWallet() != nil
 }
 
 // walletRPCReady reports whether send/list wallet RPC bridges are wired (full node).
@@ -24,7 +24,7 @@ func walletRPCReady(cfg StartConfig) bool {
 
 // walletAddressReady reports whether getnewaddress can run (wallet disk + in-process RPC).
 func walletAddressReady(cfg StartConfig) bool {
-	return cfg.Wallet != nil && cfg.RPCInvoke != nil
+	return cfg.ActiveWallet() != nil && cfg.RPCInvoke != nil
 }
 
 // walletStatusJSON is returned by GET /api/wallet for Receive/Send tabs.

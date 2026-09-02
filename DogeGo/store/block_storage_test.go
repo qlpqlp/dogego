@@ -177,6 +177,25 @@ func TestResolveBlockStorageOptsUpgradePerFileToBundled(t *testing.T) {
 	}
 }
 
+func TestResolveBlockStorageOptsAllowsZstdDisable(t *testing.T) {
+	dir := t.TempDir()
+	rawDir := filepath.Join(dir, "rawblocks")
+	if err := os.MkdirAll(rawDir, 0o700); err != nil {
+		t.Fatal(err)
+	}
+	if err := saveBlockStorageManifest(rawDir, BlockStorageOpts{Layout: BlockLayoutBundled, Zstd: true}); err != nil {
+		t.Fatal(err)
+	}
+	got := ResolveBlockStorageOpts(BlockStorageOpts{Layout: BlockLayoutBundled, Zstd: false}, rawDir)
+	if got.Zstd {
+		t.Fatalf("config block_zstd=false must disable new Puts, got %+v", got)
+	}
+	from, to, up := BlockStorageUpgrade(BlockStorageOpts{Layout: BlockLayoutBundled, Zstd: false}, rawDir)
+	if !up || !from.Zstd || to.Zstd || to.Layout != BlockLayoutBundled {
+		t.Fatalf("upgrade from=%+v to=%+v up=%v", from, to, up)
+	}
+}
+
 func TestRawBlockStoreBundledWriteBehind(t *testing.T) {
 	dir := t.TempDir()
 	raw, err := OpenRawBlockStoreWithOpts(dir, BlockStorageOpts{Layout: BlockLayoutBundled, Zstd: false})

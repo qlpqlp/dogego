@@ -2,9 +2,9 @@
   "manifest_version": 1,
   "id": "dogego.doginals",
   "name": "Doginals / DRC-20 L2",
-  "version": "0.3.0",
+  "version": "0.5.0",
   "author": "DogeGo",
-  "description": "Experimental L2 for Doginals and DRC-20: modern forms, searchable tables, metrics, settings backup. Index L1 inscriptions/tokens; mint via wallet RPC. Does not change Dogecoin consensus.",
+  "description": "Doginals / DRC-20 / Ordinals L2: envelope+OP_RETURN L1 indexer, address/UTXO ledger, wallet API at /api/ext/dogego.doginals, wizard UI, doginals-v1 P2P, off-L1 mint. Does not change Dogecoin consensus.",
   "homepage": "https://github.com/qlpqlp/dogego",
   "repository": "https://github.com/qlpqlp/dogego/tree/main/DogeGo/extensions/catalog/doginals",
   "dogego_min_version": "0.1.0",
@@ -20,7 +20,7 @@
   },
   "capabilities": ["rpc", "indexer", "l2_sync", "p2p", "ui_panel", "doginals", "drc20", "wallet_rpc"],
   "rpc": [
-    { "name": "info", "help": "Status, counts, config, and modern UI workspace." },
+    { "name": "info", "help": "Status, counts, config, and wizard UI workspace." },
     { "name": "listinscriptions", "help": "List recent L1-indexed inscriptions / DRC-20 events. Param: [limit?]." },
     { "name": "getinscription", "help": "Fetch one inscription by id. Param: [id]." },
     { "name": "indexrange", "help": "Scan L1 heights into the local index. Params: [from_height, to_height]." },
@@ -36,6 +36,12 @@
     { "name": "setconfig", "help": "Save extension settings (wallet RPC toggle, etc)." },
     { "name": "exportbackup", "help": "Write settings backup under data/backups/." },
     { "name": "importbackup", "help": "Restore settings from backup JSON." },
-    { "name": "syncstatus", "help": "Overlay protocol and peer hint." }
+    { "name": "syncstatus", "help": "Overlay protocol, index lag, and P2P sync hint." },
+    { "name": "getaddress", "help": "DRC-20 balances for a Dogecoin address." },
+    { "name": "getaddresshistory", "help": "Event history for address." },
+    { "name": "geteventsbytxid", "help": "Events for a transaction id." },
+    { "name": "mintl2", "help": "Off-L1 mint (experimental L2)." },
+    { "name": "apistatus", "help": "Public API routes for wallets." },
+    { "name": "httphandle", "help": "HTTP gateway for /api/ext/dogego.doginals/*." }
   ]
 }

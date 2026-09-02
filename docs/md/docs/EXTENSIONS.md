@@ -92,6 +92,7 @@ HTTP API (dashboard PIN when configured):
 | `/api/extensions/uninstall` | POST `{ "id", "remove_data" }` |
 | `/api/extensions/panel?id=<extension-id>` | GET extension status panel (invokes extension `ui.status_method` RPC) |
 | `/api/extensions/docs?path=` or `?id=` | GET extension markdown docs |
+| `/api/ext/{extension.id}/…` | Generic HTTP gateway → extension RPC `httphandle` (e.g. doginals wallet REST) |
 
 ## Manifest (`dogego.extension.json`)
 
@@ -152,30 +153,41 @@ dogego-cli dogego_ext_dogego_radiodoge_probe
 
 ## Catalog: `dogego.doginals`
 
-Beta **Doginals / DRC-20 L2** - same overlay style as ZK L2 (`exthello`/`extack`), protocol id **`doginals-v1`**.
+**v0.5.0** beta **Doginals / DRC-20 L2** - overlay protocol **`doginals-v1`**, Doginals wallet HTTP API.
 
-- **L1**: observe-only index of OP_RETURN / data-carrier outputs + **DRC-20 token summaries**
-- **Mint**: deploy / mint / transfer wizard builds OP_RETURN JSON; optional broadcast via **authenticated `wallet_rpc`** (enable in extension Settings; unlock wallet in dashboard)
-- **L2**: off-chain NFT / token / image metadata; P2P `dinv` / `getdasset` / `dasset`
-- **UI**: modern workspace (Home + menu sections + wizards)
+- **L1**: Ord/Doginals **envelope** + OP_RETURN index, DRC-20 token summaries, **address balances + transferable UTXOs**, auto catch-up + soft reorg
+- **Wallet API**: extension-owned `GET /api/ext/dogego.doginals/v1/status|tokens|address/…|txid/…` (host generic `/api/ext/{id}/…` gateway; CORS `*` on GET) for mobile wallets / sites
+- **Mint L1**: deploy / mint / transfer wizard; optional broadcast via **authenticated `wallet_rpc`**
+- **Mint L2**: experimental off-chain balances (`mintl2` / `POST /api/ext/dogego.doginals/v1/mint/l2`) without an L1 tx
+- **L2 assets**: NFT / token / image metadata; P2P `dinv` / `getdasset` / `dasset` + background sync
+- **UI**: wizard steps Setup → Sync → Create → Wallet API (+ Browse)
 - **Networks**: mainnet + testnet · **no consensus change**
 
 Package: [extensions/catalog/doginals/](../extensions/catalog/doginals/). Install zip then enable.
 
 | RPC | Purpose |
 |-----|---------|
-| `dogego_ext_dogego_doginals_info` | Status + UI workspace |
+| `dogego_ext_dogego_doginals_info` | Status + wizard UI workspace |
 | `dogego_ext_dogego_doginals_listtokens` / `gettoken` / `listbytick` | DRC-20 token index |
+| `dogego_ext_dogego_doginals_getaddress` / `getaddresshistory` | Address balances / history |
+| `dogego_ext_dogego_doginals_geteventsbytxid` | Events by txid |
 | `dogego_ext_dogego_doginals_previewinscription` / `inscribe` | Build / broadcast DRC-20 OP_RETURN |
+| `dogego_ext_dogego_doginals_mintl2` | Experimental off-L1 mint |
 | `dogego_ext_dogego_doginals_indexrange` | Scan L1 height window |
 | `dogego_ext_dogego_doginals_putasset` / `getasset` / `listassets` | L2 assets |
-| `dogego_ext_dogego_doginals_getconfig` / `setconfig` | Extension Settings (wallet RPC toggle) |
+| `dogego_ext_dogego_doginals_getconfig` / `setconfig` | Extension Settings |
+| `dogego_ext_dogego_doginals_syncstatus` / `apistatus` / `httphandle` | Overlay + public API routes / HTTP gateway |
 
 Docs: [USER_GUIDE](../extensions/catalog/doginals/docs/USER_GUIDE.md), [PROTOCOL](../extensions/catalog/doginals/docs/PROTOCOL.md).
 
 ```bash
-dogego-cli dogego_instextensionzip path/to/doginals.zip
+dogego-cli dogego_instextensionzip path/to/doginals-universal.zip
 dogego-cli dogego_enableextension dogego.doginals
+```
+
+```http
+GET /api/ext/dogego.doginals/v1/address/DYOURADDRESS
+GET /api/ext/dogego.doginals/v1/tokens
 ```
 
 ## Built-in: `dogego.zkl2`

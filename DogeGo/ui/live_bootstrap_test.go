@@ -181,6 +181,61 @@ func TestLiveFeedPublishesP2PWhileSummaryBlocked(t *testing.T) {
 	t.Fatal("expected live P2P overlay while BuildSummaryMap blocked")
 }
 
+func TestCommitLiveP2PRecoversFromHungSnapshot(t *testing.T) {
+	block := make(chan struct{})
+	release := make(chan struct{})
+	var f LiveFeed
+	f.bootstrapLiveIfEmpty(StartConfig{ChainDataDir: t.TempDir()})
+	cfg := StartConfig{
+		P2PSnapshot: func() map[string]any {
+			select {
+			case <-block:
+				close(block)
+				<-release
+				return map[string]any{
+					"wired":                true,
+					"connections_outbound": 3,
+					"ibd_progress":         map[string]any{"blocks_per_minute": 50.0},
+				}
+			default:
+				return map[string]any{
+					"wired":                true,
+					"connections_outbound": 3,
+					"ibd_progress":         map[string]any{"blocks_per_minute": 50.0},
+				}
+			}
+		},
+	}
+	// Seed stale disk bootstrap p2p.
+	f.publishCachedJSON(
+		[]byte(`{"tip_height":1,"connections_out":0,"from_disk_snapshot":true}`),
+		[]byte(`{"wired":true,"from_disk_snapshot":true,"connections_outbound":0}`),
+		nil,
+		[]byte(`{"ok":true,"summary":{"tip_height":1},"p2p":{"wired":true,"from_disk_snapshot":true,"connections_outbound":0}}`),
+	)
+	f.publishLiveProgress(cfg)
+	// Second call while first snapshot blocks: must not wedge forever.
+	go func() {
+		time.Sleep(50 * time.Millisecond)
+		close(release)
+	}()
+	deadline := time.Now().Add(8 * time.Second)
+	for time.Now().Before(deadline) {
+		f.mu.RLock()
+		p2b := append([]byte(nil), f.p2pJSON...)
+		f.mu.RUnlock()
+		if len(p2b) > 0 {
+			var p2 map[string]any
+			if json.Unmarshal(p2b, &p2) == nil && p2["from_disk_snapshot"] != true && p2["connections_outbound"] == float64(3) {
+				return
+			}
+		}
+		f.publishLiveProgress(cfg)
+		time.Sleep(100 * time.Millisecond)
+	}
+	t.Fatal("expected live p2p overlay to replace disk bootstrap after hung snapshot")
+}
+
 func TestPublishCachedJSONAfterRawMessageBootstrap(t *testing.T) {
 	dir := t.TempDir()
 	sum := map[string]any{"tip_height": float64(1), "network": "mainnet"}

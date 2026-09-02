@@ -6,6 +6,8 @@
 
 package node
 
+import "strings"
+
 // penalizeBlockPeer records a block/header fetch failure on the block peer scorer and addrbook (Core disconnect + addrman cooldown).
 func penalizeBlockPeer(scorer *BlockPeerScorer, book *AddrBook, addr string, hard bool) {
 	if addr == "" {
@@ -15,6 +17,20 @@ func penalizeBlockPeer(scorer *BlockPeerScorer, book *AddrBook, addr string, har
 		scorer.NoteSessionFailure(addr, hard)
 	}
 	if book != nil && hard {
+		book.NoteFailure(addr)
+	}
+}
+
+// penalizeWrongNetworkPeer applies a long quarantine after bad P2P magic / wire desync.
+func penalizeWrongNetworkPeer(scorer *BlockPeerScorer, book *AddrBook, addr string, err error) {
+	if addr == "" || err == nil || !strings.Contains(err.Error(), "bad magic") {
+		penalizeBlockPeer(scorer, book, addr, true)
+		return
+	}
+	if scorer != nil {
+		scorer.NoteWrongNetworkMagic(addr)
+	}
+	if book != nil {
 		book.NoteFailure(addr)
 	}
 }

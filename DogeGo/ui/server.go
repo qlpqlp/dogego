@@ -56,6 +56,8 @@ type StartConfig struct {
 	// RPCSnapshot returns live JSON-RPC listener state (listening port, dispatch wired).
 	RPCSnapshot func() (listening, dispatchReady bool)
 	Journal     *store.HeaderJournal
+	// Late binds Journal/RawBlocks after listen (conf → open UI → then load chain data).
+	Late *LateRefs
 	// GenesisHash is the network genesis block id (avoids reading all of headers.bin on each poll).
 	GenesisHash string
 	// RawBlocks counts full block payloads stored on disk (Phase 2+); may be nil.
@@ -180,9 +182,10 @@ func trustPrivateDashboardClients() bool {
 
 // Start runs the HTTP server until ctx is cancelled. Returns the base URL (e.g. http://localhost:2013/).
 func Start(ctx context.Context, cfg StartConfig) (baseURL string, err error) {
-	if cfg.ListenAddr == "" || cfg.Journal == nil {
+	if cfg.ListenAddr == "" {
 		return "", nil
 	}
+	// Journal may be nil briefly while LateRefs warm; dashboard shows loading overlay.
 	indexHTML, err := fs.ReadFile(static, "static/index.html")
 	if err != nil {
 		return "", err
@@ -196,6 +199,11 @@ func Start(ctx context.Context, cfg StartConfig) (baseURL string, err error) {
 		return "", err
 	}
 	baseURL = publicDashboardURL(scheme, cfg.ListenAddr, ln)
+	// Open the browser as soon as the port is bound — do not wait for route registration
+	// or LiveFeed bootstrap. The dashboard shows its own loading overlay until APIs warm.
+	if cfg.OpenBrowser {
+		OpenURLLog(baseURL)
+	}
 	if cfg.ActivityLog != nil {
 		cfg.ActivityLog.Add("ui", "Web dashboard listening at "+baseURL)
 	}
@@ -312,14 +320,14 @@ func Start(ctx context.Context, cfg StartConfig) (baseURL string, err error) {
 			schema = detail.Schema
 			rawBin = detail.RawBinCount
 		}
-		tip, hdrCount, _ := journalTipForDashboard(cfg.Journal)
-		chainActive := rpc.ActiveChainBlockHeight(cfg.Journal, cfg.RawBlocks)
+		tip, hdrCount, _ := journalTipForDashboard(cfg.ActiveJournal())
+		chainActive := rpc.ActiveChainBlockHeight(cfg.ActiveJournal(), cfg.ActiveRawBlocks())
 		storedBodies := contiguousHeightForAPI(cfg)
 		rbLive := 0
 		// Never Walk 200k+ per-file *.bin during IBD — FastCount/scan hangs the Analytics tab
 		// and used to block peer list refresh (peers were gated on this endpoint succeeding).
-		if !light && cfg.RawBlocks != nil {
-			if n, err := cfg.RawBlocks.FastCount(); err == nil {
+		if !light && cfg.ActiveRawBlocks() != nil {
+			if n, err := cfg.ActiveRawBlocks().FastCount(); err == nil {
 				rbLive = n
 			}
 		}
@@ -361,14 +369,14 @@ func Start(ctx context.Context, cfg StartConfig) (baseURL string, err error) {
 			out["reorg_summary"] = detail.ReorgSummary
 		}
 		out["max_block_weight"] = consensus.MaxBlockWeight
-		if cfg.Journal != nil {
+		if cfg.ActiveJournal() != nil {
 			ca, sb := chainStatsHints(cfg)
-			out["chainstats"] = BuildChainStats(cfg.Journal, cfg.RawBlocks, cfg.PubkeyHashAddrID, time.Now(), ca, sb, light)
+			out["chainstats"] = BuildChainStats(cfg.ActiveJournal(), cfg.ActiveRawBlocks(), cfg.PubkeyHashAddrID, time.Now(), ca, sb, light)
 		}
 		if !light && cfg.UtxoCache != nil {
 			if u := cfg.UtxoCache(); u != nil {
 				pub, sh, _ := chainVersions(cfg.Network)
-				out["top_utxo_holders"] = BuildTopUtxoHolders(u, cfg.Journal, cfg.AddrIndex, pub, sh, topUtxoHolderLimit)
+				out["top_utxo_holders"] = BuildTopUtxoHolders(u, cfg.ActiveJournal(), cfg.ActiveAddrIndex(), pub, sh, topUtxoHolderLimit)
 			}
 		}
 		// StorageSummary is cheap when cached (and uses CachedBytesOnDisk during IBD).
@@ -437,7 +445,7 @@ func Start(ctx context.Context, cfg StartConfig) (baseURL string, err error) {
 		if !readAuth(w, r) {
 			return
 		}
-		live.writeLive(w)
+		live.writeLive(w, cfg)
 	})
 
 	mux.HandleFunc("/api/summary", func(w http.ResponseWriter, r *http.Request) {
@@ -459,7 +467,7 @@ func Start(ctx context.Context, cfg StartConfig) (baseURL string, err error) {
 		if !readAuth(w, r) {
 			return
 		}
-		live.writeP2P(w)
+		live.writeP2P(w, cfg)
 	})
 
 	mux.HandleFunc("/api/lan-peer-hint", func(w http.ResponseWriter, r *http.Request) {
@@ -1009,7 +1017,7 @@ func Start(ctx context.Context, cfg StartConfig) (baseURL string, err error) {
 		}
 		w.Header().Set("Content-Type", "application/json; charset=utf-8")
 		ca, sb := chainStatsHints(cfg)
-		st := BuildChainStats(cfg.Journal, cfg.RawBlocks, cfg.PubkeyHashAddrID, time.Now(), ca, sb, light)
+		st := BuildChainStats(cfg.ActiveJournal(), cfg.ActiveRawBlocks(), cfg.PubkeyHashAddrID, time.Now(), ca, sb, light)
 		_ = json.NewEncoder(w).Encode(st)
 	})
 
@@ -1166,9 +1174,9 @@ func Start(ctx context.Context, cfg StartConfig) (baseURL string, err error) {
 			"wallet_enabled":             walletLoaded(cfg),
 			"wallet_rpc_ready":           walletRPCReady(cfg),
 			"wallet_address_ready":       walletAddressReady(cfg),
-			"wallet_address":             walletAddr(cfg.Wallet),
-			"tx_index":                   cfg.TxIndex != nil,
-			"raw_blocks":                 cfg.RawBlocks != nil,
+			"wallet_address":             walletAddr(cfg.ActiveWallet()),
+			"tx_index":                   cfg.ActiveTxIndex() != nil,
+			"raw_blocks":                 cfg.ActiveRawBlocks() != nil,
 			"embedded_analytics_sidecar": analyticsSidecarLive(cfg),
 			"node_mode":                  cfg.NodeMode,
 			"network":                    cfg.Network,
@@ -1252,7 +1260,7 @@ func Start(ctx context.Context, cfg StartConfig) (baseURL string, err error) {
 			return
 		}
 		q := r.URL.Query()
-		m, code, msg := LookupHeaderForAPI(cfg.Journal, q.Get("height"), q.Get("hash"))
+		m, code, msg := LookupHeaderForAPI(cfg.ActiveJournal(), q.Get("height"), q.Get("hash"))
 		w.Header().Set("Content-Type", "application/json; charset=utf-8")
 		if code != 0 {
 			status := http.StatusInternalServerError
@@ -1277,7 +1285,7 @@ func Start(ctx context.Context, cfg StartConfig) (baseURL string, err error) {
 			return
 		}
 		q := r.URL.Query()
-		m, code, msg := LookupBlockForAPI(cfg.Journal, cfg.RawBlocks, cfg.PubkeyHashAddrID, q.Get("height"), q.Get("hash"), contiguousHeightForAPI(cfg))
+		m, code, msg := LookupBlockForAPI(cfg.ActiveJournal(), cfg.ActiveRawBlocks(), cfg.PubkeyHashAddrID, q.Get("height"), q.Get("hash"), contiguousHeightForAPI(cfg))
 		w.Header().Set("Content-Type", "application/json; charset=utf-8")
 		if code != 0 {
 			status := http.StatusInternalServerError
@@ -1340,7 +1348,7 @@ func Start(ctx context.Context, cfg StartConfig) (baseURL string, err error) {
 			return
 		}
 		w.Header().Set("Content-Type", "application/json; charset=utf-8")
-		if cfg.Wallet == nil {
+		if cfg.ActiveWallet() == nil {
 			w.WriteHeader(http.StatusBadRequest)
 			_ = json.NewEncoder(w).Encode(map[string]string{"error": "wallet disabled"})
 			return
@@ -1348,9 +1356,9 @@ func Start(ctx context.Context, cfg StartConfig) (baseURL string, err error) {
 		switch r.Method {
 		case http.MethodGet:
 			_ = json.NewEncoder(w).Encode(map[string]any{
-				"avoid_reuse":            cfg.Wallet.AvoidReuse(),
-				"pq_commitments_enabled": cfg.Wallet.PqCommitmentsEnabled(),
-				"pq_carrier_enabled":     cfg.Wallet.PqCarrierEnabled(),
+				"avoid_reuse":            cfg.ActiveWallet().AvoidReuse(),
+				"pq_commitments_enabled": cfg.ActiveWallet().PqCommitmentsEnabled(),
+				"pq_carrier_enabled":     cfg.ActiveWallet().PqCarrierEnabled(),
 			})
 		case http.MethodPost:
 			var body struct {
@@ -1363,19 +1371,19 @@ func Start(ctx context.Context, cfg StartConfig) (baseURL string, err error) {
 				return
 			}
 			if body.AvoidReuse != nil {
-				if err := cfg.Wallet.SetAvoidReuse(*body.AvoidReuse); err != nil {
+				if err := cfg.ActiveWallet().SetAvoidReuse(*body.AvoidReuse); err != nil {
 					http.Error(w, err.Error(), http.StatusInternalServerError)
 					return
 				}
 			}
 			if body.PqCommitmentsEnabled != nil {
-				if err := cfg.Wallet.SetPqCommitmentsEnabled(*body.PqCommitmentsEnabled); err != nil {
+				if err := cfg.ActiveWallet().SetPqCommitmentsEnabled(*body.PqCommitmentsEnabled); err != nil {
 					http.Error(w, err.Error(), http.StatusInternalServerError)
 					return
 				}
 			}
 			if body.PqCarrierEnabled != nil {
-				if err := cfg.Wallet.SetPqCarrierEnabled(*body.PqCarrierEnabled); err != nil {
+				if err := cfg.ActiveWallet().SetPqCarrierEnabled(*body.PqCarrierEnabled); err != nil {
 					http.Error(w, err.Error(), http.StatusInternalServerError)
 					return
 				}
@@ -1399,14 +1407,14 @@ func Start(ctx context.Context, cfg StartConfig) (baseURL string, err error) {
 			http.Error(w, "missing txid query parameter", http.StatusBadRequest)
 			return
 		}
-		canChain := cfg.TxIndex != nil && cfg.RawBlocks != nil
+		canChain := cfg.ActiveTxIndex() != nil && cfg.ActiveRawBlocks() != nil
 		canPool := cfg.Pool != nil
 		if !canChain && !canPool {
 			w.WriteHeader(http.StatusServiceUnavailable)
 			_ = json.NewEncoder(w).Encode(map[string]any{"error": "tx lookup needs chain index + raw blocks and/or mempool (this run has neither)"})
 			return
 		}
-		jm, rawTx, src, err := rpc.LookupTxExplorer(cfg.TxIndex, cfg.RawBlocks, cfg.Pool, txid)
+		jm, rawTx, src, err := rpc.LookupTxExplorer(cfg.ActiveTxIndex(), cfg.ActiveRawBlocks(), cfg.Pool, txid)
 		if err != nil {
 			w.WriteHeader(http.StatusNotFound)
 			_ = json.NewEncoder(w).Encode(map[string]any{"error": err.Error()})
@@ -1444,7 +1452,7 @@ func Start(ctx context.Context, cfg StartConfig) (baseURL string, err error) {
 		}
 		q := strings.TrimSpace(r.URL.Query().Get("q"))
 		w.Header().Set("Content-Type", "application/json; charset=utf-8")
-		m, code, msg := ExplorerUniversalSearch(q, cfg.Network, cfg.Journal, cfg.RawBlocks, cfg.TxIndex, cfg.AddrIndex, cfg.Pool, cfg.PubkeyHashAddrID, cfg.RPCInvoke, cfg.UtxoCache, contiguousHeightForAPI(cfg))
+		m, code, msg := ExplorerUniversalSearch(q, cfg.Network, cfg.ActiveJournal(), cfg.ActiveRawBlocks(), cfg.ActiveTxIndex(), cfg.ActiveAddrIndex(), cfg.Pool, cfg.PubkeyHashAddrID, cfg.RPCInvoke, cfg.UtxoCache, contiguousHeightForAPI(cfg))
 		if code != 0 {
 			status := http.StatusBadRequest
 			switch code {
@@ -1596,8 +1604,8 @@ func Start(ctx context.Context, cfg StartConfig) (baseURL string, err error) {
 				"full_node":                  fullNode,
 				"embedded_analytics_sidecar": analyticsSidecarLive(cfg),
 				"mine_requested":             cfg.MineRequested,
-				"tx_index_enabled":           cfg.TxIndex != nil,
-				"raw_blocks_enabled":         cfg.RawBlocks != nil,
+				"tx_index_enabled":           cfg.ActiveTxIndex() != nil,
+				"raw_blocks_enabled":         cfg.ActiveRawBlocks() != nil,
 				"block_storage_layout":       out.BlockStorageLayout,
 				"block_zstd":                 out.BlockZstd,
 				"tx_index_embed_tx":          out.EffectiveTxIndexEmbedTx(),
@@ -1783,10 +1791,6 @@ func Start(ctx context.Context, cfg StartConfig) (baseURL string, err error) {
 		defer wg.Done()
 		_ = srv.Serve(ln)
 	}()
-
-	if cfg.OpenBrowser {
-		time.AfterFunc(400*time.Millisecond, func() { OpenURLLog(baseURL) })
-	}
 
 	if cfg.RPCInvoke != nil {
 		probeConf := probeConfigFromStart(cfg)

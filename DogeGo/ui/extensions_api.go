@@ -289,6 +289,11 @@ func registerExtensionsRoutes(mux *http.ServeMux, cfg StartConfig, webGate *webs
 		w.Header().Set("Content-Type", "application/json; charset=utf-8")
 		_ = json.NewEncoder(w).Encode(res)
 	})
+
+	// Generic extension HTTP gateway: /api/ext/{extension.id}/{path...}
+	// Core has no extension-specific routes; enabled packages implement RPC "httphandle".
+	registerExtensionHTTPGateway(mux, invoke, webGate)
+
 	mux.HandleFunc("/api/extensions/catalog-sources", func(w http.ResponseWriter, r *http.Request) {
 		if webGate != nil && !webGate.RequireUnlocked(w, r) {
 			return

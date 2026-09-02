@@ -35,7 +35,7 @@ func walletTxHistoryDeferReason(cfg StartConfig) string {
 func walletDeferEnv(cfg StartConfig) map[string]any {
 	env := map[string]any{}
 	attachWalletRescanStatus(env, cfg)
-	if cfg.Wallet != nil {
+	if cfg.ActiveWallet() != nil {
 		if _, _, utxos, ok := walletBalanceFromUtxoCache(cfg); ok {
 			env["utxo_count"] = utxos
 			return env
@@ -75,7 +75,7 @@ func walletTxHistoryDeferReasonFromProbeState(invoke func(string, []json.RawMess
 
 // attachWalletHistoryDeferStatus adds wallet_history_deferred + wallet_history_defer_reason to GET /api/wallet and summary.
 func attachWalletHistoryDeferStatus(out map[string]any, cfg StartConfig) {
-	if out == nil || cfg.Wallet == nil {
+	if out == nil || cfg.ActiveWallet() == nil {
 		return
 	}
 	reason := walletTxHistoryDeferReason(cfg)

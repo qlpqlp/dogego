@@ -15,13 +15,30 @@
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
   <link href="https://fonts.googleapis.com/icon?family=Material+Icons+Round" rel="stylesheet" />
   <link rel="stylesheet" href="/app.css" />
+  <style>
+    /* Show boot splash on first paint before app.js loads (large script chain). */
+    html.boot-pending { background: #0c0e12; }
+    html.boot-pending body { overflow: hidden; }
+    html.boot-pending body > *:not(#boot-overlay) { visibility: hidden; }
+    html.boot-pending #boot-overlay { display: flex !important; }
+  </style>
+  <script>document.documentElement.classList.add("boot-pending");</script>
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css" crossorigin="anonymous" />
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js" crossorigin="anonymous"></script>
   <script src="https://cdn.jsdelivr.net/npm/marked@11.1.1/marked.min.js" crossorigin="anonymous"></script>
   <script src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js" crossorigin="anonymous"></script>
   <script src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js" crossorigin="anonymous"></script>
 </head>
-<body class="mode-full">
+<body class="mode-full boot-loading">
+  <div id="boot-overlay" class="boot-overlay show" role="status" aria-live="polite" aria-busy="true">
+    <div class="boot-overlay-card">
+      <div id="boot-overlay-wait" class="boot-overlay-wait" data-doge-wait data-doge-wait-msg="Much prepare. Very load."></div>
+      <p class="boot-overlay-brand">DogeGo</p>
+      <h1 class="boot-overlay-title">Much Faster Full Dogecoin Node</h1>
+      <p id="boot-overlay-msg" class="boot-overlay-msg">Preparing your dashboard ... the node may still be waking up.</p>
+      <p class="boot-overlay-hint">Such patience. Wow. Treats inbound soon.</p>
+    </div>
+  </div>
   <header class="topbar">
     <img src="/dogecoin.svg" alt="" id="topbar-logo" data-brand-logo />
     <span class="topbar-brand">DogeGo</span>
@@ -2689,16 +2706,6 @@
       <p id="sec-pin-busy" class="field-hint sec-pin-busy" hidden aria-live="polite" data-i18n="security.pinVerifying">Verifying PIN…</p>
       <button type="button" class="btn btn-primary sec-pin-submit" id="sec-pin-submit" hidden data-i18n="common.unlock">Unlock</button>
       <p id="sec-overlay-err" class="alert err show" style="display:none"></p>
-    </div>
-  </div>
-
-  <div id="boot-overlay" class="boot-overlay show" role="status" aria-live="polite" aria-busy="true">
-    <div class="boot-overlay-card">
-      <div id="boot-overlay-wait" class="boot-overlay-wait" data-doge-wait data-doge-wait-msg="Much prepare. Very load."></div>
-      <p class="boot-overlay-brand">DogeGo</p>
-      <h1 class="boot-overlay-title">Much Faster Full Dogecoin Node</h1>
-      <p id="boot-overlay-msg" class="boot-overlay-msg">Preparing your dashboard ... the node may still be waking up.</p>
-      <p class="boot-overlay-hint">Such patience. Wow. Treats inbound soon.</p>
     </div>
   </div>
 

@@ -48,12 +48,12 @@ func TestWalletSupplementMissingSendsPQ(t *testing.T) {
 	}
 	txid := mempool.TxIDDisplayHex(tx.TxHash())
 	hx := hex.EncodeToString(raw)
-	_ = cfg.Wallet.RememberTxHex(txid, hx)
-	cfg.Wallet.SeedScannedTx([]wallet.ScannedTx{{
+	_ = cfg.ActiveWallet().RememberTxHex(txid, hx)
+	cfg.ActiveWallet().SeedScannedTx([]wallet.ScannedTx{{
 		TxID: txid, Category: "receive", Address: addr,
 		AmountKoinu: 5_500_000_000, Vout: 0, BlockHeight: 50,
 	}})
-	entries := walletSupplementMissingSends(cfg, nil, cfg.Wallet.ListScannedTx(), 50, "quantum")
+	entries := walletSupplementMissingSends(cfg, nil, cfg.ActiveWallet().ListScannedTx(), 50, "quantum")
 	if len(entries) != 1 {
 		t.Fatalf("entries=%d want 1", len(entries))
 	}
@@ -88,12 +88,12 @@ func TestWalletSupplementMissingSendsSentFilter(t *testing.T) {
 		t.Fatal(err)
 	}
 	txid := mempool.TxIDDisplayHex(tx.TxHash())
-	_ = cfg.Wallet.RememberTxHex(txid, hex.EncodeToString(raw))
-	cfg.Wallet.SeedScannedTx([]wallet.ScannedTx{{
+	_ = cfg.ActiveWallet().RememberTxHex(txid, hex.EncodeToString(raw))
+	cfg.ActiveWallet().SeedScannedTx([]wallet.ScannedTx{{
 		TxID: txid, Category: "receive", Address: addr,
 		AmountKoinu: 5_500_000_000, Vout: 0, BlockHeight: 50,
 	}})
-	entries := walletSupplementMissingSends(cfg, nil, cfg.Wallet.ListScannedTx(), 50, "sent")
+	entries := walletSupplementMissingSends(cfg, nil, cfg.ActiveWallet().ListScannedTx(), 50, "sent")
 	if len(entries) != 1 {
 		t.Fatalf("entries=%d want 1", len(entries))
 	}
@@ -123,7 +123,7 @@ func TestScannedSendShowsPaymentNotChange(t *testing.T) {
 		t.Fatal(err)
 	}
 	txid := mempool.TxIDDisplayHex(tx.TxHash())
-	_ = cfg.Wallet.RememberTxHex(txid, hex.EncodeToString(raw))
+	_ = cfg.ActiveWallet().RememberTxHex(txid, hex.EncodeToString(raw))
 	st := wallet.ScannedTx{
 		TxID: txid, Category: "send", Address: addr,
 		AmountKoinu: -4_499_000_000, FeeKoinu: 1_000_000, BlockHeight: 100,

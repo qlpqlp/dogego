@@ -127,6 +127,22 @@ func (s *SubprocessExtension) OnBlockConnected(height int64, host Host) error {
 	return err
 }
 
+// OnBlockDisconnected implements BlockDisconnectExtension.
+func (s *SubprocessExtension) OnBlockDisconnected(height int64, host Host) error {
+	if !s.hasIndexer() {
+		return nil
+	}
+	s.mu.Lock()
+	alive := s.alive
+	bridge := s.bridge
+	s.mu.Unlock()
+	if !alive || bridge == nil {
+		return nil
+	}
+	_, _, err := bridge.Call("dogego_block_disconnected", []interface{}{height})
+	return err
+}
+
 // OnPeerConnected implements PeerSyncExtension.
 func (s *SubprocessExtension) OnPeerConnected(peerAddr string, protocols []string, send func(string, []byte) error) {
 	s.mu.Lock()

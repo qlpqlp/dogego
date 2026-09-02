@@ -12,6 +12,7 @@ import (
 	"fmt"
 	"io"
 	"net"
+	"strings"
 	"time"
 
 	"dogego/applog"
@@ -34,7 +35,7 @@ const blockAssistDrainTimeout = 100 * time.Millisecond
 const blockAssistPreFetchDrain = 350 * time.Millisecond
 
 // blockAssistSessionIdleRotate disconnects assist peers that never deliver blocks (claimBatch spin).
-const blockAssistSessionIdleRotate = 45 * time.Second
+const blockAssistSessionIdleRotate = 90 * time.Second
 
 // blockAssistNoPeerLogInterval rate-limits "no peer" lines when dial candidates are exhausted.
 const blockAssistNoPeerLogInterval = 30 * time.Second
@@ -97,7 +98,15 @@ func runBlockAssistWorker(ctx context.Context, d net.Dialer, pool *BlockAssistCa
 		}
 		var lastErr error
 		connected := false
+		skippedCooldown := 0
 		for _, addr := range candidates {
+			// DialableOrder still appends cooling peers as a last-resort fallback.
+			// Assist must not hammer them: bad-magic / reject peers were reconnecting
+			// within ~500ms on the same lane (log: disconnect → immediate reconnect).
+			if assistAddrInCooldown(scorer, addr) {
+				skippedCooldown++
+				continue
+			}
 			RecordOutboundDialTry(book, addr)
 			c, err := d.DialContext(ctx, "tcp", addr)
 			if err != nil {
@@ -149,6 +158,9 @@ func runBlockAssistWorker(ctx context.Context, d net.Dialer, pool *BlockAssistCa
 			if lastErr != nil && time.Since(lastNoPeerLog) >= blockAssistNoPeerLogInterval {
 				lastNoPeerLog = time.Now()
 				applog.Line("block", fmt.Sprintf("block-assist worker %d: no peer: %v", laneID-1, lastErr))
+			} else if lastErr == nil && skippedCooldown > 0 && time.Since(lastNoPeerLog) >= blockAssistNoPeerLogInterval {
+				lastNoPeerLog = time.Now()
+				applog.Line("block", fmt.Sprintf("block-assist worker %d: %d candidate(s) in cooldown; waiting", laneID-1, skippedCooldown))
 			}
 			select {
 			case <-ctx.Done():
@@ -157,6 +169,16 @@ func runBlockAssistWorker(ctx context.Context, d net.Dialer, pool *BlockAssistCa
 			}
 		}
 	}
+}
+
+// assistAddrInCooldown is true when the block-peer scorer still has this address cooling
+// down after a fetch/dial failure (hard failures include bad magic / wrong-network framing).
+func assistAddrInCooldown(scorer *BlockPeerScorer, addr string) bool {
+	if scorer == nil || addr == "" {
+		return false
+	}
+	st, ok := scorer.Stats(addr)
+	return ok && st.InCooldown
 }
 
 func runBlockAssistSession(ctx context.Context, conn net.Conn, addr string, p chain.Params, bs *BlockStoreCtx, raw *progressiveRawState, laneID int, scorer *BlockPeerScorer, book *AddrBook) {
@@ -202,7 +224,12 @@ func runBlockAssistSession(ctx context.Context, conn net.Conn, addr string, p ch
 				applog.Line("block", fmt.Sprintf("block-assist %s sent undersized block stub - disconnecting", addr))
 				return
 			}
-			penalizeBlockPeer(scorer, book, addr, sessionFailureHardFromFetchErr(err) || shouldRotatePeerForForwardIBDFetch(err, blockFetchWantHeight(bs)))
+			hard := sessionFailureHardFromFetchErr(err) || shouldRotatePeerForForwardIBDFetch(err, blockFetchWantHeight(bs))
+			if strings.Contains(err.Error(), "bad magic") {
+				penalizeWrongNetworkPeer(scorer, book, addr, err)
+			} else {
+				penalizeBlockPeer(scorer, book, addr, hard)
+			}
 			if shouldRedialPrimaryForAncientFetch(err, blockFetchWantHeight(bs)) || shouldRotatePeerForForwardIBDFetch(err, blockFetchWantHeight(bs)) {
 				applog.Line("block", fmt.Sprintf("block-assist %s cannot serve blocks (%v) - disconnecting", addr, err))
 				return
@@ -225,9 +252,11 @@ func runBlockAssistSession(ctx context.Context, conn net.Conn, addr string, p ch
 		if n == 0 {
 			if raw != nil && (raw.laneHasActiveBatch(laneID) || raw.hasDownloadInFlight()) {
 				lastBodyAt = time.Now()
+				wake := raw.HoleReclaimWaitCh()
 				select {
 				case <-ctx.Done():
 					return
+				case <-wake:
 				case <-time.After(blockAssistWindowFullSleep):
 				}
 				continue
@@ -236,9 +265,11 @@ func runBlockAssistSession(ctx context.Context, conn net.Conn, addr string, p ch
 				applog.Line("block", fmt.Sprintf("block-assist %s idle without blocks for %s; rotating peer", addr, blockAssistSessionIdleRotate))
 				return
 			}
+			wake := raw.HoleReclaimWaitCh()
 			select {
 			case <-ctx.Done():
 				return
+			case <-wake:
 			case <-time.After(blockAssistIdleSleep):
 			}
 		}

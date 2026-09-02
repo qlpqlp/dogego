@@ -53,6 +53,9 @@ type RawBlockStore struct {
 	bundledFile          *os.File
 	bundledFileNum       uint32
 	legacyMigrateStarted atomic.Bool
+	// locMem is the append-only locator journal + RAM map (Core-class IBD persist).
+	locMemOnce sync.Once
+	locMem     *locatorMem
 }
 
 // OpenRawBlockStore creates datadir/rawblocks with default per-file layout.
@@ -96,6 +99,15 @@ func (s *RawBlockStore) EnableWriteBehind() {
 		return
 	}
 	s.writeBehind = newIBDWriteBehind(s)
+}
+
+// WriteBehindNearCapacity reports whether the IBD RAM write-behind buffer is at or above frac full.
+// claimBatch pauses new getdata when true so Put does not block the P2P read path.
+func (s *RawBlockStore) WriteBehindNearCapacity(frac float64) bool {
+	if s == nil || s.writeBehind == nil {
+		return false
+	}
+	return s.writeBehind.nearCapacity(frac)
 }
 
 // StorageOpts returns the effective on-disk block storage options.
@@ -210,11 +222,23 @@ func (s *RawBlockStore) Has(hashLE [32]byte) bool {
 
 // Put writes the raw block bytes (full serialized block as in the P2P "block" message body).
 func (s *RawBlockStore) Put(hashLE [32]byte, raw []byte) error {
+	return s.putInternal(hashLE, raw, true)
+}
+
+// PutValidated writes a payload that was already checked with ValidateBlockPayload
+// (download-first staging path — avoids a second merkle walk per block).
+func (s *RawBlockStore) PutValidated(hashLE [32]byte, raw []byte) error {
+	return s.putInternal(hashLE, raw, false)
+}
+
+func (s *RawBlockStore) putInternal(hashLE [32]byte, raw []byte, revalidate bool) error {
 	if len(raw) < 80 {
 		return fmt.Errorf("raw block too short %d", len(raw))
 	}
-	if err := wire.ValidateBlockPayload(raw, hashLE); err != nil {
-		return fmt.Errorf("block validate: %w", err)
+	if revalidate {
+		if err := wire.ValidateBlockPayload(raw, hashLE); err != nil {
+			return fmt.Errorf("block validate: %w", err)
+		}
 	}
 	s.mu.Lock()
 	had := s.hasLocked(hashLE)
@@ -278,7 +302,7 @@ func (s *RawBlockStore) Put(hashLE [32]byte, raw []byte) error {
 }
 
 func (s *RawBlockStore) hasLocked(hashLE [32]byte) bool {
-	if loc, ok, err := readBlockLocator(s.locatorRoot(), hashLE); err == nil && ok {
+	if loc, ok, err := s.lookupBlockLocator(hashLE); err == nil && ok {
 		if loc.FileNum == perFileLocatorNum {
 			_, found := s.resolvePerFilePath(hashLE)
 			return found
@@ -301,6 +325,9 @@ func (s *RawBlockStore) Remove(hashLE [32]byte) error {
 	had := s.hasLocked(hashLE)
 	if s.writeBehind != nil && s.writeBehind.has(hashLE) {
 		had = true
+	}
+	if s.locMem != nil {
+		s.locMem.remove(hashLE)
 	}
 	_ = removeBlockLocator(s.locatorRoot(), hashLE)
 	root := s.pathFor(hashLE)
@@ -358,7 +385,7 @@ func (s *RawBlockStore) Get(hashLE [32]byte) ([]byte, error) {
 }
 
 func (s *RawBlockStore) getLocked(hashLE [32]byte) ([]byte, error) {
-	if loc, ok, err := readBlockLocator(s.locatorRoot(), hashLE); err == nil && ok {
+	if loc, ok, err := s.lookupBlockLocator(hashLE); err == nil && ok {
 		if loc.FileNum == perFileLocatorNum {
 			return s.readPerFileLocator(hashLE, loc)
 		}
@@ -539,9 +566,23 @@ func (s *RawBlockStore) CachedBytesOnDisk(ttl time.Duration) (int64, error) {
 }
 
 func (s *RawBlockStore) scanFileCount() (int, error) {
-	n, err := countBlockLocators(s.locatorRoot())
-	if err != nil {
-		return 0, err
+	// Journal map is the primary locator set during IBD; per-hash files are legacy.
+	n := 0
+	if lm := s.ensureLocatorMem(); lm != nil {
+		lm.mu.RLock()
+		n = len(lm.m)
+		lm.mu.RUnlock()
+		extra, err := countLegacyLocatorsNotInJournal(s.locatorRoot(), lm)
+		if err != nil {
+			return 0, err
+		}
+		n += extra
+	} else {
+		legacy, err := countBlockLocators(s.locatorRoot())
+		if err != nil {
+			return 0, err
+		}
+		n = legacy
 	}
 	s.mu.Lock()
 	dir := s.dir
@@ -561,7 +602,7 @@ func (s *RawBlockStore) scanFileCount() (int, error) {
 		}
 		var hashLE [32]byte
 		copy(hashLE[:], b)
-		if _, ok, _ := readBlockLocator(s.locatorRoot(), hashLE); ok {
+		if _, ok, _ := s.lookupBlockLocator(hashLE); ok {
 			continue
 		}
 		n++

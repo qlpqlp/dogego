@@ -65,24 +65,167 @@ func buildUIPanel(info map[string]interface{}) map[string]interface{} {
 	}
 
 	return map[string]interface{}{
-		"panel_title": "Doginals & DRC-20",
-		"subtitle":    "Index on-chain inscriptions and tokens. Mint DRC-20 via authenticated wallet RPC. Sync L2 assets with peers.",
-		"summary":     "Experimental L2 · L1 observe + optional wallet mint · modern workspace below",
+		"panel_title": "Doginals L2",
+		"subtitle":    "Index Doginals / DRC-20 / Ordinals on L1, sync L2 assets with peers, mint on-chain or off-L1.",
+		"summary":     "Wizard · Doginals wallet API · doginals-v1 P2P",
 		"status_chips": chips,
 		"layout":       "workspace",
 		"nav": []map[string]interface{}{
-			{"id": "home", "label": "Home", "icon": "home"},
-			{"id": "tokens", "label": "Tokens", "icon": "token"},
-			{"id": "mint", "label": "Mint / Deploy", "icon": "auto_awesome"},
-			{"id": "inscriptions", "label": "Inscriptions", "icon": "receipt_long"},
-			{"id": "assets", "label": "L2 Assets", "icon": "collections"},
-			{"id": "index", "label": "Index", "icon": "manage_search"},
-			{"id": "settings", "label": "Settings", "icon": "tune"},
+			{"id": "setup", "label": "1. Setup", "icon": "tune"},
+			{"id": "sync", "label": "2. Sync", "icon": "cloud_sync"},
+			{"id": "create", "label": "3. Create", "icon": "auto_awesome"},
+			{"id": "api", "label": "4. Wallet API", "icon": "api"},
+			{"id": "browse", "label": "Browse", "icon": "grid_view"},
 		},
 		"sections": map[string]interface{}{
-			"home": map[string]interface{}{
-				"title": "Overview",
-				"lead":  "Status and metrics. Use the menu for tokens, minting, and settings.",
+			"setup": map[string]interface{}{
+				"title": "Step 1 — Setup",
+				"lead":  "Enable wallet RPC if you plan to mint on Dogecoin L1. Settings persist under data/ across upgrades.",
+				"wizards": []map[string]interface{}{
+					{
+						"id": "setup_wizard", "title": "Quick setup", "method": "setconfig", "icon": "check_circle",
+						"finish_label": "Save settings",
+						"steps": []map[string]interface{}{
+							{
+								"id": "wallet", "title": "Wallet",
+								"hint": "Unlock the dashboard wallet before L1 mint/deploy broadcast.",
+								"fields": []map[string]interface{}{
+									{"name": "wallet_rpc_enabled", "label": "Enable wallet RPC", "type": "switch", "default": boolStr(walletOn),
+										"hint": "Required for on-chain DRC-20 inscribe."},
+									{"name": "auto_broadcast", "label": "Auto-broadcast after sign", "type": "switch", "default": boolStr(autoBC)},
+									{"name": "preferred_address", "label": "Preferred address", "type": "text", "placeholder": "D…", "default": prefAddr},
+								},
+							},
+						},
+					},
+				},
+				"quick_actions": []map[string]interface{}{
+					{"id": "getconfig", "label": "Reload settings", "method": "getconfig", "icon": "refresh"},
+					{"id": "exportbackup", "label": "Export backup", "method": "exportbackup", "icon": "backup"},
+				},
+			},
+			"sync": map[string]interface{}{
+				"title": "Step 2 — Sync index",
+				"lead":  "L1 index runs locally as blocks connect. L2 assets gossip via doginals-v1 among DogeGo peers (like block sync for metadata).",
+				"widgets": []map[string]interface{}{
+					{
+						"type":    "progress",
+						"label":   "L1 index through chain tip",
+						"percent": syncPct,
+						"value":   fmt.Sprintf("%d / %d (lag %d)", idx, tip, lag),
+					},
+					{
+						"type":  "callout",
+						"tone":  "neutral",
+						"icon":  "hub",
+						"title": "Decentralized L2 overlay",
+						"body":  "Protocol doginals-v1 · commands dinv / getdasset / dasset. Background sync every 60s. Not Dogecoin consensus — experimental second layer for metadata and off-L1 balances.",
+					},
+				},
+				"tools": []map[string]interface{}{
+					{
+						"id": "indexrange", "label": "Backfill L1 heights", "method": "indexrange", "icon": "manage_search",
+						"hint": "Scan up to 5000 blocks per run to catch historical doginals/DRC-20.",
+						"fields": []map[string]interface{}{
+							{"name": "from_height", "label": "From height", "type": "number", "placeholder": "0"},
+							{"name": "to_height", "label": "To height", "type": "number", "placeholder": "1000"},
+						},
+					},
+				},
+				"quick_actions": []map[string]interface{}{
+					{"id": "sync", "label": "Sync status", "method": "syncstatus", "icon": "cloud_sync"},
+					{"id": "refresh", "label": "Refresh", "method": "info", "icon": "refresh"},
+				},
+			},
+			"create": map[string]interface{}{
+				"title": "Step 3 — Create",
+				"lead":  "Mint DRC-20 on Dogecoin (L1) or experimental off-L1 balances (L2) without an on-chain tx.",
+				"wizards": []map[string]interface{}{
+					{
+						"id": "drc20_wizard", "title": "DRC-20 on L1", "method": "inscribe", "icon": "currency_bitcoin",
+						"finish_label": "Build / broadcast",
+						"steps": []map[string]interface{}{
+							{
+								"id": "op", "title": "Operation",
+								"fields": []map[string]interface{}{
+									{"name": "op", "label": "Operation", "type": "select", "default": "mint",
+										"options": []map[string]string{
+											{"value": "deploy", "label": "Deploy"},
+											{"value": "mint", "label": "Mint"},
+											{"value": "transfer", "label": "Transfer"},
+										}},
+								},
+							},
+							{
+								"id": "params", "title": "Token",
+								"fields": []map[string]interface{}{
+									{"name": "tick", "label": "Ticker", "type": "text", "placeholder": "woof"},
+									{"name": "amt", "label": "Amount", "type": "text", "placeholder": "1000"},
+									{"name": "max", "label": "Max (deploy)", "type": "text"},
+									{"name": "lim", "label": "Limit (deploy)", "type": "text"},
+								},
+							},
+							{
+								"id": "broadcast", "title": "Broadcast",
+								"fields": []map[string]interface{}{
+									{"name": "broadcast", "label": "Broadcast to Dogecoin", "type": "switch", "default": "false"},
+								},
+							},
+						},
+					},
+					{
+						"id": "l2_mint_wizard", "title": "Mint on L2 (off-chain)", "method": "mintl2", "icon": "layers",
+						"finish_label": "Credit L2 balance",
+						"steps": []map[string]interface{}{
+							{
+								"id": "who", "title": "Recipient",
+								"hint": "Experimental: credits local/P2P-synced ledger, not Dogecoin consensus.",
+								"fields": []map[string]interface{}{
+									{"name": "address", "label": "Dogecoin address", "type": "text", "placeholder": "D…"},
+									{"name": "tick", "label": "Ticker", "type": "text", "placeholder": "woof"},
+									{"name": "amount", "label": "Amount", "type": "text", "placeholder": "1000"},
+								},
+							},
+							{
+								"id": "meta", "title": "Asset metadata (optional)",
+								"fields": []map[string]interface{}{
+									{"name": "name", "label": "Name", "type": "text"},
+									{"name": "uri", "label": "URI", "type": "text", "placeholder": "ipfs://…"},
+								},
+							},
+						},
+					},
+				},
+			},
+			"api": map[string]interface{}{
+				"title": "Step 4 — Wallet API",
+				"lead":  "Doginals wallet read routes for mobile wallets and websites. Enable this extension on your node.",
+				"widgets": []map[string]interface{}{
+					{
+						"type":  "callout",
+						"tone":  "ok",
+						"icon":  "api",
+						"title": "Public read API (CORS *)",
+						"body":  "GET /api/ext/dogego.doginals/v1/status · /tokens · /address/{addr} · /address/{addr}/history?tick= · /txid/{txid}. POST /mint/l2 and /inscribe require dashboard unlock. Host only proxies /api/ext/{id}/… — routes live in this extension.",
+					},
+					{
+						"type": "item_list",
+						"title": "Example routes",
+						"items": []map[string]interface{}{
+							{"title": "Status", "meta": "GET /api/ext/dogego.doginals/v1/status", "id": "status"},
+							{"title": "Address balances", "meta": "GET /api/ext/dogego.doginals/v1/address/D…", "id": "address"},
+							{"title": "Token list", "meta": "GET /api/ext/dogego.doginals/v1/tokens", "id": "tokens"},
+							{"title": "Events by txid", "meta": "GET /api/ext/dogego.doginals/v1/txid/{txid}", "id": "txid"},
+						},
+					},
+				},
+				"quick_actions": []map[string]interface{}{
+					{"id": "apistatus", "label": "API manifest", "method": "apistatus", "icon": "description"},
+				},
+			},
+			"browse": map[string]interface{}{
+				"title": "Browse index",
+				"lead":  "Tokens, inscriptions, and L2 assets already indexed on this node.",
 				"widgets": append([]map[string]interface{}{
 					{
 						"type": "stats",
@@ -90,202 +233,39 @@ func buildUIPanel(info map[string]interface{}) map[string]interface{} {
 							{"label": "Tokens", "value": fmt.Sprintf("%d", tokN), "icon": "token"},
 							{"label": "Inscriptions", "value": fmt.Sprintf("%d", insN), "icon": "receipt_long"},
 							{"label": "L2 assets", "value": fmt.Sprintf("%d", assetN), "icon": "collections"},
-							{"label": "Index lag", "value": fmt.Sprintf("%d", lag), "icon": "speed"},
 						},
 					},
-					{
-						"type":    "progress",
-						"label":   "Index sync",
-						"percent": syncPct,
-						"value":   fmt.Sprintf("%d / %d", idx, tip),
-					},
-					overviewChart(tokN, insN, assetN, idx, tip),
-				}, tokenListWidget(info)...),
+				}, tokenTableWidget(info)...),
 				"quick_actions": []map[string]interface{}{
-					{"id": "refresh", "label": "Refresh", "method": "info", "icon": "refresh"},
-					{"id": "list_tok", "label": "List tokens", "method": "listtokens", "icon": "token", "params": []interface{}{float64(20)}},
-					{"id": "sync", "label": "Sync status", "method": "syncstatus", "icon": "cloud_sync"},
-				},
-			},
-			"tokens": map[string]interface{}{
-				"title": "DRC-20 token index",
-				"lead":  "Search and browse indexed deploy/mint/transfer events.",
-				"quick_actions": []map[string]interface{}{
+					{"id": "list_ins", "label": "Recent inscriptions", "method": "listinscriptions", "icon": "list", "params": []interface{}{float64(20)}},
+					{"id": "list_assets", "label": "L2 gallery", "method": "listassets", "icon": "grid_view", "params": []interface{}{float64(20)}},
 					{"id": "list_tok", "label": "Refresh tokens", "method": "listtokens", "icon": "refresh", "params": []interface{}{float64(40)}},
 				},
-				"widgets": tokenTableWidget(info),
 				"tools": []map[string]interface{}{
 					{
-						"id": "gettoken", "label": "Get token", "method": "gettoken", "icon": "search",
+						"id": "gettoken", "label": "Lookup ticker", "method": "gettoken", "icon": "search",
 						"fields": []map[string]interface{}{
-							{"name": "tick", "label": "Ticker", "type": "text", "placeholder": "woof"},
+							{"name": "tick", "label": "Ticker", "type": "text"},
 						},
 					},
 					{
-						"id": "listbytick", "label": "Events for ticker", "method": "listbytick", "icon": "history", "advanced": true,
+						"id": "getaddress", "label": "Address balances", "method": "getaddress", "icon": "account_balance_wallet",
 						"fields": []map[string]interface{}{
-							{"name": "tick", "label": "Ticker", "type": "text", "placeholder": "woof"},
-							{"name": "limit", "label": "Limit", "type": "number", "default": "40"},
+							{"name": "address", "label": "Address", "type": "text", "placeholder": "D…"},
 						},
 					},
-				},
-			},
-			"mint": map[string]interface{}{
-				"title": "Deploy / mint / transfer",
-				"lead":  "Guided form for DRC-20 JSON. Broadcast needs wallet RPC enabled in Settings and an unlocked dashboard wallet.",
-				"wizards": []map[string]interface{}{
-					{
-						"id": "drc20_wizard", "title": "DRC-20 wizard", "method": "inscribe", "icon": "auto_awesome",
-						"finish_label": "Build / broadcast",
-						"steps": []map[string]interface{}{
-							{
-								"id": "op", "title": "Operation",
-								"hint": "deploy creates a new tick; mint increases supply toward max; transfer records a move.",
-								"fields": []map[string]interface{}{
-									{"name": "op", "label": "Operation", "type": "select", "default": "mint",
-										"options": []map[string]string{
-											{"value": "deploy", "label": "Deploy", "icon": "rocket_launch"},
-											{"value": "mint", "label": "Mint", "icon": "auto_awesome"},
-											{"value": "transfer", "label": "Transfer", "icon": "swap_horiz"},
-										}},
-								},
-							},
-							{
-								"id": "params", "title": "Token parameters",
-								"fields": []map[string]interface{}{
-									{"name": "tick", "label": "Ticker", "type": "text", "placeholder": "woof"},
-									{"name": "amt", "label": "Amount (mint/transfer)", "type": "text", "placeholder": "1000"},
-									{"name": "max", "label": "Max supply (deploy)", "type": "text", "placeholder": "21000000"},
-									{"name": "lim", "label": "Mint limit (deploy, optional)", "type": "text", "placeholder": "1000"},
-								},
-							},
-							{
-								"id": "broadcast", "title": "Broadcast",
-								"hint": "Leave off to preview and fund only.",
-								"fields": []map[string]interface{}{
-									{"name": "broadcast", "label": "Broadcast now", "type": "switch", "default": "false",
-										"hint": "Requires wallet RPC enabled in Settings."},
-								},
-							},
-						},
-					},
-				},
-				"tools": []map[string]interface{}{
-					{
-						"id": "preview", "label": "Preview JSON only", "method": "previewinscription", "icon": "preview", "advanced": true,
-						"fields": []map[string]interface{}{
-							{"name": "op", "label": "op", "type": "text", "default": "mint"},
-							{"name": "tick", "label": "tick", "type": "text", "placeholder": "woof"},
-							{"name": "amt", "label": "amt", "type": "text", "placeholder": "100"},
-							{"name": "max", "label": "max", "type": "text"},
-							{"name": "lim", "label": "lim", "type": "text"},
-						},
-					},
-				},
-			},
-			"inscriptions": map[string]interface{}{
-				"title": "L1 inscriptions",
-				"lead":  "Recent OP_RETURN / data-carrier observations.",
-				"quick_actions": []map[string]interface{}{
-					{"id": "list_ins", "label": "Recent", "method": "listinscriptions", "icon": "list", "params": []interface{}{float64(20)}},
-				},
-				"tools": []map[string]interface{}{
-					{
-						"id": "getinscription", "label": "Get inscription", "method": "getinscription", "icon": "search",
-						"fields": []map[string]interface{}{
-							{"name": "id", "label": "Inscription id", "type": "text", "placeholder": "txidivout@height"},
-						},
-					},
-				},
-			},
-			"assets": map[string]interface{}{
-				"title": "Off-L1 L2 assets",
-				"lead":  "NFT / token / image metadata synced via doginals-v1 (not L1).",
-				"quick_actions": []map[string]interface{}{
-					{"id": "list_assets", "label": "Gallery", "method": "listassets", "icon": "grid_view", "params": []interface{}{float64(20)}},
-				},
-				"tools": []map[string]interface{}{
 					{
 						"id": "putasset", "label": "Create L2 asset", "method": "putasset", "icon": "add_photo_alternate",
-						"hint": "Off-chain metadata only. Survives upgrades in data/.",
 						"fields": []map[string]interface{}{
 							{"name": "kind", "label": "Kind", "type": "select", "default": "nft",
 								"options": []map[string]string{
-									{"value": "nft", "label": "NFT", "icon": "image"},
-									{"value": "token", "label": "Token", "icon": "token"},
-									{"value": "image", "label": "Image", "icon": "photo"},
-									{"value": "collection", "label": "Collection", "icon": "collections"},
+									{"value": "nft", "label": "NFT"},
+									{"value": "token", "label": "Token"},
+									{"value": "image", "label": "Image"},
+									{"value": "collection", "label": "Collection"},
 								}},
-							{"name": "name", "label": "Name", "type": "text", "placeholder": "Much Wow #1"},
-							{"name": "description", "label": "Description", "type": "textarea"},
-							{"name": "content_type", "label": "Content type", "type": "text", "default": "image/png"},
-							{"name": "uri", "label": "URI / URL", "type": "text", "placeholder": "ipfs://…"},
-							{"name": "l1_inscription_id", "label": "Link L1 id", "type": "text"},
-						},
-					},
-					{
-						"id": "getasset", "label": "Get L2 asset", "method": "getasset", "icon": "inventory_2", "advanced": true,
-						"fields": []map[string]interface{}{
-							{"name": "id", "label": "Asset id", "type": "text"},
-						},
-					},
-				},
-			},
-			"index": map[string]interface{}{
-				"title": "L1 index",
-				"lead":  "Backfill heights into the local index (max 5000 per run).",
-				"widgets": []map[string]interface{}{
-					{
-						"type":    "progress",
-						"label":   "Indexed through tip",
-						"percent": syncPct,
-						"value":   fmt.Sprintf("%d / %d", idx, tip),
-					},
-				},
-				"tools": []map[string]interface{}{
-					{
-						"id": "indexrange", "label": "Scan L1 range", "method": "indexrange", "icon": "manage_search",
-						"fields": []map[string]interface{}{
-							{"name": "from_height", "label": "From height", "type": "number", "placeholder": "0"},
-							{"name": "to_height", "label": "To height", "type": "number", "placeholder": "1000"},
-						},
-					},
-				},
-			},
-			"settings": map[string]interface{}{
-				"title": "Extension settings",
-				"lead":  "Preferences live in data/ and survive zip upgrades. Export a backup before moving nodes.",
-				"widgets": []map[string]interface{}{
-					{
-						"type":  "callout",
-						"tone":  "ok",
-						"icon":  "folder_special",
-						"title": "Upgrade-safe storage",
-						"body":  "Install/Update keeps extensions/dogego.doginals/data/ (index DB + settings). Backups are written under data/backups/.",
-					},
-				},
-				"tools": []map[string]interface{}{
-					{
-						"id": "setconfig", "label": "Save settings", "method": "setconfig", "icon": "save", "run_label": "Save",
-						"hint": "Modern toggles below. Wallet RPC is required for mint/deploy broadcast.",
-						"fields": []map[string]interface{}{
-							{"name": "wallet_rpc_enabled", "label": "Enable wallet RPC for this extension", "type": "switch", "default": boolStr(walletOn),
-								"hint": "Uses authenticated DogeGo RPC only; keys never leave the node wallet."},
-							{"name": "auto_broadcast", "label": "Auto-broadcast after fund/sign", "type": "switch", "default": boolStr(autoBC)},
-							{"name": "preferred_address", "label": "Preferred address (optional)", "type": "text", "placeholder": "D…", "default": prefAddr},
-						},
-					},
-					{
-						"id": "getconfig", "label": "Reload settings", "method": "getconfig", "icon": "download", "advanced": true,
-					},
-					{
-						"id": "exportbackup", "label": "Export backup", "method": "exportbackup", "icon": "backup",
-						"hint": "Copies settings JSON into data/backups/ and returns the payload.",
-					},
-					{
-						"id": "importbackup", "label": "Restore backup", "method": "importbackup", "icon": "restore", "advanced": true,
-						"fields": []map[string]interface{}{
-							{"name": "backup_json", "label": "Backup JSON", "type": "textarea", "placeholder": "{\"config\":{...}}"},
+							{"name": "name", "label": "Name", "type": "text"},
+							{"name": "uri", "label": "URI", "type": "text"},
 						},
 					},
 				},

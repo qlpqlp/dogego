@@ -23,7 +23,7 @@ func registerWalletImportRoutes(mux *http.ServeMux, cfg StartConfig, webGate *we
 			http.Error(w, "forbidden", http.StatusForbidden)
 			return
 		}
-		if cfg.Wallet == nil || cfg.RPCInvoke == nil {
+		if cfg.ActiveWallet() == nil || cfg.RPCInvoke == nil {
 			http.Error(w, "wallet disabled", http.StatusBadRequest)
 			return
 		}
@@ -193,7 +193,7 @@ func registerWalletImportRoutes(mux *http.ServeMux, cfg StartConfig, webGate *we
 			http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
 			return
 		}
-		if cfg.Wallet == nil {
+		if cfg.ActiveWallet() == nil {
 			http.Error(w, "wallet disabled", http.StatusBadRequest)
 			return
 		}
@@ -235,7 +235,7 @@ func registerWalletImportRoutes(mux *http.ServeMux, cfg StartConfig, webGate *we
 			http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
 			return
 		}
-		if cfg.Wallet == nil || cfg.RPCInvoke == nil {
+		if cfg.ActiveWallet() == nil || cfg.RPCInvoke == nil {
 			http.Error(w, "wallet disabled", http.StatusBadRequest)
 			return
 		}

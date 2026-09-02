@@ -12,8 +12,9 @@ import (
 	"dogego/store"
 )
 
-// ApplyRecommendedStorageDefaults sets bundled blk*.dat, zstd compression, and compact tx
-// index (offset-only) for new full-node installs. No-op for SPV.
+// ApplyRecommendedStorageDefaults sets bundled blk*.dat and compact tx index (offset-only)
+// for new full-node installs. Zstd stays off by default so IBD persist stays Core-like
+// (compress offline / after catch-up); operators can still set block_zstd in config.
 func ApplyRecommendedStorageDefaults(f *File) {
 	if f == nil {
 		return
@@ -22,7 +23,7 @@ func ApplyRecommendedStorageDefaults(f *File) {
 		return
 	}
 	f.BlockStorageLayout = store.BlockLayoutBundled
-	f.BlockZstd = true
+	f.BlockZstd = false
 	embedOff := false
 	f.TxIndexEmbedTx = &embedOff
 }

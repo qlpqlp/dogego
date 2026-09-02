@@ -55,6 +55,21 @@ const (
 	maxBlockAssistWorkers      = 24
 	// Delivery EWMA window for raising/lowering per-peer in-flight budgets.
 	ibdPeerDeliveryWindow = 20 * time.Second
+	// softStallEscalateCount hard-rotates a peer after this many soft-stalls on the same hole
+	// without contiguous advance (busy-lane soft-forever was collapsing throughput).
+	softStallEscalateCount = 5
+	// maxFrontierClaimPeers is how many lanes may getdata the contiguous hole at once
+	// (Core FindNextBlocksToDownload lets several peers race the tip window).
+	maxFrontierClaimPeers = 4
+	// ibdPeerByteCap limits estimated outstanding body bytes per peer (Core ~16 mid-size blocks).
+	ibdPeerByteCap = 8 << 20
+	// ibdManyPeersBudgetCap prefers more peers at moderate in-flight once the assist pool is fat.
+	ibdManyPeersBudgetCap   = 128
+	ibdManyPeersWorkerFloor = 12
+	// ibdWriteBehindClaimPauseFrac pauses new getdata when RAM write-behind is this full.
+	// 0 disables the pause: stage() already blocks when the buffer is full, and pausing
+	// claims starved the TCP pipe (~Core keeps requesting while flush catches up).
+	ibdWriteBehindClaimPauseFrac = 0
 )
 
 // EffectiveProgressiveBatchSize scales getdata batch size with parallel sync lanes (Core: more in-flight per peer when several links download).
@@ -187,9 +202,18 @@ func shouldRefillGetData(pending int) bool {
 // getdataRefillThreshold is ltcd minInFlightBlocks (10) for Core-sized 16-block getdata.
 // Fat IBD batches refill at 1/4 remaining so the peer send buffer never drains (ltcd
 // refills at 10 of ~500). Half-full was too late once 24 lanes shared one window.
+// For Core-sized 16–32 budgets, refill at 3/4 so lanes do not sit half-empty between
+// claim rounds under multi-peer window contention.
 func getdataRefillThreshold(batchCap int) int {
 	if batchCap >= 64 {
 		th := batchCap / 4
+		if th < minInFlightBlocks {
+			return minInFlightBlocks
+		}
+		return th
+	}
+	if batchCap > minInFlightBlocks {
+		th := (batchCap * 3) / 4
 		if th < minInFlightBlocks {
 			return minInFlightBlocks
 		}
@@ -702,17 +726,39 @@ func (s *progressiveRawState) lane0AliveLocked() bool {
 }
 
 // holeFillBatchSize is how many heights the hole-owning lane may claim from contiguous+1.
-// Always Core-sized (16): burying the tip behind a fat ahead queue caused ~2 contiguous
-// blk/min with 10k+ wasted in-flight claims. Ahead lanes keep adaptive 16–256 budgets.
+// Soft-open holes and deep body IBD use a fatter batch so the contiguous tip advances
+// at Core-or-better speed (peer budgets already go to 64–256; a hard 16-wide hole starved IBD).
 func (s *progressiveRawState) holeFillBatchSize(lowMissing int64, batchCap int) int {
-	_ = lowMissing
 	if batchCap < 1 {
 		batchCap = progressiveBatchSize
 	}
-	if batchCap > progressiveBatchSize {
-		return progressiveBatchSize
+	softOpen := false
+	if s != nil {
+		s.mu.Lock()
+		softOpen = s.softStallFrontier >= 0 && s.softStallFrontier == lowMissing
+		s.mu.Unlock()
 	}
-	return batchCap
+	target := progressiveBatchSize // 16
+	if softOpen {
+		target = 64
+	} else if batchCap > progressiveBatchSize {
+		// Deep IBD: let the hole lane use more of the peer budget (Core window is 16;
+		// we already run larger ahead stripes — the tip hole must not stay 16-wide).
+		target = 64
+		if batchCap < target {
+			target = batchCap
+		}
+	}
+	if target > batchCap {
+		target = batchCap
+	}
+	if target < progressiveBatchSize {
+		target = progressiveBatchSize
+		if target > batchCap {
+			target = batchCap
+		}
+	}
+	return target
 }
 
 // mayClaimContiguousHole reports whether this lane may ask for contiguous+1.
@@ -723,18 +769,21 @@ func (s *progressiveRawState) holeFillBatchSize(lowMissing int64, batchCap int) 
 // Critical: the peer that just soft-stalled the hole must not re-claim it. Live mainnet
 // hung when lane 0 soft-released contiguous+1 then immediately re-grabbed it forever
 // while assists only filled ahead remnants.
-func (s *progressiveRawState) mayClaimContiguousHole(workerID, workers int, lowMissing int64, inFlight map[int64][32]byte) bool {
+//
+// During deep IBD, up to maxFrontierClaimPeers lanes may race the same hole height
+// (Core asks several peers for tip-window blocks).
+func (s *progressiveRawState) mayClaimContiguousHole(bs *BlockStoreCtx, workerID, workers int, lowMissing int64, inFlight map[int64][32]byte) bool {
 	if lowMissing < 0 {
-		return false
-	}
-	if _, busy := inFlight[lowMissing]; busy {
 		return false
 	}
 	chunkLane := chunkLaneForWorker(workerID, workers)
 	s.mu.Lock()
 	lane0Alive := s.lane0AliveLocked()
 	softOpen := s.softStallFrontier >= 0 && s.softStallFrontier == lowMissing
-	staller := s.lastStallPeer
+	staller := s.softStallPeer
+	if staller == "" {
+		staller = s.lastStallPeer
+	}
 	self := ""
 	if s.laneAddr != nil {
 		self = s.laneAddr[workerID]
@@ -745,11 +794,21 @@ func (s *progressiveRawState) mayClaimContiguousHole(workerID, workers int, lowM
 			lane0Active = true
 		}
 	}
+	already := s.laneClaimsFrontierLocked(lowMissing, workerID)
+	dupN := s.frontierClaimCountLocked(lowMissing)
+	maxPeers := s.maxFrontierClaimPeersLocked(bs)
 	s.mu.Unlock()
+	if already {
+		return false
+	}
+	if staller != "" && self != "" && self == staller {
+		return false
+	}
+	_, busy := inFlight[lowMissing]
+	if busy {
+		return dupN < maxPeers
+	}
 	if softOpen {
-		if staller != "" && self != "" && self == staller {
-			return false
-		}
 		return true
 	}
 	if chunkLane == 0 {
@@ -761,14 +820,85 @@ func (s *progressiveRawState) mayClaimContiguousHole(workerID, workers int, lowM
 	return false
 }
 
+func (s *progressiveRawState) frontierClaimCountLocked(h int64) int {
+	if s == nil || h < 0 {
+		return 0
+	}
+	n := 0
+	if _, ok := s.inFlight[h]; ok {
+		n = 1
+	}
+	if s.frontierExtraLanes != nil {
+		n += len(s.frontierExtraLanes[h])
+	}
+	return n
+}
+
+func (s *progressiveRawState) laneClaimsFrontierLocked(h int64, lane int) bool {
+	if s == nil || h < 0 || lane < 0 {
+		return false
+	}
+	if s.inFlightLane != nil && s.inFlightLane[h] == lane {
+		if _, ok := s.inFlight[h]; ok {
+			return true
+		}
+	}
+	if s.frontierExtraLanes == nil {
+		return false
+	}
+	set, ok := s.frontierExtraLanes[h]
+	if !ok || set == nil {
+		return false
+	}
+	_, has := set[lane]
+	return has
+}
+
+func (s *progressiveRawState) noteFrontierClaimLocked(h int64, lane int) {
+	if s == nil || h < 0 || lane < 0 {
+		return
+	}
+	if _, ok := s.inFlight[h]; !ok {
+		return
+	}
+	if s.inFlightLane != nil && s.inFlightLane[h] == lane {
+		return
+	}
+	if s.frontierExtraLanes == nil {
+		s.frontierExtraLanes = make(map[int64]map[int]struct{})
+	}
+	set := s.frontierExtraLanes[h]
+	if set == nil {
+		set = make(map[int]struct{}, maxFrontierClaimPeers)
+		s.frontierExtraLanes[h] = set
+	}
+	set[lane] = struct{}{}
+}
+
+func (s *progressiveRawState) clearFrontierClaimsLocked(h int64) {
+	if s == nil || s.frontierExtraLanes == nil {
+		return
+	}
+	delete(s.frontierExtraLanes, h)
+}
+
 // shouldUseParallelBatchChunks reports whether deep body IBD should assign each peer a
 // disjoint ~getdata-sized height chunk (no duplicate asks) instead of collapsing all
 // lanes onto the contiguous hole.
+//
+// When the contiguous frontier must be filled first (Core FindNextBlocksToDownload),
+// exclusive chunks are a net loss: assist + relay lanes map onto the same chunkLane via
+// modulo, fight over one stripe, and live IBD collapses into 1–3 block getdata scraps
+// (~230 blk/min vs Core on the same host). Shared-window claiming with the global
+// inFlight map already prevents duplicate asks.
 func shouldUseParallelBatchChunks(bs *BlockStoreCtx, lowMissing int64) bool {
 	if bs == nil || lowMissing < 0 {
 		return false
 	}
 	if ConnectBodyGapHeight(bs) >= 0 {
+		return false
+	}
+	if shouldFillContiguousFrontierFirst(bs, lowMissing) {
 		return false
 	}
 	if bs.Journal == nil {
@@ -783,15 +913,14 @@ func shouldUseParallelBatchChunks(bs *BlockStoreCtx, lowMissing int64) bool {
 	if cont < 0 {
 		gap = tip + 1
 	}
-	// Tiny early Dogecoin bodies: parallel getdata from genesis as soon as more than
-	// one Core-sized window of work exists. Sequential fill only when nearly caught up.
+	// Near-tip / non-frontier cases only: keep exclusive chunks when striping helps.
 	if gap > int64(blockDownloadWindow)/2 {
 		return true
 	}
 	if cont < 32 {
 		return false
 	}
-	return shouldFillContiguousFrontierFirst(bs, lowMissing) || ShouldDeferConnectForBodyDownload(bs)
+	return ShouldDeferConnectForBodyDownload(bs)
 }
 
 // syncBatchChunkBounds assigns lane workerID a disjoint getdata chunk of batchSize heights

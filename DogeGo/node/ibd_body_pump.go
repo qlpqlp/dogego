@@ -8,6 +8,7 @@ package node
 
 import (
 	"context"
+	"strings"
 	"time"
 
 	"dogego/chain"
@@ -70,19 +71,26 @@ func MaybePumpLaneBodyIBDDownload(
 		return 0, nil
 	}
 	raw.ensureBodyDownloadArmed(bs)
-	if lastPump != nil && !lastPump.IsZero() && time.Since(*lastPump) < bodyIBDPumpInterval {
+	// Soft-stall hole reclaim: skip the 50ms pump throttle so another lane grabs contiguous+1 ASAP.
+	if lastPump != nil && !lastPump.IsZero() && time.Since(*lastPump) < bodyIBDPumpInterval && !raw.HoleReclaimPending() {
 		return 0, nil
 	}
 	if lastPump != nil {
 		*lastPump = time.Now()
 	}
-	n, err := raw.tryFetchMissingBatches(ctx, mw, p, bs, laneID, bodyIBDPumpBatchesPerRound, scorer, book)
+	rounds := bodyIBDPumpBatchesPerRound
+	if raw.throughputBoostActive(bs) {
+		rounds = 8
+	}
+	n, err := raw.tryFetchMissingBatches(ctx, mw, p, bs, laneID, rounds, scorer, book)
 	if n > 0 && scorer != nil && mw.PeerAddr != "" {
 		scorer.NoteBlocksDelivered(mw.PeerAddr, n)
 	}
 	if err != nil && !IsBenignShutdownErr(err) && mw.PeerAddr != "" && scorer != nil {
 		if shouldRotatePeerForStubBlock(err) {
 			penalizeStubBlockPeer(scorer, book, mw.PeerAddr)
+		} else if strings.Contains(err.Error(), "bad magic") {
+			penalizeWrongNetworkPeer(scorer, book, mw.PeerAddr, err)
 		} else if sessionFailureHardFromFetchErr(err) || shouldRotatePeerForForwardIBDFetch(err, blockFetchWantHeight(bs)) {
 			penalizeBlockPeer(scorer, book, mw.PeerAddr, true)
 		}

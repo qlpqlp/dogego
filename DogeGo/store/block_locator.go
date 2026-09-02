@@ -124,3 +124,42 @@ func countBlockLocators(locatorRoot string) (int, error) {
 	})
 	return n, err
 }
+
+// countLegacyLocatorsNotInJournal counts per-hash locator files whose hash is not already
+// present in the append journal (upgrade / mixed trees).
+func countLegacyLocatorsNotInJournal(locatorRoot string, lm *locatorMem) (int, error) {
+	if lm == nil {
+		return countBlockLocators(locatorRoot)
+	}
+	if _, err := os.Stat(locatorRoot); err != nil {
+		if os.IsNotExist(err) {
+			return 0, nil
+		}
+		return 0, err
+	}
+	n := 0
+	err := filepath.Walk(locatorRoot, func(path string, info os.FileInfo, err error) error {
+		if err != nil {
+			return err
+		}
+		if info.IsDir() {
+			return nil
+		}
+		name := info.Name()
+		if len(name) != 64 {
+			return nil
+		}
+		b, decErr := hex.DecodeString(name)
+		if decErr != nil || len(b) != 32 {
+			return nil
+		}
+		var hash [32]byte
+		copy(hash[:], b)
+		if _, ok := lm.get(hash); ok {
+			return nil
+		}
+		n++
+		return nil
+	})
+	return n, err
+}

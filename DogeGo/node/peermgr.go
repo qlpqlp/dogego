@@ -780,6 +780,11 @@ func (pm *PeerMgr) tryDialMore(ctx context.Context) {
 	if want < 1 {
 		return
 	}
+	// During deep body IBD, dedicated assist/header sockets already carry getdata.
+	// Filling MaxOutbound with idle full-relay peers wastes dials and archival slots.
+	if pm.ibdBlockSyncActive() && want > 8 {
+		want = 8
+	}
 	for pm.outboundCount() < want {
 		addr := pm.pickDialCandidate()
 		if addr == "" {

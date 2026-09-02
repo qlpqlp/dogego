@@ -68,25 +68,32 @@ func runRelayPeerSession(ctx context.Context, env RelayEnv, pm *PeerMgr, link *p
 		}
 		readTO := 90 * time.Second
 		link.ping.maybePing(mw)
-		if env.FullNode && env.RawFill != nil && env.BlockStore != nil && env.RawFill.bodiesDownloadActive(env.BlockStore) {
+		relayBodyFetch := env.FullNode && env.RawFill != nil && env.BlockStore != nil && env.RawFill.bodiesDownloadActive(env.BlockStore)
+		// During download-first IBD the assist pool already saturates the Core shared
+		// window. Extra relay getdata contended on the same stripes (lane IDs 25–55
+		// colliding via chunkLane modulo) and produced 1-block scrap refills.
+		deferRelayBody := relayBodyFetch && ShouldDeferConnectForBodyDownload(env.BlockStore) && env.RawFill.syncWorkerCount() > 1
+		if relayBodyFetch {
 			readTO = 4 * time.Second
-			if lane := env.RawFill.laneForAddr(link.addr); lane > 0 {
-				n, perr := MaybePumpLaneBodyIBDDownload(ctx, mw, p, env.BlockStore, env.RawFill, lane, pm.blockScorer, addrBookFromPeerMgr(pm), &link.lastBodyPump)
-				if perr != nil {
-					if errors.Is(perr, ErrBlockDownloadStall) || errors.Is(perr, ErrBlockDownloadTimeout) || sessionFailureHardFromFetchErr(perr) {
-						applog.Line("block", "relay block disconnect: "+perr.Error())
-						_ = pm.DisconnectPeer(link.addr)
-						return
+			if !deferRelayBody {
+				if lane := env.RawFill.laneForAddr(link.addr); lane > 0 {
+					n, perr := MaybePumpLaneBodyIBDDownload(ctx, mw, p, env.BlockStore, env.RawFill, lane, pm.blockScorer, addrBookFromPeerMgr(pm), &link.lastBodyPump)
+					if perr != nil {
+						if errors.Is(perr, ErrBlockDownloadStall) || errors.Is(perr, ErrBlockDownloadTimeout) || sessionFailureHardFromFetchErr(perr) {
+							applog.Line("block", "relay block disconnect: "+perr.Error())
+							_ = pm.DisconnectPeer(link.addr)
+							return
+						}
+					} else if n > 0 && pm.blockScorer != nil {
+						pm.blockScorer.NoteBlocksDelivered(link.addr, n)
 					}
-				} else if n > 0 && pm.blockScorer != nil {
-					pm.blockScorer.NoteBlocksDelivered(link.addr, n)
 				}
 			}
 		}
 		_ = mw.Conn().SetReadDeadline(time.Now().Add(readTO))
 		cmd, pl, err := wire.ReadMessage(mw.Conn(), p.Magic)
 		if err != nil {
-			if isNetTimeout(err) && env.FullNode && env.RawFill != nil && env.BlockStore != nil && env.RawFill.bodiesDownloadActive(env.BlockStore) {
+			if isNetTimeout(err) && relayBodyFetch && !deferRelayBody {
 				if lane := env.RawFill.laneForAddr(link.addr); lane > 0 {
 					n, ferr := env.RawFill.tryFetchMissingBatches(ctx, mw, p, env.BlockStore, lane, IdleFetchBatchesPerRound(env.BlockStore), pm.blockScorer, addrBookFromPeerMgr(pm))
 					if errors.Is(ferr, ErrBlockDownloadStall) || errors.Is(ferr, ErrBlockDownloadTimeout) {
@@ -95,6 +102,11 @@ func runRelayPeerSession(ctx context.Context, env RelayEnv, pm *PeerMgr, link *p
 						return
 					}
 					if ferr != nil {
+						if strings.Contains(ferr.Error(), "bad magic") {
+							penalizeWrongNetworkPeer(pm.blockScorer, addrBookFromPeerMgr(pm), link.addr, ferr)
+							_ = pm.DisconnectPeer(link.addr)
+							return
+						}
 						hard := sessionFailureHardFromFetchErr(ferr)
 						penalizeBlockPeer(pm.blockScorer, addrBookFromPeerMgr(pm), link.addr, hard)
 						if hard {
@@ -105,6 +117,9 @@ func runRelayPeerSession(ctx context.Context, env RelayEnv, pm *PeerMgr, link *p
 						pm.blockScorer.NoteBlocksDelivered(link.addr, n)
 					}
 				}
+				continue
+			}
+			if isNetTimeout(err) && deferRelayBody {
 				continue
 			}
 			applog.Line("net", fmt.Sprintf("relay peer %s closed: %v", link.addr, err))

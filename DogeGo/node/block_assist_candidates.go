@@ -15,7 +15,7 @@ import (
 )
 
 // blockAssistCandidatesRefreshInterval is how often the main loop merges new learned addrs into assist dials.
-const blockAssistCandidatesRefreshInterval = 90 * time.Second
+const blockAssistCandidatesRefreshInterval = 30 * time.Second
 
 // BlockAssistCandidates holds a dial pool refreshed during IBD (DNS seeds + learned_addrs + scorer history).
 type BlockAssistCandidates struct {

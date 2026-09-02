@@ -14,7 +14,7 @@ import (
 
 // ScanAddressWalletFast returns wallet-owned address history from UTXO cache + wallet.db (no raw block walk).
 func ScanAddressWalletFast(cfg StartConfig, address string, pubVer, scriptVer byte, recvOffset, recvLimit, spendOffset, spendLimit int) (map[string]any, bool) {
-	if cfg.Wallet == nil || !cfg.Wallet.ContainsAddress(address) {
+	if cfg.ActiveWallet() == nil || !cfg.ActiveWallet().ContainsAddress(address) {
 		return nil, false
 	}
 	utxo := utxoCacheLive(cfg)
@@ -40,10 +40,10 @@ func ScanAddressWalletFast(cfg StartConfig, address string, pubVer, scriptVer by
 		})
 		totalKoinu += row.Value
 	}
-	appendWalletScannedReceives(cfg.Wallet, want, &hits, seen, &totalKoinu)
+	appendWalletScannedReceives(cfg.ActiveWallet(), want, &hits, seen, &totalKoinu)
 	var spendHits []AddrSpendHit
 	var totalSpent int64
-	appendWalletScannedSends(cfg.Wallet, want, &spendHits, &totalSpent)
+	appendWalletScannedSends(cfg.ActiveWallet(), want, &spendHits, &totalSpent)
 	if len(hits) == 0 && len(spendHits) == 0 {
 		return nil, false
 	}

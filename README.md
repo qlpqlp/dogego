@@ -171,7 +171,8 @@ Official packages live in [`DogeGo/extensions/catalog/`](DogeGo/extensions/catal
 ```powershell
 cd DogeGo\extensions\catalog\doginals
 .\build.ps1
-# → dist/doginals.zip + sha256 printed
+# → dist/doginals-universal.zip (+ doginals.zip) + sha256 printed
+# Catalog row: dogego.doginals v0.4.0 — wallet API /api/ext/dogego.doginals/v1/*
 ```
 
 ```bash

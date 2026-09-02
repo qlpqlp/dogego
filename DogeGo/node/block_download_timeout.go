@@ -20,9 +20,9 @@ const (
 	// (peers that only send inv/headers). After that, use Core nCalculatedDlWindow.
 	earlyIBDBlockDownloadTimeout = 90 * time.Second
 	// bodyIBDBlockDownloadTimeout caps one getdata while thousands of tiny bodies are in flight.
-	bodyIBDBlockDownloadTimeout = 30 * time.Second
+	bodyIBDBlockDownloadTimeout = 5 * time.Minute
 	// bodyIBDProgressDownloadTimeout extends the body cap while a lane is still delivering blocks.
-	bodyIBDProgressDownloadTimeout = earlyIBDBlockDownloadTimeout
+	bodyIBDProgressDownloadTimeout = 10 * time.Minute
 	// batchBlockReadSlice caps each ReadMessage wait so ping/inv chatter cannot stall a batch until Core-scale windows.
 	batchBlockReadSlice = 15 * time.Second
 )

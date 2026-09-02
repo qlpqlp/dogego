@@ -117,6 +117,74 @@ func markSummaryFromDiskSnapshot(sum map[string]any) {
 	delete(sum, "dogego_ui_loading_detail")
 	sum["sync_status_line"] = "Showing last known data · refreshing…"
 	sum["dogego_sync_status"] = sum["sync_status_line"]
+	// Never paint last-session rates / peer counts after restart or error —
+	// those only make sense once live P2P overlays refresh them.
+	zeroSummaryLiveMetrics(sum)
+}
+
+// zeroSummaryLiveMetrics clears session-volatile fields so a cold start / disk
+// snapshot does not show stale download rates or peer counts.
+func zeroSummaryLiveMetrics(sum map[string]any) {
+	if sum == nil {
+		return
+	}
+	for _, k := range []string{
+		"blocks_per_minute",
+		"contiguous_blocks_per_minute",
+		"dogego_contiguous_blocks_per_minute",
+		"headers_per_minute",
+		"dogego_headers_per_minute",
+		"dogego_blocks_per_minute_lifetime",
+		"dogego_connect_blocks_per_minute",
+		"in_flight_batches",
+		"sync_workers",
+		"blocks_stored_ibd",
+		"dogego_lane_in_flight",
+		"dogego_lane_budget",
+		"sync_eta",
+		"dogego_sync_activity",
+		"assist_peer_pool",
+	} {
+		delete(sum, k)
+	}
+	sum["connections_out"] = 0
+	sum["connections_in"] = 0
+	sum["connections"] = 0
+}
+
+// zeroP2PLiveMetrics strips volatile P2P fields from a cached/disk snapshot so
+// the dashboard does not show last-run peer counts or IBD rates before connect.
+func zeroP2PLiveMetrics(p2p map[string]any) {
+	if p2p == nil {
+		return
+	}
+	p2p["connections_outbound"] = 0
+	p2p["connections_inbound"] = 0
+	p2p["connections_total"] = 0
+	p2p["connections_outbound_relay"] = 0
+	p2p["block_assist_connections"] = 0
+	p2p["dedicated_header_connections"] = 0
+	p2p["block_assist_active"] = false
+	p2p["peer_dialing"] = true
+	delete(p2p, "ibd_progress")
+	delete(p2p, "dogego_sync_activity")
+	delete(p2p, "block_assist_peers")
+	delete(p2p, "top_block_peers")
+	delete(p2p, "primary_peer")
+	delete(p2p, "peer_addr")
+	delete(p2p, "peer_user_agent")
+	delete(p2p, "peer_start_height")
+	delete(p2p, "tcp_bytes_recv")
+	delete(p2p, "tcp_bytes_sent")
+	// Stale health strings like "P2P active with N outbound…" must not paint on cold start.
+	p2p["health"] = "starting"
+	p2p["health_message"] = "Connecting to the network…"
+	p2p["dogego_sync_activity"] = map[string]any{
+		"headline": "Connecting to peers",
+		"detail":   "Dialing DNS seeds and addrbook — block and header sync start after the first handshakes.",
+	}
+	delete(p2p, "inbound_hint")
+	p2p["from_disk_snapshot"] = true
 }
 
 func clearSummaryStaleFlags(sum map[string]any) {

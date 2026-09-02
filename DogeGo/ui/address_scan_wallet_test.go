@@ -15,12 +15,12 @@ import (
 func TestScanAddressWalletFast(t *testing.T) {
 	cfg, _, spk := testWalletFastSetup(t)
 	addWalletFastUtxo(cfg.UtxoCache(), 80, 0, 5_000_000_000, 400, spk)
-	cfg.Wallet.SeedScannedTx([]wallet.ScannedTx{{
+	cfg.ActiveWallet().SeedScannedTx([]wallet.ScannedTx{{
 		TxID: "abcd1234abcd1234abcd1234abcd1234abcd1234abcd1234abcd1234abcd1234",
-		Category: "receive", Address: cfg.Wallet.DefaultAddress(), AmountKoinu: 5_000_000_000,
+		Category: "receive", Address: cfg.ActiveWallet().DefaultAddress(), AmountKoinu: 5_000_000_000,
 		Vout: 0, BlockHeight: 400,
 	}})
-	out, ok := ScanAddressWalletFast(cfg, cfg.Wallet.DefaultAddress(), 0x71, 0xc4, 0, 40, 0, 40)
+	out, ok := ScanAddressWalletFast(cfg, cfg.ActiveWallet().DefaultAddress(), 0x71, 0xc4, 0, 40, 0, 40)
 	if !ok || out == nil {
 		t.Fatal("expected wallet fast path")
 	}
@@ -34,7 +34,7 @@ func TestScanAddressWalletFast(t *testing.T) {
 
 func TestAddressPkScriptSet(t *testing.T) {
 	cfg, _, _ := testWalletFastSetup(t)
-	addr := cfg.Wallet.DefaultAddress()
+	addr := cfg.ActiveWallet().DefaultAddress()
 	set := addressPkScriptSet(addr, 0x71, 0xc4)
 	if len(set) != 1 {
 		t.Fatalf("set len=%d addr=%s", len(set), addr)

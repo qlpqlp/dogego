@@ -29,9 +29,10 @@ type BlockStorageOpts struct {
 	Zstd bool
 }
 
-// DefaultBlockStorageOpts is one file per block hash, uncompressed.
+// DefaultBlockStorageOpts prefers Core-style bundled blk*.dat (append) over one file per
+// block. Per-file IBD on NTFS creates/renames millions of files and cannot beat Core.
 func DefaultBlockStorageOpts() BlockStorageOpts {
-	return BlockStorageOpts{Layout: BlockLayoutPerFile, Zstd: false}
+	return BlockStorageOpts{Layout: BlockLayoutBundled, Zstd: false}
 }
 
 // NormalizeBlockStorageOpts trims and validates layout; unknown layout becomes perfile.
@@ -89,8 +90,8 @@ func saveBlockStorageManifest(rawDir string, opts BlockStorageOpts) error {
 
 // ResolveBlockStorageOpts merges config opts with an existing on-disk manifest.
 // The manifest normally wins so a datadir keeps a stable layout, but config may
-// upgrade perfile → bundled (and optionally enable zstd). Old *.bin bodies stay
-// readable via Has/Get fallbacks; new Puts append Core-style blk*.dat.
+// upgrade perfile → bundled, enable zstd, or disable zstd for new Puts (old
+// compressed records stay readable via per-record decode).
 func ResolveBlockStorageOpts(requested BlockStorageOpts, rawDir string) BlockStorageOpts {
 	requested = NormalizeBlockStorageOpts(requested)
 	onDisk, ok := loadBlockStorageManifest(rawDir)
@@ -101,6 +102,10 @@ func ResolveBlockStorageOpts(requested BlockStorageOpts, rawDir string) BlockSto
 		return requested
 	}
 	if onDisk.Layout == BlockLayoutBundled && requested.Layout == BlockLayoutBundled && requested.Zstd && !onDisk.Zstd {
+		return requested
+	}
+	// Allow operators to turn compression off for IBD without rewriting old bodies.
+	if onDisk.Layout == BlockLayoutBundled && requested.Layout == BlockLayoutBundled && onDisk.Zstd && !requested.Zstd {
 		return requested
 	}
 	return onDisk

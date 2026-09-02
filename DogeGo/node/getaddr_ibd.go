@@ -13,7 +13,8 @@ import (
 )
 
 // ibdGetAddrInterval is how often we ask connected peers for more addresses during block catch-up.
-const ibdGetAddrInterval = 12 * time.Minute
+// Core gossips continuously; keep this short so assist dials find NODE_NETWORK archival peers.
+const ibdGetAddrInterval = 45 * time.Second
 
 // RequestGetAddrFromPeers sends an empty getaddr to the primary link and all relay outbounds.
 func RequestGetAddrFromPeers(mw *MsgWriter, pm *PeerMgr) {

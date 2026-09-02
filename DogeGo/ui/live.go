@@ -39,7 +39,8 @@ type LiveFeed struct {
 	chainDataDir string
 
 	refreshing atomic.Bool
-	p2pBusy    atomic.Bool
+	p2pBusy       atomic.Bool
+	p2pBusySince  atomic.Int64 // unix nano; watchdog when P2PSnapshot blocks
 	// HTTP handlers read these without taking f.mu during IBD marshal.
 	summaryAtomic atomic.Value // []byte
 	liveAtomic    atomic.Value // []byte
@@ -47,12 +48,19 @@ type LiveFeed struct {
 	lastHeavyAt   atomic.Int64
 	// summaryBuild, when set, replaces BuildSummaryMap (tests).
 	summaryBuild func(StartConfig) (map[string]any, error)
+
+	// contRate* estimates blk/min from contiguous tip movement when ibd_progress is missing.
+	contRateHeight int64
+	contRateAt     time.Time
 }
 
 const (
 	liveOverlayInterval   = 250 * time.Millisecond
 	liveHeavyIBDInterval  = 15 * time.Second
-	liveP2POverlayTimeout = 80 * time.Millisecond
+	// liveP2POverlayTimeout bounds commitLiveP2P. Unbounded P2PSnapshot blocked forever
+	// during IBD lock contention, leaving /api/live on zeroed disk bootstrap (peers=0).
+	liveP2POverlayTimeout = 5 * time.Second
+	liveP2PBusyWatchdog     = 12 * time.Second
 )
 
 // StartLiveFeed runs periodic refresh until ctx is cancelled. interval should be ~500ms-1s during IBD.
@@ -94,10 +102,10 @@ func (f *LiveFeed) loop(ctx context.Context, cfg StartConfig, interval time.Dura
 }
 
 func liveIBDActive(cfg StartConfig) bool {
-	if cfg.Journal == nil {
+	if cfg.ActiveJournal() == nil {
 		return false
 	}
-	tip, _, err := journalTipForDashboard(cfg.Journal)
+	tip, _, err := journalTipForDashboard(cfg.ActiveJournal())
 	if err != nil || tip < 0 {
 		return false
 	}
@@ -178,7 +186,16 @@ func (f *LiveFeed) commitRefresh(cfg StartConfig, sum map[string]any, sumErr err
 		}
 	}
 	if cfg.P2PSnapshot != nil {
-		if snap := p2PSnapshotWithTimeout(cfg.P2PSnapshot); snap != nil {
+		var snap map[string]any
+		if s := p2PSnapshotWithTimeout(cfg.P2PSnapshot); s != nil {
+			snap = s
+		} else {
+			snap = peerCountSnapFromRPC(cfg)
+		}
+		snap = enrichP2PSnapFromRPC(cfg, snap)
+		if snap != nil {
+			delete(snap, "from_disk_snapshot")
+			storeP2PSnapshotCache(snap)
 			p2pB, _ = json.Marshal(snap)
 		}
 	} else {
@@ -206,15 +223,7 @@ func (f *LiveFeed) commitRefresh(cfg StartConfig, sum map[string]any, sumErr err
 			live["mempool"] = mp
 		}
 	}
-	f.mu.RLock()
-	analyticsCopy := append([]byte(nil), f.analyticsJSON...)
-	f.mu.RUnlock()
-	if len(analyticsCopy) > 0 {
-		var an any
-		if json.Unmarshal(analyticsCopy, &an) == nil {
-			live["analytics_summary"] = an
-		}
-	}
+	// Keep fat analytics off the /api/live hot path (see commitLiveP2P).
 	liveB, _ := json.Marshal(live)
 
 	f.publishCachedJSON(sumB, p2pB, mpB, liveB)
@@ -224,6 +233,9 @@ func (f *LiveFeed) commitRefresh(cfg StartConfig, sum map[string]any, sumErr err
 		if dir == "" {
 			dir = strings.TrimSpace(cfg.ChainDataDir)
 		}
+		f.mu.RLock()
+		analyticsCopy := append([]byte(nil), f.analyticsJSON...)
+		f.mu.RUnlock()
 		go f.persistSnapshotAsync(dir, sum, p2pB, mpB, analyticsCopy)
 	}
 }
@@ -233,13 +245,35 @@ func (f *LiveFeed) commitRefresh(cfg StartConfig, sum map[string]any, sumErr err
 func (f *LiveFeed) publishLiveProgress(cfg StartConfig) {
 	f.patchSummaryTipFromManifest(cfg)
 	f.bootstrapLiveIfEmpty(cfg)
-	if !f.p2pBusy.CompareAndSwap(false, true) {
+	if !f.tryBeginP2POverlay() {
 		return
 	}
 	go func() {
-		defer f.p2pBusy.Store(false)
+		defer f.endP2POverlay()
 		f.commitLiveP2P(cfg)
 	}()
+}
+
+func (f *LiveFeed) tryBeginP2POverlay() bool {
+	if f.p2pBusy.CompareAndSwap(false, true) {
+		f.p2pBusySince.Store(time.Now().UnixNano())
+		return true
+	}
+	since := f.p2pBusySince.Load()
+	if since > 0 && time.Since(time.Unix(0, since)) > liveP2PBusyWatchdog {
+		// Prior overlay goroutine hung inside P2PSnapshot — recover so live metrics resume.
+		f.p2pBusy.Store(false)
+		if f.p2pBusy.CompareAndSwap(false, true) {
+			f.p2pBusySince.Store(time.Now().UnixNano())
+			return true
+		}
+	}
+	return false
+}
+
+func (f *LiveFeed) endP2POverlay() {
+	f.p2pBusy.Store(false)
+	f.p2pBusySince.Store(0)
 }
 
 func (f *LiveFeed) commitLiveP2P(cfg StartConfig) {
@@ -247,10 +281,23 @@ func (f *LiveFeed) commitLiveP2P(cfg StartConfig) {
 	if cfg.P2PSnapshot != nil {
 		snap = p2PSnapshotWithTimeoutDur(cfg.P2PSnapshot, liveP2POverlayTimeout)
 		if snap == nil {
-			snap = cachedP2PSnapshot(3 * time.Second)
+			// Prefer last full snap (with ibd_progress) over a peer-count-only RPC stub.
+			if cached := cachedP2PSnapshot(2 * time.Minute); cached != nil && cached["from_disk_snapshot"] != true {
+				snap = cached
+			}
 		}
 	}
+	if snap == nil {
+		// Full P2P snapshot can block on IBD locks; still publish peer counts from getpeerinfo
+		// so the dock is not stuck on cold-start zeros while /api/peers already shows links.
+		snap = peerCountSnapFromRPC(cfg)
+	}
+	if snap == nil {
+		snap = minimalDialingP2PSnap()
+	}
+	snap = enrichP2PSnapFromRPC(cfg, snap)
 	if snap != nil {
+		delete(snap, "from_disk_snapshot")
 		storeP2PSnapshotCache(snap)
 	}
 	p2pB, _ := json.Marshal(snap)
@@ -261,7 +308,6 @@ func (f *LiveFeed) commitLiveP2P(cfg StartConfig) {
 
 	f.mu.RLock()
 	prevSum := append([]byte(nil), f.summaryJSON...)
-	analyticsCopy := append([]byte(nil), f.analyticsJSON...)
 	f.mu.RUnlock()
 
 	var sum map[string]any
@@ -274,25 +320,62 @@ func (f *LiveFeed) commitLiveP2P(cfg StartConfig) {
 	if cont := contiguousHeightForAPI(cfg); cont >= 0 {
 		sum["contiguous_raw_height"] = cont
 		sum["dogego_contiguous_raw_height"] = cont
+		f.noteContiguousRate(sum, cont)
 	}
 	var p2 map[string]any
+	liveProgress := false
 	if len(p2pB) > 0 && json.Unmarshal(p2pB, &p2) == nil {
 		overlayP2PProgressOnSummary(sum, p2)
+		liveProgress = p2PHasLiveProgress(p2) || p2PHasLiveConnections(p2)
 	}
 	if cfg.StorageSummary != nil {
 		if st := cfg.StorageSummary(); st != nil {
 			mergeStorageSummary(sum, st)
 		}
 	}
+	// Full BuildSummaryMap may still be deferred during IBD, but contiguous height +
+	// ibd_progress overlays are live — clear disk-snapshot flags so the sync dock
+	// stops showing "Updating… / last known data" while rates advance.
+	if liveProgress || contHeightFromSummary(sum) >= 0 {
+		clearSummaryStaleFlags(sum)
+		if line, _ := sum["sync_status_line"].(string); strings.Contains(line, "last known data") {
+			if h, _ := sum["dogego_sync_status"].(string); h != "" {
+				sum["sync_status_line"] = h
+			} else if act, _ := sum["dogego_sync_activity"].(map[string]any); act != nil {
+				if h, _ := act["headline"].(string); h != "" {
+					sum["sync_status_line"] = h
+					sum["dogego_sync_status"] = h
+				} else {
+					delete(sum, "sync_status_line")
+				}
+			} else {
+				delete(sum, "sync_status_line")
+			}
+		}
+	}
+	warming := sum["warming_up"] == true
+	ApplyUILoadingFlags(sum, warming)
+	if sum["dogego_ui_loading_phase"] == "body_reconcile" && !summaryHasLiveSyncWork(sum) {
+		sum["warming_up"] = true
+	}
 	sumB, _ := json.Marshal(sum)
 	live := map[string]any{
 		"ok":                 true,
 		"summary":            sum,
-		"summary_stale":      true,
 		"from_disk_snapshot": false,
+	}
+	if sum["warming_up"] == true {
+		live["warming_up"] = true
+	}
+	// Envelope summary_stale means "full summary build pending", not frozen IBD metrics.
+	if !liveProgress {
+		live["summary_stale"] = true
 	}
 	if p2 != nil {
 		live["p2p"] = p2
+	} else if len(p2pB) == 0 {
+		// Drop stale disk-bootstrap p2p from the envelope when the live snap timed out.
+		delete(live, "p2p")
 	}
 	if len(mpB) > 0 {
 		var mp any
@@ -300,12 +383,8 @@ func (f *LiveFeed) commitLiveP2P(cfg StartConfig) {
 			live["mempool"] = mp
 		}
 	}
-	if len(analyticsCopy) > 0 {
-		var an any
-		if json.Unmarshal(analyticsCopy, &an) == nil {
-			live["analytics_summary"] = an
-		}
-	}
+	// Do not embed analytics_summary here — full Analytics payloads are 100KB–1MB and
+	// re-parsing them on every 250–400ms /api/live poll freezes the dashboard (logs stall too).
 	liveB, _ := json.Marshal(live)
 	f.publishCachedJSON(sumB, p2pB, mpB, liveB)
 }
@@ -315,6 +394,214 @@ func asJSONBytes(b []byte) []byte {
 		return nil
 	}
 	return append([]byte(nil), b...)
+}
+
+// minimalDialingP2PSnap is the fallback when full P2PSnapshot/RPC are unavailable during startup.
+func minimalDialingP2PSnap() map[string]any {
+	return map[string]any{
+		"wired":                true,
+		"peer_dialing":         true,
+		"warming_up":           true,
+		"connections_outbound": 0,
+		"connections_inbound":  0,
+		"connections_total":    0,
+		"health":               "starting",
+		"health_message":       "Connecting to the network…",
+		"dogego_sync_activity": map[string]any{
+			"headline": "Connecting to peers",
+			"detail":   "Dialing DNS seeds and addrbook — block and header sync start after the first handshakes.",
+		},
+	}
+}
+
+// peerCountSnapFromRPC builds a minimal live P2P snap from getpeerinfo when the full
+// node P2PSnapshot is blocked. Keeps Overview/dock peer counts moving during IBD.
+func peerCountSnapFromRPC(cfg StartConfig) map[string]any {
+	if cfg.RPCInvoke == nil {
+		return minimalDialingP2PSnap()
+	}
+	rpcOut, timedOut := invokeRPCWithTimeout(cfg.RPCInvoke, "getpeerinfo", nil, 1500*time.Millisecond)
+	if timedOut || rpcOut == nil {
+		return minimalDialingP2PSnap()
+	}
+	if errObj, ok := rpcOut["error"].(map[string]interface{}); ok && errObj != nil {
+		return minimalDialingP2PSnap()
+	}
+	res := rpcOut["result"]
+	if res == nil {
+		return minimalDialingP2PSnap()
+	}
+	peers := normalizePeerInfoResult(res)
+	inN, outN := peerDirectionCounts(peers)
+	if inN+outN <= 0 {
+		return minimalDialingP2PSnap()
+	}
+	return map[string]any{
+		"wired":                true,
+		"peer_dialing":         false,
+		"connections_outbound": outN,
+		"connections_inbound":  inN,
+		"connections_total":    inN + outN,
+		"health":               "ok",
+		"health_message":       fmt.Sprintf("P2P active with %d outbound sync connection(s).", outN),
+	}
+}
+
+// peerCountsFromGetPeerInfo returns live inbound/outbound counts from getpeerinfo.
+func peerCountsFromGetPeerInfo(cfg StartConfig) (inbound, outbound int, ok bool) {
+	if cfg.RPCInvoke == nil {
+		return 0, 0, false
+	}
+	rpcOut, timedOut := invokeRPCWithTimeout(cfg.RPCInvoke, "getpeerinfo", nil, 1500*time.Millisecond)
+	if timedOut || rpcOut == nil {
+		return 0, 0, false
+	}
+	if errObj, okErr := rpcOut["error"].(map[string]interface{}); okErr && errObj != nil {
+		return 0, 0, false
+	}
+	res := rpcOut["result"]
+	if res == nil {
+		return 0, 0, false
+	}
+	inN, outN := peerDirectionCounts(normalizePeerInfoResult(res))
+	if inN+outN <= 0 {
+		return 0, 0, false
+	}
+	return inN, outN, true
+}
+
+func p2pSnapConnectionCounts(snap map[string]any) (inbound, outbound, total int) {
+	if snap == nil {
+		return 0, 0, 0
+	}
+	inbound, _ = p2pCountField(snap["connections_inbound"])
+	outbound, _ = p2pCountField(snap["connections_outbound"])
+	total, haveTotal := p2pCountField(snap["connections_total"])
+	if !haveTotal || total <= 0 {
+		total = inbound + outbound
+	}
+	if outbound > 0 || total > 0 {
+		return inbound, outbound, total
+	}
+	assist, _ := p2pCountField(snap["block_assist_connections"])
+	hdr, _ := p2pCountField(snap["dedicated_header_connections"])
+	relay, _ := p2pCountField(snap["connections_outbound_relay"])
+	rebuilt := assist + hdr + relay
+	if primary, _ := snap["primary_peer"].(string); primary != "" && !strings.HasPrefix(strings.TrimSpace(primary), "(") {
+		rebuilt++
+	}
+	if rebuilt > outbound {
+		outbound = rebuilt
+		if total < outbound+inbound {
+			total = outbound + inbound
+		}
+	}
+	return inbound, outbound, total
+}
+
+func p2pCountField(v any) (int, bool) {
+	switch x := v.(type) {
+	case int:
+		return x, true
+	case int32:
+		return int(x), true
+	case int64:
+		return int(x), true
+	case float64:
+		return int(x), true
+	default:
+		return 0, false
+	}
+}
+
+// enrichP2PSnapFromRPC merges getpeerinfo counts when the node P2PSnapshot under-reports
+// connections during block-assist IBD (snapshot returns peer_dialing/0 while RPC lists peers).
+func enrichP2PSnapFromRPC(cfg StartConfig, snap map[string]any) map[string]any {
+	if snap == nil {
+		snap = peerCountSnapFromRPC(cfg)
+	}
+	if snap == nil {
+		return nil
+	}
+	healP2PSnapConnectionCounts(snap)
+	inSnap, outSnap, totalSnap := p2pSnapConnectionCounts(snap)
+	out := snap
+	changed := false
+
+	// Only hit getpeerinfo when the snap still looks empty — calling it on every
+	// /api/live|/api/p2p request under IBD stalls the HTTP handlers and freezes the UI.
+	needRPC := outSnap == 0 && totalSnap == 0
+	if needRPC {
+		inRPC, outRPC, rpcOK := peerCountsFromGetPeerInfo(cfg)
+		if rpcOK && (outRPC > outSnap || inRPC > inSnap) {
+			out = cloneStringAnyMap(snap)
+			changed = true
+			if outRPC > outSnap {
+				out["connections_outbound"] = outRPC
+				outSnap = outRPC
+			}
+			if inRPC > inSnap {
+				out["connections_inbound"] = inRPC
+				inSnap = inRPC
+			}
+			outTotal := inRPC + outRPC
+			if cur, have := p2pCountField(out["connections_total"]); !have || cur < outTotal {
+				out["connections_total"] = outTotal
+			}
+		}
+	}
+	if outSnap > 0 || inSnap > 0 {
+		if !changed {
+			out = cloneStringAnyMap(snap)
+			changed = true
+		}
+		out["peer_dialing"] = false
+		delete(out, "warming_up")
+		delete(out, "from_disk_snapshot")
+		if h, _ := out["health"].(string); h == "" || h == "starting" {
+			out["health"] = "ok"
+			out["health_message"] = fmt.Sprintf("P2P active with %d outbound sync connection(s).", outSnap)
+		}
+		// RPC/dialing stubs leave "Connecting to peers" forever; replace once peers are live.
+		if act, _ := out["dogego_sync_activity"].(map[string]any); act != nil {
+			if h, _ := act["headline"].(string); h == "Connecting to peers" || h == "" {
+				out["dogego_sync_activity"] = map[string]any{
+					"headline": "Syncing blocks",
+					"detail":   fmt.Sprintf("%d peer(s) connected — downloading and verifying block bodies.", outSnap),
+				}
+			}
+		} else {
+			out["dogego_sync_activity"] = map[string]any{
+				"headline": "Syncing blocks",
+				"detail":   fmt.Sprintf("%d peer(s) connected — downloading and verifying block bodies.", outSnap),
+			}
+		}
+	}
+	// Preserve IBD rates when this snap is a peer-count-only enrich/fallback.
+	if out["ibd_progress"] == nil {
+		if cached := cachedP2PSnapshot(2 * time.Minute); cached != nil {
+			if prog := cached["ibd_progress"]; prog != nil {
+				if !changed {
+					out = cloneStringAnyMap(out)
+					changed = true
+				}
+				out["ibd_progress"] = prog
+			}
+			for _, k := range []string{"contiguous_block_height", "ibd_sync_lanes", "block_assist_active", "block_assist_connections"} {
+				if out[k] == nil && cached[k] != nil {
+					if !changed {
+						out = cloneStringAnyMap(out)
+						changed = true
+					}
+					out[k] = cached[k]
+				}
+			}
+		}
+	}
+	if !changed {
+		return snap
+	}
+	return out
 }
 
 func storeJSONAtomic(dst *atomic.Value, b []byte) {
@@ -348,11 +635,119 @@ func (f *LiveFeed) publishCachedJSON(sumB, p2pB, mpB, liveB []byte) {
 	storeJSONAtomic(&f.liveAtomic, liveB)
 }
 
+func p2PHasLiveProgress(p2p map[string]any) bool {
+	if p2p == nil {
+		return false
+	}
+	fromDisk := p2p["from_disk_snapshot"] == true
+	if fromDisk {
+		if p2p["peer_dialing"] == true || p2p["warming_up"] == true {
+			return true
+		}
+		if act, ok := p2p["dogego_sync_activity"]; ok && act != nil {
+			return true
+		}
+		return p2PHasLiveConnections(p2p)
+	}
+	if p2p["peer_dialing"] == true || p2p["warming_up"] == true {
+		return true
+	}
+	if prog, _ := p2p["ibd_progress"].(map[string]any); prog != nil {
+		return true
+	}
+	if _, ok := p2p["ibd_progress"].(map[string]interface{}); ok {
+		return true
+	}
+	if act, ok := p2p["dogego_sync_activity"]; ok && act != nil {
+		return true
+	}
+	if _, ok := p2p["contiguous_block_height"]; ok {
+		return true
+	}
+	return p2PHasLiveConnections(p2p)
+}
+
+// p2PHasLiveConnections is true when outbound/assist counts show an active sync mesh.
+func p2PHasLiveConnections(p2p map[string]any) bool {
+	if p2p == nil || p2p["from_disk_snapshot"] == true {
+		return false
+	}
+	toInt := func(v any) (int, bool) {
+		switch x := v.(type) {
+		case int:
+			return x, true
+		case int32:
+			return int(x), true
+		case int64:
+			return int(x), true
+		case float64:
+			return int(x), true
+		default:
+			return 0, false
+		}
+	}
+	if n, ok := toInt(p2p["connections_outbound"]); ok && n > 0 {
+		return true
+	}
+	if n, ok := toInt(p2p["block_assist_connections"]); ok && n > 0 {
+		return true
+	}
+	if n, ok := toInt(p2p["connections_total"]); ok && n > 0 {
+		return true
+	}
+	return false
+}
+
+func contHeightFromSummary(sum map[string]any) int64 {
+	if sum == nil {
+		return -1
+	}
+	for _, key := range []string{"contiguous_raw_height", "dogego_contiguous_raw_height"} {
+		switch v := sum[key].(type) {
+		case int64:
+			if v >= 0 {
+				return v
+			}
+		case int:
+			if v >= 0 {
+				return int64(v)
+			}
+		case float64:
+			if v >= 0 {
+				return int64(v)
+			}
+		}
+	}
+	return -1
+}
+
 func overlayP2PProgressOnSummary(sum, p2p map[string]any) {
 	if sum == nil || p2p == nil {
 		return
 	}
-	delete(sum, "from_disk_snapshot")
+	// Cold disk bootstrap must not paint last-session peers/rates or clear "stale".
+	if p2p["from_disk_snapshot"] == true {
+		sum["connections_out"] = 0
+		sum["connections_in"] = 0
+		sum["connections"] = 0
+		if p2p["peer_dialing"] == true || p2p["dogego_sync_activity"] != nil {
+			clearSummaryStaleFlags(sum)
+			if act, ok := p2p["dogego_sync_activity"]; ok && act != nil {
+				sum["dogego_sync_activity"] = act
+				if m, ok := act.(map[string]any); ok {
+					if h, _ := m["headline"].(string); h != "" {
+						sum["dogego_sync_status"] = h
+						sum["sync_status_line"] = h
+					}
+				}
+			}
+		}
+		return
+	}
+	// Live P2P overlay replaces disk-snapshot paint even when BuildSummaryMap is deferred.
+	if p2PHasLiveProgress(p2p) {
+		clearSummaryStaleFlags(sum)
+	}
 	// Connection counts live on the P2P snapshot and must refresh even when
 	// BuildSummaryMap is deferred during IBD (otherwise Overview/Analytics stay at 0
 	// peers while the node is actively dialing).
@@ -395,6 +790,18 @@ func overlayP2PProgressOnSummary(sum, p2p map[string]any) {
 	if v, ok := prog["contiguous_blocks_per_minute"]; ok {
 		sum["contiguous_blocks_per_minute"] = v
 		sum["dogego_contiguous_blocks_per_minute"] = v
+	}
+	if v, ok := prog["frontier_hole_height"]; ok {
+		sum["frontier_hole_height"] = v
+		sum["dogego_frontier_hole_height"] = v
+	}
+	if v, ok := prog["raw_blocks_in_flight_ahead"]; ok {
+		sum["raw_blocks_in_flight_ahead"] = v
+		sum["dogego_raw_blocks_in_flight_ahead"] = v
+	}
+	if v, ok := prog["hole_blocked_sec"]; ok {
+		sum["hole_blocked_sec"] = v
+		sum["dogego_hole_blocked_sec"] = v
 	}
 	if v, ok := prog["in_flight_batches"]; ok {
 		sum["in_flight_batches"] = v
@@ -489,6 +896,31 @@ func overlayP2PConnectionCounts(sum, p2p map[string]any) {
 	}
 	outN, haveOut := toInt(p2p["connections_outbound"])
 	inN, haveIn := toInt(p2p["connections_inbound"])
+	// Never invent peer counts from a cold disk snapshot — last-session assist rows
+	// would paint "N peers connected" before any dial succeeds.
+	if p2p["from_disk_snapshot"] == true {
+		sum["connections_out"] = 0
+		sum["connections_in"] = 0
+		return
+	}
+	// Recover counts when a live snap briefly has connections_*=0 but assist is up.
+	if !haveOut || outN == 0 {
+		assist, _ := toInt(p2p["block_assist_connections"])
+		hdr, _ := toInt(p2p["dedicated_header_connections"])
+		relay, _ := toInt(p2p["connections_outbound_relay"])
+		rebuilt := assist + hdr + relay
+		if primary, _ := p2p["primary_peer"].(string); primary != "" && !strings.HasPrefix(strings.TrimSpace(primary), "(") {
+			rebuilt++
+		}
+		if rebuilt > 0 {
+			outN = rebuilt
+			haveOut = true
+			p2p["connections_outbound"] = outN
+			if total, ok := toInt(p2p["connections_total"]); !ok || total < outN {
+				p2p["connections_total"] = outN + inN
+			}
+		}
+	}
 	if haveOut {
 		sum["connections_out"] = outN
 	}
@@ -524,8 +956,8 @@ func overlayP2PConnectionCounts(sum, p2p map[string]any) {
 func (f *LiveFeed) patchSummaryTipFromManifest(cfg StartConfig) {
 	var headerTip int64 = -1
 	var headerHash string
-	if cfg.Journal != nil {
-		if m, ok := store.ReadSegmentManifest(cfg.Journal.ChainDir()); ok {
+	if cfg.ActiveJournal() != nil {
+		if m, ok := store.ReadSegmentManifest(cfg.ActiveJournal().ChainDir()); ok {
 			headerTip = m.TipHeight
 			headerHash = m.TipHashHex
 		}
@@ -599,14 +1031,42 @@ func (f *LiveFeed) patchSummaryTipFromManifest(cfg StartConfig) {
 	if !changed {
 		return
 	}
+	// Never re-attach a cold disk-bootstrap P2P blob — that permanently paints peers=0
+	// over live overlays whenever contiguous/tip advances.
+	var liveP2 map[string]any
+	if len(f.p2pJSON) > 0 {
+		var p2 map[string]any
+		if json.Unmarshal(f.p2pJSON, &p2) == nil && p2["from_disk_snapshot"] != true {
+			liveP2 = p2
+			if p2PHasLiveProgress(p2) || p2PHasLiveConnections(p2) {
+				overlayP2PProgressOnSummary(snap, p2)
+				clearSummaryStaleFlags(snap)
+			}
+		}
+	}
+	// Tip/contig movement is live chain data — drop "last known data" even before P2P lands.
+	if contig >= 0 || headerTip >= 0 {
+		clearSummaryStaleFlags(snap)
+		if line, _ := snap["sync_status_line"].(string); strings.Contains(line, "last known data") {
+			delete(snap, "sync_status_line")
+			if _, ok := snap["dogego_sync_status"].(string); ok {
+				delete(snap, "dogego_sync_status")
+			}
+		}
+	}
 	if b, err := json.Marshal(snap); err == nil {
 		f.summaryJSON = b
-		live := map[string]any{"ok": true, "summary": snap}
-		if len(f.p2pJSON) > 0 {
-			var p2 map[string]any
-			if json.Unmarshal(f.p2pJSON, &p2) == nil {
-				live["p2p"] = p2
+		storeJSONAtomic(&f.summaryAtomic, b)
+		live := map[string]any{"ok": true, "summary": snap, "from_disk_snapshot": false}
+		if liveP2 != nil {
+			live["p2p"] = liveP2
+			if p2PHasLiveProgress(liveP2) || p2PHasLiveConnections(liveP2) {
+				live["summary"] = snap
+			} else {
+				live["summary_stale"] = true
 			}
+		} else {
+			live["summary_stale"] = true
 		}
 		if len(f.mempoolJSON) > 0 {
 			var mp any
@@ -616,6 +1076,7 @@ func (f *LiveFeed) patchSummaryTipFromManifest(cfg StartConfig) {
 		}
 		if liveB, err := json.Marshal(live); err == nil {
 			f.liveJSON = liveB
+			storeJSONAtomic(&f.liveAtomic, liveB)
 		}
 	}
 }
@@ -664,6 +1125,10 @@ func (f *LiveFeed) bootstrapLiveIfEmpty(cfg StartConfig) {
 		}
 		var p2 map[string]any
 		if json.Unmarshal(p2pB, &p2) == nil {
+			zeroP2PLiveMetrics(p2)
+			if pb, err := json.Marshal(p2); err == nil {
+				p2pB = pb
+			}
 			live["p2p"] = p2
 		}
 		var mp any
@@ -671,7 +1136,7 @@ func (f *LiveFeed) bootstrapLiveIfEmpty(cfg StartConfig) {
 			live["mempool"] = mp
 		}
 		if len(snap.AnalyticsSummary) > 0 {
-			live["analytics_summary"] = snap.AnalyticsSummary
+			// Keep for disk snapshot restore of Analytics panel only — not on /api/live.
 			if anB, err := json.Marshal(snap.AnalyticsSummary); err == nil {
 				f.analyticsJSON = anB
 			}
@@ -686,7 +1151,7 @@ func (f *LiveFeed) bootstrapLiveIfEmpty(cfg StartConfig) {
 		storeJSONAtomic(&f.liveAtomic, liveB)
 		return
 	}
-	if cfg.Journal == nil {
+	if cfg.ActiveJournal() == nil {
 		return
 	}
 	sum := warmingSummaryFromManifest(cfg)
@@ -695,7 +1160,7 @@ func (f *LiveFeed) bootstrapLiveIfEmpty(cfg StartConfig) {
 	}
 	sumB, _ := json.Marshal(sum)
 	mpB, _ := json.Marshal(MempoolDetailForAPI(cfg.Pool, 200, cfg.EffectiveFile, cfg.OrphanCount))
-	p2pB := []byte(`{"wired":false,"warming_up":true}`)
+	p2pB := []byte(`{"wired":true,"peer_dialing":true,"warming_up":true}`)
 	live := map[string]any{"ok": true, "summary": sum, "warming_up": true}
 	if len(p2pB) > 0 {
 		var p2 map[string]any
@@ -720,11 +1185,11 @@ func (f *LiveFeed) bootstrapLiveIfEmpty(cfg StartConfig) {
 }
 
 func warmingSummaryFromManifest(cfg StartConfig) map[string]any {
-	tip, cnt, err := journalTipForDashboard(cfg.Journal)
+	tip, cnt, err := journalTipForDashboard(cfg.ActiveJournal())
 	if err != nil || tip < 0 {
 		return nil
 	}
-	best, _ := journalBestHashForDashboard(cfg.Journal)
+	best, _ := journalBestHashForDashboard(cfg.ActiveJournal())
 	cont := contiguousHeightForAPI(cfg)
 	nm := strings.TrimSpace(cfg.NodeMode)
 	if nm == "" {
@@ -758,7 +1223,7 @@ func warmingSummaryFromManifest(cfg StartConfig) map[string]any {
 		"wallet_enabled":        walletLoaded(cfg),
 		"wallet_rpc_ready":      walletRPCReady(cfg),
 		"wallet_address_ready":  walletAddressReady(cfg),
-		"wallet_address":        walletAddr(cfg.Wallet),
+		"wallet_address":        walletAddr(cfg.ActiveWallet()),
 		"warming_up":            true,
 	}
 	mergeVersionFields(sum)
@@ -847,7 +1312,8 @@ func (f *LiveFeed) PatchWalletEncryptionStatus(w *wallet.Disk) {
 	storeJSONAtomic(&f.liveAtomic, liveB)
 }
 
-// RememberAnalytics stores a slim analytics summary for /api/live and disk snapshot.
+// RememberAnalytics stores analytics for disk snapshot / dedicated analytics routes.
+// It must NOT embed the full payload into /api/live (that froze the dashboard during IBD).
 func (f *LiveFeed) RememberAnalytics(detail map[string]any) {
 	if f == nil || detail == nil {
 		return
@@ -858,13 +1324,14 @@ func (f *LiveFeed) RememberAnalytics(detail map[string]any) {
 	}
 	f.mu.Lock()
 	f.analyticsJSON = b
-	// Refresh liveJSON analytics field if we already have a live payload.
+	// Strip any previously embedded analytics_summary from the live poll envelope.
 	if len(f.liveJSON) > 0 {
 		var live map[string]any
-		if json.Unmarshal(f.liveJSON, &live) == nil {
-			live["analytics_summary"] = detail
+		if json.Unmarshal(f.liveJSON, &live) == nil && live["analytics_summary"] != nil {
+			delete(live, "analytics_summary")
 			if liveB, err := json.Marshal(live); err == nil {
 				f.liveJSON = liveB
+				storeJSONAtomic(&f.liveAtomic, liveB)
 			}
 		}
 	}
@@ -906,13 +1373,14 @@ func (f *LiveFeed) writeSummary(w http.ResponseWriter) {
 	_, _ = w.Write(b)
 }
 
-func (f *LiveFeed) writeP2P(w http.ResponseWriter) {
+func (f *LiveFeed) writeP2P(w http.ResponseWriter, cfg StartConfig) {
 	f.mu.RLock()
 	b := f.cachedJSON(&f.p2pAtomic, f.p2pJSON)
 	f.mu.RUnlock()
 	w.Header().Set("Content-Type", "application/json; charset=utf-8")
 	if len(b) == 0 {
-		_, _ = w.Write([]byte(`{"wired":false,"live":true}`))
+		// Request path must stay non-blocking — never call getpeerinfo here.
+		_, _ = w.Write([]byte(`{"wired":true,"peer_dialing":true,"live":true,"health":"starting"}`))
 		return
 	}
 	_, _ = w.Write(b)
@@ -930,28 +1398,271 @@ func (f *LiveFeed) writeMempool(w http.ResponseWriter) {
 	_, _ = w.Write(b)
 }
 
-func (f *LiveFeed) writeLive(w http.ResponseWriter) {
+func (f *LiveFeed) writeLive(w http.ResponseWriter, cfg StartConfig) {
+	w.Header().Set("Content-Type", "application/json; charset=utf-8")
+	var b []byte
 	if v := f.liveAtomic.Load(); v != nil {
-		if b, ok := v.([]byte); ok && len(b) > 0 {
-			w.Header().Set("Content-Type", "application/json; charset=utf-8")
-			_, _ = w.Write(b)
-			return
+		if raw, ok := v.([]byte); ok && len(raw) > 0 {
+			b = raw
 		}
 	}
-	f.mu.RLock()
-	b := f.liveJSON
-	f.mu.RUnlock()
-	w.Header().Set("Content-Type", "application/json; charset=utf-8")
+	if len(b) == 0 {
+		f.mu.RLock()
+		b = f.liveJSON
+		f.mu.RUnlock()
+	}
 	if len(b) == 0 {
 		_, _ = w.Write([]byte(`{"ok":true,"live":true,"summary":{"dogego_ui_loading":true,"dogego_sync_ok":true},"warming_up":true}`))
 		return
 	}
+	// Hot path: serve precomputed JSON. Only patch when the envelope is missing p2p or
+	// still marked as a disk snapshot — never call getpeerinfo / re-marshal analytics here.
+	if bytesContainsAny(b, []string{`"p2p":`, `"from_disk_snapshot":true`, `"summary_stale":true`}) {
+		if patched := injectLiveP2PFromCache(cfg, b, f); len(patched) > 0 {
+			b = patched
+		}
+		if fixed := sanitizeLiveJSONIfP2PActive(b); len(fixed) > 0 {
+			b = fixed
+		}
+	}
+	if fixed := overlayContiguousReconcileOnLiveJSON(b); len(fixed) > 0 {
+		b = fixed
+	}
 	_, _ = w.Write(b)
+}
+
+func bytesContainsAny(b []byte, needles []string) bool {
+	s := string(b)
+	// Fast path: if p2p is absent we must inject; if disk/stale flags present we may sanitize.
+	if !strings.Contains(s, `"p2p"`) {
+		return true
+	}
+	for _, n := range needles[1:] {
+		if strings.Contains(s, n) {
+			return true
+		}
+	}
+	return false
+}
+
+// injectLiveP2PFromCache attaches or refreshes live.p2p from the P2P cache when the envelope
+// dropped it (slow summary refresh). Cache-only — no RPC (request path must not block).
+func injectLiveP2PFromCache(cfg StartConfig, liveB []byte, f *LiveFeed) []byte {
+	var live map[string]any
+	if json.Unmarshal(liveB, &live) != nil || live == nil {
+		return nil
+	}
+	f.mu.RLock()
+	p2b := f.cachedJSON(&f.p2pAtomic, f.p2pJSON)
+	sumB := f.cachedJSON(&f.summaryAtomic, f.summaryJSON)
+	f.mu.RUnlock()
+	var p2 map[string]any
+	if len(p2b) == 0 || json.Unmarshal(p2b, &p2) != nil || p2 == nil {
+		return nil
+	}
+	// Soft heal without RPC (assist/primary rebuild + clear dialing stub text).
+	healP2PSnapConnectionCounts(p2)
+	_, outSnap, totalSnap := p2pSnapConnectionCounts(p2)
+	if outSnap > 0 || totalSnap > 0 {
+		p2["peer_dialing"] = false
+		delete(p2, "from_disk_snapshot")
+		if act, _ := p2["dogego_sync_activity"].(map[string]any); act != nil {
+			if h, _ := act["headline"].(string); h == "Connecting to peers" {
+				p2["dogego_sync_activity"] = map[string]any{
+					"headline": "Syncing blocks",
+					"detail":   fmt.Sprintf("%d peer(s) connected — downloading and verifying block bodies.", outSnap),
+				}
+			}
+		}
+	}
+	need := live["p2p"] == nil
+	if !need {
+		if cur, ok := live["p2p"].(map[string]any); ok {
+			_, outLive, totalLive := p2pSnapConnectionCounts(cur)
+			need = totalLive == 0 && outLive == 0 && (totalSnap > 0 || outSnap > 0)
+			if !need {
+				if act, _ := cur["dogego_sync_activity"].(map[string]any); act != nil {
+					if h, _ := act["headline"].(string); h == "Connecting to peers" && outSnap > 0 {
+						need = true
+					}
+				}
+			}
+		}
+	}
+	if !need {
+		return nil
+	}
+	live["p2p"] = p2
+	delete(live, "analytics_summary") // never re-embed fat analytics on the hot path
+	if sum, ok := live["summary"].(map[string]any); ok {
+		overlayP2PProgressOnSummary(sum, p2)
+		live["summary"] = sum
+	} else if len(sumB) > 0 {
+		var sum map[string]any
+		if json.Unmarshal(sumB, &sum) == nil {
+			overlayP2PProgressOnSummary(sum, p2)
+			live["summary"] = sum
+		}
+	}
+	if p2PHasLiveProgress(p2) || p2PHasLiveConnections(p2) {
+		delete(live, "from_disk_snapshot")
+		delete(live, "summary_stale")
+	}
+	out, err := json.Marshal(live)
+	if err != nil {
+		return nil
+	}
+	return out
+}
+
+// overlayContiguousReconcileOnLiveJSON injects fresh startup reconcile progress into a
+// cached /api/live payload so the dock bar moves between LiveFeed ticks.
+func overlayContiguousReconcileOnLiveJSON(b []byte) []byte {
+	st, ok := store.ContiguousReconcileProgress()
+	if !ok || !st.Active {
+		return nil
+	}
+	var live map[string]any
+	if json.Unmarshal(b, &live) != nil || live == nil {
+		return nil
+	}
+	sum, _ := live["summary"].(map[string]any)
+	if sum == nil {
+		sum = map[string]any{}
+		live["summary"] = sum
+	}
+	if !applyContiguousReconcileLoading(sum) {
+		attachContiguousReconcileNote(sum)
+		out, err := json.Marshal(live)
+		if err != nil {
+			return nil
+		}
+		return out
+	}
+	live["warming_up"] = true
+	out, err := json.Marshal(live)
+	if err != nil {
+		return nil
+	}
+	return out
+}
+
+// sanitizeLiveJSONIfP2PActive clears from_disk_snapshot / summary_stale when live IBD
+// metrics are present so Overview does not freeze on "Showing last known data".
+func sanitizeLiveJSONIfP2PActive(b []byte) []byte {
+	var live map[string]any
+	if json.Unmarshal(b, &live) != nil || live == nil {
+		return nil
+	}
+	p2, _ := live["p2p"].(map[string]any)
+	if !p2PHasLiveProgress(p2) {
+		return nil
+	}
+	if p2 != nil && p2["from_disk_snapshot"] == true {
+		delete(p2, "from_disk_snapshot")
+	}
+	sum, _ := live["summary"].(map[string]any)
+	need := live["from_disk_snapshot"] == true || live["summary_stale"] == true
+	if sum != nil && (sum["from_disk_snapshot"] == true || sum["summary_stale"] == true) {
+		need = true
+	}
+	if sum != nil {
+		if line, _ := sum["sync_status_line"].(string); strings.Contains(line, "last known data") {
+			need = true
+		}
+	}
+	if !need {
+		return nil
+	}
+	delete(live, "from_disk_snapshot")
+	delete(live, "summary_stale")
+	if sum != nil {
+		clearSummaryStaleFlags(sum)
+		overlayP2PProgressOnSummary(sum, p2)
+		if line, _ := sum["sync_status_line"].(string); strings.Contains(line, "last known data") {
+			if h, _ := sum["dogego_sync_status"].(string); h != "" && !strings.Contains(h, "last known data") {
+				sum["sync_status_line"] = h
+			} else if act, _ := sum["dogego_sync_activity"].(map[string]any); act != nil {
+				if h, _ := act["headline"].(string); h != "" {
+					sum["sync_status_line"] = h
+					sum["dogego_sync_status"] = h
+				}
+			}
+		}
+		live["summary"] = sum
+	}
+	if p2 != nil {
+		live["p2p"] = p2
+	}
+	out, err := json.Marshal(live)
+	if err != nil {
+		return nil
+	}
+	return out
+}
+
+func toIntAny(v any) (int, bool) {
+	switch x := v.(type) {
+	case int:
+		return x, true
+	case int32:
+		return int(x), true
+	case int64:
+		return int(x), true
+	case float64:
+		return int(x), true
+	default:
+		return 0, false
+	}
+}
+
+// noteContiguousRate fills blk/min from contiguous tip deltas when ibd_progress overlay is missing.
+func (f *LiveFeed) noteContiguousRate(sum map[string]any, cont int64) {
+	if f == nil || sum == nil || cont < 0 {
+		return
+	}
+	if bpm, ok := float64FromAny(sum["blocks_per_minute"]); ok && bpm > 0 {
+		f.mu.Lock()
+		f.contRateHeight = cont
+		f.contRateAt = time.Now()
+		f.mu.Unlock()
+		return
+	}
+	f.mu.Lock()
+	now := time.Now()
+	prevH := f.contRateHeight
+	prevAt := f.contRateAt
+	if prevAt.IsZero() || cont < prevH {
+		f.contRateHeight = cont
+		f.contRateAt = now
+		f.mu.Unlock()
+		return
+	}
+	if cont == prevH {
+		f.mu.Unlock()
+		return
+	}
+	elapsed := now.Sub(prevAt).Minutes()
+	f.contRateHeight = cont
+	f.contRateAt = now
+	f.mu.Unlock()
+	if elapsed < 0.05 {
+		return
+	}
+	rate := float64(cont-prevH) / elapsed
+	if rate <= 0 {
+		return
+	}
+	sum["contiguous_blocks_per_minute"] = rate
+	sum["dogego_contiguous_blocks_per_minute"] = rate
+	if _, ok := sum["blocks_per_minute"]; !ok {
+		sum["blocks_per_minute"] = rate
+	}
 }
 
 // ChainStatsCached returns light chainstats JSON, refreshing at most every minInterval.
 func (f *LiveFeed) ChainStatsCached(cfg StartConfig, light bool, minInterval time.Duration) []byte {
-	if cfg.Journal == nil {
+	if cfg.ActiveJournal() == nil {
 		return nil
 	}
 	now := time.Now()
@@ -964,7 +1675,7 @@ func (f *LiveFeed) ChainStatsCached(cfg StartConfig, light bool, minInterval tim
 	f.mu.RUnlock()
 
 	chainActive, stored := chainStatsHints(cfg)
-	stats := BuildChainStats(cfg.Journal, cfg.RawBlocks, cfg.PubkeyHashAddrID, now, chainActive, stored, light)
+	stats := BuildChainStats(cfg.ActiveJournal(), cfg.ActiveRawBlocks(), cfg.PubkeyHashAddrID, now, chainActive, stored, light)
 	b, err := json.Marshal(stats)
 	if err != nil {
 		return nil

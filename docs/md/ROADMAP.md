@@ -289,7 +289,7 @@ Smoke on a dev machine (no PS1 Core gate): `dogego cert weekly-live -skip-script
 - [x] **MVP:** P2P **BIP61 reject on mempool policy failure** - insufficient fee / invalid / non-standard (+ misbehavior for invalid); orphans and duplicate spends silent (`HandleInboundTxAdmissionFailure`, primary + relay + **inv→getdata** tx fetch)
 - [x] **MVP:** `CTransaction` wire read/write + BIP141 **size / vsize / weight** in RPC (`wire/txsize.go`, `txToRPCJSON`, mempool vsize); witness **stacks decoded** but **rejected** at mempool/P2P (Dogecoin has no segwit)
 - [x] **MVP:** AuxPoW wire decode/encode, `headers_aux.bin`, block parse, serve `getheaders`, validation, mining RPC (`wire/auxpow*.go`, `store/header_aux*.go`, `rpc/auxpow_*.go`)
-- [x] **MVP:** AuxPoW parent checks - parent must not be auxpow; parent coinbase single null prevout; merkle branch caps (`checkAuxPow` in `consensus/headers_validate.go`; Core `CAuxPow::check` does not require `CMerkleTx::hashBlock` == parent hash)
+- [x] **MVP:** AuxPoW parent checks match Core `CAuxPow::check` (strict chain id, coinbase null prevout, merkle caps; parent may carry VERSION_AUXPOW) (`checkAuxPow`)
 - [x] **Core parity:** **legacy coinbase subsidy** - `GetDogecoinBlockSubsidy` pre-145k RNG matches Core (`generateMTRandom` + Boost `uniform_int` division, not `%`; `consensus/mt19937.go`, `subsidy_legacy_vectors_test.go`)
 - [x] **MVP:** AuxPoW **chain index range** + parent coinbase size cap + parent **nBits** non-zero (`checkAuxPow`)
 - [x] **MVP:** AuxPoW parent **merkle root** non-zero; duplicate orphan txid ignored; `ComputeBlockVersion` for GBT / `createauxblock` (`consensus/versionbits.go`)
@@ -304,7 +304,7 @@ Smoke on a dev machine (no PS1 Core gate): `dogego cert weekly-live -skip-script
 - [x] **MVP:** AuxPoW rejects parent **prev hash** or **block id** equal to child block hash (`checkAuxPow`)
 - [x] **MVP:** AuxPoW validates parent header **scrypt PoW** against **child `nBits`** (`checkAuxPow`; Core `CheckAuxPowProofOfWork`)
 - [x] **MVP:** AuxPoW parent chain id - Core `CAuxPow::check`: reject parent only when chain id equals Dogecoin `0x62` (not “must be zero”; `checkAuxPow`)
-- [x] **MVP:** AuxPoW rejects **parent timestamp** more than 2h ahead of child header (`checkAuxPow`)
+- [x] **MVP:** AuxPoW matches Core `CAuxPow::check` (no parent-vs-child nTime skew; mainnet parents can be hours ahead) (`checkAuxPow`)
 - [x] **MVP:** AuxPoW validation aligned with Core `CheckAuxPowProofOfWork` + `CAuxPow::check` (parent PoW vs child `nBits`, merge-mining script layout, chain index)
 - [x] **Core parity (AuxPoW parent):** embedded parent header + coinbase + merkle branches only - **matches Dogecoin Core** (`CAuxPow::check`, `CheckAuxPowProofOfWork`). **No separate Litecoin chain sync** on Core or DogeGo; optional future parent-chain archive would exceed Core scope.
 - [x] **MVP:** AuxPoW parent coinbase **`CheckTransaction`** in `checkAuxPow` (Core-shaped structural validation)
@@ -388,7 +388,7 @@ Smoke on a dev machine (no PS1 Core gate): `dogego cert weekly-live -skip-script
 - [x] **Core parity:** **adequate raw body** checks end-to-end - fetch/store/contiguous/inv paths ignore undersized `rawblocks/` stubs; genesis fetch verifies payload size (`store/rawbody_adequate.go`, `node/fetch.go`, `node/blockstore.go`)
 - [x] **Core parity:** **startup purge** of undersized raw block stubs + reset contiguous tip (`store/rawbody_purge.go`, `node/run.go`)
 - [x] **Core parity:** **sync phase / status line** - `DogeGoSyncPhase` + `SyncStatusLine` use contiguous bodies (not chainActive alone); UI/RPC no false “Up to date” during body IBD (`rpc/sync_phase.go`, `ui/summary_build.go`, `ui/static/app.js`)
-- [x] **Core parity:** **IPv4-first peer dial** - DNS discovery and `DialableOrder` try IPv4 before IPv6 (reduces Windows `connectex: unreachable network` on v6); shuffle within each group (`p2p/addrorder.go`, `p2p/discover.go`, `node/block_peer_score.go`)
+- [x] **Core parity:** **IPv4-first peer dial** - DNS discovery and `DialableOrder` try IPv4 before IPv6 (reduces Windows `connectex: unreachable network` on v6); shuffle within each group; auto-skip further IPv6 dials after ENETUNREACH (`p2p/addrorder.go`, `p2p/ipv6_dial.go`, `p2p/discover.go`, `node/block_peer_score.go`)
 - [x] **Core parity:** **post-rewind stub purge** - `truncatetoheight` / header rewind removes inadequate `rawblocks/` stubs (`node/chain_truncate.go`, `BlockStoreCtx.PurgeInadequateRawBodies`)
 - [x] **Core parity:** **`MAX_BLOCKS_IN_TRANSIT_PER_PEER`** - progressive getdata batches default to **16** blocks per peer (cap **32** with many lanes); primary idle loop runs up to **3** batches per read timeout like header interleave (`node/ibd.go`, `tryFetchMissingBatches`)
 - [x] **Core parity:** **`PrepareAtStartup` at genesis tip** - block sync arms when header journal is only height **0** (genesis body fetch), not only when `tip >= 1` (`node/rawsync_progress.go`)
@@ -774,6 +774,7 @@ DogeGo does **not** read or write Dogecoin Core `blocks/` + `chainstate/` LevelD
 - [x] **Operator UX:** **node restart reliability** - detached replacement spawn, **`-waitpid`**, preserve CLI args (`cmd/dogego/restart_spawn*.go`, `store/process_wait.go`, `POST /api/control/restart`) - **S**
 - [x] **Operator UX:** **uacomment / node-tip UX** - auto HD node-tip when wallet enabled; manual tip address only when wallet disabled; wizard aligned (`ui/uacomment_preview.go`, `setup.html`) - **S**
 - [x] **Operator UX:** **system tray v2** - running version line, Open Console, View activity logs, check/download/dismiss updates (`desktop/tray_run.go`, `desktop/open_url.go`) - **S**
+- [x] **Operator UX:** **low disk space guard** - poll datadir volume (~30s); pause full-block getdata at **≤1 GiB** free; Overview banner + tray/desktop notify; auto-resume above 1 GiB (`diskspace/`, `ui/disk_api.go`) - **S**
 - [x] **Operator UX:** **auto-update** - daily GitHub Releases check, Overview banner + **Install update** button, tray menu, native OS notification, **`POST /api/update/download`** with SHA256 verify, **`POST /api/update/apply`** install+restart, **`-replacetarget`** install path swap, **`dogego version -check`**, **`scripts/check_update.ps1`** / **`check_update.sh`** (`version/updatecheck.go`, `version/update_download.go`, `ui/update_api.go`, `desktop/notify*.go`) - **S**
 - [x] **Operator UX:** **GitHub release workflow** - tag **`v*`** builds windows/linux/darwin binaries + **`.sha256`** sidecars (`.github/workflows/release.yml`) - **S**
 - [x] **Operator UX:** **monthly wallet backup reminder** - Receive tab banner when no **`dogego_backup_last_download`** in 30 days; dismiss snoozes 30 days (`wallet-backup-remind`, `ui/static/app.js`) - **S**
@@ -959,6 +960,7 @@ Optional **extensions** (no mainnet consensus fork). Third-party packages ship `
 - [x] **Operator UX:** **Settings external signer test** - `POST /api/signer-test` (HWI enumerate from form or saved `signer_cmd`; loopback only) - **S** (`ui/signer_probe.go`, Settings Advanced)
 - [x] **Operator UX:** **Receive HD keypool refill** - `POST /api/wallet/keypool-refill` (Core `keypoolrefill`; optional `new_size`; Address book toolbar + `hd_wallet` on GET `/api/wallet`; after wallet.dat import with pool-only rows) - **S** (`ui/wallet_keypool.go`, Receive tab)
 - [x] **Declined (out of scope):** Native USB/HID signer bridge without HWI subprocess - use HWI-compatible `signer_cmd` instead.
+- [x] **MVP:** **solo background miner mempool inclusion**
 
 ---
 

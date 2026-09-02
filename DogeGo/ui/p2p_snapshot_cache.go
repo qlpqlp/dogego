@@ -21,14 +21,34 @@ func storeP2PSnapshotCache(s map[string]any) {
 	if s == nil {
 		return
 	}
+	// Never let an RPC/dialing stub without ibd_progress wipe a recent snap that still has rates.
+	p2pSnapCache.mu.Lock()
+	defer p2pSnapCache.mu.Unlock()
+	if s["ibd_progress"] == nil && p2pSnapCache.s != nil && p2pSnapCache.s["ibd_progress"] != nil &&
+		time.Since(p2pSnapCache.at) < 2*time.Minute {
+		merged := make(map[string]any, len(p2pSnapCache.s)+8)
+		for k, v := range p2pSnapCache.s {
+			merged[k] = v
+		}
+		for _, k := range []string{
+			"connections_outbound", "connections_inbound", "connections_total",
+			"connections_outbound_relay", "block_assist_connections", "dedicated_header_connections",
+			"peer_dialing", "health", "health_message", "primary_peer", "wired",
+			"dogego_sync_activity", "warming_up",
+		} {
+			if v, ok := s[k]; ok {
+				merged[k] = v
+			}
+		}
+		delete(merged, "from_disk_snapshot")
+		s = merged
+	}
 	cp := make(map[string]any, len(s))
 	for k, v := range s {
 		cp[k] = v
 	}
-	p2pSnapCache.mu.Lock()
 	p2pSnapCache.s = cp
 	p2pSnapCache.at = time.Now()
-	p2pSnapCache.mu.Unlock()
 }
 
 func cachedP2PSnapshot(maxAge time.Duration) map[string]any {

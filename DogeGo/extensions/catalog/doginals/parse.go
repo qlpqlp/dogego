@@ -64,16 +64,19 @@ func DetectInscriptionFromOutput(height int64, txid string, vout uint32, o wire.
 		ins.Op = p.Op
 		ins.Amount = firstNonEmpty(p.Amt, p.Max)
 		ins.ContentType = "application/json"
+		ins.Source = "opreturn"
 		return ins, true
 	}
 	low := strings.ToLower(string(payload))
 	if strings.Contains(low, "doginal") || strings.HasPrefix(low, "ord") || strings.Contains(low, "text/plain") || strings.Contains(low, "image/") {
 		ins.Kind = "doginal"
 		ins.ContentType = sniffContentType(payload)
+		ins.Source = "opreturn"
 		return ins, true
 	}
 	ins.Kind = "data"
 	ins.ContentType = sniffContentType(payload)
+	ins.Source = "opreturn"
 	return ins, true
 }
 

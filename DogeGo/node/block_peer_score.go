@@ -18,6 +18,9 @@ const (
 	blockPeerCooldownDial        = 45 * time.Second
 	blockPeerCooldownSession     = 3 * time.Minute
 	blockPeerCooldownReject      = 10 * time.Minute
+	// Wrong-network / wire desync (bad magic after handshake): long quarantine so assist
+	// lanes do not burn the same broken host every few hundred milliseconds.
+	blockPeerCooldownWrongNet    = 2 * time.Hour
 	blockPeerScoreSuccessWeight  = 10
 	blockPeerScoreFailurePenalty = 25
 	// blockPeerScoreRateWeight maps recent blk/sec (ibdPeerDeliveryWindow) to rank score.
@@ -113,6 +116,27 @@ func (s *BlockPeerScorer) NoteSessionFailure(addr string, hard bool) {
 		cd = blockPeerCooldownReject
 	}
 	until := time.Now().Add(cd)
+	if until.After(e.cooldownTo) {
+		e.cooldownTo = until
+	}
+	s.dirty = true
+}
+
+// NoteWrongNetworkMagic quarantines a peer that framed responses with the wrong P2P magic
+// (or desynced wire). Longer than a normal hard reject so assist workers stop spinning.
+func (s *BlockPeerScorer) NoteWrongNetworkMagic(addr string) {
+	if s == nil || addr == "" {
+		return
+	}
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	e := s.entry(addr)
+	e.failures++
+	e.score -= blockPeerScoreFailurePenalty * 2
+	if e.score < -500 {
+		e.score = -500
+	}
+	until := time.Now().Add(blockPeerCooldownWrongNet)
 	if until.After(e.cooldownTo) {
 		e.cooldownTo = until
 	}

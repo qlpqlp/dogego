@@ -141,6 +141,8 @@ func handle(req rpcReq) {
 		handleP2P(req)
 	case "dogego_block_connected":
 		handleBlock(req)
+	case "dogego_block_disconnected":
+		handleBlockDisconnect(req)
 	case "dogego_peer_connected":
 		handlePeer(req)
 	default:
@@ -206,6 +208,20 @@ func handleBlock(req rpcReq) {
 	}
 	withExt(req, func(e *doginals.Extension) (interface{}, []p2pSend, error) {
 		return nil, nil, e.OnBlockConnected(height, host)
+	})
+}
+
+func handleBlockDisconnect(req rpcReq) {
+	var params []interface{}
+	_ = json.Unmarshal(req.Params, &params)
+	height := int64(0)
+	if len(params) > 0 {
+		if v, ok := params[0].(float64); ok {
+			height = int64(v)
+		}
+	}
+	withExt(req, func(e *doginals.Extension) (interface{}, []p2pSend, error) {
+		return nil, nil, e.OnBlockDisconnected(height, host)
 	})
 }
 

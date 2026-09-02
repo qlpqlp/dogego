@@ -93,7 +93,7 @@ func TestBlockstepScriptDisplayP2PKH(t *testing.T) {
 func TestBlockStepAddressWalletFastHTTP(t *testing.T) {
 	cfg, _, spk := testWalletFastSetup(t)
 	addWalletFastUtxo(cfg.UtxoCache(), 80, 0, 5_000_000_000, 400, spk)
-	addr := cfg.Wallet.DefaultAddress()
+	addr := cfg.ActiveWallet().DefaultAddress()
 	mux := http.NewServeMux()
 	registerBlockStepRoutes(mux, cfg)
 	srv := httptest.NewServer(mux)

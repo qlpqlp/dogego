@@ -111,10 +111,21 @@ func (s *progressiveRawState) maybePenalizeDownloadTimeout(bs *BlockStoreCtx, sc
 			freed++
 		}
 		delete(s.laneDownloadSince, lane)
+		if s.laneDelivery != nil {
+			delete(s.laneDelivery, lane)
+		}
+		if s.laneBudgetApplied != nil {
+			delete(s.laneBudgetApplied, lane)
+		}
 		s.stallingSince = time.Time{}
 		s.idleFull = false
 		s.lastDownloadTimeoutPeer = peerAddr
 		s.lastDownloadTimeoutAt = now
+		if s.laneBudgetProbeUntil == nil {
+			s.laneBudgetProbeUntil = make(map[int]time.Time)
+		}
+		s.laneBudgetProbeUntil[lane] = now.Add(2 * ibdPeerDeliveryWindow)
+		s.signalHoleReclaimLocked()
 		if peerAddr != "" {
 			penalizeBlockPeer(scorer, book, peerAddr, true)
 			NoteBlockPeerDisconnect(peerAddr, fmt.Sprintf("download timeout (%s)", limit.Round(time.Second)))

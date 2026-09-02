@@ -169,6 +169,7 @@
   let settingsRuntime = {};
   let sigMempoolPanel = "";
   let lastSummary = null;
+  let lastP2Snap = null;
   let lastAnalyticsJson = null;
   let lastAnalyticsPeersCache = null;
   let sigMempool = "";
@@ -314,14 +315,36 @@
     if (!s) return "";
     const hdrCatch = s.headers_syncing === true || s.dogego_header_catch_up_pending === true;
     const hdr = Number(s.headers_per_minute || s.dogego_headers_per_minute);
-    const dl = Number(s.blocks_per_minute);
+    let dl = Number(s.blocks_per_minute);
     const stored = Number(s.contiguous_blocks_per_minute || s.dogego_contiguous_blocks_per_minute);
+    const hole = Number(s.dogego_frontier_hole_height || s.frontier_hole_height);
+    const ahead = Number(s.dogego_raw_blocks_in_flight_ahead || s.raw_blocks_in_flight_ahead);
+    const blockedSec = Number(s.dogego_hole_blocked_sec || s.hole_blocked_sec);
+    // Fall back to sync-activity rate when summary overlay briefly omits blocks_per_minute
+    // (dock subline already shows "N blocks/min" from activity detail).
+    if (!(isFinite(dl) && dl > 0) && s.dogego_sync_activity && typeof s.dogego_sync_activity === "object") {
+      const act = s.dogego_sync_activity;
+      const fromAct = Number(act.blocks_per_minute || act.download_blocks_per_minute);
+      if (isFinite(fromAct) && fromAct > 0) dl = fromAct;
+      else {
+        const detail = String(act.detail || "");
+        const m = detail.match(/([\d.]+)\s*blocks\/min/i);
+        if (m) {
+          const parsed = Number(m[1]);
+          if (isFinite(parsed) && parsed > 0) dl = parsed;
+        }
+      }
+    }
     if (hdrCatch && isFinite(hdr) && hdr > 0) return formatBlkRate(hdr, "hdr/min");
     const parts = [];
-    if (isFinite(dl) && dl > 0) parts.push(formatBlkRate(dl, "blk/min"));
+    if (isFinite(stored) && stored > 0) parts.push(formatBlkRate(stored, "stored/min"));
+    else if (isFinite(dl) && dl > 0) parts.push(formatBlkRate(dl, "blk/min"));
     else if (isFinite(hdr) && hdr > 0) parts.push(formatBlkRate(hdr, "hdr/min"));
-    if (isFinite(stored) && stored > 0 && (!isFinite(dl) || Math.abs(stored - dl) > Math.max(10, dl * 0.15))) {
-      parts.push(formatBlkRate(stored, "stored/min"));
+    if (isFinite(dl) && dl > 0 && isFinite(stored) && stored > 0 && dl > stored * 1.15) {
+      parts.push(formatBlkRate(dl, "ingest/min"));
+    }
+    if (isFinite(hole) && hole >= 0 && isFinite(ahead) && ahead > 0 && isFinite(blockedSec) && blockedSec >= 10) {
+      parts.push("blocked @" + hole.toLocaleString());
     }
     return parts.join(" · ");
   }
@@ -445,8 +468,9 @@
         node_mode: s.node_mode,
         dogego_version: s.dogego_version,
         client_version: s.client_version,
-        connections_out: s.connections_out,
-        connections_in: s.connections_in,
+        // Never persist last-session rates / peer counts — cold start must show 0 until live.
+        connections_out: 0,
+        connections_in: 0,
         blocks_behind_headers: s.blocks_behind_headers,
         initialblockdownload: s.initialblockdownload,
         ibd_active: s.ibd_active,
@@ -478,6 +502,19 @@
       if (!raw) return false;
       const s = JSON.parse(raw);
       if (!s || s.tip_height == null) return false;
+      // Cold hydrate: never show last-session rates / peer counts.
+      s.connections_out = 0;
+      s.connections_in = 0;
+      delete s.blocks_per_minute;
+      delete s.contiguous_blocks_per_minute;
+      delete s.dogego_contiguous_blocks_per_minute;
+      delete s.headers_per_minute;
+      delete s.dogego_headers_per_minute;
+      delete s.dogego_connect_blocks_per_minute;
+      delete s.in_flight_batches;
+      delete s.sync_eta;
+      s.from_disk_snapshot = true;
+      s.summary_stale = true;
       lastSummary = s;
       applySyncProgress(s);
       if (window.DogeGoSyncDock && window.DogeGoSyncDock.update) {
@@ -2800,6 +2837,7 @@
       const detail = (s.dogego_ui_loading_detail && String(s.dogego_ui_loading_detail)) || "Loading local data…";
       const phaseMap = {
         warming: "Loading local data",
+        body_reconcile: "Checking stored blocks",
         utxo_cache: "Connecting blocks",
         snapshot_replay: "Connecting stored bodies",
         wallet_scan: "Scanning wallet",
@@ -2812,21 +2850,37 @@
       }
       if (strip) strip.classList.toggle("ov-sync-strip--loading", true);
       if (heroBar) {
-        heroBar.style.width = "35%";
-        heroBar.classList.add("sync-dock-fill--pulse");
+        const loadPct = Number(s.dogego_ui_loading_pct);
+        if (isFinite(loadPct) && loadPct >= 0) {
+          heroBar.style.width = Math.max(2, Math.min(100, loadPct)) + "%";
+          heroBar.classList.toggle("sync-dock-fill--pulse", loadPct < 3 || s.dogego_ui_loading_phase !== "body_reconcile");
+        } else {
+          heroBar.style.width = "35%";
+          heroBar.classList.add("sync-dock-fill--pulse");
+        }
+      }
+      if (heroPct && isFinite(Number(s.dogego_ui_loading_pct))) {
+        heroPct.textContent = String(Math.round(Number(s.dogego_ui_loading_pct)));
       }
       return;
     }
     if (s && (s.from_disk_snapshot === true || s.summary_stale === true)) {
-      phase.textContent = "Updating…";
-      if (sub) {
-        const tipLbl = isFinite(tip) && tip >= 0 ? tip.toLocaleString() + " headers" : "last known tip";
-        sub.textContent = "Showing last known data · refreshing (" + tipLbl + ")";
-        sub.hidden = false;
+      // Live rates mean the overlay already refreshed IBD metrics — don't freeze the dock.
+      const hasLiveRate = Number(s.blocks_per_minute) > 0 || Number(s.contiguous_blocks_per_minute) > 0
+        || (s.dogego_sync_activity && s.dogego_sync_activity.headline);
+      const hasLivePeers = (Number(s.connections_out) || 0) + (Number(s.connections_in) || 0) > 0;
+      if (!hasLiveRate && !hasLivePeers) {
+        phase.textContent = "Updating…";
+        if (sub) {
+          const tipLbl = isFinite(tip) && tip >= 0 ? tip.toLocaleString() + " headers" : "last known tip";
+          sub.textContent = "Showing last known data · refreshing (" + tipLbl + ")";
+          sub.hidden = false;
+        }
+        if (strip) strip.classList.toggle("ov-sync-strip--stale", true);
+        if (heroBar) heroBar.classList.remove("sync-dock-fill--pulse");
+        return;
       }
-      if (strip) strip.classList.toggle("ov-sync-strip--stale", true);
-      if (heroBar) heroBar.classList.remove("sync-dock-fill--pulse");
-      return;
+      if (strip) strip.classList.remove("ov-sync-strip--stale");
     }
     if (strip) {
       strip.classList.remove("ov-sync-strip--loading", "ov-sync-strip--stale");
@@ -2938,8 +2992,12 @@
       }
       const act = s.dogego_sync_activity;
       if (act && act.headline && s.dogego_sync_health !== "forward_ibd_stalled") {
-        subText = act.headline;
-        if (act.detail) subText += " · " + act.detail;
+        const outN = Number(s.connections_out) || 0;
+        const connectingStub = act.headline === "Connecting to peers" && outN > 0;
+        if (!connectingStub) {
+          subText = act.headline;
+          if (act.detail) subText += " · " + act.detail;
+        }
       }
     } else if (s.headers_syncing || (s.sync_phase && s.sync_phase !== "block_chain_connected" && s.sync_phase !== "forward_block_ibd")) {
       phaseText = "Syncing headers";
@@ -7961,7 +8019,15 @@
       const parts = [];
       const mode = p2p.p2p_connectivity || p2p.p2p_mode || "";
       if (mode) parts.push("<span class=\"label\">" + escapeHtml(i18n("pages.analytics.peersDgrMode")) + " <strong>" + escapeHtml(String(mode)) + "</strong></span>");
-      parts.push("<span class=\"label\">Out <strong>" + escapeHtml(String(data && data.connections_outbound != null ? data.connections_outbound : peers.filter((p) => !p.inbound).length)) + "</strong> · In <strong>" + escapeHtml(String(data && data.connections_inbound != null ? data.connections_inbound : peers.filter((p) => p.inbound).length)) + "</strong></span>");
+      // Prefer API/snap session totals (same as dock/header). Do not recount peer cards —
+      // getpeerinfo can list more rows than the active sync mesh.
+      const outN = (data && data.connections_outbound != null) ? Number(data.connections_outbound)
+        : (p2p.connections_outbound != null ? Number(p2p.connections_outbound)
+          : peers.filter((p) => !p.inbound).length);
+      const inN = (data && data.connections_inbound != null) ? Number(data.connections_inbound)
+        : (p2p.connections_inbound != null ? Number(p2p.connections_inbound)
+          : peers.filter((p) => p.inbound).length);
+      parts.push("<span class=\"label\">Out <strong>" + escapeHtml(String(outN || 0)) + "</strong> · In <strong>" + escapeHtml(String(inN || 0)) + "</strong></span>");
       const addedN = Array.isArray(data.added_nodes) ? data.added_nodes.length : 0;
       if (addedN) parts.push("<span class=\"label\">Manual <strong>" + escapeHtml(String(addedN)) + "</strong></span>");
       if (dgr.enabled) {
@@ -7982,12 +8048,14 @@
       wrap.innerHTML = "";
       if (empty) {
         empty.hidden = false;
-        if (data && data.error) {
+        if (data && data.error && !(snapOut + snapIn > 0)) {
           empty.textContent = String(data.error);
+        } else if (snapOut + snapIn > 0) {
+          empty.textContent = (data && data.note)
+            ? String(data.note)
+            : ("Connected peers: " + (snapOut + snapIn) + " (peer detail list refreshing…)");
         } else if (data && data.note) {
           empty.textContent = String(data.note);
-        } else if (snapOut + snapIn > 0) {
-          empty.textContent = "Connected peers: " + (snapOut + snapIn) + " (peer detail list refreshing…)";
         } else {
           empty.textContent = i18n("pages.analytics.peersEmpty");
         }
@@ -8923,6 +8991,7 @@
   function hideBootOverlay() {
     if (bootOverlayHidden) return;
     bootOverlayHidden = true;
+    document.documentElement.classList.remove("boot-pending");
     if (bootMsgTimer) {
       clearInterval(bootMsgTimer);
       bootMsgTimer = null;
@@ -8944,6 +9013,7 @@
   }
 
   function initBootOverlay() {
+    document.documentElement.classList.remove("boot-pending");
     document.body.classList.add("boot-loading");
     const waitEl = $("boot-overlay-wait");
     if (waitEl && window.DogeGoWait) window.DogeGoWait.mount(waitEl, "Much prepare. Very load.");
@@ -9062,13 +9132,47 @@
     return fetch(path, opts);
   }
 
-  function overlayLiveP2POnSummary(s, p2) {
+	function overlayLiveP2POnSummary(s, p2) {
     if (!s) return s;
     if (!p2) return s;
     if (p2.connections_outbound != null) s.connections_out = p2.connections_outbound;
     if (p2.connections_inbound != null) s.connections_in = p2.connections_inbound;
+    // Recover peer count from assist only on a live P2P snap — never from disk bootstrap.
+    const assistN = Number(p2.block_assist_connections) || 0;
+    const hdrN = Number(p2.dedicated_header_connections) || 0;
+    const relayN = Number(p2.connections_outbound_relay) || 0;
+    const livePeers = (Number(p2.connections_outbound) || 0) + (Number(p2.connections_inbound) || 0) + assistN + hdrN + relayN;
+    if (p2.from_disk_snapshot === true && livePeers <= 0 && p2.peer_dialing !== true && !p2.dogego_sync_activity) {
+      s.connections_out = 0;
+      s.connections_in = 0;
+      delete s.blocks_per_minute;
+      delete s.contiguous_blocks_per_minute;
+      delete s.dogego_contiguous_blocks_per_minute;
+      delete s.headers_per_minute;
+      delete s.dogego_headers_per_minute;
+      delete s.dogego_connect_blocks_per_minute;
+      delete s.in_flight_batches;
+      delete s.sync_eta;
+      return s;
+    }
+    if (p2.from_disk_snapshot === true && livePeers <= 0) {
+      s.connections_out = 0;
+      s.connections_in = 0;
+    }
+    if ((!s.connections_out || s.connections_out === 0) && (assistN > 0 || hdrN > 0 || relayN > 0)) {
+      let rebuilt = assistN + hdrN + relayN;
+      const primary = String(p2.primary_peer || "");
+      if (primary && primary.charAt(0) !== "(") rebuilt += 1;
+      if (rebuilt > 0) {
+        s.connections_out = rebuilt;
+        delete s.from_disk_snapshot;
+        delete s.summary_stale;
+      }
+    }
     const prog = p2.ibd_progress;
+    let liveProg = false;
     if (prog && typeof prog === "object") {
+      liveProg = true;
       if (prog.blocks_per_minute != null) s.blocks_per_minute = prog.blocks_per_minute;
       if (prog.contiguous_blocks_per_minute != null) {
         s.contiguous_blocks_per_minute = prog.contiguous_blocks_per_minute;
@@ -9085,6 +9189,25 @@
         s.contiguous_raw_height = prog.contiguous_raw_height;
         s.dogego_contiguous_raw_height = prog.contiguous_raw_height;
       }
+      if (prog.lane_in_flight != null) s.dogego_lane_in_flight = prog.lane_in_flight;
+      if (prog.lane_budget != null) s.dogego_lane_budget = prog.lane_budget;
+    }
+    if (p2.contiguous_block_height != null) {
+      liveProg = true;
+      s.contiguous_raw_height = p2.contiguous_block_height;
+      s.dogego_contiguous_raw_height = p2.contiguous_block_height;
+    }
+    if (p2.peer_dialing === true) {
+      liveProg = true;
+    }
+    if (p2.dogego_sync_activity) {
+      liveProg = true;
+      s.dogego_sync_activity = p2.dogego_sync_activity;
+    }
+    // Live IBD overlay must not keep the dock stuck on "Updating… / last known data".
+    if (liveProg) {
+      delete s.from_disk_snapshot;
+      delete s.summary_stale;
     }
     return s;
   }
@@ -9100,7 +9223,23 @@
       if (gen !== refreshGen) return null;
       if (!rLive.ok) throw new Error("live HTTP " + rLive.status);
       const live = await rLive.json();
-      if (live && live.summary) return live;
+      if (live && live.summary) {
+        const out = Number(live.p2p && live.p2p.connections_outbound) || Number(live.summary.connections_out) || 0;
+        const missingP2P = !live.p2p;
+        const dialingEmpty = !!(live.p2p && live.p2p.peer_dialing) && out === 0;
+        // Only fall back when live truly lacks peers — avoid doubling poll load during IBD.
+        if (missingP2P || dialingEmpty) {
+          try {
+            const rP2 = await fetchAPI("/api/p2p", 2500);
+            if (gen !== refreshGen) return null;
+            if (rP2.ok) {
+              const p2 = await rP2.json();
+              if (p2 && p2.wired !== false) live.p2p = p2;
+            }
+          } catch (_) { /* keep live envelope */ }
+        }
+        return live;
+      }
     } catch (e) {
       if (gen !== refreshGen) return null;
       if (!isTransientAPIError(e)) throw e;
@@ -9112,10 +9251,17 @@
     if (!s || s.live === false && !s.tip_height && !s.contiguous_raw_height) {
       throw new Error("dashboard not ready");
     }
-    return { ok: true, summary: s, summary_stale: true };
+    let p2 = null;
+    try {
+      const rP2 = await fetchAPI("/api/p2p", 2500);
+      if (gen === refreshGen && rP2.ok) p2 = await rP2.json();
+    } catch (_) { /* */ }
+    return { ok: true, summary: s, summary_stale: true, p2p: p2 };
   }
 
-  function pollIntervalMs(summary) {
+  function pollIntervalMs(summary, p2snap) {
+    const p2 = p2snap || lastP2Snap;
+    if (p2 && p2.peer_dialing) return 400;
     const lag = summaryConnectLag(summary);
     const ibd = summary && (summary.ibd_active || (Number(summary.blocks_behind_headers) || 0) > 64);
     if (ibd) return 400;
@@ -9227,6 +9373,7 @@
       if (!live || !live.summary) throw new Error(live && live.summary_error ? live.summary_error : "dashboard not ready");
       const s = overlayLiveP2POnSummary(live.summary, live.p2p);
       const p2snap = live.p2p || null;
+      lastP2Snap = p2snap;
       lastSummary = s;
       if (live.analytics_summary && !lastAnalyticsJson) {
         lastAnalyticsJson = live.analytics_summary;
@@ -15141,7 +15288,7 @@
         refreshDGRLive();
         schedulePoll();
       });
-    }, pollIntervalMs(lastSummary));
+    }, pollIntervalMs(lastSummary, lastP2Snap));
   })();
   setInterval(() => {
     const pan = document.getElementById("panel-console");

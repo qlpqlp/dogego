@@ -21,10 +21,10 @@ var walletRescanHTTP struct {
 }
 
 func attachWalletRescanStatus(out map[string]any, cfg StartConfig) {
-	if out == nil || cfg.Wallet == nil {
+	if out == nil || cfg.ActiveWallet() == nil {
 		return
 	}
-	maxH := cfg.Wallet.MaxScannedBlockHeight()
+	maxH := cfg.ActiveWallet().MaxScannedBlockHeight()
 	out["wallet_index_height"] = maxH
 	tip := int64(-1)
 	if utxo := utxoCacheLive(cfg); utxo != nil {
@@ -44,7 +44,7 @@ func attachWalletRescanStatus(out map[string]any, cfg StartConfig) {
 			out["wallet_scan_index_ok"] = maxH >= tip
 		}
 	}
-	if walletHasReceiveHistory(cfg.Wallet) {
+	if walletHasReceiveHistory(cfg.ActiveWallet()) {
 		out["wallet_history_fast_path"] = true
 	} else {
 		out["wallet_listtransactions_utxo_walk"] = true
@@ -92,7 +92,7 @@ func registerWalletRescanRoute(mux *http.ServeMux, cfg StartConfig, webGate *web
 			return
 		}
 		w.Header().Set("Content-Type", "application/json; charset=utf-8")
-		if cfg.Wallet == nil || cfg.RPCInvoke == nil {
+		if cfg.ActiveWallet() == nil || cfg.RPCInvoke == nil {
 			w.WriteHeader(http.StatusBadRequest)
 			_ = json.NewEncoder(w).Encode(map[string]string{"error": "wallet or RPC not ready"})
 			return
@@ -144,8 +144,8 @@ func walletRescanStartHeight(cfg StartConfig, full *bool, explicit *int64) int64
 	if full != nil && *full {
 		return 0
 	}
-	if cfg.Wallet != nil {
-		maxH := cfg.Wallet.MaxScannedBlockHeight()
+	if cfg.ActiveWallet() != nil {
+		maxH := cfg.ActiveWallet().MaxScannedBlockHeight()
 		if maxH >= 0 {
 			return maxH + 1
 		}

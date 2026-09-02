@@ -63,7 +63,10 @@ func keyTick(tick, id string) []byte {
 	return []byte("t/" + strings.ToUpper(tick) + "/" + strings.ToLower(id))
 }
 func keyAsset(id string) []byte { return []byte("a/" + strings.ToLower(id)) }
-func keyMeta(k string) []byte   { return []byte("m/" + k) }
+func keyTx(txid, id string) []byte {
+	return []byte("x/" + strings.ToLower(txid) + "/" + strings.ToLower(id))
+}
+func keyMeta(k string) []byte { return []byte("m/" + k) }
 
 func (s *Store) setMeta(k, v string) error {
 	return s.db.Set(keyMeta(k), []byte(v), pebble.Sync)
@@ -118,9 +121,15 @@ func (s *Store) PutInscription(ins Inscription) error {
 	defer batch.Close()
 	_ = batch.Set(keyIns(ins.ID), b, nil)
 	_ = batch.Set(keyInsH(ins.Height, ins.ID), []byte{1}, nil)
+	if ins.TxID != "" {
+		_ = batch.Set(keyTx(ins.TxID, ins.ID), []byte{1}, nil)
+	}
 	if ins.Kind == "drc20" && ins.Tick != "" {
 		_ = batch.Set(keyTick(ins.Tick, ins.ID), []byte{1}, nil)
 		if err := s.applyTokenToBatch(batch, ins); err != nil {
+			return err
+		}
+		if err := s.applyLedger(batch, ins); err != nil {
 			return err
 		}
 	}
@@ -187,6 +196,42 @@ func (s *Store) GetInscription(id string) (Inscription, bool, error) {
 		return z, false, err
 	}
 	return z, true, nil
+}
+
+// ListByTxID returns indexed events for a transaction id.
+func (s *Store) ListByTxID(txid string) ([]Inscription, error) {
+	s.mu.RLock()
+	defer s.mu.RUnlock()
+	if s.db == nil {
+		return nil, fmt.Errorf("store closed")
+	}
+	txid = strings.ToLower(strings.TrimSpace(txid))
+	if txid == "" {
+		return nil, fmt.Errorf("txid required")
+	}
+	prefix := []byte("x/" + txid + "/")
+	it, err := s.db.NewIter(&pebble.IterOptions{LowerBound: prefix, UpperBound: prefixEnd(prefix)})
+	if err != nil {
+		return nil, err
+	}
+	defer it.Close()
+	var out []Inscription
+	for ok := it.First(); ok; ok = it.Next() {
+		k := string(it.Key())
+		parts := strings.SplitN(k, "/", 3)
+		if len(parts) != 3 {
+			continue
+		}
+		val, closer, err := s.db.Get(keyIns(parts[2]))
+		if err != nil {
+			continue
+		}
+		var ins Inscription
+		_ = json.Unmarshal(val, &ins)
+		closer.Close()
+		out = append(out, ins)
+	}
+	return out, nil
 }
 
 // ListInscriptions returns newest-first up to limit (scan by height index reverse).

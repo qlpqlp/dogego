@@ -43,12 +43,12 @@ func testPQSendTxHex(t *testing.T) (string, string) {
 func TestScannedSendUIEntryHexBlockFallback(t *testing.T) {
 	cfg, _, _ := testWalletFastSetup(t)
 	txid := "abcd1234abcd1234abcd1234abcd1234abcd1234abcd1234abcd1234abcd1234"
-	cfg.Wallet.SeedScannedTx([]wallet.ScannedTx{{
+	cfg.ActiveWallet().SeedScannedTx([]wallet.ScannedTx{{
 		TxID: txid, Category: "send", Address: "DSendAddr", AmountKoinu: -1_000_000_000,
 		BlockHeight: 50,
 	}})
 	// Block fallback needs a stored raw block with matching tx; setup has none here.
-	if _, ok := cfg.Wallet.LookupTxHex(txid); ok {
+	if _, ok := cfg.ActiveWallet().LookupTxHex(txid); ok {
 		t.Fatal("unexpected hex in wallet.db before lookup")
 	}
 	entry := scannedSendToUIEntry(cfg, wallet.ScannedTx{

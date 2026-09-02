@@ -136,6 +136,7 @@
         "Loading local data…";
       const phaseMap = {
         warming: "Loading local data",
+        body_reconcile: "Checking stored blocks",
         utxo_cache: "Connecting blocks",
         snapshot_replay: "Connecting stored bodies",
         wallet_scan: "Scanning wallet",
@@ -143,16 +144,23 @@
       };
       const phaseKey = s.dogego_ui_loading_phase;
       const phase = (phaseKey && phaseMap[phaseKey]) || "Loading local data";
-      return { phase: phase, sub: detail, pct: pct, loading: true };
+      const loadPct = Number(s.dogego_ui_loading_pct);
+      const barPct = isFinite(loadPct) && loadPct >= 0 ? Math.max(2, Math.min(100, loadPct)) : pct;
+      return { phase: phase, sub: detail, pct: barPct, loading: true, loadingPct: isFinite(loadPct) ? loadPct : null };
     }
     if (s && (s.from_disk_snapshot === true || s.summary_stale === true)) {
-      const tipLbl = isFinite(tip) && tip >= 0 ? tip.toLocaleString() + " headers" : "last known tip";
-      return {
-        phase: "Updating…",
-        sub: "Showing last known data · refreshing (" + tipLbl + ")",
-        pct: pct,
-        stale: true
-      };
+      const hasLiveRate = Number(s.blocks_per_minute) > 0 || Number(s.contiguous_blocks_per_minute) > 0
+        || (s.dogego_sync_activity && s.dogego_sync_activity.headline);
+      const hasLivePeers = (Number(s.connections_out) || 0) + (Number(s.connections_in) || 0) > 0;
+      if (!hasLiveRate && !hasLivePeers) {
+        const tipLbl = isFinite(tip) && tip >= 0 ? tip.toLocaleString() + " headers" : "last known tip";
+        return {
+          phase: "Updating…",
+          sub: "Showing last known data · refreshing (" + tipLbl + ")",
+          pct: pct,
+          stale: true
+        };
+      }
     }
     const behind = Number(s.blocks_behind_headers);
     const bodyPct = s.dogego_body_verification_progress != null
@@ -189,7 +197,13 @@
       const boost = formatConnectCatchUpBoost(s);
       if (boost) sub += " · boost " + boost;
     } else if (ibd) {
-      phase = "Syncing blocks";
+      const hole = Number(s.dogego_frontier_hole_height || s.frontier_hole_height);
+      const ahead = Number(s.dogego_raw_blocks_in_flight_ahead || s.raw_blocks_in_flight_ahead);
+      const storedBpm = Number(s.contiguous_blocks_per_minute || s.dogego_contiguous_blocks_per_minute);
+      const blockedSec = Number(s.dogego_hole_blocked_sec || s.hole_blocked_sec);
+      const holeBlocked = isFinite(hole) && hole >= 0 && isFinite(ahead) && ahead > 0 &&
+        (!isFinite(storedBpm) || storedBpm <= 0) && isFinite(blockedSec) && blockedSec >= 10;
+      phase = holeBlocked ? ("Blocked at height " + hole.toLocaleString()) : "Syncing blocks";
       const parts = [];
       if (s.dogego_body_ibd_header_paused && s.dogego_body_verification_progress != null) {
         const bp = Math.round(Number(s.dogego_body_verification_progress) * 100);
@@ -200,6 +214,9 @@
       if (eta) parts.push("~" + eta);
       const rateTxt = (global.DogeGoFormatSyncDownloadRate && global.DogeGoFormatSyncDownloadRate(s)) || "";
       if (rateTxt) parts.push(rateTxt);
+      if (holeBlocked && isFinite(ahead) && ahead > 0) {
+        parts.push(ahead.toLocaleString() + " ahead in flight");
+      }
       if (s.dogego_body_ibd_header_paused) parts.push("headers paused");
       sub = parts.join(" · ") || (s.sync_status_line || "");
     } else if (s.headers_syncing) {
@@ -211,8 +228,14 @@
     }
     const act = s.dogego_sync_activity;
     if (act && act.headline && s.dogego_sync_health !== "forward_ibd_stalled") {
-      if (act.headline) phase = act.headline;
-      if (act.detail) sub = act.detail;
+      const outN = Number(s.connections_out) || 0;
+      const connectingStub = act.headline === "Connecting to peers" && outN > 0
+        && (s.initialblockdownload === true || s.ibd_active === true
+          || (Number(s.blocks_behind_headers) || 0) > 32);
+      if (!connectingStub) {
+        if (act.headline) phase = act.headline;
+        if (act.detail) sub = act.detail;
+      }
     }
     return { phase, sub, pct };
   }
@@ -409,21 +432,27 @@
     const labels = syncPhaseLabels(s);
     const pct = labels.pct;
     const fill = $("sync-dock-fill");
+    const hasLoadPct = labels.loading && labels.loadingPct != null && isFinite(labels.loadingPct);
     if (fill) {
-      fill.style.width = (labels.loading ? 35 : pct) + "%";
-      fill.classList.toggle("sync-dock-fill--pulse", !!labels.loading);
+      fill.style.width = (hasLoadPct ? Math.max(2, Math.min(100, labels.loadingPct)) : (labels.loading ? 35 : pct)) + "%";
+      fill.classList.toggle("sync-dock-fill--pulse", !!labels.loading && !hasLoadPct);
       fill.classList.toggle("sync-dock-fill--stale", !!labels.stale);
     }
     dock.classList.toggle("sync-dock--loading", !!labels.loading);
     dock.classList.toggle("sync-dock--stale", !!labels.stale);
     const prog = $("sync-dock-progress");
-    if (prog) prog.setAttribute("aria-valuenow", String(labels.loading ? 0 : pct));
+    if (prog) prog.setAttribute("aria-valuenow", String(hasLoadPct ? Math.round(labels.loadingPct) : (labels.loading ? 0 : pct)));
     setMetric("sync-dock-phase", labels.phase);
-    setMetric("sync-dock-pct", labels.loading ? "…" : (pct + "%"));
+    setMetric("sync-dock-pct", hasLoadPct ? (Math.round(labels.loadingPct) + "%") : (labels.loading ? "…" : (pct + "%")));
     const sub = $("sync-dock-sub");
     if (sub) {
-      sub.textContent = labels.sub || "";
-      sub.hidden = !labels.sub;
+      let subTxt = labels.sub || "";
+      const verify = s && s.dogego_disk_verify_detail ? String(s.dogego_disk_verify_detail) : "";
+      if (verify && !labels.loading) {
+        subTxt = subTxt ? (subTxt + " · " + verify) : verify;
+      }
+      sub.textContent = subTxt;
+      sub.hidden = !subTxt;
     }
     const resumeWarn = $("sync-dock-resume-warn");
     if (resumeWarn) {

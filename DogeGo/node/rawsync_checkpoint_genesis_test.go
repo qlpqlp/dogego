@@ -9,6 +9,7 @@ package node
 import (
 	"path/filepath"
 	"testing"
+	"time"
 
 	"dogego/pow"
 	"dogego/store"
@@ -50,5 +51,16 @@ func TestSyncCheckpointToContiguousAfterGenesis(t *testing.T) {
 	s.SyncCheckpointToContiguous(bs.ContiguousRawHeight())
 	if s.nextProbe != 1 {
 		t.Fatalf("nextProbe %d want 1 after genesis stored", s.nextProbe)
+	}
+	// Wait for coalesced async flush so TempDir cleanup does not race leftover .tmp files.
+	deadline := time.Now().Add(2 * time.Second)
+	for time.Now().Before(deadline) {
+		s.mu.Lock()
+		flushing := s.checkpointFlushing || s.checkpointDirty
+		s.mu.Unlock()
+		if !flushing {
+			break
+		}
+		time.Sleep(10 * time.Millisecond)
 	}
 }

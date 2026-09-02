@@ -18,7 +18,8 @@ import (
 
 func TestWriteBehindHasAndGetBeforeDiskFlush(t *testing.T) {
 	dir := t.TempDir()
-	rs, err := store.OpenRawBlockStore(dir)
+	// Per-file layout so the test can assert a hash.bin path; bundled defaults use blk*.dat.
+	rs, err := store.OpenRawBlockStoreWithOpts(dir, store.BlockStorageOpts{Layout: store.BlockLayoutPerFile})
 	if err != nil {
 		t.Fatal(err)
 	}

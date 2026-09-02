@@ -27,18 +27,23 @@ const (
 
 // Inscription is one L1-observed data carrier / DRC-20 / doginal-like event.
 type Inscription struct {
-	ID          string `json:"id"` // height:txid:vout
-	Height      int64  `json:"height"`
-	TxID        string `json:"txid"`
-	Vout        uint32 `json:"vout"`
-	Kind        string `json:"kind"` // drc20 | doginal | data
-	Tick        string `json:"tick,omitempty"`
-	Op          string `json:"op,omitempty"` // deploy|mint|transfer
-	Amount      string `json:"amount,omitempty"`
-	ContentType string `json:"content_type,omitempty"`
-	TextPreview string `json:"text_preview,omitempty"`
-	PayloadHex  string `json:"payload_hex,omitempty"`
-	RecordedUnix int64 `json:"recorded_unix"`
+	ID           string `json:"id"` // height:txid:vout or txidi{vin}@height
+	Height       int64  `json:"height"`
+	TxID         string `json:"txid"`
+	Vout         uint32 `json:"vout"`
+	Vin          uint32 `json:"vin,omitempty"`
+	Kind         string `json:"kind"` // drc20 | doginal | data | ordinal
+	Tick         string `json:"tick,omitempty"`
+	Op           string `json:"op,omitempty"` // deploy|mint|transfer
+	Address      string `json:"address,omitempty"`   // sender / owner when known
+	Recipient    string `json:"recipient,omitempty"` // transfer destination when known
+	Amount       string `json:"amount,omitempty"`
+	ContentType  string `json:"content_type,omitempty"`
+	TextPreview  string `json:"text_preview,omitempty"`
+	PayloadHex   string `json:"payload_hex,omitempty"`
+	Source       string `json:"source,omitempty"` // opreturn | envelope
+	Outpoint     string `json:"outpoint,omitempty"` // created transferable outpoint when applicable
+	RecordedUnix int64  `json:"recorded_unix"`
 }
 
 // Asset is an off-L1 L2 record (NFT / token metadata / image pointer).

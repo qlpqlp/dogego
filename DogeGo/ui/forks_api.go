@@ -31,10 +31,10 @@ func BuildForksStatus(cfg StartConfig) map[string]any {
 	}
 
 	local := map[string]any{"height": int64(-1), "hash": "", "chain": cfg.Network}
-	if cfg.Journal != nil {
-		if tip, err := cfg.Journal.TipHeight(); err == nil && tip >= 0 {
+	if cfg.ActiveJournal() != nil {
+		if tip, err := cfg.ActiveJournal().TipHeight(); err == nil && tip >= 0 {
 			local["height"] = tip
-			if h80, err := cfg.Journal.ReadHeaderAt(tip); err == nil {
+			if h80, err := cfg.ActiveJournal().ReadHeaderAt(tip); err == nil {
 				local["hash"] = pow.BlockHashHex(h80)
 			}
 		}

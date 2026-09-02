@@ -25,7 +25,7 @@ func TestEffectiveBlockDownloadTimeoutEarlyIBDCap(t *testing.T) {
 	bs.contiguousMu.Unlock()
 	d = EffectiveBlockDownloadTimeout(bs, 4)
 	if d != bodyIBDBlockDownloadTimeout {
-		t.Fatalf("body IBD timeout=%v want %v (must not wait Core 17m while claims leak)", d, bodyIBDBlockDownloadTimeout)
+		t.Fatalf("body IBD timeout=%v want %v (deep IBD uses multi-minute window, not Core 17m claim-leak)", d, bodyIBDBlockDownloadTimeout)
 	}
 }
 

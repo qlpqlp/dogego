@@ -28,8 +28,8 @@ func walletScriptIndexFor(cfg StartConfig) (walletScriptIndex, bool) {
 		return walletScriptIndex{}, false
 	}
 	idx := walletScriptIndex{byScript: make(map[string]string)}
-	if cfg.Wallet != nil {
-		for _, script := range cfg.Wallet.SpendScripts() {
+	if cfg.ActiveWallet() != nil {
+		for _, script := range cfg.ActiveWallet().SpendScripts() {
 			if len(script) == 0 {
 				continue
 			}
@@ -38,8 +38,8 @@ func walletScriptIndexFor(cfg StartConfig) (walletScriptIndex, bool) {
 			}
 		}
 	}
-	if len(idx.byScript) == 0 && cfg.Wallet != nil {
-		addr := strings.TrimSpace(walletAddr(cfg.Wallet))
+	if len(idx.byScript) == 0 && cfg.ActiveWallet() != nil {
+		addr := strings.TrimSpace(walletAddr(cfg.ActiveWallet()))
 		if addr != "" {
 			if _, payload, err := chain.Base58CheckDecode(addr); err == nil {
 				spk := chain.P2PKHScriptFromPubKeyHash(payload)
@@ -145,7 +145,7 @@ func walletListUnspentFromUtxoCache(cfg StartConfig) ([]interface{}, bool) {
 		}
 		addr := r.address
 		if addr == "" {
-			addr = walletAddr(cfg.Wallet)
+			addr = walletAddr(cfg.ActiveWallet())
 		}
 		out[i] = map[string]interface{}{
 			"txid":          r.txid,
@@ -190,9 +190,9 @@ func walletTxPageFromUtxoCache(cfg StartConfig, offset, limit int, q, kind strin
 	for _, r := range filtered {
 		addr := r.address
 		if addr == "" {
-			addr = walletAddr(cfg.Wallet)
+			addr = walletAddr(cfg.ActiveWallet())
 		}
-		entries = append(entries, walletUtxoRowToEntryWithPQ(cfg, r, addr, maturity, cfg.Journal))
+		entries = append(entries, walletUtxoRowToEntryWithPQ(cfg, r, addr, maturity, cfg.ActiveJournal()))
 	}
 	entries = walletCollapseUIEntries(entries)
 	total = len(entries)
@@ -228,10 +228,10 @@ func walletTxHistoryUsesScannedSendFastPath(kind string) bool {
 
 // walletTxPageFromScannedSend lists confirmed wallet sends from wallet.db (no UTXO-cache walk).
 func walletTxPageFromScannedSend(cfg StartConfig, offset, limit int, q, kind string) (total int, items []interface{}, ok bool) {
-	if cfg.Wallet == nil {
+	if cfg.ActiveWallet() == nil {
 		return 0, nil, false
 	}
-	scanned := cfg.Wallet.ListScannedTx()
+	scanned := cfg.ActiveWallet().ListScannedTx()
 	if len(scanned) == 0 {
 		return 0, nil, false
 	}
@@ -315,8 +315,8 @@ func scannedTxToUIEntry(cfg StartConfig, r wallet.ScannedTx, tip int64, kind ...
 		conf = 1
 	}
 	rowTime := r.BlockHeight
-	if cfg.Journal != nil && r.BlockHeight >= 0 {
-		if h80, err := cfg.Journal.ReadHeaderAt(r.BlockHeight); err == nil {
+	if cfg.ActiveJournal() != nil && r.BlockHeight >= 0 {
+		if h80, err := cfg.ActiveJournal().ReadHeaderAt(r.BlockHeight); err == nil {
 			rowTime = headerTimeUnix(h80)
 		}
 	}
@@ -347,8 +347,8 @@ func scannedTxToUIEntry(cfg StartConfig, r wallet.ScannedTx, tip int64, kind ...
 	if r.BlockHeight >= 0 {
 		entry["blockheight"] = r.BlockHeight
 		entry["blockindex"] = r.Vout
-		if cfg.Journal != nil {
-			if h80, err := cfg.Journal.ReadHeaderAt(r.BlockHeight); err == nil {
+		if cfg.ActiveJournal() != nil {
+			if h80, err := cfg.ActiveJournal().ReadHeaderAt(r.BlockHeight); err == nil {
 				entry["blocktime"] = headerTimeUnix(h80)
 			}
 		}
@@ -374,10 +374,10 @@ func scannedTxToUIEntry(cfg StartConfig, r wallet.ScannedTx, tip int64, kind ...
 
 // walletTxPageFromScannedHistory lists receive+send rows from wallet.db (no UTXO-cache walk).
 func walletTxPageFromScannedHistory(cfg StartConfig, offset, limit int, q, kind string) (total int, items []interface{}, ok bool) {
-	if cfg.Wallet == nil {
+	if cfg.ActiveWallet() == nil {
 		return 0, nil, false
 	}
-	scanned := cfg.Wallet.ListScannedTx()
+	scanned := cfg.ActiveWallet().ListScannedTx()
 	if len(scanned) == 0 {
 		return 0, nil, false
 	}
@@ -566,10 +566,10 @@ func walletHasScannedIndex(w *wallet.Disk) bool {
 
 // walletTxPageMergedAll combines wallet.db history when indexed, else UTXO receives + scan sends.
 func walletTxPageMergedAll(cfg StartConfig, offset, limit int, q string) (total int, items []interface{}, ok bool) {
-	if cfg.Wallet == nil || !walletHasScannedIndex(cfg.Wallet) {
+	if cfg.ActiveWallet() == nil || !walletHasScannedIndex(cfg.ActiveWallet()) {
 		return 0, nil, false
 	}
-	if walletScanHasReceiveRows(cfg.Wallet) {
+	if walletScanHasReceiveRows(cfg.ActiveWallet()) {
 		return walletTxPageFromScannedHistory(cfg, offset, limit, q, "all")
 	}
 	_, recvItems, recvOK := walletTxPageFromUtxoCache(cfg, 0, 0, q, "all")

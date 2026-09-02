@@ -17,12 +17,12 @@ import (
 
 func TestWalletTxsHTTPSentUsesScannedIndexFastPath(t *testing.T) {
 	cfg, _, _ := testWalletFastSetup(t)
-	cfg.Wallet.SeedScannedTx([]wallet.ScannedTx{{
+	cfg.ActiveWallet().SeedScannedTx([]wallet.ScannedTx{{
 		TxID: "abcd1234abcd1234abcd1234abcd1234abcd1234abcd1234abcd1234abcd1234",
 		Category: "send", Address: "DSendAddr", AmountKoinu: -5_000_000_000,
 		FeeKoinu: 100_000_000, BlockHeight: 100,
 	}})
-	_ = cfg.Wallet.RememberTxHex("abcd1234abcd1234abcd1234abcd1234abcd1234abcd1234abcd1234abcd1234", "deadbeef")
+	_ = cfg.ActiveWallet().RememberTxHex("abcd1234abcd1234abcd1234abcd1234abcd1234abcd1234abcd1234abcd1234", "deadbeef")
 
 	mux := http.NewServeMux()
 	registerWalletTxsRoutes(mux, cfg, nil)
@@ -63,10 +63,10 @@ func TestWalletTxsHTTPSentUsesScannedIndexFastPath(t *testing.T) {
 func TestWalletTxsHTTPMergedAllFastPath(t *testing.T) {
 	cfg, _, spk := testWalletFastSetup(t)
 	addWalletFastUtxo(cfg.UtxoCache(), 50, 0, 2_000_000_000, 200, spk)
-	cfg.Wallet.SeedScannedTx([]wallet.ScannedTx{
+	cfg.ActiveWallet().SeedScannedTx([]wallet.ScannedTx{
 		{
 			TxID: "bbbb1234bbbb1234bbbb1234bbbb1234bbbb1234bbbb1234bbbb1234bbbb1234",
-			Category: "receive", Address: cfg.Wallet.Address(), AmountKoinu: 2_000_000_000,
+			Category: "receive", Address: cfg.ActiveWallet().Address(), AmountKoinu: 2_000_000_000,
 			BlockHeight: 200, Vout: 0,
 		},
 		{
@@ -105,7 +105,7 @@ func TestWalletTxsHTTPMergedAllFastPath(t *testing.T) {
 
 func TestWalletTxsHTTPPrefersListPageBridge(t *testing.T) {
 	cfg, _, _ := testWalletFastSetup(t)
-	cfg.Wallet.SeedScannedTx([]wallet.ScannedTx{{
+	cfg.ActiveWallet().SeedScannedTx([]wallet.ScannedTx{{
 		TxID: "abcd1234abcd1234abcd1234abcd1234abcd1234abcd1234abcd1234abcd1234",
 		Category: "send", Address: "DSendAddr", AmountKoinu: -1_000_000_000,
 		FeeKoinu: 50_000_000, BlockHeight: 300,

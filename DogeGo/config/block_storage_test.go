@@ -18,7 +18,9 @@ func TestSetupWizardSeed_recommendedStorage(t *testing.T) {
 		t.Fatalf("layout %q", f.BlockStorageLayout)
 	}
 	if !f.BlockZstd {
-		t.Fatal("want block_zstd")
+		// IBD defaults: uncompressed bodies (faster persist). Explicit true still allowed.
+	} else {
+		t.Fatal("want block_zstd false for IBD-friendly defaults")
 	}
 	if f.EffectiveTxIndexEmbedTx() {
 		t.Fatal("want compact tx index (embed off)")

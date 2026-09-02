@@ -768,6 +768,26 @@ func (m *Manager) NotifyBlockConnected(height int64) {
 	}
 }
 
+// NotifyBlockDisconnected soft-reorgs extension indexes for a dropped tip height.
+func (m *Manager) NotifyBlockDisconnected(height int64) {
+	if m == nil {
+		return
+	}
+	m.mu.Lock()
+	active := make(map[string]Extension, len(m.active))
+	manifests := make(map[string]Manifest, len(m.activeManifest))
+	for id, ext := range m.active {
+		active[id] = ext
+		manifests[id] = m.activeManifest[id]
+	}
+	m.mu.Unlock()
+	for id, ext := range active {
+		if bi, ok := ext.(BlockDisconnectExtension); ok {
+			_ = bi.OnBlockDisconnected(height, m.hostFor(id, manifests[id]))
+		}
+	}
+}
+
 // NotifyPeerNegotiated informs extensions that a peer agreed on overlay protocols.
 func (m *Manager) NotifyPeerNegotiated(peerAddr string, protocols []string, send func(string, []byte) error) {
 	if m == nil || peerAddr == "" {
@@ -854,6 +874,11 @@ func (m *Manager) OverlayPeerCount(protocolID string) int {
 // BlockIndexExtension receives new block heights for L1 indexing.
 type BlockIndexExtension interface {
 	OnBlockConnected(height int64, host Host) error
+}
+
+// BlockDisconnectExtension optionally soft-reorgs local indexes when a tip is disconnected.
+type BlockDisconnectExtension interface {
+	OnBlockDisconnected(height int64, host Host) error
 }
 
 // PeerSyncExtension starts overlay sync when a compatible peer connects.

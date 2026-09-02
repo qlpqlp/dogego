@@ -9,6 +9,7 @@ package store
 import (
 	"encoding/binary"
 	"fmt"
+	"io"
 	"os"
 	"path/filepath"
 	"testing"
@@ -32,7 +33,7 @@ func (s *RawBlockStore) putBundled(hashLE [32]byte, raw []byte) error {
 	if err != nil {
 		return err
 	}
-	return writeBlockLocator(s.locatorRoot(), hashLE, loc)
+	return s.commitBlockLocator(hashLE, loc)
 }
 
 func (s *RawBlockStore) appendBundledRecordLocked(rec []byte, uncompressed uint32) (blockLocator, error) {
@@ -106,15 +107,22 @@ func (s *RawBlockStore) closeBundledAppendLocked() error {
 	return err
 }
 
-// Close releases the cached bundled append handle (tests / shutdown).
+// Close releases the cached bundled append handle and locator journal (tests / shutdown).
 func (s *RawBlockStore) Close() error {
 	if s == nil {
 		return nil
 	}
+	var err error
+	if s.locMem != nil {
+		err = s.locMem.close()
+	}
 	s.bundledAppendMu.Lock()
-	err := s.closeBundledAppendLocked()
+	err2 := s.closeBundledAppendLocked()
 	s.bundledAppendMu.Unlock()
-	return err
+	if err != nil {
+		return err
+	}
+	return err2
 }
 
 func (s *RawBlockStore) pickBundledAppendSlot(need int64) (fileNum uint32, offset int64, err error) {
@@ -171,7 +179,7 @@ func (s *RawBlockStore) noteBundledAppend(fileNum uint32, offset int64, recordLe
 }
 
 func (s *RawBlockStore) getViaLocator(hashLE [32]byte) ([]byte, error) {
-	loc, ok, err := readBlockLocator(s.locatorRoot(), hashLE)
+	loc, ok, err := s.lookupBlockLocator(hashLE)
 	if err != nil || !ok {
 		return nil, err
 	}
@@ -221,7 +229,7 @@ func (s *RawBlockStore) putPerFile(hashLE [32]byte, raw []byte) error {
 			RecordLen:    uint32(len(data)),
 			Uncompressed: uint32(len(raw)),
 		}
-		return writeBlockLocator(s.locatorRoot(), hashLE, loc)
+		return s.commitBlockLocator(hashLE, loc)
 	}
 	if err := os.WriteFile(tmp, data, 0o600); err != nil {
 		return err
@@ -244,7 +252,7 @@ func (s *RawBlockStore) putPerFile(hashLE [32]byte, raw []byte) error {
 	if s.opts.Zstd {
 		loc.Flags = blockLocatorFlagZstd
 	}
-	return writeBlockLocator(s.locatorRoot(), hashLE, loc)
+	return s.commitBlockLocator(hashLE, loc)
 }
 
 func (s *RawBlockStore) readPerFileLocator(hashLE [32]byte, loc blockLocator) ([]byte, error) {
@@ -264,7 +272,7 @@ func (s *RawBlockStore) readPerFileLocator(hashLE [32]byte, loc blockLocator) ([
 }
 
 func (s *RawBlockStore) getPerFile(hashLE [32]byte) ([]byte, error) {
-	if loc, ok, err := readBlockLocator(s.locatorRoot(), hashLE); err == nil && ok && loc.FileNum == perFileLocatorNum {
+	if loc, ok, err := s.lookupBlockLocator(hashLE); err == nil && ok && loc.FileNum == perFileLocatorNum {
 		return s.readPerFileLocator(hashLE, loc)
 	}
 	path, ok := s.resolvePerFilePath(hashLE)
@@ -283,6 +291,9 @@ func (s *RawBlockStore) getPerFile(hashLE [32]byte) ([]byte, error) {
 
 // ProbeBundledContiguousTip scans bundled blk*.dat files in append order and returns the
 // highest height present (-1 when empty). Used to reconcile rawblocks_sync.json with disk.
+//
+// Reads record headers and seeks past payloads (does not load entire blk*.dat into memory),
+// so cold start stays seconds even with hundreds of thousands of stored bodies.
 func (s *RawBlockStore) ProbeBundledContiguousTip() (int64, error) {
 	if s.opts.Layout != BlockLayoutBundled {
 		return -1, fmt.Errorf("bundled contiguous probe requires bundled layout")
@@ -294,29 +305,67 @@ func (s *RawBlockStore) ProbeBundledContiguousTip() (int64, error) {
 	if err != nil {
 		return -1, err
 	}
+	var totalBytes int64
+	sizes := make([]int64, len(files))
+	for i, fileNum := range files {
+		fi, err := os.Stat(bundledBlkPath(dir, fileNum))
+		if err != nil {
+			continue
+		}
+		sizes[i] = fi.Size()
+		totalBytes += sizes[i]
+	}
+	reportContiguousProbe(0, totalBytes, "")
 	var last int64 = -1
 	var cur int64
-	for _, fileNum := range files {
+	var doneBytes int64
+	hdr := make([]byte, blockRecordHeaderLen)
+	for i, fileNum := range files {
 		path := bundledBlkPath(dir, fileNum)
-		data, err := os.ReadFile(path)
+		label := filepath.Base(path)
+		reportContiguousProbe(doneBytes, totalBytes, label)
+		f, err := os.Open(path)
 		if err != nil {
 			return last, err
 		}
-		off := 0
-		for off+blockRecordHeaderLen <= len(data) {
-			if binary.LittleEndian.Uint32(data[off:]) != blockRecordMagic {
+		size := sizes[i]
+		if size <= 0 {
+			if fi, err := f.Stat(); err == nil {
+				size = fi.Size()
+			}
+		}
+		var off int64
+		var lastReport int64
+		for off+int64(blockRecordHeaderLen) <= size {
+			if _, err := f.ReadAt(hdr, off); err != nil {
+				if err == io.EOF || err == io.ErrUnexpectedEOF {
+					break
+				}
+				_ = f.Close()
+				return last, err
+			}
+			if binary.LittleEndian.Uint32(hdr[0:4]) != blockRecordMagic {
 				break
 			}
-			storedLen := binary.LittleEndian.Uint32(data[off+8 : off+12])
-			recLen := blockRecordHeaderLen + int(storedLen)
-			if recLen <= blockRecordHeaderLen || off+recLen > len(data) {
+			storedLen := binary.LittleEndian.Uint32(hdr[8:12])
+			recLen := int64(blockRecordHeaderLen) + int64(storedLen)
+			if storedLen == 0 || off+recLen > size {
+				// Torn / undersized tail: do not count this record.
 				break
 			}
 			last = cur
 			cur++
 			off += recLen
+			if off-lastReport >= 8<<20 || off == size {
+				reportContiguousProbe(doneBytes+off, totalBytes, label)
+				lastReport = off
+			}
 		}
+		_ = f.Close()
+		doneBytes += size
+		reportContiguousProbe(doneBytes, totalBytes, label)
 	}
+	reportContiguousProbeDone()
 	if last < 0 {
 		s.fileCount.Store(0)
 	} else {

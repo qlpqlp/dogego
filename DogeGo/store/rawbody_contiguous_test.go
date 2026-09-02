@@ -125,9 +125,54 @@ func TestReconcileBundledContiguousTipMeasuredAboveProbe(t *testing.T) {
 		t.Fatalf("measured=%d want 3", measured)
 	}
 	reconciled := ReconcileBundledContiguousTip(j, raw, chain.RebootTestnet)
-	// Hybrid leftover *.bin must count: probe alone would under-report after perfile→bundled upgrade.
 	if reconciled != measured {
 		t.Fatalf("reconciled=%d want measured=%d (probe=%d)", reconciled, measured, probe)
+	}
+}
+
+func TestReconcileBundledContiguousTipSeededSkipsGenesisRescan(t *testing.T) {
+	dir := t.TempDir()
+	g80, err := pow.Header80()
+	if err != nil {
+		t.Fatal(err)
+	}
+	genesisRaw := MakeTestBlockRaw(t, g80[:])
+	j, err := OpenHeaderJournal(filepath.Join(dir, "headers.bin"), genesisRaw[:80])
+	if err != nil {
+		t.Fatal(err)
+	}
+	raw, err := OpenRawBlockStoreWithOpts(dir, BlockStorageOpts{Layout: BlockLayoutBundled, Zstd: false})
+	if err != nil {
+		t.Fatal(err)
+	}
+	genHash := pow.BlockHashLE(genesisRaw[:80])
+	if err := raw.Put(genHash, genesisRaw); err != nil {
+		t.Fatal(err)
+	}
+	prev := genesisRaw[:80]
+	for i := 0; i < 8; i++ {
+		h1 := append([]byte(nil), prev...)
+		copy(h1[4:36], genHash[:])
+		h1[76] ^= byte(i + 1)
+		if err := j.AppendHeaders([][]byte{h1}); err != nil {
+			t.Fatal(err)
+		}
+		body := MakeTestBlockRaw(t, h1)
+		hHash := pow.BlockHashLE(h1)
+		if err := raw.Put(hHash, body); err != nil {
+			t.Fatal(err)
+		}
+		prev = h1
+		genHash = hHash
+	}
+	probe, err := raw.ProbeBundledContiguousTip()
+	if err != nil || probe != 8 {
+		t.Fatalf("probe=%d err=%v want 8", probe, err)
+	}
+	// Seed near tip: must still reach probe without requiring a genesis walk.
+	got := ReconcileBundledContiguousTipSeeded(j, raw, chain.RebootTestnet, 6)
+	if got != probe {
+		t.Fatalf("seeded reconcile=%d want %d", got, probe)
 	}
 }
 

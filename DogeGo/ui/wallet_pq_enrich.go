@@ -89,7 +89,7 @@ func enrichWalletSendUIEntry(entry map[string]interface{}, hexStr string) {
 }
 
 func enrichWalletReceiveUIEntry(cfg StartConfig, entry map[string]interface{}) {
-	if entry == nil || cfg.Wallet == nil {
+	if entry == nil || cfg.ActiveWallet() == nil {
 		return
 	}
 	txid := strings.ToLower(strings.TrimSpace(strFromAny(entry["txid"])))

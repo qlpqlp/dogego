@@ -8,6 +8,7 @@ package store
 
 import (
 	"errors"
+	"fmt"
 	"os"
 	"time"
 )
@@ -26,11 +27,16 @@ func atomicWriteFile(path string, data []byte, perm os.FileMode) error {
 
 // atomicWriteFileStall is atomicWriteFile with an optional sleep after the .tmp write (crash tests).
 func atomicWriteFileStall(path string, data []byte, perm os.FileMode, stallAfterTmp time.Duration) error {
-	tmp := path + ".tmp"
 	var lastErr error
 	for attempt := 0; attempt < 5; attempt++ {
 		if attempt > 0 {
 			time.Sleep(time.Duration(attempt*25) * time.Millisecond)
+		}
+		// Unique .tmp so concurrent writers cannot steal a shared path+".tmp" between
+		// WriteFile and Rename on Windows. Crash tests (stallAfterTmp>0) keep path+".tmp".
+		tmp := path + ".tmp"
+		if stallAfterTmp == 0 {
+			tmp = fmt.Sprintf("%s.tmp.%d.%d", path, os.Getpid(), time.Now().UnixNano()+int64(attempt))
 		}
 		if err := os.WriteFile(tmp, data, perm); err != nil {
 			lastErr = err
@@ -44,6 +50,10 @@ func atomicWriteFileStall(path string, data []byte, perm os.FileMode, stallAfter
 		}
 		if err := os.Rename(tmp, path); err == nil {
 			return nil
+		} else if os.IsNotExist(err) || isMissingFileErr(err) {
+			// Another writer already renamed/removed this tmp — retry with a fresh name.
+			lastErr = err
+			continue
 		} else if !isReplaceExistingErr(err) {
 			_ = os.Remove(tmp)
 			return err
@@ -64,7 +74,7 @@ func atomicWriteFileStall(path string, data []byte, perm os.FileMode, stallAfter
 		} else {
 			lastErr = err
 			_ = os.Remove(tmp)
-			if !isReplaceExistingErr(err) {
+			if !isReplaceExistingErr(err) && !isMissingFileErr(err) {
 				return err
 			}
 		}
@@ -85,6 +95,16 @@ func isReplaceExistingErr(err error) bool {
 	// Windows ERROR_ALREADY_EXISTS / sharing violation on Rename over open file.
 	msg := err.Error()
 	return containsAny(msg, "Access is denied", "being used by another process", "cannot replace", "already exists")
+}
+
+func isMissingFileErr(err error) bool {
+	if err == nil {
+		return false
+	}
+	if os.IsNotExist(err) {
+		return true
+	}
+	return containsAny(err.Error(), "The system cannot find the file specified", "no such file or directory")
 }
 
 func containsAny(s string, subs ...string) bool {

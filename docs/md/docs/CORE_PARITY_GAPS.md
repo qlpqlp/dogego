@@ -231,3 +231,6 @@ Related: [WEB_UI.md](WEB_UI.md) (dashboard tabs), Docs tab section **DogeGo vs D
 | Settings → Advanced cert strip | `/api/core-status` on tab open |
 | Sync dock operator cert `N/M` | Cached cert via summary or `/api/core-status` |
 | Startup warm cache | Background `WarmCoreProbeCache` ~8s after web UI listen |
+
+addrman_info
+on-chain pq crypto verify

@@ -15,12 +15,12 @@ import (
 )
 
 func walletAPIEnvelope(cfg StartConfig) map[string]any {
-	out := walletStatusJSON(cfg.Wallet, cfg.Network)
+	out := walletStatusJSON(cfg.ActiveWallet(), cfg.Network)
 	out["send_ready"] = walletRPCReady(cfg)
 	out["address_ready"] = walletAddressReady(cfg)
 	attachWalletSignerStatus(out, cfg)
 	attachWalletRescanStatus(out, cfg)
-	if cfg.Wallet != nil {
+	if cfg.ActiveWallet() != nil {
 		if confirmed, immature, utxos, ok := walletBalanceFromUtxoCache(cfg); ok {
 			out["balance"] = confirmed
 			if immature > 0 {
@@ -28,8 +28,8 @@ func walletAPIEnvelope(cfg StartConfig) map[string]any {
 			}
 			out["utxo_count"] = utxos
 			out["unconfirmed_balance"] = 0.0
-			if cfg.Wallet != nil {
-				if fee := cfg.Wallet.PayTxFee(); fee >= 0 {
+			if cfg.ActiveWallet() != nil {
+				if fee := cfg.ActiveWallet().PayTxFee(); fee >= 0 {
 					out["fee_per_kb"] = fee
 				}
 			}
@@ -37,7 +37,7 @@ func walletAPIEnvelope(cfg StartConfig) map[string]any {
 			return out
 		}
 	}
-	if cfg.Wallet == nil || cfg.RPCInvoke == nil {
+	if cfg.ActiveWallet() == nil || cfg.RPCInvoke == nil {
 		attachWalletHistoryDeferStatus(out, cfg)
 		return out
 	}
@@ -224,7 +224,7 @@ func registerWalletTxsRoutes(mux *http.ServeMux, cfg StartConfig, webGate *webse
 			return
 		}
 		w.Header().Set("Content-Type", "application/json; charset=utf-8")
-		if cfg.Wallet == nil {
+		if cfg.ActiveWallet() == nil {
 			_ = json.NewEncoder(w).Encode(map[string]interface{}{
 				"total": 0, "offset": 0, "limit": walletTxDefaultLimit, "items": []interface{}{},
 			})
@@ -246,7 +246,7 @@ func registerWalletTxsRoutes(mux *http.ServeMux, cfg StartConfig, webGate *webse
 				return
 			}
 		}
-		if strings.EqualFold(strings.TrimSpace(kind), "all") && walletHasScannedIndex(cfg.Wallet) {
+		if strings.EqualFold(strings.TrimSpace(kind), "all") && walletHasScannedIndex(cfg.ActiveWallet()) {
 			if total, items, ok := walletTxPageMergedAll(cfg, offset, limit, q); ok {
 				_ = json.NewEncoder(w).Encode(map[string]interface{}{
 					"total": total, "offset": offset, "limit": limit, "items": items,
@@ -305,7 +305,7 @@ func registerWalletTxsRoutes(mux *http.ServeMux, cfg StartConfig, webGate *webse
 		}
 		var txs []interface{}
 		_, _, q, kind := parseWalletTxListQuery(r)
-		if cfg.Wallet != nil {
+		if cfg.ActiveWallet() != nil {
 			if cfg.WalletTxs != nil {
 				if page, ok := cfg.WalletTxs.ListPage(0, 0, q, kind); ok {
 					txs = page.Items
@@ -313,7 +313,7 @@ func registerWalletTxsRoutes(mux *http.ServeMux, cfg StartConfig, webGate *webse
 					txs = cfg.WalletTxs.List()
 				}
 			}
-			if txs == nil && strings.EqualFold(strings.TrimSpace(kind), "all") && walletHasScannedIndex(cfg.Wallet) {
+			if txs == nil && strings.EqualFold(strings.TrimSpace(kind), "all") && walletHasScannedIndex(cfg.ActiveWallet()) {
 				if _, items, ok := walletTxPageMergedAll(cfg, 0, 0, q); ok {
 					txs = items
 				}
@@ -351,7 +351,7 @@ func registerWalletUtxosRoute(mux *http.ServeMux, cfg StartConfig, webGate *webs
 			return
 		}
 		w.Header().Set("Content-Type", "application/json; charset=utf-8")
-		if cfg.Wallet == nil {
+		if cfg.ActiveWallet() == nil {
 			_ = json.NewEncoder(w).Encode([]interface{}{})
 			return
 		}

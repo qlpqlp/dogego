@@ -285,7 +285,7 @@
       },
       "extensions": {
         "title": "Modular extension platform",
-        "body": "Install and enable catalog packages without changing Dogecoin consensus: zip or GitHub install, subprocess/wasm hosts, allowlisted permissions, optional <code>wallet_rpc</code>, and host-rendered UI panels. See the <a href=\"#extensions\">Extensions</a> section for each official package."
+        "body": "Install and enable catalog packages without changing Dogecoin consensus: zip or GitHub install, subprocess/wasm hosts, allowlisted permissions, optional <code>wallet_rpc</code>, and host-rendered UI panels. <code>dogego.doginals</code> v0.4.0 owns its wallet REST under <code>/api/ext/dogego.doginals/</code>. See the <a href=\"#extensions\">Extensions</a> section for each official package."
       },
       "segwit": {
         "title": "SegWit ready",
@@ -306,7 +306,7 @@
       "doginals": {
         "id": "dogego.doginals",
         "title": "Doginals / DRC-20 L2",
-        "body": "Index L1 Doginals/DRC-20 carriers, mint via allowlisted wallet RPC, and sync off-chain NFT/token metadata among peers (<code>doginals-v1</code>). Mainnet + testnet."
+        "body": "<strong>v0.4.0</strong> indexes L1 Doginals/DRC-20, tracks address balances, and exposes a Doginals wallet API at <code>/api/ext/dogego.doginals/v1/*</code> (extension-owned <code>httphandle</code>; host only proxies <code>/api/ext/{id}/…</code>). Wizard UI (Setup → Sync → Create → API). Mint on Dogecoin via wallet RPC or experimentally off-L1. Peers sync L2 assets over <code>doginals-v1</code>. Mainnet + testnet · no consensus change."
       },
       "radiodoge": {
         "id": "dogego.radiodoge",

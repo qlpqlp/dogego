@@ -28,12 +28,12 @@ func registerWalletEncryptRoutes(mux *http.ServeMux, cfg StartConfig, webGate *w
 			return
 		}
 		w.Header().Set("Content-Type", "application/json; charset=utf-8")
-		if cfg.Wallet == nil {
+		if cfg.ActiveWallet() == nil {
 			w.WriteHeader(http.StatusBadRequest)
 			_ = json.NewEncoder(w).Encode(map[string]any{"error": "wallet disabled"})
 			return
 		}
-		if cfg.Wallet.IsEncrypted() {
+		if cfg.ActiveWallet().IsEncrypted() {
 			w.WriteHeader(http.StatusBadRequest)
 			_ = json.NewEncoder(w).Encode(map[string]any{"error": "wallet already encrypted"})
 			return
@@ -59,13 +59,13 @@ func registerWalletEncryptRoutes(mux *http.ServeMux, cfg StartConfig, webGate *w
 			_ = json.NewEncoder(w).Encode(map[string]any{"error": "passphrases do not match"})
 			return
 		}
-		msg, err := cfg.Wallet.Encrypt(pass)
+		msg, err := cfg.ActiveWallet().Encrypt(pass)
 		if err != nil {
 			w.WriteHeader(http.StatusBadRequest)
 			_ = json.NewEncoder(w).Encode(map[string]any{"error": err.Error()})
 			return
 		}
-		out := walletUnlockJSON(cfg.Wallet)
+		out := walletUnlockJSON(cfg.ActiveWallet())
 		out["ok"] = true
 		out["message"] = msg
 		_ = json.NewEncoder(w).Encode(out)
@@ -84,12 +84,12 @@ func registerWalletEncryptRoutes(mux *http.ServeMux, cfg StartConfig, webGate *w
 			return
 		}
 		w.Header().Set("Content-Type", "application/json; charset=utf-8")
-		if cfg.Wallet == nil {
+		if cfg.ActiveWallet() == nil {
 			w.WriteHeader(http.StatusBadRequest)
 			_ = json.NewEncoder(w).Encode(map[string]any{"error": "wallet disabled"})
 			return
 		}
-		if !cfg.Wallet.IsEncrypted() {
+		if !cfg.ActiveWallet().IsEncrypted() {
 			w.WriteHeader(http.StatusBadRequest)
 			_ = json.NewEncoder(w).Encode(map[string]any{"error": "wallet is not encrypted"})
 			return
@@ -117,12 +117,12 @@ func registerWalletEncryptRoutes(mux *http.ServeMux, cfg StartConfig, webGate *w
 			_ = json.NewEncoder(w).Encode(map[string]any{"error": "new passphrases do not match"})
 			return
 		}
-		if err := cfg.Wallet.ChangePassphrase(oldPass, newPass); err != nil {
+		if err := cfg.ActiveWallet().ChangePassphrase(oldPass, newPass); err != nil {
 			w.WriteHeader(http.StatusBadRequest)
 			_ = json.NewEncoder(w).Encode(map[string]any{"error": err.Error(), "wallet_locked": strings.Contains(err.Error(), "locked")})
 			return
 		}
-		out := walletUnlockJSON(cfg.Wallet)
+		out := walletUnlockJSON(cfg.ActiveWallet())
 		out["ok"] = true
 		out["message"] = "passphrase changed"
 		_ = json.NewEncoder(w).Encode(out)

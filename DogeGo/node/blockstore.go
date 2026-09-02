@@ -520,7 +520,7 @@ func (c *BlockStoreCtx) StageDownloadedBlockAtHeight(want [32]byte, payload []by
 			return fmt.Errorf("raw block too short at height %d: %d bytes (need >= %d)", height, len(payload), minB)
 		}
 	}
-	if err := c.Raw.Put(want, payload); err != nil {
+	if err := c.Raw.PutValidated(want, payload); err != nil {
 		return err
 	}
 	// Download-first: update contiguous hole coverage without triggering heavy IBD hooks.

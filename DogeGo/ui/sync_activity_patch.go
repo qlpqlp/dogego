@@ -14,7 +14,7 @@ func patchSyncActivityForHeaderTip(act map[string]any, tip, peerStart, contiguou
 	if act == nil || tip < 0 {
 		return
 	}
-	headline := "Downloading block bodies from height 1"
+	headline := "Downloading block bodies"
 	if lowestMissing >= 0 {
 		headline = fmt.Sprintf("Downloading block bodies from height %d", lowestMissing)
 	} else if contiguous >= 0 && tip > contiguous {

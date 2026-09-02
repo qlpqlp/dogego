@@ -440,12 +440,11 @@ func TestForwardIBDStripeTip(t *testing.T) {
 	bs.noteBlockStoredAt(0)
 	tip, _ := j.TipHeight()
 	hi := forwardIBDStripeTip(bs, 2, tip)
-	want := int64(2 + blockDownloadWindow - 1)
-	if want > tip {
-		want = tip
-	}
+	// Frontier-first IBD uses the full body fetch window (up to maxIBDFetchWindow),
+	// which past a short tip equals the header tip.
+	want := tip
 	if hi != want {
-		t.Fatalf("forward cap hi=%d want %d (Core BLOCK_DOWNLOAD_WINDOW past the hole)", hi, want)
+		t.Fatalf("forward cap hi=%d want %d (shared-window IBD past the hole)", hi, want)
 	}
 	lo, hi2, ok := syncStripeBounds(2, hi, 1, 3)
 	if !ok || lo < 2 || hi2 > hi || lo > hi2 {
@@ -522,38 +521,38 @@ func TestMayClaimContiguousHoleSoftOpen(t *testing.T) {
 			1: "5.6.7.8:22556",
 		},
 		softStallFrontier: 100,
-		lastStallPeer:     "1.2.3.4:22556",
+		softStallPeer:     "1.2.3.4:22556",
 		laneDownloadSince: map[int]time.Time{0: time.Now()},
 	}
 	inFlight := map[int64][32]byte{}
-	if s.mayClaimContiguousHole(0, 6, 100, inFlight) {
+	if s.mayClaimContiguousHole(nil, 0, 6, 100, inFlight) {
 		t.Fatal("soft-stall peer must not re-claim the hole")
 	}
-	if !s.mayClaimContiguousHole(1, 6, 100, inFlight) {
+	if !s.mayClaimContiguousHole(nil, 1, 6, 100, inFlight) {
 		t.Fatal("assist must reclaim hole after soft-stall")
 	}
 	s.softStallFrontier = -1
-	s.lastStallPeer = ""
-	if s.mayClaimContiguousHole(1, 6, 100, inFlight) {
+	s.softStallPeer = ""
+	if s.mayClaimContiguousHole(nil, 1, 6, 100, inFlight) {
 		t.Fatal("assist must not steal hole while lane0 alive+active and no soft-stall")
 	}
 	delete(s.laneDownloadSince, 0)
-	if !s.mayClaimContiguousHole(1, 6, 100, inFlight) {
+	if !s.mayClaimContiguousHole(nil, 1, 6, 100, inFlight) {
 		t.Fatal("assist must reclaim hole when lane0 is idle")
 	}
-	if !s.mayClaimContiguousHole(0, 6, 100, inFlight) {
+	if !s.mayClaimContiguousHole(nil, 0, 6, 100, inFlight) {
 		t.Fatal("lane0 owns hole")
 	}
 }
 
 func TestHoleFillBatchSize(t *testing.T) {
 	s := &progressiveRawState{softStallFrontier: -1}
-	if got := s.holeFillBatchSize(100, ibdGetDataBatch); got != progressiveBatchSize {
-		t.Fatalf("hole batch=%d want %d", got, progressiveBatchSize)
+	if got := s.holeFillBatchSize(100, ibdGetDataBatch); got != 64 {
+		t.Fatalf("hole batch=%d want 64 (deep IBD uses peer budget, not 16-wide Core hole)", got)
 	}
 	s.softStallFrontier = 100
-	if got := s.holeFillBatchSize(100, ibdGetDataBatch); got != progressiveBatchSize {
-		t.Fatalf("soft-stall hole batch=%d want %d", got, progressiveBatchSize)
+	if got := s.holeFillBatchSize(100, ibdGetDataBatch); got != 64 {
+		t.Fatalf("soft-stall hole batch=%d want 64", got)
 	}
 	if got := s.holeFillBatchSize(200, 8); got != 8 {
 		t.Fatalf("hole batch must not exceed peer budget, got %d", got)
@@ -707,14 +706,15 @@ func TestShouldRefillGetData(t *testing.T) {
 }
 
 func TestGetdataRefillThresholdFatBatch(t *testing.T) {
-	if getdataRefillThreshold(progressiveBatchSize) != minInFlightBlocks {
-		t.Fatalf("Core-sized batch threshold=%d want %d (ltcd minInFlightBlocks)", getdataRefillThreshold(progressiveBatchSize), minInFlightBlocks)
+	wantCore := (progressiveBatchSize * 3) / 4
+	if getdataRefillThreshold(progressiveBatchSize) != wantCore {
+		t.Fatalf("Core-sized batch threshold=%d want %d (3/4 of 16)", getdataRefillThreshold(progressiveBatchSize), wantCore)
 	}
-	if shouldRefillGetDataAt(minInFlightBlocks, progressiveBatchSize) {
-		t.Fatal("at ltcd minInFlightBlocks must not refill")
+	if shouldRefillGetDataAt(wantCore, progressiveBatchSize) {
+		t.Fatal("at Core refill threshold must not refill")
 	}
-	if !shouldRefillGetDataAt(minInFlightBlocks-1, progressiveBatchSize) {
-		t.Fatal("below ltcd minInFlightBlocks must refill to hide getdata RTT")
+	if !shouldRefillGetDataAt(wantCore-1, progressiveBatchSize) {
+		t.Fatal("below Core refill threshold must refill to hide getdata RTT")
 	}
 	if getdataRefillThreshold(ibdGetDataBatch) != ibdGetDataBatch/4 {
 		t.Fatalf("max-peer-budget threshold=%d want %d", getdataRefillThreshold(ibdGetDataBatch), ibdGetDataBatch/4)
@@ -911,15 +911,16 @@ func TestClaimBatchAdaptiveDownloadFirstIBD(t *testing.T) {
 	if !ok {
 		t.Fatal("expected claim")
 	}
-	// Hole-owning lane starts at Core-sized 16 (adaptive raises proven-fast peers later).
-	if len(b.heights) != ibdPeerInFlightInitial {
-		t.Fatalf("claimed %d want %d (adaptive initial / hole fill)", len(b.heights), ibdPeerInFlightInitial)
+	// Deep IBD shared-window floor is 64 for small/mid bodies (Core 16 under-fills multi-peer).
+	want := ibdDeepBodyStartBudget(bs)
+	if len(b.heights) != want {
+		t.Fatalf("claimed %d want %d (deep IBD start budget)", len(b.heights), want)
 	}
 	if b.heights[0] != 2001 {
 		t.Fatalf("first height %d want 2001", b.heights[0])
 	}
-	if b.heights[len(b.heights)-1] != 2000+int64(ibdPeerInFlightInitial) {
-		t.Fatalf("last height %d want %d", b.heights[len(b.heights)-1], 2000+int64(ibdPeerInFlightInitial))
+	if b.heights[len(b.heights)-1] != 2000+int64(want) {
+		t.Fatalf("last height %d want %d", b.heights[len(b.heights)-1], 2000+int64(want))
 	}
 }
 
@@ -936,7 +937,7 @@ func TestPeerInFlightBudget(t *testing.T) {
 	s.lastStallAt = time.Now()
 	s.mu.Unlock()
 	if got := s.peerInFlightBudget(nil, 0); got != ibdPeerInFlightSlowFloor {
-		t.Fatalf("stalling peer budget=%d want %d", got, ibdPeerInFlightSlowFloor)
+		t.Fatalf("hard-stall peer budget=%d want %d", got, ibdPeerInFlightSlowFloor)
 	}
 	if got := s.peerInFlightBudget(nil, 1); got != ibdPeerInFlightInitial {
 		t.Fatalf("other peer should stay initial, got %d", got)
@@ -944,19 +945,203 @@ func TestPeerInFlightBudget(t *testing.T) {
 	s.mu.Lock()
 	s.lastStallPeer = ""
 	s.lastStallAt = time.Time{}
+	s.laneBudgetApplied = nil
 	now := time.Now()
-	// ~25 blk/sec over the window → max budget.
+	// ~25 blk/sec over the window → climb toward max (asymmetric: one step per call).
 	s.laneDelivery = map[int][]laneDeliverySample{
 		1: {{at: now.Add(-2 * time.Second), n: 50}},
 	}
 	s.mu.Unlock()
-	if got := s.peerInFlightBudget(nil, 1); got != ibdPeerInFlightMax {
-		t.Fatalf("fast peer budget=%d want %d", got, ibdPeerInFlightMax)
+	got := s.peerInFlightBudget(nil, 1)
+	if got <= ibdPeerInFlightInitial {
+		t.Fatalf("fast peer should ramp above initial, got %d", got)
+	}
+	for i := 0; i < 8; i++ {
+		got = s.peerInFlightBudget(nil, 1)
+	}
+	if got != ibdPeerInFlightMax {
+		t.Fatalf("fast peer budget after ramp=%d want %d", got, ibdPeerInFlightMax)
 	}
 	s.mu.Lock()
 	s.laneDelivery[1] = []laneDeliverySample{{at: now.Add(-10 * time.Second), n: 5}}
 	s.mu.Unlock()
-	if got := s.peerInFlightBudget(nil, 1); got != ibdPeerInFlightSlow {
-		t.Fatalf("slow peer budget=%d want %d", got, ibdPeerInFlightSlow)
+	got = s.peerInFlightBudget(nil, 1)
+	if got < ibdPeerInFlightInitial {
+		t.Fatalf("rate-based path must not floor below initial, got %d", got)
+	}
+}
+
+func TestShouldUseParallelBatchChunksDefersToSharedWindow(t *testing.T) {
+	p, err := chain.ParamsFor(chain.MainnetDogecoin)
+	if err != nil {
+		t.Fatal(err)
+	}
+	g80, err := pow.Header80FromParams(p)
+	if err != nil {
+		t.Fatal(err)
+	}
+	dir := t.TempDir()
+	j, err := store.OpenHeaderChain(dir, g80[:])
+	if err != nil {
+		t.Fatal(err)
+	}
+	appendFakeHeaderChain(t, j, g80[:], 534_000)
+	rs, err := store.OpenRawBlockStore(dir)
+	if err != nil {
+		t.Fatal(err)
+	}
+	bs := NewBlockStoreCtx(j, nil, p, rs, nil, nil)
+	bs.SeedContiguousTip(5000)
+	low := int64(5001)
+	if !shouldFillContiguousFrontierFirst(bs, low) {
+		t.Fatal("expected frontier-first during deep body IBD")
+	}
+	if shouldUseParallelBatchChunks(bs, low) {
+		t.Fatal("exclusive chunks must yield to Core shared window during frontier-first IBD")
+	}
+}
+
+func TestPeerInFlightBudgetReprobesInitialAfterHardFloor(t *testing.T) {
+	s := &progressiveRawState{
+		syncWorkers:       8,
+		laneAddr:          map[int]string{0: "1.2.3.4:22556"},
+		laneBudgetApplied: map[int]int{0: ibdPeerInFlightSlowFloor},
+	}
+	if got := s.peerInFlightBudget(nil, 0); got != ibdPeerInFlightInitial {
+		t.Fatalf("stale slow-floor mark must jump to initial, got %d", got)
+	}
+}
+
+func TestSoftStallDoesNotFloorBudget(t *testing.T) {
+	p, err := chain.ParamsFor(chain.MainnetDogecoin)
+	if err != nil {
+		t.Fatal(err)
+	}
+	g80, err := pow.Header80FromParams(p)
+	if err != nil {
+		t.Fatal(err)
+	}
+	dir := t.TempDir()
+	j, err := store.OpenHeaderChain(dir, g80[:])
+	if err != nil {
+		t.Fatal(err)
+	}
+	appendFakeHeaderChain(t, j, g80[:], 534_000)
+	rs, err := store.OpenRawBlockStore(dir)
+	if err != nil {
+		t.Fatal(err)
+	}
+	bs := NewBlockStoreCtx(j, nil, p, rs, nil, nil)
+	bs.SeedContiguousTip(5000)
+	if !ShouldDeferConnectForBodyDownload(bs) {
+		t.Fatal("need deep body IBD for soft-stall path")
+	}
+	s := &progressiveRawState{
+		syncWorkers:       8,
+		inFlight:          map[int64][32]byte{5001: {}, 5100: {}},
+		inFlightLane:      map[int64]int{5001: 0, 5100: 0},
+		laneAddr:          map[int]string{0: "1.2.3.4:22556"},
+		laneDownloadSince: map[int]time.Time{0: time.Now()},
+		stallingSince:     time.Now().Add(-20 * time.Second),
+		softStallFrontier: -1,
+		laneDelivery: map[int][]laneDeliverySample{
+			0: {{at: time.Now().Add(-2 * time.Second), n: 40}},
+		},
+	}
+	peer, stalled := s.maybePenalizeStallingPeer(bs, NewBlockPeerScorer(), nil)
+	if !stalled || peer != "" {
+		t.Fatalf("expected soft-stall (no disconnect), peer=%q stalled=%v", peer, stalled)
+	}
+	if s.lastStallPeer != "" {
+		t.Fatal("soft-stall must not set lastStallPeer (budget floor)")
+	}
+	if s.softStallPeer != "1.2.3.4:22556" {
+		t.Fatalf("softStallPeer=%q", s.softStallPeer)
+	}
+	if _, ok := s.inFlight[5001]; ok {
+		t.Fatal("frontier should be released")
+	}
+	if _, ok := s.inFlight[5100]; !ok {
+		t.Fatal("ahead claims must be kept")
+	}
+	got := s.peerInFlightBudget(bs, 0)
+	if got <= ibdPeerInFlightSlow {
+		t.Fatalf("soft-stall must not floor budget, got %d", got)
+	}
+}
+
+func TestTrimLaneInFlightToBudget(t *testing.T) {
+	s := &progressiveRawState{
+		inFlight: map[int64][32]byte{
+			100: {}, 101: {}, 102: {}, 103: {}, 200: {},
+		},
+		inFlightLane: map[int64]int{
+			100: 0, 101: 0, 102: 0, 103: 0, 200: 0,
+		},
+	}
+	s.mu.Lock()
+	freed := s.trimLaneInFlightToBudgetLocked(0, 2)
+	s.mu.Unlock()
+	if freed != 3 {
+		t.Fatalf("freed=%d want 3", freed)
+	}
+	if len(s.inFlight) != 2 {
+		t.Fatalf("remaining=%d want 2 (lowest heights kept)", len(s.inFlight))
+	}
+	if _, ok := s.inFlight[100]; !ok {
+		t.Fatal("keep lowest height 100")
+	}
+	if _, ok := s.inFlight[101]; !ok {
+		t.Fatal("keep height 101")
+	}
+}
+
+func TestSoftStallEscalatesToHard(t *testing.T) {
+	p, err := chain.ParamsFor(chain.MainnetDogecoin)
+	if err != nil {
+		t.Fatal(err)
+	}
+	g80, err := pow.Header80FromParams(p)
+	if err != nil {
+		t.Fatal(err)
+	}
+	dir := t.TempDir()
+	j, err := store.OpenHeaderChain(dir, g80[:])
+	if err != nil {
+		t.Fatal(err)
+	}
+	appendFakeHeaderChain(t, j, g80[:], 534_000)
+	rs, err := store.OpenRawBlockStore(dir)
+	if err != nil {
+		t.Fatal(err)
+	}
+	bs := NewBlockStoreCtx(j, nil, p, rs, nil, nil)
+	bs.SeedContiguousTip(5000)
+	scorer := NewBlockPeerScorer()
+	s := &progressiveRawState{
+		syncWorkers:       4,
+		laneAddr:          map[int]string{0: "1.2.3.4:22556"},
+		softStallFrontier: -1,
+	}
+	for i := 0; i < softStallEscalateCount; i++ {
+		s.inFlight = map[int64][32]byte{5001: {}, 5100: {}}
+		s.inFlightLane = map[int64]int{5001: 0, 5100: 0}
+		s.laneDownloadSince = map[int]time.Time{0: time.Now()}
+		s.stallingSince = time.Now().Add(-20 * time.Second)
+		peer, stalled := s.maybePenalizeStallingPeer(bs, scorer, nil)
+		if !stalled || peer != "" {
+			t.Fatalf("soft %d: want soft-stall, peer=%q stalled=%v", i+1, peer, stalled)
+		}
+	}
+	s.inFlight = map[int64][32]byte{5001: {}, 5100: {}}
+	s.inFlightLane = map[int64]int{5001: 0, 5100: 0}
+	s.laneDownloadSince = map[int]time.Time{0: time.Now()}
+	s.stallingSince = time.Now().Add(-20 * time.Second)
+	peer, stalled := s.maybePenalizeStallingPeer(bs, scorer, nil)
+	if !stalled || peer != "1.2.3.4:22556" {
+		t.Fatalf("after %d softs want hard disconnect, peer=%q stalled=%v", softStallEscalateCount, peer, stalled)
+	}
+	if len(s.inFlight) != 0 {
+		t.Fatalf("hard stall must free lane, left %v", s.inFlight)
 	}
 }

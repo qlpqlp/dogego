@@ -14,6 +14,10 @@ import (
 	"time"
 )
 
+// peersRPCTimeout bounds getpeerinfo under IBD so /api/peers returns before the
+// Analytics UI aborts (~8s). Heavy peer rows are best-effort; P2P snapshot fills counts.
+const peersRPCTimeout = 2500 * time.Millisecond
+
 // BuildPeersDashboardResponse assembles live peer rows for GET /api/peers.
 func BuildPeersDashboardResponse(cfg StartConfig) map[string]any {
 	out := map[string]any{
@@ -23,8 +27,11 @@ func BuildPeersDashboardResponse(cfg StartConfig) map[string]any {
 		"added_nodes":  []any{},
 	}
 	if cfg.RPCInvoke != nil {
-		rpcOut := cfg.RPCInvoke("getpeerinfo", nil)
-		if errObj, ok := rpcOut["error"].(map[string]interface{}); ok && errObj != nil {
+		rpcOut, timedOut := invokeRPCWithTimeout(cfg.RPCInvoke, "getpeerinfo", nil, peersRPCTimeout)
+		if timedOut {
+			out["error"] = "peer info timed out (sync busy); showing connection counts"
+			out["peers_partial"] = true
+		} else if errObj, ok := rpcOut["error"].(map[string]interface{}); ok && errObj != nil {
 			if msg, _ := errObj["message"].(string); msg != "" {
 				out["error"] = msg
 			}
@@ -35,20 +42,25 @@ func BuildPeersDashboardResponse(cfg StartConfig) map[string]any {
 			// Dispatch returns result:null when PeerInfo is not wired yet.
 			out["error"] = "peer info not ready yet"
 		}
-		addedOut := cfg.RPCInvoke("getaddednodeinfo", nil)
-		if errObj, ok := addedOut["error"].(map[string]interface{}); ok && errObj != nil {
-			// keep peers ok; surface added_nodes_error separately
-			if msg, _ := errObj["message"].(string); msg != "" {
-				out["added_nodes_error"] = msg
+		if !timedOut {
+			addedOut, addedTimedOut := invokeRPCWithTimeout(cfg.RPCInvoke, "getaddednodeinfo", nil, peersRPCTimeout)
+			if addedTimedOut {
+				out["added_nodes_error"] = "added nodes timed out (sync busy)"
+			} else if errObj, ok := addedOut["error"].(map[string]interface{}); ok && errObj != nil {
+				// keep peers ok; surface added_nodes_error separately
+				if msg, _ := errObj["message"].(string); msg != "" {
+					out["added_nodes_error"] = msg
+				}
+			} else if res := addedOut["result"]; res != nil {
+				out["added_nodes"] = res
 			}
-		} else if res := addedOut["result"]; res != nil {
-			out["added_nodes"] = res
 		}
 	} else {
 		out["error"] = "RPC not available"
 	}
 	if cfg.P2PSnapshot != nil {
 		if snap := cfg.P2PSnapshot(); snap != nil {
+			healP2PSnapConnectionCounts(snap)
 			out["p2p"] = snap
 			// Prefer live session counts from getpeerinfo; fall back to P2P snapshot
 			// so Analytics does not show "0 peers" while Overview already sees dials.
@@ -62,11 +74,30 @@ func BuildPeersDashboardResponse(cfg StartConfig) map[string]any {
 				if v, ok := snapInt(snap["connections_total"]); ok {
 					out["connections_total"] = v
 				}
-				if cout, _ := out["connections_outbound"].(int); cout > 0 {
-					// Live dials exist; don't surface a hard empty/error state to Analytics.
+				// Assist/primary IBD links are not always in getpeerinfo (dedicated TCP sessions).
+				if synth := synthesizePeersFromP2PSnap(snap); len(synth) > 0 {
+					out["peers"] = synth
+					out["peers_from_p2p"] = true
+					delete(out, "error")
+					out["note"] = "Showing IBD sync links (block-assist / primary). Full getpeerinfo rows still warming up."
+					out["ok"] = true
+				} else if cout, _ := out["connections_outbound"].(int); cout > 0 {
 					delete(out, "error")
 					out["note"] = "Peers are connected; detailed peer rows are still warming up."
 					out["ok"] = true
+				}
+			} else {
+				// Keep dock/header totals authoritative when the P2P snap has live counts.
+				// getpeerinfo can list more rows (cooling, relay, short-lived dials) than the
+				// active sync mesh — that caused Analytics "Out 51" vs dock "18/0".
+				if v, ok := snapInt(snap["connections_outbound"]); ok {
+					out["connections_outbound"] = v
+				}
+				if v, ok := snapInt(snap["connections_inbound"]); ok {
+					out["connections_inbound"] = v
+				}
+				if v, ok := snapInt(snap["connections_total"]); ok {
+					out["connections_total"] = v
 				}
 			}
 		}
@@ -76,17 +107,45 @@ func BuildPeersDashboardResponse(cfg StartConfig) map[string]any {
 			out["dgr"] = snap
 		}
 	}
-	if peerListLen(out["peers"]) > 0 || out["connections_outbound"] == nil {
+	if out["connections_outbound"] == nil && peerListLen(out["peers"]) > 0 {
 		countInbound, countOutbound := peerDirectionCounts(out["peers"])
 		out["connections_inbound"] = countInbound
 		out["connections_outbound"] = countOutbound
 		out["connections_total"] = countInbound + countOutbound
+	} else if out["connections_outbound"] == nil {
+		out["connections_inbound"] = 0
+		out["connections_outbound"] = 0
+		out["connections_total"] = 0
 	} else if out["connections_total"] == nil {
 		cin, _ := out["connections_inbound"].(int)
 		cout, _ := out["connections_outbound"].(int)
 		out["connections_total"] = cin + cout
 	}
 	return out
+}
+
+func invokeRPCWithTimeout(
+	invoke func(method string, params []json.RawMessage) map[string]interface{},
+	method string,
+	params []json.RawMessage,
+	limit time.Duration,
+) (map[string]interface{}, bool) {
+	if invoke == nil {
+		return map[string]interface{}{"error": map[string]interface{}{"message": "RPC not available"}}, false
+	}
+	if limit <= 0 {
+		return invoke(method, params), false
+	}
+	ch := make(chan map[string]interface{}, 1)
+	go func() {
+		ch <- invoke(method, params)
+	}()
+	select {
+	case out := <-ch:
+		return out, false
+	case <-time.After(limit):
+		return nil, true
+	}
 }
 
 func normalizePeerInfoResult(res any) any {
@@ -164,6 +223,102 @@ func peerRowInbound(row map[string]interface{}) bool {
 		return v
 	}
 	return false
+}
+
+// healP2PSnapConnectionCounts rebuilds outbound totals from assist/primary when a
+// live snapshot briefly has connections_*=0. Never runs on cold disk bootstrap.
+func healP2PSnapConnectionCounts(snap map[string]any) {
+	if snap == nil || snap["from_disk_snapshot"] == true {
+		return
+	}
+	outN, haveOut := snapInt(snap["connections_outbound"])
+	if haveOut && outN > 0 {
+		return
+	}
+	assist, _ := snapInt(snap["block_assist_connections"])
+	hdr, _ := snapInt(snap["dedicated_header_connections"])
+	relay, _ := snapInt(snap["connections_outbound_relay"])
+	rebuilt := assist + hdr + relay
+	if primary, _ := snap["primary_peer"].(string); primary != "" && !strings.HasPrefix(strings.TrimSpace(primary), "(") {
+		rebuilt++
+	}
+	if rebuilt <= 0 {
+		return
+	}
+	inN, _ := snapInt(snap["connections_inbound"])
+	snap["connections_outbound"] = rebuilt
+	snap["connections_total"] = rebuilt + inN
+}
+
+// synthesizePeersFromP2PSnap builds Analytics peer cards from IBD assist/primary links when
+// getpeerinfo is empty (common during download-first IBD — assist sessions are outside PeerMgr).
+func synthesizePeersFromP2PSnap(snap map[string]any) []any {
+	if snap == nil || snap["from_disk_snapshot"] == true {
+		return nil
+	}
+	seen := make(map[string]struct{})
+	var peers []any
+	id := 1
+	add := func(addr, role string, extras map[string]interface{}) {
+		addr = strings.TrimSpace(addr)
+		if addr == "" || strings.HasPrefix(addr, "(") {
+			return
+		}
+		if _, ok := seen[addr]; ok {
+			return
+		}
+		seen[addr] = struct{}{}
+		row := map[string]interface{}{
+			"id":              id,
+			"addr":            addr,
+			"inbound":         false,
+			"dogego_role":     role,
+			"connection_type": role,
+			"dogego_note":     "IBD sync link (assist/primary); getpeerinfo detail still warming",
+		}
+		for k, v := range extras {
+			row[k] = v
+		}
+		peers = append(peers, row)
+		id++
+	}
+	if primary, ok := snap["primary_peer"].(string); ok {
+		add(primary, "primary", nil)
+	}
+	appendAssist := func(addr string, lane any, recv, sent any) {
+		extras := map[string]interface{}{}
+		if lane != nil {
+			extras["dogego_assist_lane"] = lane
+		}
+		if recv != nil {
+			extras["bytesrecv"] = recv
+		}
+		if sent != nil {
+			extras["bytessent"] = sent
+		}
+		add(addr, "block-assist", extras)
+	}
+	switch rows := snap["block_assist_peers"].(type) {
+	case []any:
+		for _, item := range rows {
+			m, _ := item.(map[string]any)
+			if m == nil {
+				if mi, ok := item.(map[string]interface{}); ok {
+					addr, _ := mi["addr"].(string)
+					appendAssist(addr, mi["lane"], mi["bytes_recv"], mi["bytes_sent"])
+				}
+				continue
+			}
+			addr, _ := m["addr"].(string)
+			appendAssist(addr, m["lane"], m["bytes_recv"], m["bytes_sent"])
+		}
+	case []map[string]any:
+		for _, m := range rows {
+			addr, _ := m["addr"].(string)
+			appendAssist(addr, m["lane"], m["bytes_recv"], m["bytes_sent"])
+		}
+	}
+	return peers
 }
 
 type peersActionBody struct {

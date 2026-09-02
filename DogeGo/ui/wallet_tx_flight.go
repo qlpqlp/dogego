@@ -132,10 +132,10 @@ func walletTxFlightStatus(cfg StartConfig, txid string) map[string]interface{} {
 		out["status"] = "mempool"
 		out["source"] = "mempool"
 	}
-	canChain := cfg.TxIndex != nil && cfg.RawBlocks != nil
+	canChain := cfg.ActiveTxIndex() != nil && cfg.ActiveRawBlocks() != nil
 	canPool := cfg.Pool != nil
 	if canChain || canPool {
-		if _, rawTx, src, err := rpc.LookupTxExplorer(cfg.TxIndex, cfg.RawBlocks, cfg.Pool, txid); err == nil {
+		if _, rawTx, src, err := rpc.LookupTxExplorer(cfg.ActiveTxIndex(), cfg.ActiveRawBlocks(), cfg.Pool, txid); err == nil {
 			out["source"] = src
 			if src == "mempool" {
 				out["in_mempool"] = true

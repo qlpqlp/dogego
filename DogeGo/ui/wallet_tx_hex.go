@@ -19,10 +19,10 @@ import (
 // walletTxHexCached returns hex from wallet.db only (no tx-index / block walk).
 func walletTxHexCached(cfg StartConfig, txid string) string {
 	txid = strings.ToLower(strings.TrimSpace(txid))
-	if txid == "" || cfg.Wallet == nil {
+	if txid == "" || cfg.ActiveWallet() == nil {
 		return ""
 	}
-	if hx, ok := cfg.Wallet.LookupTxHex(txid); ok && hx != "" {
+	if hx, ok := cfg.ActiveWallet().LookupTxHex(txid); ok && hx != "" {
 		return hx
 	}
 	return ""
@@ -35,8 +35,8 @@ func walletTxHexForUI(cfg StartConfig, txid string, blockHeight int64) string {
 	if txid == "" {
 		return ""
 	}
-	if cfg.Wallet != nil {
-		if hx, ok := cfg.Wallet.LookupTxHex(txid); ok && hx != "" {
+	if cfg.ActiveWallet() != nil {
+		if hx, ok := cfg.ActiveWallet().LookupTxHex(txid); ok && hx != "" {
 			return hx
 		}
 	}
@@ -47,8 +47,8 @@ func walletTxHexForUI(cfg StartConfig, txid string, blockHeight int64) string {
 			return hx
 		}
 	}
-	if cfg.TxIndex != nil && cfg.RawBlocks != nil {
-		if tx, err := store.LoadIndexedTx(cfg.TxIndex, cfg.RawBlocks, txid); err == nil {
+	if cfg.ActiveTxIndex() != nil && cfg.ActiveRawBlocks() != nil {
+		if tx, err := store.LoadIndexedTx(cfg.ActiveTxIndex(), cfg.ActiveRawBlocks(), txid); err == nil {
 			if ser, err := tx.Serialize(); err == nil {
 				hx := hex.EncodeToString(ser)
 				walletRememberTxHex(cfg, txid, hx)
@@ -56,8 +56,8 @@ func walletTxHexForUI(cfg StartConfig, txid string, blockHeight int64) string {
 			}
 		}
 	}
-	if cfg.Journal != nil && cfg.RawBlocks != nil && blockHeight >= 0 {
-		if hx := walletTxHexFromBlockHeight(cfg.Journal, cfg.RawBlocks, txid, blockHeight); hx != "" {
+	if cfg.ActiveJournal() != nil && cfg.ActiveRawBlocks() != nil && blockHeight >= 0 {
+		if hx := walletTxHexFromBlockHeight(cfg.ActiveJournal(), cfg.ActiveRawBlocks(), txid, blockHeight); hx != "" {
 			walletRememberTxHex(cfg, txid, hx)
 			return hx
 		}
@@ -66,10 +66,10 @@ func walletTxHexForUI(cfg StartConfig, txid string, blockHeight int64) string {
 }
 
 func walletRememberTxHex(cfg StartConfig, txid, hx string) {
-	if cfg.Wallet == nil || hx == "" {
+	if cfg.ActiveWallet() == nil || hx == "" {
 		return
 	}
-	_ = cfg.Wallet.RememberTxHex(txid, hx)
+	_ = cfg.ActiveWallet().RememberTxHex(txid, hx)
 }
 
 func walletTxHexFromBlockHeight(j *store.HeaderJournal, raw *store.RawBlockStore, txid string, height int64) string {

@@ -92,6 +92,17 @@ func (wb *ibdWriteBehind) queuedBytes() int64 {
 	return n
 }
 
+// nearCapacity reports whether staged RAM bytes are at or above frac of the IBD buffer.
+func (wb *ibdWriteBehind) nearCapacity(frac float64) bool {
+	if wb == nil || frac <= 0 {
+		return false
+	}
+	if frac > 1 {
+		frac = 1
+	}
+	return float64(wb.queuedBytes()) >= float64(ibdWriteBehindMaxBytes)*frac
+}
+
 func (wb *ibdWriteBehind) size(hash [32]byte) (int, bool) {
 	if wb == nil {
 		return 0, false
@@ -154,9 +165,19 @@ func (wb *ibdWriteBehind) stage(hash [32]byte, raw []byte) error {
 		return fmt.Errorf("write-behind not started")
 	}
 	cp := append([]byte(nil), raw...)
-	wb.mu.Lock()
-	for wb.bytes+int64(len(cp)) > ibdWriteBehindMaxBytes {
-		wb.cond.Wait()
+	for {
+		wb.mu.Lock()
+		if wb.bytes+int64(len(cp)) <= ibdWriteBehindMaxBytes {
+			break
+		}
+		// Do not hold wb.mu while waiting — that stalled every concurrent Put/Get
+		// when the 512 MiB buffer filled during multi-peer IBD.
+		wb.mu.Unlock()
+		select {
+		case <-wb.stop:
+			return fmt.Errorf("write-behind stopped")
+		case <-time.After(5 * time.Millisecond):
+		}
 	}
 	if _, ok := wb.staged[hash]; ok {
 		wb.mu.Unlock()

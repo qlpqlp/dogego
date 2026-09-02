@@ -43,9 +43,9 @@ func TestMergeIBDProgressConnectCatchUpTuning(t *testing.T) {
 func TestBuildSummaryMapWalletRescanFields(t *testing.T) {
 	cfg, _, spk := testWalletFastSetup(t)
 	addWalletFastUtxo(cfg.UtxoCache(), 9, 0, 1_000_000_000, 300, spk)
-	cfg.Wallet.SeedScannedTx([]wallet.ScannedTx{{
+	cfg.ActiveWallet().SeedScannedTx([]wallet.ScannedTx{{
 		TxID: "abcd1234abcd1234abcd1234abcd1234abcd1234abcd1234abcd1234abcd1234",
-		Category: "receive", Address: cfg.Wallet.Address(), AmountKoinu: 1_000_000_000,
+		Category: "receive", Address: cfg.ActiveWallet().Address(), AmountKoinu: 1_000_000_000,
 		BlockHeight: 250, Vout: 0,
 	}})
 	summary := map[string]any{}

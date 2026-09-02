@@ -47,20 +47,40 @@ type progressiveRawState struct {
 	peerLane          map[string]int // peer host:port → unique getdata lane (no hash collisions)
 	stallingSince     time.Time      // Core nStallingSince when frontier height is in-flight
 	softStallFrontier int64          // last frontier soft-released (-1 none); next stall hard-disconnects
-	lastStallPeer     string         // last peer penalized for block stalling (RPC snapshot)
+	softStallPeer     string         // peer denied from re-claiming the soft-opened hole (not a budget floor)
+	softStallCount    int            // soft-stalls on softStallFrontier without contiguous advance
+	lastStallPeer     string         // last peer hard-penalized for block stalling (budget floor + RPC)
 	lastStallAt       time.Time
+	holeReclaimNotify chan struct{} // closed/recreated to wake assists after soft-stall hole release
+	// frontierExtraLanes tracks additional sync lanes that also getdata the contiguous hole
+	// (Core asks several peers for the same tip window). inFlightLane keeps the first owner.
+	frontierExtraLanes map[int64]map[int]struct{}
 
 	laneDownloadSince       map[int]time.Time // per sync lane: first getdata in current batch
 	lastDownloadTimeoutPeer string
 	lastDownloadTimeoutAt   time.Time
 
-	laneDelivery map[int][]laneDeliverySample // recent deliveries for adaptive in-flight budgets
+	laneDelivery     map[int][]laneDeliverySample // recent deliveries for adaptive in-flight budgets
+	laneBudgetApplied map[int]int                 // last applied per-lane budget (asymmetric ramp)
+	laneBudgetProbeUntil map[int]time.Time        // force ≥ Initial after hard penalty expires
 
 	contiguousCheckpoint int64           // persisted monotonic raw coverage; -2 = not loaded
 	contigRateSamples    []ibdRateSample // contiguous tip samples for hole-fill blk/min
+	// Coalesce async rawblocks_sync.json writes: many lanes used to spawn concurrent
+	// SaveRawBlockSyncCheckpoint on the same .tmp path (Windows: rename → file not found).
+	checkpointPending   store.RawBlockSyncCheckpoint
+	checkpointDirty     bool
+	checkpointFlushing  bool
+
+	throughputBoostUntil time.Time // low stored/min recovery window (budget hold, hole race, faster soft-stall)
 
 	activeBatch map[int]*batchSlot // lane → in-progress getdata cancel (header rewind abort)
 	batchGen    int
+
+	// uiSnap caches the last successful IBD progress map for the dashboard. Live /api/p2p
+	// must not block on s.mu during claimBatch/getdata (that left peer_dialing stubs with no rates).
+	uiSnapMu sync.RWMutex
+	uiSnap   map[string]interface{}
 }
 
 type batchSlot struct {
@@ -263,6 +283,7 @@ func (s *progressiveRawState) noteContiguousTipLocked(cont int64) {
 	if s == nil || cont < 0 {
 		return
 	}
+	s.clearSoftStallIfAdvancedLocked(cont)
 	now := time.Now()
 	if n := len(s.contigRateSamples); n > 0 && s.contigRateSamples[n-1].cum == cont {
 		return
@@ -321,6 +342,9 @@ func (s *progressiveRawState) initProgressiveRawAtStartup(chainDir string, bs *B
 func (s *progressiveRawState) InitFromCheckpoint(chainDir string, tip, contiguous int64) {
 	s.chainDir = chainDir
 	s.softStallFrontier = -1
+	s.softStallPeer = ""
+	s.softStallCount = 0
+	s.ensureHoleReclaimNotifyLocked()
 	if s.inFlight == nil {
 		s.inFlight = make(map[int64][32]byte)
 	}
@@ -369,8 +393,32 @@ func (s *progressiveRawState) persistCheckpointLocked() {
 	if s.contiguousCheckpoint >= -1 {
 		cp.ContiguousRawHeight = s.contiguousCheckpoint
 	}
-	if err := store.SaveRawBlockSyncCheckpoint(s.chainDir, cp); err != nil {
-		applog.Line("block", "rawblocks_sync checkpoint write: "+err.Error())
+	s.checkpointPending = cp
+	s.checkpointDirty = true
+	if s.checkpointFlushing {
+		return
+	}
+	s.checkpointFlushing = true
+	dir := s.chainDir
+	// Disk write outside rawFill.mu — callers already hold s.mu. One flusher at a time
+	// so concurrent claimBatch lanes cannot race the same .tmp rename on Windows.
+	go s.flushCheckpoints(dir)
+}
+
+func (s *progressiveRawState) flushCheckpoints(dir string) {
+	for {
+		s.mu.Lock()
+		if !s.checkpointDirty {
+			s.checkpointFlushing = false
+			s.mu.Unlock()
+			return
+		}
+		cp := s.checkpointPending
+		s.checkpointDirty = false
+		s.mu.Unlock()
+		if err := store.SaveRawBlockSyncCheckpoint(dir, cp); err != nil {
+			applog.Line("block", "rawblocks_sync checkpoint write: "+err.Error())
+		}
 	}
 }
 
@@ -822,15 +870,54 @@ func (s *progressiveRawState) pickParallelChunkClaim(
 	if maxSlots < 8 {
 		maxSlots = 8
 	}
-	minPrefer := batchCap / 4
-	if minPrefer < 32 {
-		minPrefer = 32
+	minPrefer := batchCap / 2
+	if minPrefer < 1 {
+		minPrefer = 1
+	}
+	if minPrefer > batchCap {
+		minPrefer = batchCap
 	}
 	chunkLane := chunkLaneForWorker(workerID, workers)
-	mayHole := s.mayClaimContiguousHole(workerID, workers, lowMissing, inFlightSnap)
+	if s.throughputBoostActive(bs) {
+		mayHole := s.mayClaimContiguousHole(bs, workerID, workers, lowMissing, inFlightSnap)
+		holeFree := true
+		if _, busy := inFlightSnap[lowMissing]; busy {
+			holeFree = false
+		}
+		if mayHole && !holeFree {
+			holeClaim := s.planClaimRange(bs, j, rs, lowMissing, lowMissing, lowMissing, downloadTip, lowMissing, workerID, workers, laneInflight, inFlightSnap)
+			if len(holeClaim.heights) > 0 {
+				return holeClaim
+			}
+		}
+		if mayHole && holeFree {
+			holeBatch := s.holeFillBatchSize(lowMissing, batchCap)
+			holeHi := lowMissing + int64(holeBatch) - 1
+			if holeHi > stripeTip {
+				holeHi = stripeTip
+			}
+			if holeHi > downloadTip {
+				holeHi = downloadTip
+			}
+			probe := lowMissing
+			if probeStart > probe {
+				probe = probeStart
+			}
+			best = s.planClaimRange(bs, j, rs, probe, lowMissing, holeHi, downloadTip, lowMissing, workerID, workers, laneInflight, inFlightSnap)
+		}
+		return best
+	}
+	mayHole := s.mayClaimContiguousHole(bs, workerID, workers, lowMissing, inFlightSnap)
 	holeFree := true
 	if _, busy := inFlightSnap[lowMissing]; busy {
 		holeFree = false
+	}
+	if mayHole && !holeFree {
+		// Hole is claimed but undelivered — race it from another peer before scraping ahead.
+		holeClaim := s.planClaimRange(bs, j, rs, lowMissing, lowMissing, lowMissing, downloadTip, lowMissing, workerID, workers, laneInflight, inFlightSnap)
+		if len(holeClaim.heights) > 0 {
+			return holeClaim
+		}
 	}
 	if mayHole && holeFree {
 		holeBatch := s.holeFillBatchSize(lowMissing, batchCap)
@@ -908,6 +995,7 @@ func (s *progressiveRawState) claimBatch(bs *BlockStoreCtx, workerID int) (rawBa
 	}
 	idle := s.idleFull
 	diskPaused := s.diskPressurePaused
+	writePaused := false
 	if workerID < 0 {
 		workerID = 0
 	}
@@ -928,7 +1016,10 @@ func (s *progressiveRawState) claimBatch(bs *BlockStoreCtx, workerID int) (rawBa
 
 	j := bs.Journal
 	rs := bs.Raw
-	if idle || diskPaused {
+	if rs != nil && ibdWriteBehindClaimPauseFrac > 0 && rs.WriteBehindNearCapacity(ibdWriteBehindClaimPauseFrac) {
+		writePaused = true
+	}
+	if idle || diskPaused || writePaused {
 		return empty, false
 	}
 	tip, err := j.TipHeight()
@@ -987,12 +1078,27 @@ func (s *progressiveRawState) claimBatch(bs *BlockStoreCtx, workerID int) (rawBa
 	if batchCap < 1 {
 		batchCap = progressiveBatchSize
 	}
+	s.mu.Lock()
+	// Trim when budget drops (hard stall/timeout floor or boost cap).
+	if batchCap < ibdPeerInFlightInitial || s.throughputBoostActiveLocked(bs) {
+		if trimmed := s.trimLaneInFlightToBudgetLocked(workerID, batchCap); trimmed > 0 {
+			inFlightSnap = make(map[int64][32]byte, len(s.inFlight))
+			for h, hash := range s.inFlight {
+				inFlightSnap[h] = hash
+			}
+			laneInflight = s.inFlightCountForLaneLocked(workerID)
+			applog.Line("block", fmt.Sprintf("trimmed %d excess in-flight height(s) on lane %d to budget %d", trimmed, workerID, batchCap))
+		}
+	}
+	s.mu.Unlock()
 	useChunks := workers > 1 && shouldUseParallelBatchChunks(bs, lowMissing)
 	// Keep Core-sized headroom for the contiguous hole when not using parallel chunks.
 	frontierReserve := progressiveBatchSize
 	if len(inFlightSnap) >= win {
 		if _, busy := inFlightSnap[lowMissing]; busy {
-			return empty, false
+			if !s.mayClaimContiguousHole(bs, workerID, workers, lowMissing, inFlightSnap) {
+				return empty, false
+			}
 		}
 		// Window saturated with ahead claims but hole is free: still allow a frontier
 		// claim so gap-fill is not starved by ahead getdata.
@@ -1027,6 +1133,20 @@ func (s *progressiveRawState) claimBatch(bs *BlockStoreCtx, workerID int) (rawBa
 		if probe < rangeLo {
 			probe = rangeLo
 		}
+		// Soft-stall / non-owners must not re-grab contiguous+1 (same rule as chunk path).
+		if !s.mayClaimContiguousHole(bs, workerID, workers, lowMissing, inFlightSnap) {
+			if lowMissing >= 0 {
+				if probe <= lowMissing {
+					probe = lowMissing + 1
+				}
+				if rangeLo <= lowMissing {
+					rangeLo = lowMissing + 1
+				}
+			}
+			if rangeLo > rangeHi {
+				return empty, false
+			}
+		}
 		claim = s.planClaimRange(bs, j, rs, probe, rangeLo, rangeHi, downloadTip, lowMissing, workerID, workers, laneInflight, inFlightSnap)
 		if len(claim.heights) == 0 && workers > 1 && stripeWorkers > 1 {
 			stripeMissing, err := rangeHasMissingBlock(j, rs, stripeLo, stripeHi, bs.chainNet())
@@ -1052,7 +1172,6 @@ func (s *progressiveRawState) claimBatch(bs *BlockStoreCtx, workerID int) (rawBa
 		s.mu.Unlock()
 		return empty, false
 	}
-	rangeLo, rangeHi := claim.lo, claim.hi
 	probeStart = claim.lo
 	for attempt := 0; attempt < workers; attempt++ {
 		if attempt > 0 {
@@ -1066,7 +1185,18 @@ func (s *progressiveRawState) claimBatch(bs *BlockStoreCtx, workerID int) (rawBa
 			if useChunks {
 				claim = s.pickParallelChunkClaim(bs, j, rs, workerID, workers, batchCap, lowMissing, probeStart, stripeTip, downloadTip, laneInflight, inFlightSnap)
 			} else {
-				claim = s.planClaimRange(bs, j, rs, probeStart, rangeLo, rangeHi, downloadTip, lowMissing, workerID, workers, laneInflight, inFlightSnap)
+				// Shared Core window: after a race, walk the full frontier again for free heights
+				// instead of retrying the first (now fully claimed) scrap range.
+				retryLo, retryHi := lowMissing, stripeTip
+				retryProbe := lowMissing
+				if !s.mayClaimContiguousHole(bs, workerID, workers, lowMissing, inFlightSnap) && lowMissing >= 0 {
+					retryLo = lowMissing + 1
+					retryProbe = lowMissing + 1
+				}
+				if retryLo > retryHi {
+					return empty, false
+				}
+				claim = s.planClaimRange(bs, j, rs, retryProbe, retryLo, retryHi, downloadTip, lowMissing, workerID, workers, laneInflight, inFlightSnap)
 			}
 			if len(claim.heights) == 0 {
 				return empty, false
@@ -1077,6 +1207,13 @@ func (s *progressiveRawState) claimBatch(bs *BlockStoreCtx, workerID int) (rawBa
 		var keptHash [][32]byte
 		for i, h := range claim.heights {
 			if _, busy := s.inFlight[h]; busy {
+				// Contiguous hole: allow extra lanes to race the same height (Core tip window).
+				if h == lowMissing && s.frontierClaimCountLocked(h) < s.maxFrontierClaimPeersLocked(bs) &&
+					!s.laneClaimsFrontierLocked(h, workerID) {
+					keptH = append(keptH, h)
+					keptHash = append(keptHash, claim.hashes[i])
+					s.noteFrontierClaimLocked(h, workerID)
+				}
 				continue
 			}
 			keptH = append(keptH, h)
@@ -1089,6 +1226,9 @@ func (s *progressiveRawState) claimBatch(bs *BlockStoreCtx, workerID int) (rawBa
 			continue
 		}
 		for i, h := range claim.heights {
+			if _, busy := s.inFlight[h]; busy {
+				continue // already recorded as frontier extra
+			}
 			s.inFlight[h] = claim.hashes[i]
 			s.inFlightLane[h] = workerID
 		}
@@ -1138,6 +1278,7 @@ func (s *progressiveRawState) releaseInFlightHeight(h int64) {
 	s.mu.Lock()
 	delete(s.inFlight, h)
 	delete(s.inFlightLane, h)
+	s.clearFrontierClaimsLocked(h)
 	s.mu.Unlock()
 }
 
@@ -1172,6 +1313,18 @@ func (s *progressiveRawState) planClaimRange(bs *BlockStoreCtx, j *store.HeaderJ
 		return claim
 	}
 	maxNew := batchCap - laneInflight
+	if lowMissing >= 0 && rangeLo <= lowMissing && lowMissing <= rangeHi && bs != nil && shouldFillContiguousFrontierFirst(bs, lowMissing) {
+		// One lane must not monopolize hundreds of heights starting at the hole while
+		// contiguous+1 is still undelivered (head-of-line stall → disconnect thrash).
+		holeCap := s.holeFillBatchSize(lowMissing, batchCap)
+		if maxNew > holeCap {
+			maxNew = holeCap
+		}
+		capHi := lowMissing + int64(holeCap) - 1
+		if rangeHi > capHi {
+			rangeHi = capHi
+		}
+	}
 	if j == nil {
 		return claim
 	}
@@ -1219,7 +1372,10 @@ func (s *progressiveRawState) planClaimRange(bs *BlockStoreCtx, j *store.HeaderJ
 			continue
 		}
 		if _, busy := inFlight[probe]; busy {
-			continue
+			if probe != lowMissing || !s.mayClaimContiguousHole(bs, workerID, workers, lowMissing, inFlight) {
+				continue
+			}
+			// Fall through: include the hole height again for a racing peer.
 		}
 		scanned++
 		if scanned > walkCap {
@@ -1575,16 +1731,86 @@ const txIndexLegacyUpgradeBatch = 256
 // snapshot returns a copy of sync coordinator state for RPC / dashboard.
 func (s *progressiveRawState) snapshot() map[string]interface{} {
 	s.mu.Lock()
-	defer s.mu.Unlock()
+	out := s.snapshotLocked()
+	s.mu.Unlock()
+	s.storeUISnap(out)
+	return out
+}
+
+// snapshotForUI prefers a non-blocking read so /api/live never waits on claimBatch locks.
+// Falls back to the last cached progress map when the download mutex is busy.
+func (s *progressiveRawState) snapshotForUI() map[string]interface{} {
+	if s == nil {
+		return map[string]interface{}{}
+	}
+	if s.mu.TryLock() {
+		out := s.snapshotLocked()
+		s.mu.Unlock()
+		s.storeUISnap(out)
+		return out
+	}
+	if cached := s.cachedUISnap(); cached != nil {
+		return cached
+	}
+	// Last resort: brief wait so cold start still gets a first paint.
+	done := make(chan map[string]interface{}, 1)
+	go func() {
+		done <- s.snapshot()
+	}()
+	select {
+	case out := <-done:
+		return out
+	case <-time.After(200 * time.Millisecond):
+		if cached := s.cachedUISnap(); cached != nil {
+			return cached
+		}
+		return map[string]interface{}{}
+	}
+}
+
+func (s *progressiveRawState) storeUISnap(out map[string]interface{}) {
+	if s == nil || out == nil {
+		return
+	}
+	cp := cloneStringInterfaceMap(out)
+	s.uiSnapMu.Lock()
+	s.uiSnap = cp
+	s.uiSnapMu.Unlock()
+}
+
+func (s *progressiveRawState) cachedUISnap() map[string]interface{} {
+	if s == nil {
+		return nil
+	}
+	s.uiSnapMu.RLock()
+	defer s.uiSnapMu.RUnlock()
+	if s.uiSnap == nil {
+		return nil
+	}
+	return cloneStringInterfaceMap(s.uiSnap)
+}
+
+func cloneStringInterfaceMap(m map[string]interface{}) map[string]interface{} {
+	if m == nil {
+		return nil
+	}
+	out := make(map[string]interface{}, len(m))
+	for k, v := range m {
+		out[k] = v
+	}
+	return out
+}
+
+func (s *progressiveRawState) snapshotLocked() map[string]interface{} {
 	out := map[string]interface{}{
-		"next_probe_height": s.nextProbe,
-		"idle_full":         s.idleFull,
+		"next_probe_height":    s.nextProbe,
+		"idle_full":            s.idleFull,
 		"disk_pressure_paused": s.diskPressurePaused,
-		"in_flight_batches": len(s.inFlight),
-		"blocks_in_flight":  len(s.inFlight),
-		"last_header_tip":   s.lastTip,
-		"sync_workers":      s.syncWorkers,
-		"blocks_stored_ibd": s.blocksStoredIBD,
+		"in_flight_batches":    len(s.inFlight),
+		"blocks_in_flight":     len(s.inFlight),
+		"last_header_tip":      s.lastTip,
+		"sync_workers":         s.syncWorkers,
+		"blocks_stored_ibd":    s.blocksStoredIBD,
 	}
 	if !s.ibdStarted.IsZero() {
 		elapsed := time.Since(s.ibdStarted)

@@ -31,12 +31,12 @@ func registerWalletUnlockRoutes(mux *http.ServeMux, cfg StartConfig, webGate *we
 			return
 		}
 		w.Header().Set("Content-Type", "application/json; charset=utf-8")
-		if cfg.Wallet == nil {
+		if cfg.ActiveWallet() == nil {
 			w.WriteHeader(http.StatusBadRequest)
 			_ = json.NewEncoder(w).Encode(map[string]any{"error": "wallet disabled"})
 			return
 		}
-		if !cfg.Wallet.IsEncrypted() {
+		if !cfg.ActiveWallet().IsEncrypted() {
 			w.WriteHeader(http.StatusBadRequest)
 			_ = json.NewEncoder(w).Encode(map[string]any{"error": "wallet is not encrypted"})
 			return
@@ -54,7 +54,7 @@ func registerWalletUnlockRoutes(mux *http.ServeMux, cfg StartConfig, webGate *we
 		if body.Timeout != nil {
 			timeout = *body.Timeout
 		}
-		if err := cfg.Wallet.Unlock(body.Passphrase, timeout); err != nil {
+		if err := cfg.ActiveWallet().Unlock(body.Passphrase, timeout); err != nil {
 			w.WriteHeader(http.StatusBadRequest)
 			_ = json.NewEncoder(w).Encode(map[string]any{
 				"error":         err.Error(),
@@ -63,9 +63,9 @@ func registerWalletUnlockRoutes(mux *http.ServeMux, cfg StartConfig, webGate *we
 			return
 		}
 		if live != nil {
-			live.PatchWalletEncryptionStatus(cfg.Wallet)
+			live.PatchWalletEncryptionStatus(cfg.ActiveWallet())
 		}
-		_ = json.NewEncoder(w).Encode(walletUnlockJSON(cfg.Wallet))
+		_ = json.NewEncoder(w).Encode(walletUnlockJSON(cfg.ActiveWallet()))
 	})
 
 	mux.HandleFunc("/api/wallet/lock", func(w http.ResponseWriter, r *http.Request) {
@@ -81,24 +81,24 @@ func registerWalletUnlockRoutes(mux *http.ServeMux, cfg StartConfig, webGate *we
 			return
 		}
 		w.Header().Set("Content-Type", "application/json; charset=utf-8")
-		if cfg.Wallet == nil {
+		if cfg.ActiveWallet() == nil {
 			w.WriteHeader(http.StatusBadRequest)
 			_ = json.NewEncoder(w).Encode(map[string]any{"error": "wallet disabled"})
 			return
 		}
-		if !cfg.Wallet.IsEncrypted() {
+		if !cfg.ActiveWallet().IsEncrypted() {
 			_ = json.NewEncoder(w).Encode(map[string]any{"ok": true, "encrypted": false})
 			return
 		}
-		if err := cfg.Wallet.Lock(); err != nil {
+		if err := cfg.ActiveWallet().Lock(); err != nil {
 			w.WriteHeader(http.StatusBadRequest)
 			_ = json.NewEncoder(w).Encode(map[string]any{"error": err.Error()})
 			return
 		}
 		if live != nil {
-			live.PatchWalletEncryptionStatus(cfg.Wallet)
+			live.PatchWalletEncryptionStatus(cfg.ActiveWallet())
 		}
-		out := walletUnlockJSON(cfg.Wallet)
+		out := walletUnlockJSON(cfg.ActiveWallet())
 		out["ok"] = true
 		_ = json.NewEncoder(w).Encode(out)
 	})
@@ -127,10 +127,10 @@ func walletUnlockJSON(w *wallet.Disk) map[string]any {
 }
 
 func walletFileLockedErr(cfg StartConfig) (locked bool, msg string) {
-	if cfg.Wallet == nil || !cfg.Wallet.IsEncrypted() {
+	if cfg.ActiveWallet() == nil || !cfg.ActiveWallet().IsEncrypted() {
 		return false, ""
 	}
-	if cfg.Wallet.IsUnlocked() {
+	if cfg.ActiveWallet().IsUnlocked() {
 		return false, ""
 	}
 	msg = "Please enter the wallet passphrase with walletpassphrase first."

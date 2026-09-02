@@ -92,6 +92,51 @@ func TestBootstrapLiveFromDiskSnapshot(t *testing.T) {
 	}
 }
 
+func TestMarkSummaryFromDiskSnapshotZerosLiveMetrics(t *testing.T) {
+	sum := map[string]any{
+		"tip_height":                       int64(100),
+		"blocks_per_minute":                250.0,
+		"contiguous_blocks_per_minute":     200.0,
+		"dogego_connect_blocks_per_minute": 50.0,
+		"connections_out":                  36,
+		"connections_in":                   2,
+		"in_flight_batches":                180,
+		"sync_eta":                         "about 2 weeks",
+	}
+	markSummaryFromDiskSnapshot(sum)
+	if sum["blocks_per_minute"] != nil || sum["contiguous_blocks_per_minute"] != nil {
+		t.Fatalf("rates should be cleared: %#v", sum)
+	}
+	if sum["connections_out"] != 0 || sum["connections_in"] != 0 {
+		t.Fatalf("peers should be 0: %#v", sum)
+	}
+	if sum["in_flight_batches"] != nil || sum["sync_eta"] != nil {
+		t.Fatalf("volatile IBD fields should be cleared: %#v", sum)
+	}
+	if sum["tip_height"] != int64(100) {
+		t.Fatalf("tip should remain: %#v", sum["tip_height"])
+	}
+	p2 := map[string]any{
+		"wired":                    true,
+		"connections_outbound":     36,
+		"block_assist_connections": 17,
+		"block_assist_peers":       []any{map[string]any{"addr": "1.2.3.4:22556"}},
+		"primary_peer":             "5.6.7.8:22556",
+		"health_message":           "P2P active with 18 outbound sync connection(s).",
+		"ibd_progress":             map[string]any{"blocks_per_minute": 250.0},
+	}
+	zeroP2PLiveMetrics(p2)
+	if p2["connections_outbound"] != 0 || p2["ibd_progress"] != nil {
+		t.Fatalf("p2p live metrics should be cleared: %#v", p2)
+	}
+	if p2["block_assist_connections"] != 0 || p2["block_assist_peers"] != nil || p2["primary_peer"] != nil {
+		t.Fatalf("assist/primary must be stripped on cold start: %#v", p2)
+	}
+	if p2["from_disk_snapshot"] != true {
+		t.Fatal("from_disk_snapshot must remain set after zeroing")
+	}
+}
+
 func TestApplyUILoadingFlagsWarming(t *testing.T) {
 	sum := map[string]any{}
 	ApplyUILoadingFlags(sum, true)
@@ -117,6 +162,31 @@ func TestApplyUILoadingFlagsWarming(t *testing.T) {
 	ApplyUILoadingFlags(sum, false)
 	if sum["dogego_ui_loading"] == true {
 		t.Fatalf("during body IBD, connect lag must not set ui loading: %#v", sum)
+	}
+}
+
+func TestApplyUILoadingFlagsBodyReconcile(t *testing.T) {
+	store.BeginContiguousReconcile()
+	defer store.EndContiguousReconcile()
+	sum := map[string]any{}
+	ApplyUILoadingFlags(sum, true)
+	if sum["dogego_ui_loading_phase"] != "body_reconcile" {
+		t.Fatalf("reconcile should win over warming when idle: %#v", sum)
+	}
+	if sum["dogego_ui_loading_pct"] == nil {
+		t.Fatalf("expected loading pct: %#v", sum)
+	}
+	// IBD already behind headers → dock stays on sync, verify is a soft note only.
+	sum2 := map[string]any{"blocks_behind_headers": int64(100000), "initialblockdownload": true}
+	ApplyUILoadingFlags(sum2, true)
+	if sum2["dogego_ui_loading_phase"] == "body_reconcile" {
+		t.Fatalf("live IBD must not be overridden by reconcile: %#v", sum2)
+	}
+	if sum2["dogego_disk_verify_detail"] == nil {
+		t.Fatalf("expected soft verify note: %#v", sum2)
+	}
+	if sum2["warming_up"] == true {
+		t.Fatalf("warming_up must clear when IBD is live: %#v", sum2)
 	}
 }
 
@@ -201,5 +271,47 @@ func TestPatchSummaryTipFromManifestBodyIBD(t *testing.T) {
 	}
 	if got["raw_blocks"] != float64(53249) {
 		t.Fatalf("raw_blocks %#v", got["raw_blocks"])
+	}
+}
+
+func TestPatchSummaryTipDoesNotReattachDiskP2P(t *testing.T) {
+	dir := t.TempDir()
+	if err := store.SaveRawBlockSyncCheckpoint(dir, store.RawBlockSyncCheckpoint{
+		NextProbeHeight:     1001,
+		ContiguousRawHeight: 1000,
+	}); err != nil {
+		t.Fatal(err)
+	}
+	var f LiveFeed
+	f.chainDataDir = dir
+	sum := map[string]any{
+		"tip_height":            float64(5000),
+		"contiguous_raw_height": float64(900),
+		"from_disk_snapshot":    true,
+		"summary_stale":         true,
+		"sync_status_line":      "Showing last known data · refreshing…",
+		"connections_out":       0,
+	}
+	sumB, _ := json.Marshal(sum)
+	f.summaryJSON = sumB
+	f.p2pJSON = []byte(`{"wired":true,"from_disk_snapshot":true,"connections_outbound":0,"health_message":"Connecting to the network…"}`)
+	f.liveJSON = []byte(`{"ok":true,"from_disk_snapshot":true,"summary":{},"p2p":{"from_disk_snapshot":true}}`)
+	f.patchSummaryTipFromManifest(StartConfig{ChainDataDir: dir})
+	var live map[string]any
+	if err := json.Unmarshal(f.liveJSON, &live); err != nil {
+		t.Fatal(err)
+	}
+	if live["from_disk_snapshot"] != false {
+		t.Fatalf("envelope from_disk=%v", live["from_disk_snapshot"])
+	}
+	if _, has := live["p2p"]; has {
+		t.Fatalf("must not re-attach disk bootstrap p2p: %#v", live["p2p"])
+	}
+	gotSum, _ := live["summary"].(map[string]any)
+	if gotSum["from_disk_snapshot"] != nil || gotSum["summary_stale"] != nil {
+		t.Fatalf("summary still marked disk/stale: %#v", gotSum)
+	}
+	if gotSum["connections_out"] != float64(0) && gotSum["connections_out"] != 0 {
+		// still 0 until live overlay; just ensure we didn't invent peers
 	}
 }

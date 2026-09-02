@@ -53,9 +53,7 @@ func (s *RawBlockStore) LikelyHasBody(hashLE [32]byte, minBytes int) bool {
 			return true
 		}
 	}
-	s.mu.Lock()
-	loc, ok, err := readBlockLocator(s.locatorRoot(), hashLE)
-	s.mu.Unlock()
+	loc, ok, err := s.lookupBlockLocator(hashLE)
 	if err != nil || !ok {
 		// Claim planning must not Stat leftover hash.bin under a 200k-file hybrid tree.
 		// Heights already covered sit at/below contiguous tip (skipped via contSkip).
@@ -95,9 +93,7 @@ func (s *RawBlockStore) storedPayloadSize(hashLE [32]byte) (int, bool) {
 			return n, true
 		}
 	}
-	s.mu.Lock()
-	loc, ok, err := readBlockLocator(s.locatorRoot(), hashLE)
-	s.mu.Unlock()
+	loc, ok, err := s.lookupBlockLocator(hashLE)
 	if err == nil && ok {
 		if loc.FileNum == perFileLocatorNum {
 			p, found := s.resolvePerFilePath(hashLE)

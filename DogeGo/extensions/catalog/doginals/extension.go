@@ -17,7 +17,6 @@ import (
 
 	"dogego/extensions"
 	"dogego/pow"
-	"dogego/wire"
 )
 
 // Extension implements dogego.doginals (L1 observe index + L2 asset overlay).
@@ -26,6 +25,8 @@ type Extension struct {
 	mu       sync.Mutex
 	store    *Store
 	host     extensions.Host
+	syncStop chan struct{}
+	catchStop chan struct{}
 }
 
 // NewExtension builds the extension.
@@ -42,9 +43,9 @@ func DefaultManifest() extensions.Manifest {
 		ManifestVersion:  extensions.ManifestVersion,
 		ID:               ExtensionID,
 		Name:             "Doginals / DRC-20 L2",
-		Version:          "0.3.0",
+		Version:          "0.5.0",
 		Author:           "DogeGo",
-		Description:      "Experimental L2 for Doginals and DRC-20: modern forms, searchable tables, metrics, settings backup. Index L1 inscriptions/tokens; mint via wallet RPC. Does not change Dogecoin consensus.",
+		Description:      "Doginals / DRC-20 / Ordinals L2: full L1 envelope+OP_RETURN indexer, address/UTXO ledger, wallet HTTP API via /api/ext/dogego.doginals, wizard UI, doginals-v1 P2P, off-L1 mint. Does not change Dogecoin consensus.",
 		Homepage:         "https://github.com/qlpqlp/dogego",
 		Repository:       "https://github.com/qlpqlp/dogego/tree/main/DogeGo/extensions/catalog/doginals",
 		DogeGoMinVersion: "0.1.0",
@@ -76,7 +77,13 @@ func DefaultManifest() extensions.Manifest {
 			{Name: "setconfig", Help: "Save extension settings. Param: [config_object]."},
 			{Name: "exportbackup", Help: "Write settings backup under data/backups/ and return JSON."},
 			{Name: "importbackup", Help: "Restore settings from backup JSON. Param: [backup_object]."},
-			{Name: "syncstatus", Help: "Overlay protocol and peer hint."},
+			{Name: "syncstatus", Help: "Overlay protocol, index lag, and P2P sync hint."},
+			{Name: "getaddress", Help: "DRC-20 balances for a Dogecoin address. Param: [address]."},
+			{Name: "getaddresshistory", Help: "Event history for address. Params: [address, tick?, limit?]."},
+			{Name: "geteventsbytxid", Help: "Events for a transaction id. Param: [txid]."},
+			{Name: "mintl2", Help: "Off-L1 mint (experimental L2). Param: {address,tick,amount,kind?,name?,uri?}."},
+			{Name: "apistatus", Help: "Public API routes and compatibility notes for wallets."},
+			{Name: "httphandle", Help: "HTTP gateway handler for /api/ext/dogego.doginals/* (Doginals wallet REST)."},
 		},
 	}
 }
@@ -104,11 +111,16 @@ func (e *Extension) OnEnable(_ context.Context, host extensions.Host) error {
 	e.store = st
 	e.host = host
 	e.mu.Unlock()
-	host.Log("doginals: enabled (L1 index + L2 assets; no consensus change)")
+	e.startBackgroundSync()
+	e.startCatchUp(host)
+	e.startBackgroundCatchUp()
+	host.Log("doginals: enabled v0.5.0 (envelope+OP_RETURN index, ledger, L2, wallet API)")
 	return nil
 }
 
 func (e *Extension) OnDisable() error {
+	e.stopCatchUp()
+	e.stopBackgroundSync()
 	e.mu.Lock()
 	st := e.store
 	e.store = nil
@@ -142,35 +154,126 @@ func (e *Extension) OnBlockConnected(height int64, host extensions.Host) error {
 	return e.indexHeight(host, height)
 }
 
-func (e *Extension) indexHeight(host extensions.Host, height int64) error {
+// OnBlockDisconnected soft-reorgs the local index when the active chain drops a tip.
+func (e *Extension) OnBlockDisconnected(height int64, _ extensions.Host) error {
 	st, err := e.storeOrErr()
 	if err != nil {
 		return err
 	}
-	raw, err := host.GetRawBlockByHeight(height)
-	if err != nil || len(raw) < 80 {
-		return err
-	}
-	n := 0
-	_ = wire.ForEachBlockTx(raw, func(_ uint32, tx *wire.Tx) error {
-		txid := TxDisplayHex(tx.TxHash())
-		for vout, o := range tx.Vout {
-			ins, ok := DetectInscriptionFromOutput(height, txid, uint32(vout), o)
-			if !ok {
-				continue
-			}
-			if err := st.PutInscription(ins); err != nil {
-				return err
-			}
-			n++
+	return st.RollbackHeight(height)
+}
+
+func (e *Extension) startCatchUp(host extensions.Host) {
+	go func() {
+		st, err := e.storeOrErr()
+		if err != nil || host == nil {
+			return
 		}
-		return nil
-	})
-	_ = st.SetIndexHeight(height)
-	if n > 0 {
-		host.Log(fmt.Sprintf("doginals: height %d indexed %d inscription(s)", height, n))
+		tip, err := host.TipHeight()
+		if err != nil || tip < 0 {
+			return
+		}
+		idx := st.IndexHeight()
+		if idx > tip {
+			// Soft reorg: tip behind index.
+			for h := idx; h > tip; h-- {
+				_ = st.RollbackHeight(h)
+			}
+			idx = st.IndexHeight()
+		}
+		from := idx + 1
+		if from < 0 {
+			from = 0
+		}
+		if from > tip {
+			return
+		}
+		host.Log(fmt.Sprintf("doginals: catch-up L1 index %d → %d", from, tip))
+		const maxBatch = 2000
+		to := tip
+		if to-from+1 > maxBatch {
+			to = from + maxBatch - 1
+		}
+		for h := from; h <= to; h++ {
+			if err := e.indexHeight(host, h); err != nil {
+				host.Log(fmt.Sprintf("doginals: catch-up stopped at %d: %v", h, err))
+				return
+			}
+		}
+		if to < tip {
+			host.Log(fmt.Sprintf("doginals: catch-up progressed through %d (tip %d); continuing on new blocks + background", to, tip))
+		}
+	}()
+}
+
+func (e *Extension) startBackgroundCatchUp() {
+	e.mu.Lock()
+	host := e.host
+	if e.catchStop != nil {
+		e.mu.Unlock()
+		return
 	}
-	return nil
+	e.catchStop = make(chan struct{})
+	stop := e.catchStop
+	e.mu.Unlock()
+	go func() {
+		ticker := time.NewTicker(30 * time.Second)
+		defer ticker.Stop()
+		for {
+			select {
+			case <-stop:
+				return
+			case <-ticker.C:
+				e.mu.Lock()
+				h := e.host
+				e.mu.Unlock()
+				if h == nil {
+					h = host
+				}
+				if h == nil {
+					continue
+				}
+				st, err := e.storeOrErr()
+				if err != nil {
+					continue
+				}
+				tip, err := h.TipHeight()
+				if err != nil || tip < 0 {
+					continue
+				}
+				idx := st.IndexHeight()
+				if idx > tip {
+					for x := idx; x > tip; x-- {
+						_ = st.RollbackHeight(x)
+					}
+					continue
+				}
+				if idx >= tip {
+					continue
+				}
+				from := idx + 1
+				to := from + 499
+				if to > tip {
+					to = tip
+				}
+				for hgt := from; hgt <= to; hgt++ {
+					if err := e.indexHeight(h, hgt); err != nil {
+						break
+					}
+				}
+			}
+		}
+	}()
+}
+
+func (e *Extension) stopCatchUp() {
+	e.mu.Lock()
+	stop := e.catchStop
+	e.catchStop = nil
+	e.mu.Unlock()
+	if stop != nil {
+		close(stop)
+	}
 }
 
 // HandleRPC dispatches extension methods.
@@ -240,6 +343,9 @@ func (e *Extension) HandleRPC(method string, params []json.RawMessage, host exte
 		}
 		if err := st.PutAsset(a); err != nil {
 			return nil, err
+		}
+		if host != nil {
+			e.broadcastAsset(host, a.ID)
 		}
 		return a, nil
 	case "getasset":
@@ -326,11 +432,99 @@ func (e *Extension) HandleRPC(method string, params []json.RawMessage, host exte
 		}
 		return map[string]interface{}{"ok": true, "config": cfg}, nil
 	case "syncstatus":
+		net := ""
+		tip := int64(-1)
+		if host != nil {
+			net = host.Network()
+			tip, _ = host.TipHeight()
+		}
+		idx := st.IndexHeight()
+		lag := int64(0)
+		if tip >= 0 && idx >= 0 {
+			lag = tip - idx
+		}
 		return map[string]interface{}{
-			"protocol_id": ProtocolID,
-			"commands":    []string{CmdDInv, CmdGetAsset, CmdAsset},
-			"note":        "L2 assets sync among DogeGo peers that enable dogego.doginals. L1 index is local observe-only. Wallet mint uses authenticated wallet_rpc.",
+			"protocol_id":   ProtocolID,
+			"commands":      []string{CmdDInv, CmdGetAsset, CmdAsset},
+			"index_height":  idx,
+			"chain_tip":     tip,
+			"index_lag":     lag,
+			"network":       net,
+			"p2p_broadcast": true,
+			"background_sync_sec": 60,
+			"api_base":      HTTPAPIBase + "/v1",
+			"note":          "L2 assets sync via doginals-v1 among DogeGo peers. L1 index is local. Wallet REST is extension-owned at /api/ext/dogego.doginals/v1 (host generic /api/ext gateway).",
 		}, nil
+	case "getaddress":
+		addr, err := stringParam(params, 0)
+		if err != nil {
+			return nil, err
+		}
+		return st.GetAddressBalances(addr, 100)
+	case "getaddresshistory":
+		addr, err := stringParam(params, 0)
+		if err != nil {
+			return nil, err
+		}
+		tick := ""
+		limit := 40
+		if len(params) > 1 {
+			_ = json.Unmarshal(params[1], &tick)
+		}
+		if len(params) > 2 {
+			_ = json.Unmarshal(params[2], &limit)
+		}
+		return st.GetAddressHistory(addr, tick, limit)
+	case "geteventsbytxid":
+		txid, err := stringParam(params, 0)
+		if err != nil {
+			return nil, err
+		}
+		return st.ListByTxID(txid)
+	case "mintl2":
+		raw, err := parseMapParam(params)
+		if err != nil {
+			return nil, err
+		}
+		addr, _ := raw["address"].(string)
+		tick, _ := raw["tick"].(string)
+		amt, _ := raw["amount"].(string)
+		if amt == "" {
+			amt, _ = raw["amt"].(string)
+		}
+		kind, _ := raw["kind"].(string)
+		if kind == "" {
+			kind = "token"
+		}
+		name, _ := raw["name"].(string)
+		if name == "" {
+			name = strings.ToUpper(tick) + " L2"
+		}
+		if err := st.CreditL2Balance(addr, tick, amt); err != nil {
+			return nil, err
+		}
+		a := Asset{Kind: kind, Name: name, CreatorNote: "L2 mint (off-L1 experimental)"}
+		if uri, ok := raw["uri"].(string); ok {
+			a.URI = uri
+		}
+		a, err = NormalizeAsset(a)
+		if err != nil {
+			return nil, err
+		}
+		if err := st.PutAsset(a); err != nil {
+			return nil, err
+		}
+		if host != nil {
+			e.broadcastAsset(host, a.ID)
+		}
+		return map[string]interface{}{
+			"ok": true, "address": addr, "tick": tick, "amount": amt,
+			"asset_id": a.ID, "layer": "L2", "note": "Experimental off-L1 balance; not Dogecoin consensus.",
+		}, nil
+	case "apistatus":
+		return e.apiManifest(), nil
+	case "httphandle":
+		return e.handleHTTP(host, st, params)
 	default:
 		return nil, fmt.Errorf("unknown method %s", method)
 	}
@@ -481,6 +675,17 @@ func parseBackupParams(params []json.RawMessage) (map[string]interface{}, error)
 		}
 	}
 	return nil, fmt.Errorf("want backup JSON object")
+}
+
+func parseMapParam(params []json.RawMessage) (map[string]interface{}, error) {
+	if len(params) == 0 {
+		return nil, fmt.Errorf("params required")
+	}
+	var obj map[string]interface{}
+	if err := json.Unmarshal(params[0], &obj); err != nil || obj == nil {
+		return nil, fmt.Errorf("want object param")
+	}
+	return obj, nil
 }
 
 func parseAssetParams(params []json.RawMessage) (Asset, error) {

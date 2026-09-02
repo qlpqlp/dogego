@@ -79,6 +79,14 @@ At install time DogeGo copies the matching file to `entry.binary` (e.g. `hello-e
 | `ui_panel` | Optional dashboard panel: status RPC returns a `ui` object. Prefer `layout: "workspace"` with `nav` + `sections` (home stays light; menu/tabs; optional `wizards`). Legacy `tools` / `widgets` / `quick_actions` still work. |
 | `wallet_rpc` | Whitelisted wallet JSON-RPC (`signmessage`, `sendtoaddress`, `createrawtransaction`, `fundrawtransaction`, …). Spend/sign needs unlock via `walletpassphrase` in the dashboard (extensions cannot unlock themselves). Configure usage in the extension's own Settings section when provided. |
 
+### Extension HTTP APIs
+
+Extensions **must not** add Go handlers under `ui/`. For wallet/site REST, implement RPC method **`httphandle`**. The host proxies:
+
+` /api/ext/{your.extension.id}/{path…} ` → `dogego_ext_<id>_httphandle`
+
+Param: `{ "method", "path", "query", "body" }`. Return JSON (or `{ "status", "json" }`). GET is public (CORS `*`); POST requires dashboard unlock. See `dogego.doginals` for a wallet HTTP API example.
+
 **Forbidden:** `wallet`, `private_keys`, `sign_message`, `sign_transaction`, `spend`
 
 ### Wallet RPC from extensions

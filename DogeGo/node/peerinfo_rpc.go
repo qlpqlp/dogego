@@ -82,6 +82,13 @@ func peerInflightRow(ctx *PeerInfoContext, addr string, primary bool) []interfac
 	return inflightHeightsJSON(ctx.RawFill, lane)
 }
 
+func peerInflightFromSnap(byLane map[int][]int64, lane int) []interface{} {
+	if lane < 0 || byLane == nil {
+		return []interface{}{}
+	}
+	return heightsToJSONCap(byLane[lane], maxPeerInfoInflightHeights)
+}
+
 // PeerInfoMaps builds getpeerinfo-style rows for all sessions plus active block-assist workers.
 func (pm *PeerMgr) PeerInfoMaps(j *store.HeaderJournal, p chain.Params, ctx *PeerInfoContext) []map[string]interface{} {
 	if pm == nil {
@@ -96,22 +103,31 @@ func (pm *PeerMgr) PeerInfoMaps(j *store.HeaderJournal, p chain.Params, ctx *Pee
 		syncedBlocks = ctx.SyncedBlocks
 	}
 	now := time.Now().Unix()
+	assist := assistSnapshots(ctx)
+	var byLane map[int][]int64
+	if ctx != nil && ctx.RawFill != nil {
+		byLane = ctx.RawFill.InflightHeightsByLane()
+	}
+	// Copy session pointers under the peer lock, then build rows without holding it
+	// so IBD getdata can take RawFill.mu without stacking behind peer-manager work.
 	pm.mu.Lock()
-	defer pm.mu.Unlock()
-	out := make([]map[string]interface{}, 0, len(pm.order)+4)
+	links := make([]*peerLink, 0, len(pm.order))
 	for _, addr := range pm.order {
-		l, ok := pm.sessions[addr]
-		if !ok {
-			continue
+		if l, ok := pm.sessions[addr]; ok {
+			links = append(links, l)
 		}
-		row := peerInfoRow(l, p, tipH, syncedBlocks, now, ctx, pm)
+	}
+	pm.mu.Unlock()
+	out := make([]map[string]interface{}, 0, len(links)+4)
+	for _, l := range links {
+		row := peerInfoRow(l, p, tipH, syncedBlocks, now, ctx, pm, assist, byLane)
 		out = append(out, row)
 	}
-	out = append(out, assistPeerInfoRows(ctx, p, j, out)...)
+	out = append(out, assistPeerInfoRowsWithSnap(ctx, p, j, out, assist, byLane)...)
 	return out
 }
 
-func peerInfoRow(l *peerLink, p chain.Params, tipH int64, syncedBlocks int64, now int64, ctx *PeerInfoContext, pm *PeerMgr) map[string]interface{} {
+func peerInfoRow(l *peerLink, p chain.Params, tipH int64, syncedBlocks int64, now int64, ctx *PeerInfoContext, pm *PeerMgr, assist []AssistPeerSnapshot, byLane map[int][]int64) map[string]interface{} {
 	var recv, sent int64
 	if l.ctr != nil {
 		recv = int64(l.ctr.Recv())
@@ -188,7 +204,7 @@ func peerInfoRow(l *peerLink, p chain.Params, tipH int64, syncedBlocks int64, no
 		"last_block":       lastBlock,
 		"last_transaction": lastTx,
 		"dogego_note":      note,
-		"inflight":         peerInflightRow(ctx, l.addr, l.primary),
+		"inflight":         peerInflightFromSnap(byLane, syncLaneForPeer(l.addr, ctxPrimaryAddr(ctx, l), assist, ctxRaw(ctx))),
 	}
 	if la := peerLocalAddr(l.conn); la != "" {
 		row["addrlocal"] = la
@@ -224,7 +240,7 @@ func peerInfoRow(l *peerLink, p chain.Params, tipH int64, syncedBlocks int64, no
 		row["dogego_role"] = "relay"
 	}
 	if ctx != nil && ctx.RawFill != nil {
-		lane := syncLaneForPeer(l.addr, ctx.PrimaryAddr, assistSnapshots(ctx), ctx.RawFill)
+		lane := syncLaneForPeer(l.addr, ctx.PrimaryAddr, assist, ctx.RawFill)
 		if lane >= 0 {
 			row["dogego_ibd_lane"] = lane
 		}
@@ -241,8 +257,37 @@ func peerInfoRow(l *peerLink, p chain.Params, tipH int64, syncedBlocks int64, no
 	return row
 }
 
+func ctxPrimaryAddr(ctx *PeerInfoContext, l *peerLink) string {
+	if ctx != nil && ctx.PrimaryAddr != "" {
+		return ctx.PrimaryAddr
+	}
+	if l != nil && l.primary {
+		return l.addr
+	}
+	if ctx != nil {
+		return ctx.PrimaryAddr
+	}
+	return ""
+}
+
+func ctxRaw(ctx *PeerInfoContext) *progressiveRawState {
+	if ctx == nil {
+		return nil
+	}
+	return ctx.RawFill
+}
+
 func assistPeerInfoRows(ctx *PeerInfoContext, p chain.Params, j *store.HeaderJournal, existing []map[string]interface{}) []map[string]interface{} {
-	if ctx == nil || ctx.Assist == nil {
+	assist := assistSnapshots(ctx)
+	var byLane map[int][]int64
+	if ctx != nil && ctx.RawFill != nil {
+		byLane = ctx.RawFill.InflightHeightsByLane()
+	}
+	return assistPeerInfoRowsWithSnap(ctx, p, j, existing, assist, byLane)
+}
+
+func assistPeerInfoRowsWithSnap(ctx *PeerInfoContext, p chain.Params, j *store.HeaderJournal, existing []map[string]interface{}, assist []AssistPeerSnapshot, byLane map[int][]int64) []map[string]interface{} {
+	if ctx == nil || ctx.Assist == nil || len(assist) == 0 {
 		return nil
 	}
 	var tipH int64
@@ -262,7 +307,7 @@ func assistPeerInfoRows(ctx *PeerInfoContext, p chain.Params, j *store.HeaderJou
 	}
 	var out []map[string]interface{}
 	baseID := 9000
-	for i, snap := range ctx.Assist.Snapshot() {
+	for i, snap := range assist {
 		if _, dup := seen[snap.Addr]; dup {
 			continue
 		}
@@ -293,7 +338,7 @@ func assistPeerInfoRows(ctx *PeerInfoContext, p chain.Params, j *store.HeaderJou
 			"dogego_note":      "block-assist IBD worker",
 			"dogego_role":      "block-assist",
 			"dogego_ibd_lane":  snap.Lane,
-			"inflight":         peerInflightRow(ctx, snap.Addr, false),
+			"inflight":         peerInflightFromSnap(byLane, snap.Lane),
 		}
 		for k, v := range peerInfoExtras(snap.Addr, ctx) {
 			row[k] = v

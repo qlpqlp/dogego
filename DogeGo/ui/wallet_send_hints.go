@@ -67,7 +67,7 @@ func registerWalletSendRoute(mux *http.ServeMux, cfg StartConfig, webGate *webse
 			return
 		}
 		w.Header().Set("Content-Type", "application/json; charset=utf-8")
-		if cfg.Wallet == nil {
+		if cfg.ActiveWallet() == nil {
 			w.WriteHeader(http.StatusBadRequest)
 			_ = json.NewEncoder(w).Encode(map[string]string{"error": "wallet disabled"})
 			return
@@ -84,7 +84,7 @@ func registerWalletSendRoute(mux *http.ServeMux, cfg StartConfig, webGate *webse
 			_ = json.NewEncoder(w).Encode(resp)
 			return
 		}
-		if err := cfg.Wallet.RequireMainnetEncryption(cfg.Network); err != nil {
+		if err := cfg.ActiveWallet().RequireMainnetEncryption(cfg.Network); err != nil {
 			w.WriteHeader(http.StatusBadRequest)
 			_ = json.NewEncoder(w).Encode(walletSendErrorResponse(-15, err.Error(), cfg))
 			return
@@ -111,7 +111,7 @@ func registerWalletSendRoute(mux *http.ServeMux, cfg StartConfig, webGate *webse
 			return
 		}
 		if strings.EqualFold(strings.TrimSpace(body.PQMode), "carrier") {
-			if cfg.Wallet == nil || !cfg.Wallet.PqCarrierEnabled() {
+			if cfg.ActiveWallet() == nil || !cfg.ActiveWallet().PqCarrierEnabled() {
 				w.WriteHeader(http.StatusBadRequest)
 				_ = json.NewEncoder(w).Encode(walletSendErrorResponse(-8, "pq_carrier_enabled is false (enable under Settings → Wallet)", cfg))
 				return
@@ -238,8 +238,8 @@ func registerWalletSendRoute(mux *http.ServeMux, cfg StartConfig, webGate *webse
 }
 
 func walletSuggestedFeeRateDOGE(cfg StartConfig) float64 {
-	if cfg.Wallet != nil {
-		if fee := cfg.Wallet.PayTxFee(); fee > 0 {
+	if cfg.ActiveWallet() != nil {
+		if fee := cfg.ActiveWallet().PayTxFee(); fee > 0 {
 			return fee
 		}
 	}
