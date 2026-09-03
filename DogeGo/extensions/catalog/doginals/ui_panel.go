@@ -138,15 +138,73 @@ func buildUIPanel(info map[string]interface{}) map[string]interface{} {
 				},
 			},
 			"create": map[string]interface{}{
-				"title": "Step 3 — Create",
-				"lead":  "Mint DRC-20 on Dogecoin (L1) or experimental off-L1 balances (L2) without an on-chain tx.",
+				"title": "Step 3 — Create (L2 mint)",
+				"lead":  "When this extension is enabled, minting defaults to signed L2 (tokens, images, files). Classic P2SH/OP_RETURN Doginals on L1 are indexed only — optional L1 OP_RETURN mint remains as advanced.",
+				"widgets": []map[string]interface{}{
+					{
+						"type":  "callout",
+						"tone":  "ok",
+						"icon":  "verified",
+						"title": "Signed L2 mints",
+						"body":  "Each mint is signed with your Dogecoin address (signmessage). Other Doginals-enabled DogeGo nodes verify the signature before accepting. Not Dogecoin consensus — verifiable among overlay peers.",
+					},
+				},
 				"wizards": []map[string]interface{}{
 					{
-						"id": "drc20_wizard", "title": "DRC-20 on L1", "method": "inscribe", "icon": "currency_bitcoin",
-						"finish_label": "Build / broadcast",
+						"id": "l2_token_wizard", "title": "Mint DRC-20 on L2", "method": "mint", "icon": "token",
+						"finish_label": "Mint on L2",
+						"steps": []map[string]interface{}{
+							{
+								"id": "who", "title": "Token",
+								"hint": "Requires wallet unlock + wallet RPC in Setup if you want one-click sign. Otherwise you get a sign_message to sign externally.",
+								"fields": []map[string]interface{}{
+									{"name": "kind", "label": "Kind", "type": "select", "default": "token",
+										"options": []map[string]string{{"value": "token", "label": "Token (DRC-20 style)"}}},
+									{"name": "op", "label": "Operation", "type": "select", "default": "mint",
+										"options": []map[string]string{
+											{"value": "mint", "label": "Mint"},
+											{"value": "deploy", "label": "Deploy"},
+										}},
+									{"name": "address", "label": "Signer address (P2PKH)", "type": "text", "placeholder": "D…", "default": prefAddr},
+									{"name": "tick", "label": "Ticker", "type": "text", "placeholder": "woof"},
+									{"name": "amount", "label": "Amount", "type": "text", "placeholder": "1000"},
+									{"name": "name", "label": "Name (optional)", "type": "text"},
+								},
+							},
+						},
+					},
+					{
+						"id": "l2_media_wizard", "title": "Mint image or file on L2", "method": "mint", "icon": "image",
+						"finish_label": "Mint media on L2",
+						"steps": []map[string]interface{}{
+							{
+								"id": "meta", "title": "Media",
+								"hint": "Select an image or any file. Content is hashed, signed, stored, and gossiped. Max 4 MiB.",
+								"fields": []map[string]interface{}{
+									{"name": "kind", "label": "Kind", "type": "select", "default": "image",
+										"options": []map[string]string{
+											{"value": "image", "label": "Image"},
+											{"value": "file", "label": "File"},
+											{"value": "nft", "label": "NFT"},
+										}},
+									{"name": "op", "label": "Operation", "type": "select", "default": "inscribe",
+										"options": []map[string]string{{"value": "inscribe", "label": "Inscribe"}}},
+									{"name": "address", "label": "Signer address (P2PKH)", "type": "text", "placeholder": "D…", "default": prefAddr},
+									{"name": "name", "label": "Name", "type": "text", "placeholder": "Much Wow #1"},
+									{"name": "content_b64", "label": "Image / file", "type": "file",
+										"accept": "image/*,*/*", "hint": "Stored as content_b64 for the mint API."},
+									{"name": "uri", "label": "External URI (optional)", "type": "text", "placeholder": "ipfs://…"},
+								},
+							},
+						},
+					},
+					{
+						"id": "drc20_wizard", "title": "Advanced: DRC-20 on L1 (OP_RETURN)", "method": "inscribe", "icon": "currency_bitcoin",
+						"finish_label": "Build / broadcast L1",
 						"steps": []map[string]interface{}{
 							{
 								"id": "op", "title": "Operation",
+								"hint": "Writes to Dogecoin. Prefer L2 mint above when using DogeGo. P2SH minting is not offered — L1 P2SH is indexed only.",
 								"fields": []map[string]interface{}{
 									{"name": "op", "label": "Operation", "type": "select", "default": "mint",
 										"options": []map[string]string{
@@ -173,28 +231,6 @@ func buildUIPanel(info map[string]interface{}) map[string]interface{} {
 							},
 						},
 					},
-					{
-						"id": "l2_mint_wizard", "title": "Mint on L2 (off-chain)", "method": "mintl2", "icon": "layers",
-						"finish_label": "Credit L2 balance",
-						"steps": []map[string]interface{}{
-							{
-								"id": "who", "title": "Recipient",
-								"hint": "Experimental: credits local/P2P-synced ledger, not Dogecoin consensus.",
-								"fields": []map[string]interface{}{
-									{"name": "address", "label": "Dogecoin address", "type": "text", "placeholder": "D…"},
-									{"name": "tick", "label": "Ticker", "type": "text", "placeholder": "woof"},
-									{"name": "amount", "label": "Amount", "type": "text", "placeholder": "1000"},
-								},
-							},
-							{
-								"id": "meta", "title": "Asset metadata (optional)",
-								"fields": []map[string]interface{}{
-									{"name": "name", "label": "Name", "type": "text"},
-									{"name": "uri", "label": "URI", "type": "text", "placeholder": "ipfs://…"},
-								},
-							},
-						},
-					},
 				},
 			},
 			"api": map[string]interface{}{
@@ -206,7 +242,7 @@ func buildUIPanel(info map[string]interface{}) map[string]interface{} {
 						"tone":  "ok",
 						"icon":  "api",
 						"title": "Public read API (CORS *)",
-						"body":  "GET /api/ext/dogego.doginals/v1/status · /tokens · /address/{addr} · /address/{addr}/history?tick= · /txid/{txid}. POST /mint/l2 and /inscribe require dashboard unlock. Host only proxies /api/ext/{id}/… — routes live in this extension.",
+						"body":  "GET …/status · /tokens · /address/{addr} · /txid/{txid} · /inscription/{id}/content · /mints · /mint/{id}/content. POST …/mint (L2 token/image/file) · /mint/prepare · /mint/commit. Optional POST …/inscribe for L1 OP_RETURN. Unlock required for writes.",
 					},
 					{
 						"type": "item_list",
@@ -215,6 +251,7 @@ func buildUIPanel(info map[string]interface{}) map[string]interface{} {
 							{"title": "Status", "meta": "GET /api/ext/dogego.doginals/v1/status", "id": "status"},
 							{"title": "Address balances", "meta": "GET /api/ext/dogego.doginals/v1/address/D…", "id": "address"},
 							{"title": "Token list", "meta": "GET /api/ext/dogego.doginals/v1/tokens", "id": "tokens"},
+							{"title": "Inscription content", "meta": "GET /api/ext/dogego.doginals/v1/inscription/{id}/content", "id": "content"},
 							{"title": "Events by txid", "meta": "GET /api/ext/dogego.doginals/v1/txid/{txid}", "id": "txid"},
 						},
 					},
@@ -225,8 +262,8 @@ func buildUIPanel(info map[string]interface{}) map[string]interface{} {
 			},
 			"browse": map[string]interface{}{
 				"title": "Browse index",
-				"lead":  "Tokens, inscriptions, and L2 assets already indexed on this node.",
-				"widgets": append([]map[string]interface{}{
+				"lead":  "Tokens, inscriptions (images/files/DRC-20), and L2 assets indexed on this node — including classic P2SH Doginals.",
+				"widgets": append(append([]map[string]interface{}{
 					{
 						"type": "stats",
 						"items": []map[string]interface{}{
@@ -235,7 +272,7 @@ func buildUIPanel(info map[string]interface{}) map[string]interface{} {
 							{"label": "L2 assets", "value": fmt.Sprintf("%d", assetN), "icon": "collections"},
 						},
 					},
-				}, tokenTableWidget(info)...),
+				}, tokenTableWidget(info)...), inscriptionTableWidget(info)...),
 				"quick_actions": []map[string]interface{}{
 					{"id": "list_ins", "label": "Recent inscriptions", "method": "listinscriptions", "icon": "list", "params": []interface{}{float64(20)}},
 					{"id": "list_assets", "label": "L2 gallery", "method": "listassets", "icon": "grid_view", "params": []interface{}{float64(20)}},
@@ -252,6 +289,12 @@ func buildUIPanel(info map[string]interface{}) map[string]interface{} {
 						"id": "getaddress", "label": "Address balances", "method": "getaddress", "icon": "account_balance_wallet",
 						"fields": []map[string]interface{}{
 							{"name": "address", "label": "Address", "type": "text", "placeholder": "D…"},
+						},
+					},
+					{
+						"id": "getcontent", "label": "View inscription content", "method": "getcontent", "icon": "image",
+						"fields": []map[string]interface{}{
+							{"name": "id", "label": "Inscription id", "type": "text", "placeholder": "txid…i0@height"},
 						},
 					},
 					{
@@ -340,6 +383,75 @@ func tokenTableWidget(info map[string]interface{}) []map[string]interface{} {
 			"map_rows":          "tokens",
 		},
 	}}
+}
+
+func inscriptionTableWidget(info map[string]interface{}) []map[string]interface{} {
+	rows := inscriptionRows(info)
+	return []map[string]interface{}{{
+		"type":               "table",
+		"title":              "Recent inscriptions",
+		"search":             true,
+		"search_placeholder": "Search kind / type / tick…",
+		"page_size":          12,
+		"columns": []map[string]interface{}{
+			{"key": "media", "label": "Type"},
+			{"key": "content_type", "label": "MIME"},
+			{"key": "size", "label": "Size"},
+			{"key": "source", "label": "Source"},
+			{"key": "tick", "label": "Tick"},
+			{"key": "preview", "label": "Preview"},
+			{"key": "id", "label": "Id"},
+		},
+		"rows": rows,
+		"load_more": map[string]interface{}{
+			"method":            "listinscriptions",
+			"params":            []interface{}{float64(40)},
+			"limit_param_index": 0,
+		},
+	}}
+}
+
+func inscriptionRows(info map[string]interface{}) []map[string]interface{} {
+	raw, ok := info["recent_inscriptions"]
+	if !ok {
+		return nil
+	}
+	var rows []map[string]interface{}
+	switch v := raw.(type) {
+	case []Inscription:
+		for _, ins := range v {
+			rows = append(rows, map[string]interface{}{
+				"media":        firstNonEmpty(ins.MediaKind, ins.Kind),
+				"content_type": ins.ContentType,
+				"size":         ins.Size,
+				"source":       ins.Source,
+				"tick":         ins.Tick,
+				"preview":      ins.TextPreview,
+				"id":           ins.ID,
+			})
+		}
+	case []interface{}:
+		for _, item := range v {
+			m, _ := item.(map[string]interface{})
+			if m == nil {
+				continue
+			}
+			mk, _ := m["media_kind"].(string)
+			if mk == "" {
+				mk, _ = m["kind"].(string)
+			}
+			rows = append(rows, map[string]interface{}{
+				"media":        mk,
+				"content_type": m["content_type"],
+				"size":         m["size"],
+				"source":       m["source"],
+				"tick":         m["tick"],
+				"preview":      m["text_preview"],
+				"id":           m["id"],
+			})
+		}
+	}
+	return rows
 }
 
 func tokenRows(info map[string]interface{}) []map[string]interface{} {

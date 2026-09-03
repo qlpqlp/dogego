@@ -6,17 +6,17 @@
     {
       "id": "dogego.doginals",
       "name": "Doginals / DRC-20 L2",
-      "version": "0.5.0",
+      "version": "0.7.0",
       "author": "DogeGo",
-      "description": "Doginals / DRC-20 / Ordinals L2: envelope+OP_RETURN L1 indexer, address/UTXO ledger, wallet API at /api/ext/dogego.doginals, wizard UI, doginals-v1 P2P, off-L1 mint. Does not change Dogecoin consensus.",
+      "description": "Doginals / DRC-20 / Ordinals L2: indexes L1 P2SH+envelope+OP_RETURN; mints tokens/images/files on signed L2 (default); wallet API; wizard UI; doginals-v1 P2P. Does not change Dogecoin consensus.",
       "homepage": "https://github.com/qlpqlp/dogego",
       "repository": "https://github.com/qlpqlp/dogego/tree/main/DogeGo/extensions/catalog/doginals",
       "download_url": "https://raw.githubusercontent.com/qlpqlp/dogego/main/DogeGo/extensions/catalog/doginals/dist/doginals.zip",
-      "sha256": "b044f540a8607a548f83407a7a969f84e2d65609054a7f15f369506d4848dd99",
+      "sha256": "c831ae574e577f89174605b38eb030226a9e7c35af67f2432a991a36f2d37adf",
       "downloads": {
         "universal": {
           "download_url": "https://raw.githubusercontent.com/qlpqlp/dogego/main/DogeGo/extensions/catalog/doginals/dist/doginals-universal.zip",
-          "sha256": "b044f540a8607a548f83407a7a969f84e2d65609054a7f15f369506d4848dd99"
+          "sha256": "c831ae574e577f89174605b38eb030226a9e7c35af67f2432a991a36f2d37adf"
         }
       },
       "featured": true,

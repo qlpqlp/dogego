@@ -1,117 +1,101 @@
 # doginals-v1 protocol
 
-Overlay for DogeGo peers that enable `dogego.doginals` (v0.4.0+). Negotiated via host `exthello` / `extack` (same machinery as `zkproof-v1`).
+Overlay for DogeGo peers that enable `dogego.doginals` (v0.7.0+). Negotiated via host `exthello` / `extack` (same machinery as `zkproof-v1`).
 
 ## Goals
 
-- Share **off-L1** asset metadata (NFT / token / image / collection) among DogeGo nodes  
-- Keep **L1 indexing** local (each node observes its own chain)  
-- Expose **Doginals wallet** read APIs for wallets  
+- Share **signed off-L1** mints (token / image / file) among DogeGo nodes  
+- Keep **L1 indexing** local (P2SH Doginals, Ord envelopes, OP_RETURN)  
+- Expose **Doginals wallet** read APIs + **content** for wallets  
 - Stay **observe-only** on Dogecoin consensus: no new opcodes, no soft/hard fork  
+- **Mint on L2 when the extension is enabled**; do **not** build L1 P2SH mints (index only)
 
 ## Commands
 
 | Command | Payload | Direction |
 |---------|---------|-----------|
-| `dinv` | Length-prefixed UTF-8 asset ids (`uint16` BE length + bytes, repeated) | Announce inventory |
+| `dinv` | Length-prefixed UTF-8 asset ids | Announce L2 asset inventory |
 | `getdasset` | UTF-8 asset id | Request one asset |
-| `dasset` | JSON `Asset` object | Deliver asset |
+| `dasset` | JSON `Asset` | Deliver asset |
+| `dminv` | Length-prefixed mint ids | Announce signed L2 mints |
+| `getdmint` | UTF-8 mint id | Request one mint |
+| `dmint` | JSON `{ "record": L2MintRecord, "content_b64"?: "…" }` | Deliver mint (+ optional body) |
 
-On peer connect (and about every 60s), a node may send `dinv` with up to ~200 local ids. Receivers request missing ids with `getdasset`; owners reply with `dasset`. Creating an asset (`putasset` / `mintl2`) also broadcasts `dinv`.
+On peer connect (and ~every 60s), a node may send `dinv` / `dminv`. Receivers request missing ids. Creating a mint broadcasts `dminv`.
 
-## L1 inscription record
+Receivers **must** verify `record.signature` with Dogecoin `signmessage` rules before `PutL2Mint`. Invalid or replayed nonces are dropped.
 
-Stored when an OP_RETURN (or compatible data carrier) is seen:
+## L1 indexing (P2SH / envelope / OP_RETURN)
 
-```json
-{
-  "id": "<txid>i<vout>@<height>",
-  "height": 123,
-  "txid": "…",
-  "vout": 0,
-  "kind": "drc20|doginal|data",
-  "tick": "DOGE",
-  "op": "mint",
-  "amount": "1000",
-  "address": "D…",
-  "recipient": "",
-  "content_type": "application/json",
-  "text_preview": "…",
-  "payload_hex": "…"
-}
+### Classic P2SH Doginals ([apezord](https://github.com/apezord/doginals))
+
+Inscription pushdatas in **scriptSig** (redeem path):
+
+```
+"ord" | pieces | content-type | (n, data)* …
 ```
 
-### DRC-20 detection
+Parts may span multiple txs; separators count down to `0`. Indexer assembles pending state keyed by the next P2SH outpoint. **Minting P2SH on L1 is not implemented** — historical and future P2SH reveals are indexed only.
 
-JSON payload with `"p":"drc-20"` (or `drc20`) and a non-empty `tick`. Ops: `deploy` / `mint` / `transfer` (lowercased).
+### Witness envelopes
 
-### Doginal-like detection
+`OP_FALSE OP_IF … "ord" … OP_ENDIF` in witness stack.
 
-Payload text contains `doginal`, starts with `ord`, or mentions `text/plain` / `image/` → `doginal`. Other OP_RETURN data → `data`.
+### OP_RETURN
 
-## Address ledger (`bal/`, `ah/`)
+DRC-20 JSON and data carriers (≤80 B typical).
 
-When a DRC-20 event has an `address`, the indexer updates:
-
-- `bal/<addr>/<TICK>` → `{ tick, balance, transferable_balance, transfers_count }`  
-- `ah/<addr>/<id>` → history row (`Mint` / `Transfer` / …)
-
-`CreditL2Balance` (RPC `mintl2`) credits balances without an L1 tx (experimental L2).
-
-## L2 asset record
+## Signed L2 mint record (`doginals-l2` v1)
 
 ```json
 {
   "id": "hex16…",
-  "kind": "nft|token|image|collection",
-  "name": "Much Wow #1",
-  "description": "",
+  "p": "doginals-l2",
+  "v": 1,
+  "op": "mint|deploy|transfer|inscribe",
+  "kind": "token|image|file|nft",
+  "tick": "WOOF",
+  "amt": "1000",
+  "address": "D…",
+  "to": "D…",
+  "name": "…",
   "content_type": "image/png",
-  "uri": "ipfs://…",
-  "content_b64": "",
-  "l1_inscription_id": "",
-  "created_unix": 0,
-  "updated_unix": 0,
-  "creator_note": ""
+  "content_hash": "sha256 hex",
+  "nonce": "hex",
+  "created_unix": 1730000000,
+  "network": "mainnet|testnet",
+  "signature": "base64 compact signmessage",
+  "media_kind": "token|image|text|json|file",
+  "size": 1234,
+  "has_content": true
 }
 ```
 
-If `id` is omitted, it is derived as `SHA256(kind|name|uri|content_b64|l1_inscription_id)[:16]` hex.
+### Signing
 
-## Token index (`tk/`)
+1. Build record with `nonce` + `created_unix` + `content_hash` (body stored separately).  
+2. `sign_message` = canonical JSON of the record **without** `signature` / `recorded_unix`, and **without** `content_b64` when `content_hash` is set.  
+3. Wallet: `signmessage(address, sign_message)` → base64 compact ECDSA.  
+4. Peers: recover pubkey, match P2PKH `address`, check nonce uniqueness, optional body vs `content_hash`.
 
-Each DRC-20 tick accumulates a `TokenSummary` (deploy max/lim, mint/transfer counts, last height).
+### Apply rules
 
-## HTTP API (extension-owned)
+- `kind=token` + `op=mint|deploy` + `amt` → credit L2 balance for `to` (or `address`)  
+- `kind=image|file|nft` → store body; expose via `/mint/{id}/content`  
+- Duplicate `id` or reused `nonce` → reject  
 
-Host mounts a **generic** gateway: `/api/ext/{extension.id}/…` → RPC `httphandle`.
-Doginals implements wallet read paths under `/api/ext/dogego.doginals/v1/*`. Core has **no** doginals-specific HTTP handlers. See [USER_GUIDE.md](USER_GUIDE.md).
+## L1 inscription record
 
-## Mint paths
+See USER_GUIDE. Fields include `source` (`p2sh` \| `envelope` \| `opreturn`), `media_kind`, `has_content`.
 
-| Path | Mechanism |
-|------|-----------|
-| L1 `inscribe` | OP_RETURN ≤80 B → `createrawtransaction` → fund → sign → optional `sendrawtransaction` |
-| L2 `mintl2` | Local ledger credit + optional L2 asset + `dinv` broadcast |
+## Address ledger
 
-## Storage
+L1 DRC-20 events and verified L2 token mints update `bal/` + `ah/`.
 
-Pebble DB `doginals.db` under the extension data directory:
+## HTTP surface
 
-| Key prefix | Value |
-|------------|-------|
-| `i/` | Inscription JSON |
-| `ih/` | Height → id index |
-| `x/` | Txid → id index |
-| `t/` | Tick → id (DRC-20) |
-| `tk/` | Token summary |
-| `bal/` | Address balances |
-| `ah/` | Address history |
-| `a/` | Asset JSON |
-| `m/` | Meta (`index_height`, `config`, …) |
+All under `/api/ext/dogego.doginals/v1/*` via extension `httphandle`. Core only proxies `/api/ext/{id}/…`.
 
-## Non-goals / follow-ups
+## Honesty
 
-- Every exotic Ordinals tag (parent, metadata pointers, …) — body + content-type are indexed  
-- WebSocket event subscriptions  
-- Cryptographically anchored L2 consensus (L2 mint remains experimental gossip)
+L2 mints are **not** Dogecoin consensus. Anyone running Doginals can verify signatures and sync; they cannot force the wider chain to accept L2 balances. Optional future work: Merkle roots anchored in OP_RETURN for stronger timestamps.

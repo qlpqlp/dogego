@@ -1,13 +1,13 @@
 # Doginals / DRC-20 L2 (`dogego.doginals`)
 
-**v0.4.0** — experimental DogeGo extension that:
+**v0.7.0** — experimental DogeGo extension that:
 
-1. **Indexes L1** OP_RETURN / data-carrier outputs (DRC-20, doginal-like, generic data)  
-2. **Tracks address balances** (wallet read shape)  
-3. **Exposes a wallet HTTP API** at `/api/ext/dogego.doginals/v1/*` (extension-owned `httphandle`; host only proxies `/api/ext/{id}/…`)  
-4. **Stores L2 assets** off-chain and **syncs** them via `doginals-v1` (`dinv` / `getdasset` / `dasset`)  
-5. **Mints** DRC-20 on L1 (wallet RPC) or experimentally off-L1 (`mintl2`)  
-6. Ships a **wizard UI**: Setup → Sync → Create → Wallet API  
+1. **Indexes L1** classic **P2SH Doginals** (apezord/booktoshi), Ord **envelopes**, and **OP_RETURN** (existing + future)  
+2. **Mints on L2 by default** when the extension is enabled — **tokens, images, and files** with wallet `signmessage` proofs  
+3. **Does not mint P2SH on L1** — P2SH is **index-only**; optional legacy L1 path is OP_RETURN via `inscribe`  
+4. **Classifies media** as token / image / text / json / file and serves content for display  
+5. **Tracks address balances** and gossips signed L2 mints via `doginals-v1`  
+6. Ships a **wizard UI** with file/image picker  
 
 **Does not change Dogecoin consensus.**
 
@@ -15,18 +15,10 @@
 
 | File | Purpose |
 |------|---------|
-| [USER_GUIDE.md](USER_GUIDE.md) | Install, wizard, HTTP API, RPC |
-| [PROTOCOL.md](PROTOCOL.md) | Overlay wire + storage model |
+| [USER_GUIDE.md](USER_GUIDE.md) | Install, mint UX, HTTP API, RPC |
+| [PROTOCOL.md](PROTOCOL.md) | L1 index + signed L2 mint wire format |
 
-## Build
+## Protocol references
 
-```powershell
-.\build.ps1
-# → dist/doginals-universal.zip (+ doginals.zip copy) and sha256
-```
-
-Refresh catalog hashes from `DogeGo/`:
-
-```powershell
-.\scripts\build_extensions_catalog.ps1
-```
+- [apezord/doginals](https://github.com/apezord/doginals) — original P2SH Doginals protocol (indexed)  
+- [booktoshi/doginals](https://github.com/booktoshi/doginals) — community inscriber tooling  

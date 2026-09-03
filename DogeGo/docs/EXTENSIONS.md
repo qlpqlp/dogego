@@ -153,14 +153,12 @@ dogego-cli dogego_ext_dogego_radiodoge_probe
 
 ## Catalog: `dogego.doginals`
 
-**v0.5.0** beta **Doginals / DRC-20 L2** - overlay protocol **`doginals-v1`**, Doginals wallet HTTP API.
+**v0.7.0** beta **Doginals / DRC-20 L2** - overlay protocol **`doginals-v1`**, signed L2 mint + L1 index.
 
-- **L1**: Ord/Doginals **envelope** + OP_RETURN index, DRC-20 token summaries, **address balances + transferable UTXOs**, auto catch-up + soft reorg
-- **Wallet API**: extension-owned `GET /api/ext/dogego.doginals/v1/status|tokens|address/…|txid/…` (host generic `/api/ext/{id}/…` gateway; CORS `*` on GET) for mobile wallets / sites
-- **Mint L1**: deploy / mint / transfer wizard; optional broadcast via **authenticated `wallet_rpc`**
-- **Mint L2**: experimental off-chain balances (`mintl2` / `POST /api/ext/dogego.doginals/v1/mint/l2`) without an L1 tx
-- **L2 assets**: NFT / token / image metadata; P2P `dinv` / `getdasset` / `dasset` + background sync
-- **UI**: wizard steps Setup → Sync → Create → Wallet API (+ Browse)
+- **L1 index**: classic **P2SH Doginals** (apezord/booktoshi) + Ord **envelope** + OP_RETURN; `media_kind` (token/image/text/file); balances + transferable UTXOs (P2SH is **index-only**, no L1 P2SH mint builder)
+- **L2 mint (default when enabled)**: wallet-signed records for **tokens, images, files**; `signmessage` verify-on-receive; gossip `dminv`/`getdmint`/`dmint`
+- **Wallet API**: `GET …/status|tokens|address/…|inscription/…|mints|mint/{id}/content`; `POST …/mint` (+ prepare/commit); optional `POST …/inscribe` for L1 OP_RETURN
+- **UI**: Setup → Sync → Create (L2 token / L2 image-file picker / advanced L1) → Wallet API → Browse
 - **Networks**: mainnet + testnet · **no consensus change**
 
 Package: [extensions/catalog/doginals/](../extensions/catalog/doginals/). Install zip then enable.

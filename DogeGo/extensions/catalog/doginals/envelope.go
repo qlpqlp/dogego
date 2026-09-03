@@ -7,7 +7,6 @@ package doginals
 
 import (
 	"bytes"
-	"encoding/hex"
 	"strings"
 	"unicode/utf8"
 )
@@ -171,36 +170,7 @@ func DetectInscriptionFromWitness(height int64, txid string, vin uint32, witness
 	if !ok {
 		return Inscription{}, false
 	}
-	id := fmtInscriptionIDVin(height, txid, vin)
-	ins := Inscription{
-		ID:           id,
-		Height:       height,
-		TxID:         txid,
-		Vout:         0,
-		Vin:          vin,
-		Kind:         "doginal",
-		ContentType:  env.ContentType,
-		PayloadHex:   hex.EncodeToString(env.Body),
-		TextPreview:  previewText(env.Body, 96),
-		Source:       "envelope",
-	}
-	if p, ok := ParseDRC20JSON(env.Body); ok {
-		ins.Kind = "drc20"
-		ins.Tick = p.Tick
-		ins.Op = p.Op
-		ins.Amount = firstNonEmpty(p.Amt, p.Max)
-		ins.ContentType = "application/json"
-		return ins, true
-	}
-	lowCT := strings.ToLower(env.ContentType)
-	if strings.Contains(lowCT, "json") || (len(env.Body) > 0 && env.Body[0] == '{') {
-		if p, ok := ParseDRC20JSON(env.Body); ok {
-			ins.Kind = "drc20"
-			ins.Tick = p.Tick
-			ins.Op = p.Op
-			ins.Amount = firstNonEmpty(p.Amt, p.Max)
-		}
-	}
+	ins := InscriptionFromBody(height, txid, vin, env.ContentType, env.Body, "envelope")
 	return ins, true
 }
 

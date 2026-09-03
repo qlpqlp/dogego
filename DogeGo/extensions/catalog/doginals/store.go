@@ -56,6 +56,12 @@ func (s *Store) Close() error {
 }
 
 func keyIns(id string) []byte { return []byte("i/" + strings.ToLower(id)) }
+func keyBody(id string) []byte { return []byte("b/" + strings.ToLower(id)) }
+func keyMint(id string) []byte { return []byte("lm/" + strings.ToLower(id)) }
+func keyMintNonce(addr, nonce string) []byte {
+	return []byte("ln/" + strings.ToLower(addr) + "/" + strings.ToLower(nonce))
+}
+func keyPending(op string) []byte { return []byte("p2sh/pending/" + strings.ToLower(op)) }
 func keyInsH(h int64, id string) []byte {
 	return []byte(fmt.Sprintf("ih/%012d/%s", h, strings.ToLower(id)))
 }
@@ -103,7 +109,7 @@ func (s *Store) SetIndexHeight(h int64) error {
 	return s.setMeta("index_height", fmt.Sprintf("%d", h))
 }
 
-// PutInscription stores an L1 observation.
+// PutInscription stores an L1 observation (and optional media body).
 func (s *Store) PutInscription(ins Inscription) error {
 	s.mu.Lock()
 	defer s.mu.Unlock()
@@ -113,6 +119,23 @@ func (s *Store) PutInscription(ins Inscription) error {
 	if ins.RecordedUnix == 0 {
 		ins.RecordedUnix = time.Now().Unix()
 	}
+	body := ins.Body
+	if len(body) == 0 && ins.PayloadHex != "" {
+		if raw, err := hexDecodePayload(ins.PayloadHex); err == nil {
+			body = raw
+		}
+	}
+	if len(body) > MaxInscriptionBodyBytes {
+		body = body[:MaxInscriptionBodyBytes]
+	}
+	if len(body) > 0 {
+		ins.Size = len(body)
+		ins.HasContent = true
+		if ins.MediaKind == "" {
+			ins.MediaKind = ClassifyMediaKind(ins.ContentType, body, ins.Kind == "drc20")
+		}
+	}
+	ins.Body = nil
 	b, err := json.Marshal(ins)
 	if err != nil {
 		return err
@@ -120,6 +143,9 @@ func (s *Store) PutInscription(ins Inscription) error {
 	batch := s.db.NewBatch()
 	defer batch.Close()
 	_ = batch.Set(keyIns(ins.ID), b, nil)
+	if len(body) > 0 {
+		_ = batch.Set(keyBody(ins.ID), body, nil)
+	}
 	_ = batch.Set(keyInsH(ins.Height, ins.ID), []byte{1}, nil)
 	if ins.TxID != "" {
 		_ = batch.Set(keyTx(ins.TxID, ins.ID), []byte{1}, nil)
@@ -134,6 +160,91 @@ func (s *Store) PutInscription(ins Inscription) error {
 		}
 	}
 	return batch.Commit(pebble.Sync)
+}
+
+// GetInscriptionBody returns stored media bytes for an inscription id.
+func (s *Store) GetInscriptionBody(id string) ([]byte, bool, error) {
+	s.mu.RLock()
+	defer s.mu.RUnlock()
+	if s.db == nil {
+		return nil, false, fmt.Errorf("store closed")
+	}
+	val, closer, err := s.db.Get(keyBody(id))
+	if err == pebble.ErrNotFound {
+		// Fall back to payload_hex on the row.
+		ins, ok, err := s.getInscriptionUnlocked(id)
+		if err != nil || !ok {
+			return nil, false, err
+		}
+		if ins.PayloadHex == "" {
+			return nil, false, nil
+		}
+		raw, err := hexDecodePayload(ins.PayloadHex)
+		if err != nil {
+			return nil, false, err
+		}
+		return raw, true, nil
+	}
+	if err != nil {
+		return nil, false, err
+	}
+	defer closer.Close()
+	out := append([]byte(nil), val...)
+	return out, true, nil
+}
+
+func (s *Store) getInscriptionUnlocked(id string) (Inscription, bool, error) {
+	var z Inscription
+	val, closer, err := s.db.Get(keyIns(id))
+	if err == pebble.ErrNotFound {
+		return z, false, nil
+	}
+	if err != nil {
+		return z, false, err
+	}
+	defer closer.Close()
+	if err := json.Unmarshal(val, &z); err != nil {
+		return z, false, err
+	}
+	return z, true, nil
+}
+
+// PutP2SHPending stores in-progress multi-tx doginal assembly keyed by next outpoint.
+func (s *Store) PutP2SHPending(outpoint string, a p2shAssembly) error {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	if s.db == nil {
+		return fmt.Errorf("store closed")
+	}
+	b, err := json.Marshal(a)
+	if err != nil {
+		return err
+	}
+	return s.db.Set(keyPending(outpoint), b, pebble.Sync)
+}
+
+// TakeP2SHPending loads and deletes a pending assembly for a spent outpoint.
+func (s *Store) TakeP2SHPending(outpoint string) (p2shAssembly, bool, error) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	var z p2shAssembly
+	if s.db == nil {
+		return z, false, fmt.Errorf("store closed")
+	}
+	val, closer, err := s.db.Get(keyPending(outpoint))
+	if err == pebble.ErrNotFound {
+		return z, false, nil
+	}
+	if err != nil {
+		return z, false, err
+	}
+	err = json.Unmarshal(val, &z)
+	closer.Close()
+	if err != nil {
+		return z, false, err
+	}
+	_ = s.db.Delete(keyPending(outpoint), pebble.Sync)
+	return z, true, nil
 }
 
 // applyTokenToBatch updates tk/ summary inside an open batch (caller holds s.mu).
@@ -306,6 +417,136 @@ func (s *Store) PutAsset(a Asset) error {
 		return err
 	}
 	return s.db.Set(keyAsset(a.ID), b, pebble.Sync)
+}
+
+// PutL2Mint stores a verified signed L2 mint (+ optional media body). Rejects replayed nonces.
+func (s *Store) PutL2Mint(r L2MintRecord, body []byte) error {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	if s.db == nil {
+		return fmt.Errorf("store closed")
+	}
+	if r.ID == "" {
+		return fmt.Errorf("mint id required")
+	}
+	if r.Nonce != "" {
+		if _, closer, err := s.db.Get(keyMintNonce(r.Address, r.Nonce)); err == nil {
+			closer.Close()
+			return fmt.Errorf("nonce already used")
+		}
+	}
+	if _, closer, err := s.db.Get(keyMint(r.ID)); err == nil {
+		closer.Close()
+		return fmt.Errorf("mint already stored")
+	}
+	wireRec := r
+	wireRec.ContentB64 = ""
+	b, err := json.Marshal(wireRec)
+	if err != nil {
+		return err
+	}
+	batch := s.db.NewBatch()
+	defer batch.Close()
+	_ = batch.Set(keyMint(r.ID), b, nil)
+	if r.Nonce != "" {
+		_ = batch.Set(keyMintNonce(r.Address, r.Nonce), []byte(r.ID), nil)
+	}
+	if len(body) > 0 {
+		_ = batch.Set(keyBody("mint:"+r.ID), body, nil)
+	}
+	return batch.Commit(pebble.Sync)
+}
+
+func (s *Store) GetL2Mint(id string) (L2MintRecord, bool, error) {
+	s.mu.RLock()
+	defer s.mu.RUnlock()
+	var z L2MintRecord
+	if s.db == nil {
+		return z, false, fmt.Errorf("store closed")
+	}
+	val, closer, err := s.db.Get(keyMint(id))
+	if err == pebble.ErrNotFound {
+		return z, false, nil
+	}
+	if err != nil {
+		return z, false, err
+	}
+	defer closer.Close()
+	if err := json.Unmarshal(val, &z); err != nil {
+		return z, false, err
+	}
+	return z, true, nil
+}
+
+func (s *Store) GetL2MintBody(id string) ([]byte, bool, error) {
+	s.mu.RLock()
+	defer s.mu.RUnlock()
+	if s.db == nil {
+		return nil, false, fmt.Errorf("store closed")
+	}
+	val, closer, err := s.db.Get(keyBody("mint:" + strings.ToLower(id)))
+	if err == pebble.ErrNotFound {
+		return nil, false, nil
+	}
+	if err != nil {
+		return nil, false, err
+	}
+	defer closer.Close()
+	return append([]byte(nil), val...), true, nil
+}
+
+func (s *Store) ListL2Mints(limit int) ([]L2MintRecord, error) {
+	s.mu.RLock()
+	defer s.mu.RUnlock()
+	if s.db == nil {
+		return nil, fmt.Errorf("store closed")
+	}
+	if limit <= 0 {
+		limit = 40
+	}
+	it, err := s.db.NewIter(&pebble.IterOptions{LowerBound: []byte("lm/"), UpperBound: prefixEnd([]byte("lm/"))})
+	if err != nil {
+		return nil, err
+	}
+	defer it.Close()
+	var out []L2MintRecord
+	for ok := it.Last(); ok && len(out) < limit; ok = it.Prev() {
+		var r L2MintRecord
+		if json.Unmarshal(it.Value(), &r) == nil {
+			out = append(out, r)
+		}
+	}
+	return out, nil
+}
+
+func (s *Store) ListL2MintIDs(limit int) ([]string, error) {
+	rows, err := s.ListL2Mints(limit)
+	if err != nil {
+		return nil, err
+	}
+	ids := make([]string, 0, len(rows))
+	for _, r := range rows {
+		ids = append(ids, r.ID)
+	}
+	return ids, nil
+}
+
+func (s *Store) CountL2Mints() int {
+	s.mu.RLock()
+	defer s.mu.RUnlock()
+	if s.db == nil {
+		return 0
+	}
+	it, err := s.db.NewIter(&pebble.IterOptions{LowerBound: []byte("lm/"), UpperBound: prefixEnd([]byte("lm/"))})
+	if err != nil {
+		return 0
+	}
+	defer it.Close()
+	n := 0
+	for ok := it.First(); ok; ok = it.Next() {
+		n++
+	}
+	return n
 }
 
 func (s *Store) GetAsset(id string) (Asset, bool, error) {

@@ -56,21 +56,22 @@ func (e *Extension) indexTx(host extensions.Host, st *Store, height int64, tx *w
 
 	n := 0
 	for vin, in := range tx.Vin {
-		ins, ok := DetectInscriptionFromWitness(height, txid, uint32(vin), in.Witness)
-		if !ok {
+		if ins, ok := DetectInscriptionFromWitness(height, txid, uint32(vin), in.Witness); ok {
+			ins.Address = sender
+			ins.Recipient = recipient
+			ins.RecordedUnix = now
+			if len(tx.Vout) > 0 {
+				ins.Vout = 0
+				ins.Outpoint = outpointKey(txid, 0)
+			}
+			if err := st.PutInscription(ins); err == nil {
+				n++
+			}
 			continue
 		}
-		ins.Address = sender
-		ins.Recipient = recipient
-		ins.RecordedUnix = now
-		if len(tx.Vout) > 0 {
-			ins.Vout = 0
-			ins.Outpoint = outpointKey(txid, 0)
+		if nP2SH := e.indexP2SHInput(st, height, txid, uint32(vin), in, tx, sender, recipient, now); nP2SH > 0 {
+			n += nP2SH
 		}
-		if err := st.PutInscription(ins); err != nil {
-			continue
-		}
-		n++
 	}
 	for vout, o := range tx.Vout {
 		ins, ok := DetectInscriptionFromOutput(height, txid, uint32(vout), o)
@@ -87,6 +88,72 @@ func (e *Extension) indexTx(host extensions.Host, st *Store, height int64, tx *w
 		n++
 	}
 	return n
+}
+
+// indexP2SHInput indexes apezord/booktoshi P2SH doginals revealed in scriptSig.
+func (e *Extension) indexP2SHInput(st *Store, height int64, txid string, vin uint32, in wire.TxIn, tx *wire.Tx, sender, recipient string, now int64) int {
+	if len(in.Script) == 0 {
+		return 0
+	}
+	partial, ok := ExtractP2SHInscriptionPartial(in.Script)
+	if !ok {
+		return 0
+	}
+
+	var asm p2shAssembly
+	continued := false
+	if !partial.StartsOrd && in.PrevIdx != 0xffffffff {
+		prevOP := outpointKey(TxDisplayHex(in.PrevHash), in.PrevIdx)
+		if prev, found, err := st.TakeP2SHPending(prevOP); err == nil && found {
+			asm = prev
+			continued = true
+		}
+	}
+	if partial.StartsOrd {
+		asm = p2shAssembly{
+			StartTxID:   txid,
+			StartHeight: height,
+			Vin:         vin,
+		}
+	} else if !continued {
+		return 0
+	}
+
+	trial := asm
+	if !trial.applyPartial(partial) {
+		if continued && in.PrevIdx != 0xffffffff {
+			_ = st.PutP2SHPending(outpointKey(TxDisplayHex(in.PrevHash), in.PrevIdx), asm)
+		}
+		return 0
+	}
+	asm = trial
+
+	if asm.complete() {
+		ins := InscriptionFromBody(asm.StartHeight, asm.StartTxID, asm.Vin, asm.ContentType, asm.Data, "p2sh")
+		// Prefer the reveal/completion tx for lookup convenience.
+		ins.TxID = txid
+		ins.Height = height
+		ins.ID = fmtInscriptionIDVin(height, txid, vin)
+		ins.Address = sender
+		ins.Recipient = recipient
+		ins.RecordedUnix = now
+		if len(tx.Vout) > 0 {
+			ins.Vout = 0
+			ins.Outpoint = outpointKey(txid, 0)
+		}
+		if err := st.PutInscription(ins); err != nil {
+			return 0
+		}
+		return 1
+	}
+
+	// Incomplete: chain continues via first output (apezord mint path).
+	if len(tx.Vout) == 0 {
+		return 0
+	}
+	nextOP := outpointKey(txid, 0)
+	_ = st.PutP2SHPending(nextOP, asm)
+	return 0
 }
 
 // ApplySpends settles transferable DRC-20 when inputs spend tracked outpoints.

@@ -306,7 +306,7 @@
       "doginals": {
         "id": "dogego.doginals",
         "title": "Doginals / DRC-20 L2",
-        "body": "<strong>v0.4.0</strong> indexes L1 Doginals/DRC-20, tracks address balances, and exposes a Doginals wallet API at <code>/api/ext/dogego.doginals/v1/*</code> (extension-owned <code>httphandle</code>; host only proxies <code>/api/ext/{id}/…</code>). Wizard UI (Setup → Sync → Create → API). Mint on Dogecoin via wallet RPC or experimentally off-L1. Peers sync L2 assets over <code>doginals-v1</code>. Mainnet + testnet · no consensus change."
+        "body": "<strong>v0.4.0</strong> indexes L1 Doginals/DRC-20, tracks address balances, and exposes a Doginals wallet API and signed L2 mint (tokens/images/files) at <code>/api/ext/dogego.doginals/v1/*</code> (extension-owned <code>httphandle</code>; host only proxies <code>/api/ext/{id}/…</code>). Wizard UI (Setup → Sync → Create → API). Mint on Dogecoin via wallet RPC or experimentally off-L1. Peers sync L2 assets over <code>doginals-v1</code>. Mainnet + testnet · no consensus change."
       },
       "radiodoge": {
         "id": "dogego.radiodoge",

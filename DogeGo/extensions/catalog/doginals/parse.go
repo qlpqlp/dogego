@@ -58,25 +58,29 @@ func DetectInscriptionFromOutput(height int64, txid string, vout uint32, o wire.
 		PayloadHex:   hex.EncodeToString(payload),
 		TextPreview:  previewText(payload, 96),
 	}
+	ins.Size = len(payload)
+	ins.HasContent = true
+	ins.Body = append([]byte(nil), payload...)
+	ins.Source = "opreturn"
 	if p, ok := ParseDRC20JSON(payload); ok {
 		ins.Kind = "drc20"
 		ins.Tick = p.Tick
 		ins.Op = p.Op
 		ins.Amount = firstNonEmpty(p.Amt, p.Max)
 		ins.ContentType = "application/json"
-		ins.Source = "opreturn"
+		ins.MediaKind = "token"
 		return ins, true
 	}
 	low := strings.ToLower(string(payload))
 	if strings.Contains(low, "doginal") || strings.HasPrefix(low, "ord") || strings.Contains(low, "text/plain") || strings.Contains(low, "image/") {
 		ins.Kind = "doginal"
 		ins.ContentType = sniffContentType(payload)
-		ins.Source = "opreturn"
+		ins.MediaKind = ClassifyMediaKind(ins.ContentType, payload, false)
 		return ins, true
 	}
 	ins.Kind = "data"
 	ins.ContentType = sniffContentType(payload)
-	ins.Source = "opreturn"
+	ins.MediaKind = ClassifyMediaKind(ins.ContentType, payload, false)
 	return ins, true
 }
 

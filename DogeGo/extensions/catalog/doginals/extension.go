@@ -43,9 +43,9 @@ func DefaultManifest() extensions.Manifest {
 		ManifestVersion:  extensions.ManifestVersion,
 		ID:               ExtensionID,
 		Name:             "Doginals / DRC-20 L2",
-		Version:          "0.5.0",
+		Version:          "0.7.0",
 		Author:           "DogeGo",
-		Description:      "Doginals / DRC-20 / Ordinals L2: full L1 envelope+OP_RETURN indexer, address/UTXO ledger, wallet HTTP API via /api/ext/dogego.doginals, wizard UI, doginals-v1 P2P, off-L1 mint. Does not change Dogecoin consensus.",
+		Description:      "Doginals / DRC-20 / Ordinals L2: indexes L1 P2SH+envelope+OP_RETURN; mints tokens/images/files on signed L2 (default); wallet API; wizard UI; doginals-v1 P2P. Does not change Dogecoin consensus.",
 		Homepage:         "https://github.com/qlpqlp/dogego",
 		Repository:       "https://github.com/qlpqlp/dogego/tree/main/DogeGo/extensions/catalog/doginals",
 		DogeGoMinVersion: "0.1.0",
@@ -64,12 +64,20 @@ func DefaultManifest() extensions.Manifest {
 			{Name: "info", Help: "Status, index height, counts, config, and modern UI workspace."},
 			{Name: "listinscriptions", Help: "List recent L1-indexed inscriptions / DRC-20 events. Param: [limit?]."},
 			{Name: "getinscription", Help: "Fetch one inscription by id. Param: [id]."},
+			{Name: "getcontent", Help: "Fetch inscription media (base64/data URL). Param: [id]."},
 			{Name: "indexrange", Help: "Scan L1 heights into the local index. Params: [from_height, to_height]."},
 			{Name: "listtokens", Help: "List indexed DRC-20 token summaries. Param: [limit?]."},
 			{Name: "gettoken", Help: "Token summary by ticker. Param: [tick]."},
 			{Name: "listbytick", Help: "Inscription events for a ticker. Params: [tick, limit?]."},
 			{Name: "previewinscription", Help: "Build DRC-20 JSON/hex without broadcasting. Params: [op, tick, amt?, max?, lim?] or object."},
-			{Name: "inscribe", Help: "Fund/sign/optional broadcast OP_RETURN DRC-20 via wallet_rpc. Params: object {op,tick,amt,max,lim,broadcast}."},
+			{Name: "inscribe", Help: "Optional L1 OP_RETURN DRC-20 via wallet_rpc (legacy). Default minting is L2."},
+			{Name: "mint", Help: "Mint on L2 (token/image/file). Signs with wallet_rpc or returns sign_message. Param: object."},
+			{Name: "mintprepare", Help: "Prepare unsigned L2 mint + sign_message. Param: object."},
+			{Name: "mintcommit", Help: "Commit signed L2 mint (verify signature, store, gossip). Param: {record,signature,content_b64?}."},
+			{Name: "mintl2", Help: "Alias of mint (signed L2)."},
+			{Name: "listmints", Help: "List recent signed L2 mints. Param: [limit?]."},
+			{Name: "getmint", Help: "Fetch one L2 mint by id. Param: [id]."},
+			{Name: "getmintcontent", Help: "Fetch L2 mint media. Param: [id]."},
 			{Name: "putasset", Help: "Create/update an off-L1 L2 asset (nft|token|image|collection). Param: [asset_object]."},
 			{Name: "getasset", Help: "Fetch L2 asset by id. Param: [id]."},
 			{Name: "listassets", Help: "List recent L2 assets. Param: [limit?]."},
@@ -81,7 +89,6 @@ func DefaultManifest() extensions.Manifest {
 			{Name: "getaddress", Help: "DRC-20 balances for a Dogecoin address. Param: [address]."},
 			{Name: "getaddresshistory", Help: "Event history for address. Params: [address, tick?, limit?]."},
 			{Name: "geteventsbytxid", Help: "Events for a transaction id. Param: [txid]."},
-			{Name: "mintl2", Help: "Off-L1 mint (experimental L2). Param: {address,tick,amount,kind?,name?,uri?}."},
 			{Name: "apistatus", Help: "Public API routes and compatibility notes for wallets."},
 			{Name: "httphandle", Help: "HTTP gateway handler for /api/ext/dogego.doginals/* (Doginals wallet REST)."},
 		},
@@ -114,7 +121,7 @@ func (e *Extension) OnEnable(_ context.Context, host extensions.Host) error {
 	e.startBackgroundSync()
 	e.startCatchUp(host)
 	e.startBackgroundCatchUp()
-	host.Log("doginals: enabled v0.5.0 (envelope+OP_RETURN index, ledger, L2, wallet API)")
+	host.Log("doginals: enabled v0.7.0 (L1 P2SH index + signed L2 mint for tokens/images/files)")
 	return nil
 }
 
@@ -304,6 +311,22 @@ func (e *Extension) HandleRPC(method string, params []json.RawMessage, host exte
 			return nil, fmt.Errorf("inscription not found")
 		}
 		return ins, nil
+	case "getcontent":
+		id, err := stringParam(params, 0)
+		if err != nil {
+			return nil, err
+		}
+		res := e.contentResponse(st, id, "")
+		if m, ok := res["json"]; ok {
+			if st, ok := res["status"].(int); ok && st >= 400 {
+				if errMap, ok := m.(map[string]string); ok {
+					return nil, fmt.Errorf("%s", errMap["error"])
+				}
+				return nil, fmt.Errorf("content error")
+			}
+			return m, nil
+		}
+		return res, nil
 	case "indexrange":
 		if host == nil {
 			return nil, fmt.Errorf("host required")
@@ -481,46 +504,49 @@ func (e *Extension) HandleRPC(method string, params []json.RawMessage, host exte
 			return nil, err
 		}
 		return st.ListByTxID(txid)
-	case "mintl2":
+	case "mintl2", "mint":
 		raw, err := parseMapParam(params)
 		if err != nil {
 			return nil, err
 		}
-		addr, _ := raw["address"].(string)
-		tick, _ := raw["tick"].(string)
-		amt, _ := raw["amount"].(string)
-		if amt == "" {
-			amt, _ = raw["amt"].(string)
-		}
-		kind, _ := raw["kind"].(string)
-		if kind == "" {
-			kind = "token"
-		}
-		name, _ := raw["name"].(string)
-		if name == "" {
-			name = strings.ToUpper(tick) + " L2"
-		}
-		if err := st.CreditL2Balance(addr, tick, amt); err != nil {
-			return nil, err
-		}
-		a := Asset{Kind: kind, Name: name, CreatorNote: "L2 mint (off-L1 experimental)"}
-		if uri, ok := raw["uri"].(string); ok {
-			a.URI = uri
-		}
-		a, err = NormalizeAsset(a)
+		return e.mintAuto(host, st, raw)
+	case "mintprepare":
+		raw, err := parseMapParam(params)
 		if err != nil {
 			return nil, err
 		}
-		if err := st.PutAsset(a); err != nil {
+		return e.mintPrepare(host, st, raw)
+	case "mintcommit":
+		raw, err := parseMapParam(params)
+		if err != nil {
 			return nil, err
 		}
-		if host != nil {
-			e.broadcastAsset(host, a.ID)
+		return e.mintCommit(host, st, raw)
+	case "listmints":
+		limit := 40
+		if len(params) > 0 {
+			_ = json.Unmarshal(params[0], &limit)
 		}
-		return map[string]interface{}{
-			"ok": true, "address": addr, "tick": tick, "amount": amt,
-			"asset_id": a.ID, "layer": "L2", "note": "Experimental off-L1 balance; not Dogecoin consensus.",
-		}, nil
+		return st.ListL2Mints(limit)
+	case "getmint":
+		id, err := stringParam(params, 0)
+		if err != nil {
+			return nil, err
+		}
+		r, ok, err := st.GetL2Mint(id)
+		if err != nil {
+			return nil, err
+		}
+		if !ok {
+			return nil, fmt.Errorf("mint not found")
+		}
+		return r, nil
+	case "getmintcontent":
+		id, err := stringParam(params, 0)
+		if err != nil {
+			return nil, err
+		}
+		return e.mintContentResponse(st, id), nil
 	case "apistatus":
 		return e.apiManifest(), nil
 	case "httphandle":
@@ -539,23 +565,26 @@ func (e *Extension) info(host extensions.Host, st *Store) map[string]interface{}
 	}
 	cfg := st.GetConfig()
 	recentTok, _ := st.ListTokens(12)
+	recentIns, _ := st.ListInscriptions(12)
 	out := map[string]interface{}{
-		"extension":       ExtensionID,
-		"protocol_id":     ProtocolID,
-		"network":         net,
-		"chain_tip":       tip,
-		"index_height":    st.IndexHeight(),
-		"inscriptions":    st.CountInscriptions(),
-		"l2_assets":       st.CountAssets(),
-		"tokens":          st.CountTokens(),
-		"recent_tokens":   recentTok,
-		"config":          cfg,
-		"not_consensus":   true,
-		"experimental":    true,
-		"l1_observe_only": true,
-		"l2_off_chain":    true,
-		"wallet_rpc":      true,
-		"recorded_unix":   time.Now().Unix(),
+		"extension":            ExtensionID,
+		"protocol_id":          ProtocolID,
+		"network":              net,
+		"chain_tip":            tip,
+		"index_height":         st.IndexHeight(),
+		"inscriptions":         st.CountInscriptions(),
+		"l2_assets":            st.CountAssets(),
+		"tokens":               st.CountTokens(),
+		"recent_tokens":        recentTok,
+		"recent_inscriptions":  recentIns,
+		"l2_mints":             st.CountL2Mints(),
+		"config":               cfg,
+		"not_consensus":        true,
+		"experimental":         true,
+		"l1_observe_only":      true,
+		"l2_off_chain":         true,
+		"wallet_rpc":           true,
+		"recorded_unix":        time.Now().Unix(),
 	}
 	out["ui"] = buildUIPanel(out)
 	return out

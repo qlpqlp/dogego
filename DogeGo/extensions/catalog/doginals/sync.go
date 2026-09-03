@@ -58,13 +58,28 @@ func (e *Extension) backgroundSyncTick() {
 		return
 	}
 	ids, err := st.ListAssetIDs(200)
-	if err != nil || len(ids) == 0 {
+	if err != nil {
+		ids = nil
+	}
+	mids, _ := st.ListL2MintIDs(200)
+	if len(ids) == 0 && len(mids) == 0 {
 		return
 	}
-	_ = oh.BroadcastOverlay(ProtocolID, CmdDInv, EncodeInv(ids), "")
+	if len(ids) > 0 {
+		_ = oh.BroadcastOverlay(ProtocolID, CmdDInv, EncodeInv(ids), "")
+	}
+	if len(mids) > 0 {
+		_ = oh.BroadcastOverlay(ProtocolID, CmdDMintInv, EncodeInv(mids), "")
+	}
 	oh.EachOverlayPeer(ProtocolID, func(_ string, send func(string, []byte) error) {
-		if send != nil && len(ids) > 0 {
+		if send == nil {
+			return
+		}
+		if len(ids) > 0 {
 			_ = send(CmdDInv, EncodeInv(ids))
+		}
+		if len(mids) > 0 {
+			_ = send(CmdDMintInv, EncodeInv(mids))
 		}
 	})
 }
@@ -78,6 +93,17 @@ func (e *Extension) broadcastAsset(host extensions.Host, id string) {
 		return
 	}
 	_ = oh.BroadcastOverlay(ProtocolID, CmdDInv, EncodeInv([]string{id}), "")
+}
+
+func (e *Extension) broadcastMint(host extensions.Host, id string) {
+	if host == nil || id == "" {
+		return
+	}
+	oh, ok := host.(extensions.OverlayHost)
+	if !ok {
+		return
+	}
+	_ = oh.BroadcastOverlay(ProtocolID, CmdDMintInv, EncodeInv([]string{id}), "")
 }
 
 func protocolSupported(protocols []string) bool {

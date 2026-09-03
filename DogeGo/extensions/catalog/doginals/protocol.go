@@ -4,8 +4,8 @@
 // SPDX-License-Identifier: MIT
 
 // Package doginals is an experimental DogeGo L2 for Doginals / DRC-20 / NFT-style assets.
-// It indexes L1 OP_RETURN / data-carrier inscriptions (observe-only) and stores off-L1
-// metadata/media that syncs among DogeGo peers. It does not change Dogecoin consensus.
+// It indexes L1 P2SH Doginals (apezord/booktoshi), Ord envelopes, and OP_RETURN carriers,
+// and stores off-L1 metadata/media that syncs among DogeGo peers. It does not change Dogecoin consensus.
 package doginals
 
 import (
@@ -23,6 +23,9 @@ const (
 	CmdDInv     = "dinv"
 	CmdGetAsset = "getdasset"
 	CmdAsset    = "dasset"
+	CmdDMintInv = "dminv"
+	CmdGetMint  = "getdmint"
+	CmdMint     = "dmint"
 )
 
 // Inscription is one L1-observed data carrier / DRC-20 / doginal-like event.
@@ -33,6 +36,7 @@ type Inscription struct {
 	Vout         uint32 `json:"vout"`
 	Vin          uint32 `json:"vin,omitempty"`
 	Kind         string `json:"kind"` // drc20 | doginal | data | ordinal
+	MediaKind    string `json:"media_kind,omitempty"` // token | image | text | json | file
 	Tick         string `json:"tick,omitempty"`
 	Op           string `json:"op,omitempty"` // deploy|mint|transfer
 	Address      string `json:"address,omitempty"`   // sender / owner when known
@@ -40,10 +44,13 @@ type Inscription struct {
 	Amount       string `json:"amount,omitempty"`
 	ContentType  string `json:"content_type,omitempty"`
 	TextPreview  string `json:"text_preview,omitempty"`
-	PayloadHex   string `json:"payload_hex,omitempty"`
-	Source       string `json:"source,omitempty"` // opreturn | envelope
+	PayloadHex   string `json:"payload_hex,omitempty"` // small payloads only; use content API for media
+	Size         int    `json:"size,omitempty"`
+	HasContent   bool   `json:"has_content,omitempty"`
+	Source       string `json:"source,omitempty"` // opreturn | envelope | p2sh
 	Outpoint     string `json:"outpoint,omitempty"` // created transferable outpoint when applicable
 	RecordedUnix int64  `json:"recorded_unix"`
+	Body         []byte `json:"-"` // full media; persisted under b/{id}, not in JSON row
 }
 
 // Asset is an off-L1 L2 record (NFT / token metadata / image pointer).

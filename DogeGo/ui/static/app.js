@@ -11129,12 +11129,23 @@
     const params = Array.isArray(tool.params) ? tool.params.slice() : [];
     if (!params.length) {
       const jsonFields = { proof_json: 1, payload: 1, payload_json: 1, backup_json: 1 };
-      const asObject = tool.params_as === "object" || tool.method === "setconfig" || tool.method === "inscribe" || tool.method === "putasset" || tool.method === "importbackup";
+      const asObject = tool.params_as === "object" || tool.method === "setconfig" || tool.method === "inscribe" || tool.method === "putasset" || tool.method === "importbackup" || tool.method === "mint" || tool.method === "mintl2" || tool.method === "mintprepare" || tool.method === "mintcommit";
       const obj = {};
       (tool.fields || []).forEach((field) => {
         const el = form.querySelector("[name=\"" + field.name + "\"]");
         let raw = "";
         let boolVal = false;
+        if (field.type === "file") {
+          raw = el ? (el.value || "").trim() : "";
+          if (asObject) {
+            if (raw) obj[field.name] = raw;
+            const ctEl = form.querySelector("[name=\"" + field.name + "_content_type\"]");
+            if (ctEl && ctEl.value) obj.content_type = ctEl.value;
+          } else if (raw) {
+            params.push(raw);
+          }
+          return;
+        }
         if (el) {
           if (isExtToggleField(field, el)) {
             boolVal = !!el.checked;
@@ -11185,6 +11196,15 @@
         obj[field.name] = !!el.checked;
         return;
       }
+      if (field.type === "file") {
+        const b64 = (el.value || "").trim();
+        if (b64) obj[field.name] = b64;
+        const ctEl = host.querySelector("[name=\"" + field.name + "_content_type\"]");
+        if (ctEl && ctEl.value) obj.content_type = ctEl.value;
+        const nameEl = host.querySelector("[name=\"" + field.name + "_file_name\"]");
+        if (nameEl && nameEl.value && !obj.name) obj.file_name = nameEl.value;
+        return;
+      }
       const raw = (el.value || "").trim();
       if (field.type === "number") {
         obj[field.name] = raw === "" ? (field.default != null ? Number(field.default) : 0) : Number(raw);
@@ -11201,7 +11221,56 @@
     const lab = document.createElement("label");
     lab.textContent = field.label || field.name;
     let input;
-    if (field.type === "textarea") {
+    if (field.type === "file") {
+      wrap.className = "ext-tool-field ext-file-field";
+      const hidden = document.createElement("input");
+      hidden.type = "hidden";
+      hidden.name = field.name;
+      const ctHidden = document.createElement("input");
+      ctHidden.type = "hidden";
+      ctHidden.name = field.name + "_content_type";
+      const nameHidden = document.createElement("input");
+      nameHidden.type = "hidden";
+      nameHidden.name = field.name + "_file_name";
+      const fileInput = document.createElement("input");
+      fileInput.type = "file";
+      fileInput.accept = field.accept || "*/*";
+      const meta = document.createElement("div");
+      meta.className = "field-hint";
+      meta.textContent = field.hint || "Choose a file (sent as base64).";
+      fileInput.addEventListener("change", () => {
+        const f = fileInput.files && fileInput.files[0];
+        if (!f) {
+          hidden.value = "";
+          ctHidden.value = "";
+          nameHidden.value = "";
+          meta.textContent = field.hint || "Choose a file (sent as base64).";
+          return;
+        }
+        if (f.size > 4 * 1024 * 1024) {
+          meta.textContent = "File too large (max 4 MiB).";
+          fileInput.value = "";
+          hidden.value = "";
+          return;
+        }
+        const reader = new FileReader();
+        reader.onload = () => {
+          const dataUrl = String(reader.result || "");
+          const comma = dataUrl.indexOf(",");
+          hidden.value = comma >= 0 ? dataUrl.slice(comma + 1) : dataUrl;
+          ctHidden.value = f.type || "application/octet-stream";
+          nameHidden.value = f.name || "";
+          meta.textContent = f.name + " · " + Math.round(f.size / 1024) + " KiB · " + (f.type || "file");
+        };
+        reader.onerror = () => {
+          meta.textContent = "Failed to read file.";
+          hidden.value = "";
+        };
+        reader.readAsDataURL(f);
+      });
+      wrap.append(lab, fileInput, hidden, ctHidden, nameHidden, meta);
+      return wrap;
+    } else if (field.type === "textarea") {
       input = document.createElement("textarea");
       input.rows = field.rows || 4;
     } else if (field.type === "select") {
