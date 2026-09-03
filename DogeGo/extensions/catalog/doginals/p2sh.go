@@ -110,7 +110,7 @@ type p2shPartial struct {
 
 // ExtractP2SHInscriptionPartial parses apezord/booktoshi P2SH scriptSig unlock data.
 // Unlock layout: inscription pushdatas + signature + redeemScript (last two pushes ignored when present).
-// Protocol: https://github.com/apezord/doginals — redeem scripts start with inscription push datas.
+// Protocol: https://github.com/apezord/doginals  -  redeem scripts start with inscription push datas.
 func ExtractP2SHInscriptionPartial(scriptSig []byte) (p2shPartial, bool) {
 	var z p2shPartial
 	chunks := ParseScriptChunks(scriptSig)
@@ -122,7 +122,7 @@ func ExtractP2SHInscriptionPartial(scriptSig []byte) (p2shPartial, bool) {
 	if len(chunks) >= 3 {
 		last := chunks[len(chunks)-1]
 		prev := chunks[len(chunks)-2]
-		// Redeem scripts are typically larger than a sighash; signatures are 65–73 bytes-ish.
+		// Redeem scripts are typically larger than a sighash; signatures are 65-73 bytes-ish.
 		if len(last.Buf) >= 25 && len(prev.Buf) >= 8 && len(prev.Buf) <= 80 {
 			dataChunks = chunks[:len(chunks)-2]
 		}

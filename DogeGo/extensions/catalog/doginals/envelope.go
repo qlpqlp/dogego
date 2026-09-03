@@ -7,6 +7,7 @@ package doginals
 
 import (
 	"bytes"
+	"fmt"
 	"strings"
 	"unicode/utf8"
 )
@@ -88,6 +89,48 @@ func ParseOrdEnvelope(script []byte) (Envelope, bool) {
 		return z, false
 	}
 	return z, false
+}
+
+// BuildOrdEnvelope encodes the official Ordinals inscription envelope:
+//
+//	OP_FALSE OP_IF
+//	  "ord"
+//	  OP_1 <content-type>
+//	  OP_0 <body>
+//	OP_ENDIF
+//
+// Same layout the L1 indexer parses from witness. Used for L2 Ordinals mints.
+func BuildOrdEnvelope(contentType string, body []byte) ([]byte, error) {
+	contentType = strings.TrimSpace(contentType)
+	if contentType == "" {
+		contentType = sniffContentType(body)
+	}
+	if contentType == "" {
+		contentType = "application/octet-stream"
+	}
+	if len(body) == 0 {
+		return nil, fmt.Errorf("ordinal envelope requires content bytes")
+	}
+	ordPush, err := pushData([]byte("ord"))
+	if err != nil {
+		return nil, err
+	}
+	ctPush, err := pushData([]byte(contentType))
+	if err != nil {
+		return nil, err
+	}
+	bodyPush, err := pushData(body)
+	if err != nil {
+		return nil, err
+	}
+	out := []byte{0x00, 0x63} // OP_FALSE OP_IF
+	out = append(out, ordPush...)
+	out = append(out, 0x51) // OP_1 content-type tag
+	out = append(out, ctPush...)
+	out = append(out, 0x00) // OP_0 body tag
+	out = append(out, bodyPush...)
+	out = append(out, 0x68) // OP_ENDIF
+	return out, nil
 }
 
 func readOrdTag(script []byte, i int) (int, int, bool) {

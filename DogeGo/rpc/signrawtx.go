@@ -59,12 +59,14 @@ func execSignRawTransaction(chainName string, paths *DataPaths, params []json.Ra
 			return nil, -8, "signrawtransaction: prevtxs must be an array or null"
 		}
 	}
+	walletPrev, werr := buildWalletPrevTxs(tx, paths)
+	if werr != nil {
+		return nil, -8, "signrawtransaction: " + werr.Error()
+	}
 	if len(prevJSON) == 0 {
-		var err error
-		prevJSON, err = buildWalletPrevTxs(tx, paths)
-		if err != nil {
-			return nil, -8, "signrawtransaction: " + err.Error()
-		}
+		prevJSON = walletPrev
+	} else if len(walletPrev) > 0 {
+		prevJSON = mergePrevTxJSON(walletPrev, prevJSON)
 	}
 	if len(prevJSON) == 0 {
 		return nil, -8, "signrawtransaction: prevtxs required (or enable wallet + UTXO cache for auto prevouts)"
@@ -77,19 +79,19 @@ func execSignRawTransaction(chainName string, paths *DataPaths, params []json.Ra
 	var privStrs []string
 	if len(params) >= 3 && string(params[2]) != "null" {
 		if err := json.Unmarshal(params[2], &privStrs); err != nil {
-			return nil, -8, errPrefix+": privkeys must be an array of strings"
+			return nil, -8, errPrefix + ": privkeys must be an array of strings"
 		}
 	}
 	useWalletKeys := !o.keysOnly && (len(params) < 3 || strings.TrimSpace(string(params[2])) == "null")
 	if o.keysOnly {
 		if len(params) < 3 || strings.TrimSpace(string(params[2])) == "null" || len(privStrs) == 0 {
-			return nil, -8, errPrefix+": privkeys array required"
+			return nil, -8, errPrefix + ": privkeys array required"
 		}
 	} else if len(privStrs) == 0 {
 		privStrs = rpcWalletWIFs(paths)
 	}
 	if len(privStrs) == 0 {
-		return nil, -8, errPrefix+": privkeys array required (or enable built-in wallet)"
+		return nil, -8, errPrefix + ": privkeys array required (or enable built-in wallet)"
 	}
 	if useWalletKeys && rpcWalletDefaultAddress(paths) != "" {
 		if code, msg := rpcWalletRequireUnlocked(paths); code != 0 {
@@ -165,7 +167,15 @@ func execSignRawTransaction(chainName string, paths *DataPaths, params []json.Ra
 				continue
 			}
 		}
-		scriptSig, signErr := signInputScript(tx, idx, spk, redeem, innerRedeem, keys, hashType)
+		var doginalPartial []byte
+		if ent.DoginalPartial != "" {
+			doginalPartial, err = hex.DecodeString(strings.TrimPrefix(strings.TrimSpace(ent.DoginalPartial), "0x"))
+			if err != nil {
+				errs = append(errs, signRawErrEntry(in, "invalid doginalPartial hex"))
+				continue
+			}
+		}
+		scriptSig, signErr := signInputScript(tx, idx, spk, redeem, innerRedeem, doginalPartial, keys, hashType)
 		if signErr != nil {
 			errs = append(errs, signRawErrEntry(in, signErr.Error()))
 			continue
@@ -217,15 +227,45 @@ type prevOutEnt struct {
 	ScriptPubKey      string
 	RedeemScript      string
 	InnerRedeemScript string
+	DoginalPartial    string // hex of inscription pushdatas prepended to doginal P2SH unlock
 }
 
-func signInputScript(tx *wire.Tx, idx int, spk, redeem, innerRedeem []byte, keys []wifPriv, hashType uint32) ([]byte, error) {
+func signInputScript(tx *wire.Tx, idx int, spk, redeem, innerRedeem, doginalPartial []byte, keys []wifPriv, hashType uint32) ([]byte, error) {
 	scriptCode, p2sh, redeemPushes, err := consensus.SigningScriptAndRedeem(spk, redeem, innerRedeem)
 	if err != nil {
 		return nil, err
 	}
 	if consensus.IsMultisigRedeemScript(scriptCode) {
 		return signMultisigScriptSig(tx, idx, scriptCode, redeemPushes, keys, hashType)
+	}
+	if pub, _, ok := consensus.ParseDoginalLockRedeem(scriptCode); ok {
+		if len(doginalPartial) == 0 {
+			return nil, fmt.Errorf("doginalPartial required for doginal P2SH redeem")
+		}
+		priv, ok := findPrivForPubkeyBytes(keys, pub)
+		if !ok {
+			return nil, fmt.Errorf("no matching private key for doginal lock pubkey")
+		}
+		digest, err := wire.CalcSignatureHashLegacy(scriptCode, hashType, tx, idx)
+		if err != nil {
+			return nil, err
+		}
+		sig := ecdsa.Sign(priv, digest[:])
+		sigWithType := append(sig.Serialize(), byte(hashType&0xff))
+		sigPush, err := pushScriptData(sigWithType)
+		if err != nil {
+			return nil, err
+		}
+		out := append([]byte(nil), doginalPartial...)
+		out = append(out, sigPush...)
+		for _, r := range redeemPushes {
+			p, err := pushScriptData(r)
+			if err != nil {
+				return nil, err
+			}
+			out = append(out, p...)
+		}
+		return out, nil
 	}
 	var wantH160 [20]byte
 	switch {
@@ -355,6 +395,7 @@ func buildPrevOutMap(prevJSON []json.RawMessage) (map[string]prevOutEnt, error) 
 			ScriptPubKey      string `json:"scriptPubKey"`
 			RedeemScript      string `json:"redeemScript"`
 			InnerRedeemScript string `json:"innerRedeemScript"`
+			DoginalPartial    string `json:"doginalPartial"`
 		}
 		if err := json.Unmarshal(raw, &o); err != nil {
 			return nil, fmt.Errorf("prevtxs entry must be an object with txid, vout, scriptPubKey")
@@ -377,9 +418,46 @@ func buildPrevOutMap(prevJSON []json.RawMessage) (map[string]prevOutEnt, error) 
 			ScriptPubKey:      o.ScriptPubKey,
 			RedeemScript:      o.RedeemScript,
 			InnerRedeemScript: o.InnerRedeemScript,
+			DoginalPartial:    o.DoginalPartial,
 		}
 	}
 	return m, nil
+}
+
+// mergePrevTxJSON overlays provided prevtxs on wallet auto prevtxs (provided wins).
+func mergePrevTxJSON(wallet, provided []json.RawMessage) []json.RawMessage {
+	type key struct {
+		txid string
+		vout uint32
+	}
+	order := make([]key, 0, len(wallet)+len(provided))
+	seen := map[key]struct{}{}
+	by := map[key]json.RawMessage{}
+	ingest := func(list []json.RawMessage) {
+		for _, raw := range list {
+			var o struct {
+				Txid string `json:"txid"`
+				Vout uint32 `json:"vout"`
+			}
+			if json.Unmarshal(raw, &o) != nil {
+				continue
+			}
+			txid := strings.TrimSpace(strings.TrimPrefix(strings.ToLower(o.Txid), "0x"))
+			k := key{txid: txid, vout: o.Vout}
+			if _, ok := seen[k]; !ok {
+				seen[k] = struct{}{}
+				order = append(order, k)
+			}
+			by[k] = raw
+		}
+	}
+	ingest(wallet)
+	ingest(provided)
+	out := make([]json.RawMessage, 0, len(order))
+	for _, k := range order {
+		out = append(out, by[k])
+	}
+	return out
 }
 
 func prevMapKey(prevHash [32]byte, vout uint32) string {

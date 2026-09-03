@@ -8,6 +8,7 @@ package doginals
 import (
 	"encoding/base64"
 	"path/filepath"
+	"strings"
 	"testing"
 
 	"dogego/chain"
@@ -18,15 +19,15 @@ import (
 func TestPrepareL2MintImage(t *testing.T) {
 	png := []byte{0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a, 0x00, 0x01}
 	rec, body, err := PrepareL2Mint(map[string]interface{}{
-		"address":        "DDummy",
-		"kind":           "image",
-		"op":             "inscribe",
-		"name":           "Test",
-		"content_type":   "image/png",
-		"content_b64":    base64.StdEncoding.EncodeToString(png),
+		"address":      "DDummy",
+		"kind":         "image",
+		"op":           "inscribe",
+		"name":         "Test",
+		"content_type": "image/png",
+		"content_b64":  base64.StdEncoding.EncodeToString(png),
 	}, "mainnet")
 	if err != nil {
-		// address is dummy — prepare doesn't validate address format
+		// address is dummy  -  prepare doesn't validate address format
 		t.Fatal(err)
 	}
 	if rec.Kind != "image" || rec.ContentHash == "" || len(body) != len(png) {
@@ -100,6 +101,51 @@ func TestAcceptL2MintSignedRoundTrip(t *testing.T) {
 	b2, ok, err := st.GetL2MintBody(accepted.ID)
 	if err != nil || !ok || string(b2) != string(body) {
 		t.Fatalf("%v %v %q", ok, err, b2)
+	}
+}
+
+func TestBuildOrdEnvelopeRoundTrip(t *testing.T) {
+	body := []byte("hello ordinal")
+	env, err := BuildOrdEnvelope("text/plain", body)
+	if err != nil {
+		t.Fatal(err)
+	}
+	parsed, ok := ParseOrdEnvelope(env)
+	if !ok || parsed.ContentType != "text/plain" || string(parsed.Body) != string(body) {
+		t.Fatalf("ok=%v %+v", ok, parsed)
+	}
+}
+
+func TestPrepareL2MintOrdinal(t *testing.T) {
+	png := []byte{0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a, 0x00, 0x01}
+	rec, body, err := PrepareL2Mint(map[string]interface{}{
+		"address":      "DDummy",
+		"kind":         "ordinals",
+		"op":           "inscribe",
+		"name":         "Ord L2",
+		"content_type": "image/png",
+		"content_b64":  base64.StdEncoding.EncodeToString(png),
+	}, "mainnet")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if rec.Kind != "ordinal" || rec.Protocol != "ord" || rec.Op != "inscribe" {
+		t.Fatalf("%+v", rec)
+	}
+	env, err := BuildOrdEnvelope(rec.ContentType, body)
+	if err != nil {
+		t.Fatal(err)
+	}
+	parsed, ok := ParseOrdEnvelope(env)
+	if !ok || parsed.ContentType != "image/png" || len(parsed.Body) != len(png) {
+		t.Fatalf("ok=%v %+v", ok, parsed)
+	}
+}
+
+func TestErrMintL2Only(t *testing.T) {
+	err := errMintL2Only()
+	if err == nil || !strings.Contains(err.Error(), "L2 only") {
+		t.Fatal(err)
 	}
 }
 

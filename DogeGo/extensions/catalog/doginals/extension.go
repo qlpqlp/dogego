@@ -21,11 +21,11 @@ import (
 
 // Extension implements dogego.doginals (L1 observe index + L2 asset overlay).
 type Extension struct {
-	manifest extensions.Manifest
-	mu       sync.Mutex
-	store    *Store
-	host     extensions.Host
-	syncStop chan struct{}
+	manifest  extensions.Manifest
+	mu        sync.Mutex
+	store     *Store
+	host      extensions.Host
+	syncStop  chan struct{}
 	catchStop chan struct{}
 }
 
@@ -43,9 +43,9 @@ func DefaultManifest() extensions.Manifest {
 		ManifestVersion:  extensions.ManifestVersion,
 		ID:               ExtensionID,
 		Name:             "Doginals / DRC-20 L2",
-		Version:          "0.7.0",
+		Version:          "0.8.0",
 		Author:           "DogeGo",
-		Description:      "Doginals / DRC-20 / Ordinals L2: indexes L1 P2SH+envelope+OP_RETURN; mints tokens/images/files on signed L2 (default); wallet API; wizard UI; doginals-v1 P2P. Does not change Dogecoin consensus.",
+		Description:      "Indexes L1 P2SH Doginals, Ord envelopes, and OP_RETURN. Mint is L2-only (tokens/images/files/ordinals), signed and gossiped via doginals-v1. Does not mint on Dogecoin L1. Does not change consensus.",
 		Homepage:         "https://github.com/qlpqlp/dogego",
 		Repository:       "https://github.com/qlpqlp/dogego/tree/main/DogeGo/extensions/catalog/doginals",
 		DogeGoMinVersion: "0.1.0",
@@ -69,12 +69,13 @@ func DefaultManifest() extensions.Manifest {
 			{Name: "listtokens", Help: "List indexed DRC-20 token summaries. Param: [limit?]."},
 			{Name: "gettoken", Help: "Token summary by ticker. Param: [tick]."},
 			{Name: "listbytick", Help: "Inscription events for a ticker. Params: [tick, limit?]."},
-			{Name: "previewinscription", Help: "Build DRC-20 JSON/hex without broadcasting. Params: [op, tick, amt?, max?, lim?] or object."},
-			{Name: "inscribe", Help: "Optional L1 OP_RETURN DRC-20 via wallet_rpc (legacy). Default minting is L2."},
-			{Name: "mint", Help: "Mint on L2 (token/image/file). Signs with wallet_rpc or returns sign_message. Param: object."},
+			{Name: "previewinscription", Help: "Preview DRC-20 JSON/hex (does not broadcast; L1 mint is disabled)."},
+			{Name: "inscribe", Help: "Disabled: minting is L2 only. L1 OP_RETURN is indexed, not minted."},
+			{Name: "mint", Help: "Mint on L2 only (token/image/file/ordinal). Param: object."},
 			{Name: "mintprepare", Help: "Prepare unsigned L2 mint + sign_message. Param: object."},
 			{Name: "mintcommit", Help: "Commit signed L2 mint (verify signature, store, gossip). Param: {record,signature,content_b64?}."},
-			{Name: "mintl2", Help: "Alias of mint (signed L2)."},
+			{Name: "mintl2", Help: "Alias of mint (L2)."},
+			{Name: "mintp2sh", Help: "Disabled: minting is L2 only. L1 P2SH Doginals are indexed, not minted."},
 			{Name: "listmints", Help: "List recent signed L2 mints. Param: [limit?]."},
 			{Name: "getmint", Help: "Fetch one L2 mint by id. Param: [id]."},
 			{Name: "getmintcontent", Help: "Fetch L2 mint media. Param: [id]."},
@@ -121,7 +122,7 @@ func (e *Extension) OnEnable(_ context.Context, host extensions.Host) error {
 	e.startBackgroundSync()
 	e.startCatchUp(host)
 	e.startBackgroundCatchUp()
-	host.Log("doginals: enabled v0.7.0 (L1 P2SH index + signed L2 mint for tokens/images/files)")
+	host.Log("doginals: enabled v0.8.0 (index L1 P2SH/envelope/OP_RETURN; mint L2 only)")
 	return nil
 }
 
@@ -426,11 +427,7 @@ func (e *Extension) HandleRPC(method string, params []json.RawMessage, host exte
 		}
 		return PreviewInscription(op, tick, amt, max, lim)
 	case "inscribe":
-		op, tick, amt, max, lim, broadcast, err := parseInscribeParams(params)
-		if err != nil {
-			return nil, err
-		}
-		return e.InscribeDRC20(host, op, tick, amt, max, lim, broadcast)
+		return nil, errMintL2Only()
 	case "getconfig":
 		return st.GetConfig(), nil
 	case "setconfig":
@@ -467,16 +464,16 @@ func (e *Extension) HandleRPC(method string, params []json.RawMessage, host exte
 			lag = tip - idx
 		}
 		return map[string]interface{}{
-			"protocol_id":   ProtocolID,
-			"commands":      []string{CmdDInv, CmdGetAsset, CmdAsset},
-			"index_height":  idx,
-			"chain_tip":     tip,
-			"index_lag":     lag,
-			"network":       net,
-			"p2p_broadcast": true,
+			"protocol_id":         ProtocolID,
+			"commands":            []string{CmdDInv, CmdGetAsset, CmdAsset},
+			"index_height":        idx,
+			"chain_tip":           tip,
+			"index_lag":           lag,
+			"network":             net,
+			"p2p_broadcast":       true,
 			"background_sync_sec": 60,
-			"api_base":      HTTPAPIBase + "/v1",
-			"note":          "L2 assets sync via doginals-v1 among DogeGo peers. L1 index is local. Wallet REST is extension-owned at /api/ext/dogego.doginals/v1 (host generic /api/ext gateway).",
+			"api_base":            HTTPAPIBase + "/v1",
+			"note":                "L2 assets sync via doginals-v1 among DogeGo peers. L1 index is local. Wallet REST is extension-owned at /api/ext/dogego.doginals/v1 (host generic /api/ext gateway).",
 		}, nil
 	case "getaddress":
 		addr, err := stringParam(params, 0)
@@ -509,7 +506,17 @@ func (e *Extension) HandleRPC(method string, params []json.RawMessage, host exte
 		if err != nil {
 			return nil, err
 		}
+		if method == "mintl2" {
+			if raw == nil {
+				raw = map[string]interface{}{}
+			}
+			if _, ok := raw["destination"]; !ok {
+				raw["destination"] = "l2"
+			}
+		}
 		return e.mintAuto(host, st, raw)
+	case "mintp2sh":
+		return nil, errMintL2Only()
 	case "mintprepare":
 		raw, err := parseMapParam(params)
 		if err != nil {
@@ -567,24 +574,24 @@ func (e *Extension) info(host extensions.Host, st *Store) map[string]interface{}
 	recentTok, _ := st.ListTokens(12)
 	recentIns, _ := st.ListInscriptions(12)
 	out := map[string]interface{}{
-		"extension":            ExtensionID,
-		"protocol_id":          ProtocolID,
-		"network":              net,
-		"chain_tip":            tip,
-		"index_height":         st.IndexHeight(),
-		"inscriptions":         st.CountInscriptions(),
-		"l2_assets":            st.CountAssets(),
-		"tokens":               st.CountTokens(),
-		"recent_tokens":        recentTok,
-		"recent_inscriptions":  recentIns,
-		"l2_mints":             st.CountL2Mints(),
-		"config":               cfg,
-		"not_consensus":        true,
-		"experimental":         true,
-		"l1_observe_only":      true,
-		"l2_off_chain":         true,
-		"wallet_rpc":           true,
-		"recorded_unix":        time.Now().Unix(),
+		"extension":           ExtensionID,
+		"protocol_id":         ProtocolID,
+		"network":             net,
+		"chain_tip":           tip,
+		"index_height":        st.IndexHeight(),
+		"inscriptions":        st.CountInscriptions(),
+		"l2_assets":           st.CountAssets(),
+		"tokens":              st.CountTokens(),
+		"recent_tokens":       recentTok,
+		"recent_inscriptions": recentIns,
+		"l2_mints":            st.CountL2Mints(),
+		"config":              cfg,
+		"not_consensus":       true,
+		"experimental":        true,
+		"l1_observe_only":     true,
+		"l2_off_chain":        true,
+		"wallet_rpc":          true,
+		"recorded_unix":       time.Now().Unix(),
 	}
 	out["ui"] = buildUIPanel(out)
 	return out

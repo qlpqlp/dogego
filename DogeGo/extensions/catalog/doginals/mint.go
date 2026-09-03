@@ -7,6 +7,7 @@ package doginals
 
 import (
 	"encoding/base64"
+	"encoding/hex"
 	"encoding/json"
 	"fmt"
 	"strings"
@@ -35,11 +36,12 @@ func (e *Extension) mintPrepare(host extensions.Host, st *Store, raw map[string]
 		"sign_message": msg,
 		"sign_via":     signVia,
 		"size":         len(body),
-		"note":         "L2 mint is wallet-signed and gossiped among doginals-v1 peers. Not Dogecoin L1 consensus. Classic P2SH/OP_RETURN are indexed from L1 only.",
+		"note":         "Mint is L2 only. Signed records gossip among doginals-v1 peers. Not Dogecoin L1 consensus. L1 P2SH/Ordinals/OP_RETURN are indexed when they already exist on-chain.",
 	}
 	if len(body) > 0 && len(body) <= 64*1024 {
 		out["content_b64"] = encodeB64(body)
 	}
+	attachOrdEnvelopeMeta(out, rec, body)
 	return out, nil
 }
 
@@ -113,19 +115,32 @@ func (e *Extension) mintCommit(host extensions.Host, st *Store, raw map[string]i
 		"address": accepted.Address, "tick": accepted.Tick, "amount": accepted.Amt,
 		"content_type": accepted.ContentType, "size": accepted.Size,
 		"has_content": accepted.HasContent,
-		"note":        "Accepted signed L2 mint. Indexed by Doginals-enabled DogeGo peers via doginals-v1.",
+		"note":        "Accepted signed L2 mint. Gossiped permissionlessly to Doginals-enabled DogeGo peers via doginals-v1.",
 	}
+	attachOrdEnvelopeMeta(out, accepted, body)
 	return out, nil
 }
 
-// mintAuto prepares and signs via wallet_rpc when possible, then commits.
+// mintAuto prepares and signs via wallet_rpc when possible, then commits. Mint is L2 only.
 func (e *Extension) mintAuto(host extensions.Host, st *Store, raw map[string]interface{}) (map[string]interface{}, error) {
-	target := strings.ToLower(strings.TrimSpace(fmt.Sprint(raw["target"])))
-	if target == "" {
-		target = "l2"
+	dest := strings.ToLower(strings.TrimSpace(fmt.Sprint(raw["destination"])))
+	if dest == "" || dest == "<nil>" {
+		dest = strings.ToLower(strings.TrimSpace(fmt.Sprint(raw["target"])))
 	}
-	if target == "l1" {
-		return nil, fmt.Errorf("for L1 OP_RETURN use method inscribe; P2SH is index-only (no L1 mint builder). Default mint target is L2")
+	if dest == "" || dest == "<nil>" {
+		dest = strings.ToLower(strings.TrimSpace(fmt.Sprint(raw["protocol"])))
+	}
+	switch dest {
+	case "", "l2", "doginals-l2", "ordinal", "ordinals", "ord", "envelope":
+		if dest == "ordinal" || dest == "ordinals" || dest == "ord" || dest == "envelope" {
+			if strings.TrimSpace(fmt.Sprint(raw["kind"])) == "" || fmt.Sprint(raw["kind"]) == "<nil>" {
+				raw["kind"] = "ordinal"
+			}
+		}
+	case "p2sh", "l1-p2sh", "doginals", "apezord", "opreturn", "l1", "l1-opreturn", "drc20":
+		return nil, errMintL2Only()
+	default:
+		return nil, errMintL2Only()
 	}
 	// If caller already provided a signature, commit directly.
 	if sig, _ := raw["signature"].(string); strings.TrimSpace(sig) != "" {
@@ -177,6 +192,8 @@ func mapMintKindToAsset(kind string) string {
 		return "token"
 	case "image":
 		return "image"
+	case "ordinal":
+		return "nft"
 	case "file":
 		return "nft"
 	default:
@@ -216,7 +233,21 @@ func (e *Extension) mintContentResponse(st *Store, id string) map[string]interfa
 		out["content_type"] = ct
 		out["size"] = len(body)
 	}
+	attachOrdEnvelopeMeta(out, r, body)
 	return out
+}
+
+func attachOrdEnvelopeMeta(out map[string]interface{}, rec L2MintRecord, body []byte) {
+	if out == nil || !isOrdinalKind(rec.Kind, rec.Protocol) || len(body) == 0 {
+		return
+	}
+	env, err := BuildOrdEnvelope(rec.ContentType, body)
+	if err != nil {
+		return
+	}
+	out["protocol"] = "ord"
+	out["envelope_hex"] = hex.EncodeToString(env)
+	out["envelope_note"] = "Official Ordinals envelope (OP_FALSE OP_IF ord ... OP_ENDIF). Signed and stored on L2 only."
 }
 
 func recordFromPrep(v interface{}) L2MintRecord {
@@ -231,4 +262,8 @@ func recordFromPrep(v interface{}) L2MintRecord {
 	default:
 		return L2MintRecord{}
 	}
+}
+
+func errMintL2Only() error {
+	return fmt.Errorf("minting is L2 only. This extension does not mint Doginals, Ordinals, P2SH, or OP_RETURN on Dogecoin L1. Existing L1 inscriptions are indexed only")
 }

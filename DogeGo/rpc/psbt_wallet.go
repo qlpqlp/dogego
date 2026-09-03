@@ -106,11 +106,11 @@ func execWalletCreateFundedPsbt(chainName string, paths *DataPaths, j HeaderJour
 	}
 	ser, err := tx.Serialize()
 	if err != nil {
-		return nil, -8, "walletcreatefundedpsbt: "+err.Error()
+		return nil, -8, "walletcreatefundedpsbt: " + err.Error()
 	}
 	optsRaw, err := json.Marshal(fundRawTxOptionsToMap(fundOpts))
 	if err != nil {
-		return nil, -8, "walletcreatefundedpsbt: "+err.Error()
+		return nil, -8, "walletcreatefundedpsbt: " + err.Error()
 	}
 	fundRes, code, msg := execFundRawTransaction(chainName, paths, j, raw, ix, []json.RawMessage{
 		json.RawMessage(`"` + hex.EncodeToString(ser) + `"`),
@@ -156,8 +156,8 @@ func execWalletCreateFundedPsbt(chainName string, paths *DataPaths, j HeaderJour
 
 func fundRawTxOptionsToMap(o fundRawTxOptions) map[string]interface{} {
 	m := map[string]interface{}{
-		"add_inputs":     o.addInputs,
-		"lockUnspents":   o.lockUnspents,
+		"add_inputs":      o.addInputs,
+		"lockUnspents":    o.lockUnspents,
 		"includeWatching": o.includeWatching,
 	}
 	if o.changeAddr != "" {
@@ -307,7 +307,7 @@ func signPsbtWithWallet(chainName string, paths *DataPaths, p *wire.Psbt, hashTy
 		if ent.InnerRedeemScript != "" {
 			innerRedeem, _ = hex.DecodeString(strings.TrimPrefix(strings.TrimSpace(ent.InnerRedeemScript), "0x"))
 		}
-		scriptSig, signErr := signInputScript(tx, idx, spk, redeem, innerRedeem, keys, hashType)
+		scriptSig, signErr := signInputScript(tx, idx, spk, redeem, innerRedeem, nil, keys, hashType)
 		if signErr != nil {
 			continue
 		}

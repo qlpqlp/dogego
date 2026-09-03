@@ -38,7 +38,8 @@ type L2MintRecord struct {
 	P            string `json:"p"`  // doginals-l2
 	V            int    `json:"v"`  // 1
 	Op           string `json:"op"` // mint|deploy|transfer|inscribe
-	Kind         string `json:"kind"` // token|image|file|nft
+	Kind         string `json:"kind"` // token|image|file|nft|ordinal
+	Protocol     string `json:"protocol,omitempty"` // ord for Ordinals-style envelopes
 	Tick         string `json:"tick,omitempty"`
 	Amt          string `json:"amt,omitempty"`
 	Max          string `json:"max,omitempty"`
@@ -111,7 +112,7 @@ func PrepareL2Mint(raw map[string]interface{}, network string) (L2MintRecord, []
 	if op == "" {
 		op = "mint"
 	}
-	kind := strings.ToLower(strings.TrimSpace(fmt.Sprint(raw["kind"])))
+	kind := normalizeL2Kind(fmt.Sprint(raw["kind"]))
 	tick := strings.ToUpper(strings.TrimSpace(fmt.Sprint(raw["tick"])))
 	amt := strings.TrimSpace(fmt.Sprint(raw["amount"]))
 	if amt == "" {
@@ -142,7 +143,7 @@ func PrepareL2Mint(raw map[string]interface{}, network string) (L2MintRecord, []
 	}
 
 	switch kind {
-	case "token", "image", "file", "nft":
+	case "token", "image", "file", "nft", "ordinal":
 	case "":
 		if len(body) > 0 {
 			mk := ClassifyMediaKind(ct, body, false)
@@ -162,7 +163,7 @@ func PrepareL2Mint(raw map[string]interface{}, network string) (L2MintRecord, []
 			kind = "nft"
 		}
 	default:
-		return z, nil, fmt.Errorf("kind must be token|image|file|nft")
+		return z, nil, fmt.Errorf("kind must be token|image|file|nft|ordinal")
 	}
 
 	switch op {
@@ -174,8 +175,11 @@ func PrepareL2Mint(raw map[string]interface{}, network string) (L2MintRecord, []
 	if kind == "token" && tick == "" {
 		return z, nil, fmt.Errorf("tick required for token mints")
 	}
-	if (kind == "image" || kind == "file") && len(body) == 0 && uri == "" {
-		return z, nil, fmt.Errorf("content_b64 or uri required for image/file mint")
+	if (kind == "image" || kind == "file" || kind == "ordinal") && len(body) == 0 && uri == "" {
+		return z, nil, fmt.Errorf("content_b64 or uri required for image/file/ordinal mint")
+	}
+	if kind == "ordinal" && len(body) == 0 {
+		return z, nil, fmt.Errorf("content_b64 required for L2 Ordinals mint (Choose file)")
 	}
 	if name == "" {
 		switch kind {
@@ -185,6 +189,8 @@ func PrepareL2Mint(raw map[string]interface{}, network string) (L2MintRecord, []
 			name = "Doginal image"
 		case "file":
 			name = "Doginal file"
+		case "ordinal":
+			name = "Ordinal inscription"
 		default:
 			name = "Doginal L2"
 		}
@@ -197,11 +203,18 @@ func PrepareL2Mint(raw map[string]interface{}, network string) (L2MintRecord, []
 		to = addr
 	}
 
+	if kind == "ordinal" {
+		if op == "mint" {
+			op = "inscribe"
+		}
+	}
+
 	r := L2MintRecord{
 		P:           L2ProtocolName,
 		V:           L2ProtocolV,
 		Op:          op,
 		Kind:        kind,
+		Protocol:    ordinalProtocol(kind),
 		Tick:        tick,
 		Amt:         amt,
 		Max:         strings.TrimSpace(fmt.Sprint(raw["max"])),
@@ -230,6 +243,26 @@ func PrepareL2Mint(raw map[string]interface{}, network string) (L2MintRecord, []
 		r.MediaKind = kind
 	}
 	return r, body, nil
+}
+
+func normalizeL2Kind(s string) string {
+	switch strings.ToLower(strings.TrimSpace(s)) {
+	case "ordinals", "ord", "envelope", "inscription":
+		return "ordinal"
+	default:
+		return strings.ToLower(strings.TrimSpace(s))
+	}
+}
+
+func ordinalProtocol(kind string) string {
+	if kind == "ordinal" {
+		return "ord"
+	}
+	return ""
+}
+
+func isOrdinalKind(kind, protocol string) bool {
+	return kind == "ordinal" || protocol == "ord"
 }
 
 // VerifyDogecoinMessage checks Core/Dogecoin signmessage compact signature for a P2PKH address.

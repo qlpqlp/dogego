@@ -65,9 +65,9 @@ func buildUIPanel(info map[string]interface{}) map[string]interface{} {
 	}
 
 	return map[string]interface{}{
-		"panel_title": "Doginals L2",
-		"subtitle":    "Index Doginals / DRC-20 / Ordinals on L1, sync L2 assets with peers, mint on-chain or off-L1.",
-		"summary":     "Wizard · Doginals wallet API · doginals-v1 P2P",
+		"panel_title":  "Doginals L2",
+		"subtitle":     "Index Doginals / DRC-20 / Ordinals on L1. Mint only on signed L2. Sync with peers over doginals-v1.",
+		"summary":      "Wizard · Doginals wallet API · doginals-v1 P2P",
 		"status_chips": chips,
 		"layout":       "workspace",
 		"nav": []map[string]interface{}{
@@ -79,8 +79,8 @@ func buildUIPanel(info map[string]interface{}) map[string]interface{} {
 		},
 		"sections": map[string]interface{}{
 			"setup": map[string]interface{}{
-				"title": "Step 1 — Setup",
-				"lead":  "Enable wallet RPC if you plan to mint on Dogecoin L1. Settings persist under data/ across upgrades.",
+				"title": "Step 1 - Setup",
+				"lead":  "Enable wallet RPC for one-click L2 mint signing. Settings persist under data/ across upgrades.",
 				"wizards": []map[string]interface{}{
 					{
 						"id": "setup_wizard", "title": "Quick setup", "method": "setconfig", "icon": "check_circle",
@@ -88,10 +88,10 @@ func buildUIPanel(info map[string]interface{}) map[string]interface{} {
 						"steps": []map[string]interface{}{
 							{
 								"id": "wallet", "title": "Wallet",
-								"hint": "Unlock the dashboard wallet before L1 mint/deploy broadcast.",
+								"hint": "Unlock the dashboard wallet for one-click L2 signmessage.",
 								"fields": []map[string]interface{}{
 									{"name": "wallet_rpc_enabled", "label": "Enable wallet RPC", "type": "switch", "default": boolStr(walletOn),
-										"hint": "Required for on-chain DRC-20 inscribe."},
+										"hint": "Required to sign L2 mints with signmessage."},
 									{"name": "auto_broadcast", "label": "Auto-broadcast after sign", "type": "switch", "default": boolStr(autoBC)},
 									{"name": "preferred_address", "label": "Preferred address", "type": "text", "placeholder": "D…", "default": prefAddr},
 								},
@@ -105,8 +105,8 @@ func buildUIPanel(info map[string]interface{}) map[string]interface{} {
 				},
 			},
 			"sync": map[string]interface{}{
-				"title": "Step 2 — Sync index",
-				"lead":  "L1 index runs locally as blocks connect. L2 assets gossip via doginals-v1 among DogeGo peers (like block sync for metadata).",
+				"title": "Step 2 - Sync index",
+				"lead":  "L1 index runs locally as blocks connect (P2SH Doginals, Ord envelopes, OP_RETURN). L2 mints gossip permissionlessly via doginals-v1 among peers that enable this extension.",
 				"widgets": []map[string]interface{}{
 					{
 						"type":    "progress",
@@ -119,7 +119,7 @@ func buildUIPanel(info map[string]interface{}) map[string]interface{} {
 						"tone":  "neutral",
 						"icon":  "hub",
 						"title": "Decentralized L2 overlay",
-						"body":  "Protocol doginals-v1 · commands dinv / getdasset / dasset. Background sync every 60s. Not Dogecoin consensus — experimental second layer for metadata and off-L1 balances.",
+						"body":  "Any DogeGo node that enables Doginals can join. Protocol doginals-v1 commands: dinv / getdasset / dasset / dminv / getdmint / dmint. No registrar. Peers request missing ids and accept only valid signmessage signatures. Syncs about every 60s. Not Dogecoin consensus.",
 					},
 				},
 				"tools": []map[string]interface{}{
@@ -138,15 +138,15 @@ func buildUIPanel(info map[string]interface{}) map[string]interface{} {
 				},
 			},
 			"create": map[string]interface{}{
-				"title": "Step 3 — Create (L2 mint)",
-				"lead":  "When this extension is enabled, minting defaults to signed L2 (tokens, images, files). Classic P2SH/OP_RETURN Doginals on L1 are indexed only — optional L1 OP_RETURN mint remains as advanced.",
+				"title": "Step 3 - Create / mint (L2 only)",
+				"lead":  "Mint tokens, images, files, and Ordinals on signed L2 only. L1 Doginals / Ordinals / P2SH / OP_RETURN are indexed, never minted here. Use Choose file to pick an image.",
 				"widgets": []map[string]interface{}{
 					{
 						"type":  "callout",
 						"tone":  "ok",
 						"icon":  "verified",
-						"title": "Signed L2 mints",
-						"body":  "Each mint is signed with your Dogecoin address (signmessage). Other Doginals-enabled DogeGo nodes verify the signature before accepting. Not Dogecoin consensus — verifiable among overlay peers.",
+						"title": "Mint is L2 only",
+						"body":  "Your wallet signs the mint (signmessage). Other Doginals-enabled nodes verify the signature and gossip it. Anyone can run a node; there is no gatekeeper. Classic on-chain P2SH, Ord envelopes, and OP_RETURN are still indexed from the chain.",
 					},
 				},
 				"wizards": []map[string]interface{}{
@@ -158,6 +158,8 @@ func buildUIPanel(info map[string]interface{}) map[string]interface{} {
 								"id": "who", "title": "Token",
 								"hint": "Requires wallet unlock + wallet RPC in Setup if you want one-click sign. Otherwise you get a sign_message to sign externally.",
 								"fields": []map[string]interface{}{
+									{"name": "destination", "label": "Destination", "type": "select", "default": "l2",
+										"options": []map[string]string{{"value": "l2", "label": "L2 (signed overlay)"}}},
 									{"name": "kind", "label": "Kind", "type": "select", "default": "token",
 										"options": []map[string]string{{"value": "token", "label": "Token (DRC-20 style)"}}},
 									{"name": "op", "label": "Operation", "type": "select", "default": "mint",
@@ -179,54 +181,46 @@ func buildUIPanel(info map[string]interface{}) map[string]interface{} {
 						"steps": []map[string]interface{}{
 							{
 								"id": "meta", "title": "Media",
-								"hint": "Select an image or any file. Content is hashed, signed, stored, and gossiped. Max 4 MiB.",
+								"hint": "Click Choose file to pick an image or any file (max 4 MiB). Content is hashed, signed, stored, and gossiped.",
 								"fields": []map[string]interface{}{
+									{"name": "destination", "label": "Destination", "type": "select", "default": "l2",
+										"options": []map[string]string{{"value": "l2", "label": "L2 (signed overlay)"}}},
 									{"name": "kind", "label": "Kind", "type": "select", "default": "image",
 										"options": []map[string]string{
 											{"value": "image", "label": "Image"},
 											{"value": "file", "label": "File"},
 											{"value": "nft", "label": "NFT"},
+											{"value": "ordinal", "label": "Ordinals"},
 										}},
 									{"name": "op", "label": "Operation", "type": "select", "default": "inscribe",
 										"options": []map[string]string{{"value": "inscribe", "label": "Inscribe"}}},
 									{"name": "address", "label": "Signer address (P2PKH)", "type": "text", "placeholder": "D…", "default": prefAddr},
 									{"name": "name", "label": "Name", "type": "text", "placeholder": "Much Wow #1"},
 									{"name": "content_b64", "label": "Image / file", "type": "file",
-										"accept": "image/*,*/*", "hint": "Stored as content_b64 for the mint API."},
+										"accept": "image/*,*/*", "hint": "Use Choose file (not a path). Sent as base64."},
 									{"name": "uri", "label": "External URI (optional)", "type": "text", "placeholder": "ipfs://…"},
 								},
 							},
 						},
 					},
 					{
-						"id": "drc20_wizard", "title": "Advanced: DRC-20 on L1 (OP_RETURN)", "method": "inscribe", "icon": "currency_bitcoin",
-						"finish_label": "Build / broadcast L1",
+						"id": "l2_ordinal_wizard", "title": "Mint Ordinals on L2", "method": "mint", "icon": "filter_vintage",
+						"finish_label": "Mint Ordinals on L2",
 						"steps": []map[string]interface{}{
 							{
-								"id": "op", "title": "Operation",
-								"hint": "Writes to Dogecoin. Prefer L2 mint above when using DogeGo. P2SH minting is not offered — L1 P2SH is indexed only.",
+								"id": "ord", "title": "Inscription",
+								"hint": "Official Ordinals envelope (OP_FALSE OP_IF ord ...). Choose a file. Signed and stored on L2, then gossiped to peers.",
 								"fields": []map[string]interface{}{
-									{"name": "op", "label": "Operation", "type": "select", "default": "mint",
-										"options": []map[string]string{
-											{"value": "deploy", "label": "Deploy"},
-											{"value": "mint", "label": "Mint"},
-											{"value": "transfer", "label": "Transfer"},
-										}},
-								},
-							},
-							{
-								"id": "params", "title": "Token",
-								"fields": []map[string]interface{}{
-									{"name": "tick", "label": "Ticker", "type": "text", "placeholder": "woof"},
-									{"name": "amt", "label": "Amount", "type": "text", "placeholder": "1000"},
-									{"name": "max", "label": "Max (deploy)", "type": "text"},
-									{"name": "lim", "label": "Limit (deploy)", "type": "text"},
-								},
-							},
-							{
-								"id": "broadcast", "title": "Broadcast",
-								"fields": []map[string]interface{}{
-									{"name": "broadcast", "label": "Broadcast to Dogecoin", "type": "switch", "default": "false"},
+									{"name": "destination", "label": "Destination", "type": "select", "default": "l2",
+										"options": []map[string]string{{"value": "l2", "label": "L2 (signed overlay)"}}},
+									{"name": "kind", "label": "Kind", "type": "select", "default": "ordinal",
+										"options": []map[string]string{{"value": "ordinal", "label": "Ordinals (ord envelope)"}}},
+									{"name": "op", "label": "Operation", "type": "select", "default": "inscribe",
+										"options": []map[string]string{{"value": "inscribe", "label": "Inscribe"}}},
+									{"name": "address", "label": "Signer address (P2PKH)", "type": "text", "placeholder": "D…", "default": prefAddr},
+									{"name": "name", "label": "Name", "type": "text", "placeholder": "Ordinal #1"},
+									{"name": "content_b64", "label": "Image / file", "type": "file",
+										"accept": "image/*,*/*", "hint": "Click Choose file. Encoded as an ord envelope and stored on L2."},
 								},
 							},
 						},
@@ -234,7 +228,7 @@ func buildUIPanel(info map[string]interface{}) map[string]interface{} {
 				},
 			},
 			"api": map[string]interface{}{
-				"title": "Step 4 — Wallet API",
+				"title": "Step 4 - Wallet API",
 				"lead":  "Doginals wallet read routes for mobile wallets and websites. Enable this extension on your node.",
 				"widgets": []map[string]interface{}{
 					{
@@ -242,10 +236,10 @@ func buildUIPanel(info map[string]interface{}) map[string]interface{} {
 						"tone":  "ok",
 						"icon":  "api",
 						"title": "Public read API (CORS *)",
-						"body":  "GET …/status · /tokens · /address/{addr} · /txid/{txid} · /inscription/{id}/content · /mints · /mint/{id}/content. POST …/mint (L2 token/image/file) · /mint/prepare · /mint/commit. Optional POST …/inscribe for L1 OP_RETURN. Unlock required for writes.",
+						"body":  "GET …/status · /tokens · /address/{addr} · /txid/{txid} · /inscription/{id}/content · /mints · /mint/{id}/content. POST …/mint (L2 only) · /mint/prepare · /mint/commit. Unlock required for writes.",
 					},
 					{
-						"type": "item_list",
+						"type":  "item_list",
 						"title": "Example routes",
 						"items": []map[string]interface{}{
 							{"title": "Status", "meta": "GET /api/ext/dogego.doginals/v1/status", "id": "status"},
@@ -262,7 +256,7 @@ func buildUIPanel(info map[string]interface{}) map[string]interface{} {
 			},
 			"browse": map[string]interface{}{
 				"title": "Browse index",
-				"lead":  "Tokens, inscriptions (images/files/DRC-20), and L2 assets indexed on this node — including classic P2SH Doginals.",
+				"lead":  "L1 inscriptions (P2SH / envelopes / OP_RETURN) plus L2 signed mints indexed on this node.",
 				"widgets": append(append([]map[string]interface{}{
 					{
 						"type": "stats",

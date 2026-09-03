@@ -64,6 +64,9 @@ func signingScriptCodeFromRedeemSimple(redeem []byte) ([]byte, error) {
 		return inner, err
 	case IsMultisigRedeemScript(redeem):
 		return redeem, nil
+	case IsDoginalLockRedeem(redeem):
+		// apezord/doginals: sighash scriptCode is the full lock redeem.
+		return redeem, nil
 	default:
 		return signingScriptFromTimelockInner(redeem)
 	}

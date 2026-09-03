@@ -153,6 +153,8 @@ func (e *Extension) handleHTTP(host extensions.Host, st *Store, params []json.Ra
 		}
 		b, _ := json.Marshal(body)
 		return e.HandleRPC("mint", []json.RawMessage{b}, host)
+	case method == "POST" && path == "v1/mint/p2sh":
+		return jsonErr(400, errMintL2Only().Error()), nil
 	case method == "POST" && path == "v1/mint/prepare":
 		if body == nil {
 			return jsonErr(400, "json body required"), nil
@@ -166,11 +168,7 @@ func (e *Extension) handleHTTP(host extensions.Host, st *Store, params []json.Ra
 		b, _ := json.Marshal(body)
 		return e.HandleRPC("mintcommit", []json.RawMessage{b}, host)
 	case method == "POST" && path == "v1/inscribe":
-		if body == nil {
-			return jsonErr(400, "json body required"), nil
-		}
-		b, _ := json.Marshal(body)
-		return e.HandleRPC("inscribe", []json.RawMessage{b}, host)
+		return jsonErr(400, errMintL2Only().Error()), nil
 	default:
 		return jsonErr(404, "unknown route"), nil
 	}
@@ -178,10 +176,10 @@ func (e *Extension) handleHTTP(host extensions.Host, st *Store, params []json.Ra
 
 func (e *Extension) apiManifest() map[string]interface{} {
 	return map[string]interface{}{
-		"version":  "0.7.0",
+		"version":  "0.8.0",
 		"compat":   []string{"doginals-wallet-v1", "doginals-l2-v1"},
 		"api_base": HTTPAPIBase + "/v1",
-		"note":     "Owned by dogego.doginals via httphandle; host only proxies /api/ext/{id}/…",
+		"note":     "Owned by dogego.doginals via httphandle. Mint is L2 only. L1 inscriptions are indexed.",
 		"routes": []string{
 			"GET " + HTTPAPIBase + "/v1/status",
 			"GET " + HTTPAPIBase + "/v1/tokens",
@@ -194,11 +192,10 @@ func (e *Extension) apiManifest() map[string]interface{} {
 			"GET " + HTTPAPIBase + "/v1/mints",
 			"GET " + HTTPAPIBase + "/v1/mint/{id}",
 			"GET " + HTTPAPIBase + "/v1/mint/{id}/content",
-			"POST " + HTTPAPIBase + "/v1/mint (L2 token/image/file; unlock)",
+			"POST " + HTTPAPIBase + "/v1/mint (L2 token/image/file/ordinal; unlock)",
 			"POST " + HTTPAPIBase + "/v1/mint/prepare (unlock)",
 			"POST " + HTTPAPIBase + "/v1/mint/commit (unlock)",
 			"POST " + HTTPAPIBase + "/v1/mint/l2 (alias; unlock)",
-			"POST " + HTTPAPIBase + "/v1/inscribe (optional L1 OP_RETURN; unlock)",
 		},
 	}
 }
