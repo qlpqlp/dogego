@@ -151,6 +151,25 @@ dogego-cli dogego_enableextension dogego.radiodoge
 dogego-cli dogego_ext_dogego_radiodoge_probe
 ```
 
+## Catalog: `dogego.dogeos`
+
+**DogeOS** EVM application-layer bridge for [DogeOS](https://docs.dogeos.com/en/developers) (not Dogecoin L1, not Doginals L2):
+
+- **Default network**: Chikyū Testnet (`https://rpc.testnet.dogeos.com/`, chain ID `6281971`)
+- **Mainnet**: placeholder profile until DogeOS publishes RPC + chain ID; custom RPC override anytime
+- **Metrics**: background `eth_chainId` / `eth_blockNumber` / `eth_gasPrice` probes, 15m uptime, latency history
+- **Helpers**: MetaMask add-chain, Hardhat, Foundry, ethers, viem, curl, cast
+- **Tools**: balance, contract check, receipt, block, raw JSON-RPC
+- **HTTP**: `/api/ext/dogego.dogeos/v1/*` via `httphandle`
+
+Package: [extensions/catalog/dogeos/](../extensions/catalog/dogeos/). Build with `build-universal.ps1` / `build-universal.sh`. Docs: [USER_GUIDE](../extensions/catalog/dogeos/docs/USER_GUIDE.md), [EXAMPLES](../extensions/catalog/dogeos/docs/EXAMPLES.md).
+
+```bash
+dogego-cli dogego_instextensionzip path/to/dogeos-universal.zip
+dogego-cli dogego_enableextension dogego.dogeos
+dogego-cli dogego_ext_dogego_dogeos_probe
+```
+
 ## Catalog: `dogego.doginals`
 
 **v0.8.0** beta **Doginals / DRC-20 L2** - overlay protocol **`doginals-v1`**, signed L2 mint only + L1 index.

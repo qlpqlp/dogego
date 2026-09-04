@@ -1,0 +1,37 @@
+{
+  "manifest_version": 1,
+  "id": "dogego.dogeos",
+  "name": "DogeOS",
+  "version": "0.1.0",
+  "author": "DogeGo",
+  "description": "Integrate the DogeOS EVM application layer with DogeGo: Chikyū testnet RPC, live metrics, MetaMask/Hardhat/Foundry helpers, faucet/explorer links, and a public HTTP API. Does not change Dogecoin L1 consensus.",
+  "homepage": "https://docs.dogeos.com/en/developers",
+  "repository": "https://github.com/qlpqlp/dogego/tree/main/DogeGo/extensions/catalog/dogeos",
+  "dogego_min_version": "0.1.0",
+  "permissions": ["datadir_write", "rpc_register", "ui_panel"],
+  "networks": ["mainnet", "testnet"],
+  "icon": "icon.png",
+  "docs_path": "extensions/catalog/dogeos/docs/USER_GUIDE.md",
+  "ui": { "status_method": "info" },
+  "entry": {
+    "type": "subprocess",
+    "module": "dogego.dogeos",
+    "binary": "dogeos-ext"
+  },
+  "capabilities": ["rpc", "ui_panel", "dogeos", "evm"],
+  "rpc": [
+    { "name": "info", "help": "Network status, metrics summary, and UI workspace." },
+    { "name": "probe", "help": "Probe eth_chainId / eth_blockNumber / eth_gasPrice on the active RPC." },
+    { "name": "metrics", "help": "Background probe history and 15m uptime." },
+    { "name": "networks", "help": "Built-in DogeOS profiles (Chikyū testnet + mainnet placeholder)." },
+    { "name": "helpers", "help": "MetaMask, Hardhat, Foundry, ethers, viem, curl, cast snippets." },
+    { "name": "getbalance", "help": "eth_getBalance for an EVM address (wei + DOGE)." },
+    { "name": "getcode", "help": "eth_getCode; reports whether address is a contract." },
+    { "name": "getreceipt", "help": "eth_getTransactionReceipt + explorer link." },
+    { "name": "getblock", "help": "eth_getBlockByNumber (latest or height)." },
+    { "name": "rpccall", "help": "Raw JSON-RPC method + params_json array." },
+    { "name": "getconfig", "help": "Read persisted network / RPC / poll settings." },
+    { "name": "setconfig", "help": "Update network_id, custom_rpc_url, poll_seconds, metrics_enabled." },
+    { "name": "httphandle", "help": "HTTP gateway for /api/ext/dogego.dogeos/*." }
+  ]
+}

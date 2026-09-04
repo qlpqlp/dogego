@@ -1,6 +1,6 @@
 {
   "catalog_version": 1,
-  "updated": "2026-09-03",
+  "updated": "2026-09-04",
   "source": "https://github.com/qlpqlp/dogego",
   "extensions": [
     {
@@ -12,11 +12,11 @@
       "homepage": "https://github.com/qlpqlp/dogego",
       "repository": "https://github.com/qlpqlp/dogego/tree/main/DogeGo/extensions/catalog/doginals",
       "download_url": "https://raw.githubusercontent.com/qlpqlp/dogego/main/DogeGo/extensions/catalog/doginals/dist/doginals.zip",
-      "sha256": "de524c5d5f49371ac11bb3c7b8d8da4b6cea585418509798e6b317ffae5e8d04",
+      "sha256": "6e9bfcd47aa786606238007e7d4934f4cbd6667f9353c4fb4792efb693a1e04a",
       "downloads": {
         "universal": {
           "download_url": "https://raw.githubusercontent.com/qlpqlp/dogego/main/DogeGo/extensions/catalog/doginals/dist/doginals-universal.zip",
-          "sha256": "de524c5d5f49371ac11bb3c7b8d8da4b6cea585418509798e6b317ffae5e8d04"
+          "sha256": "6e9bfcd47aa786606238007e7d4934f4cbd6667f9353c4fb4792efb693a1e04a"
         }
       },
       "featured": true,
@@ -161,6 +161,42 @@
         "ui_panel",
         "wallet_rpc",
         "radiodoge"
+      ]
+    },
+    {
+      "id": "dogego.dogeos",
+      "name": "DogeOS",
+      "version": "0.1.0",
+      "author": "DogeGo",
+      "description": "DogeOS EVM app-layer bridge: Chikyū testnet RPC, live metrics, MetaMask/Hardhat/Foundry helpers, faucet/explorer links, HTTP API. Mainnet profile ready when published. Does not change Dogecoin L1.",
+      "homepage": "https://docs.dogeos.com/en/developers",
+      "repository": "https://github.com/qlpqlp/dogego/tree/main/DogeGo/extensions/catalog/dogeos",
+      "download_url": "https://raw.githubusercontent.com/qlpqlp/dogego/main/DogeGo/extensions/catalog/dogeos/dist/dogeos.zip",
+      "sha256": "00ee4676edf232f93618bc2b48c01cec1d6bf9b0012ef8a160a8780aca8d6af7",
+      "downloads": {
+        "universal": {
+          "download_url": "https://raw.githubusercontent.com/qlpqlp/dogego/main/DogeGo/extensions/catalog/dogeos/dist/dogeos-universal.zip",
+          "sha256": "00ee4676edf232f93618bc2b48c01cec1d6bf9b0012ef8a160a8780aca8d6af7"
+        }
+      },
+      "dogego_min_version": "0.1.0",
+      "networks": [
+        "mainnet",
+        "testnet"
+      ],
+      "featured": true,
+      "icon": "icon.png",
+      "docs_path": "extensions/catalog/dogeos/docs/USER_GUIDE.md",
+      "permissions": [
+        "datadir_write",
+        "rpc_register",
+        "ui_panel"
+      ],
+      "capabilities": [
+        "rpc",
+        "ui_panel",
+        "dogeos",
+        "evm"
       ]
     },
     {
