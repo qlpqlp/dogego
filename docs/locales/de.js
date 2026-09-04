@@ -67,7 +67,7 @@
     },
     "walletcare": {
       "value": "Wallet-Pflege",
-      "label": "Backup-Erinnerungen Â· SchlÃ¼sselrotation"
+      "label": "Backup-Erinnerungen · SchlÃ¼sselrotation"
     }
   },
   "demo": {
@@ -76,7 +76,7 @@
     "full": "voll",
     "mainnet": "mainnet",
     "english": "English",
-    "peersOutIn": "{out} aus Â· {in} ein",
+    "peersOutIn": "{out} aus · {in} ein",
     "mempoolTx": "{n} Tx",
     "blockHeight": "Block #{n}",
     "txProcessedM": "{n} M",
@@ -127,17 +127,17 @@
     "blockstepOpenBlock": "Diesen Block Ã¶ffnen",
     "mempoolTitle": "Mempool",
     "mempoolSub": "Zulassungsrichtlinie, Feefilter, Paketlimits, RBF.",
-    "mempoolMeta": "124 Tx Â· 0,42 MB Â· Min-Relay 0,001 DOGE/kB Â· Full RBF aus",
+    "mempoolMeta": "124 Tx · 0,42 MB · Min-Relay 0,001 DOGE/kB · Full RBF aus",
     "featuresTitle": "Funktionen & ParitÃ¤t",
     "featuresSub": "Live-RPC-FÃ¤higkeitsmanifest und Betreiber-Cert-Sonden.",
     "featuresPillAuxpow": "AuxPoW Core-ParitÃ¤t",
     "featuresPillRpc": "180+ JSON-RPC-Methoden",
     "featuresPillMempool": "Mempool-Korpus (53/53)",
-    "featuresPillPsbt": "PSBT Â· BIP32 Â· HWI",
-    "featuresPillExtensions": "Extensions Â· zkproof-v1",
-    "featuresNote": "Einstellungen -> Core-Verbindung testen Â· gecachte Cert-Matrix Â· OpenRPC unter <code>/api/openrpc.json</code>",
-    "syncDockMain": "Body-IBD Â· mainnet Â· {pct}%",
-    "syncDockMeta": "Verbunden <strong>{connected}</strong> Â· Gespeichert <strong>{stored}</strong> Â· RÃ¼ckstand <strong>{behind}</strong>",
+    "featuresPillPsbt": "PSBT · BIP32 · HWI",
+    "featuresPillExtensions": "Extensions · zkproof-v1",
+    "featuresNote": "Einstellungen -> Core-Verbindung testen · gecachte Cert-Matrix · OpenRPC unter <code>/api/openrpc.json</code>",
+    "syncDockMain": "Body-IBD · mainnet · {pct}%",
+    "syncDockMeta": "Verbunden <strong>{connected}</strong> · Gespeichert <strong>{stored}</strong> · RÃ¼ckstand <strong>{behind}</strong>",
     "explainerHead": "Live-Dashboard-Highlights",
     "caption": "Loopback-Dashboard unter <code>localhost:2013</code> - i18n, Update-Banner, Sync-Dock, eingebettete Docs und Betreiber-Funktionen-Tab entsprechen dem laufenden Knoten.",
     "explainer": {
@@ -194,17 +194,17 @@
     "running": "LÃ¤uft",
     "logAria": "Knoten-Startprotokoll",
     "lines": [
-      "DogeGo 0.1.0-beta (1.14.9) Â· Deutlich schnellerer Dogecoin-Vollknoten",
+      "DogeGo 0.1.0-beta (1.14.9) · Deutlich schnellerer Dogecoin-Vollknoten",
       "$ cd DogeGo && ./dogego",
-      "Web-UI  http://localhost:2013/  Â·  Setup-Assistent beim ersten Start",
+      "Web-UI  http://localhost:2013/  ·  Setup-Assistent beim ersten Start",
       "JSON-RPC  http://127.0.0.1:22557/  (Cookie-Auth wenn aktiviert)",
-      "P2P both Â· max 12 ausgehend Â· DGR-Relay auto-konfiguriert",
-      "Speicher: gebÃ¼ndelte blk*.dat + zstd Â· kompakter Tx-Index",
+      "P2P both · max 12 ausgehend · DGR-Relay auto-konfiguriert",
+      "Speicher: gebÃ¼ndelte blk*.dat + zstd · kompakter Tx-Index",
       "Update-Check: github.com/qlpqlp/dogego/releases (tÃ¤glich)",
-      "Wallet aktiviert Â· BIP44 HD Â· Dashboard-PIN optional",
-      "IBD 68,4 % Â· Header 5.412.884 Â· Bodies holen auf â¬¦",
-      "Sync-Dock: verbunden 3.701.204 Â· gespeichert 3.842.880 Â· Assist-Pool 4",
-      "Eingebetteter Docs-Tab Â· Funktionen-Cert-Matrix Â· Konsole JSON-RPC-Presets"
+      "Wallet aktiviert · BIP44 HD · Dashboard-PIN optional",
+      "IBD 68,4 % · Header 5.412.884 · Bodies holen auf â¬¦",
+      "Sync-Dock: verbunden 3.701.204 · gespeichert 3.842.880 · Assist-Pool 4",
+      "Eingebetteter Docs-Tab · Funktionen-Cert-Matrix · Konsole JSON-RPC-Presets"
     ]
   },
   "features": {
@@ -296,7 +296,7 @@
   "extensions": {
     "title": "Official extensions",
     "lead": "Optional catalog packages you install beside the node. They do not fork mainnet consensus. Install from <strong>Settings â†’ Extensions</strong> or the GitHub catalog, then enable.",
-    "footnote": "Author your own packages too. Docs: <a href=\"guide/#/docs/EXTENSIONS.md\">EXTENSIONS.md</a> Â· <a href=\"https://github.com/qlpqlp/dogego/tree/main/DogeGo/extensions/catalog\">catalog on GitHub</a>.",
+    "footnote": "Author your own packages too. Docs: <a href=\"guide/?path=docs%2FEXTENSIONS.md\">EXTENSIONS.md</a> · <a href=\"https://github.com/qlpqlp/dogego/tree/main/DogeGo/extensions/catalog\">catalog on GitHub</a>.",
     "items": {
       "zkl2": {
         "id": "dogego.zkl2",
@@ -459,7 +459,7 @@
     "aria": "Animierte Setup-Assistenten-Vorschau",
     "setupBadge": "setup",
     "firstRun": "Erster Start",
-    "stepKicker": "Schritt {n} von 5 Â· {label}",
+    "stepKicker": "Schritt {n} von 5 · {label}",
     "steps": {
       "profile": "Profil",
       "data": "Daten",
@@ -472,15 +472,15 @@
       "profileTitle": "Setup wÃ¤hlen",
       "profileHint": "Karte antippen - jedes Profil setzt Netzwerk, Knotenmodus, Wallet und P2P-Defaults.",
       "profileTryTestnet": "Testnet ausprobieren",
-      "profileTryTestnetSub": "Vollknoten Â· Wallet an Â· ideal fÃ¼r ersten Start",
+      "profileTryTestnetSub": "Vollknoten · Wallet an · ideal fÃ¼r ersten Start",
       "profileMainnetFull": "Mainnet-Vollknoten",
-      "profileMainnetFullSub": "Produktions-Dogecoin Â· lÃ¤ngere Sync, volle Validierung",
+      "profileMainnetFullSub": "Produktions-Dogecoin · lÃ¤ngere Sync, volle Validierung",
       "profileMainnetWallet": "Mainnet + Wallet",
-      "profileMainnetWalletSub": "Senden/Empfangen Â· optionale 6-stellige Dashboard-PIN am Ende",
+      "profileMainnetWalletSub": "Senden/Empfangen · optionale 6-stellige Dashboard-PIN am Ende",
       "profileLightSpv": "Leichtes SPV + Wallet",
-      "profileLightSpvSub": "Nur Header Â· wenig Speicher Â· CGNAT-freundlich",
+      "profileLightSpvSub": "Nur Header · wenig Speicher · CGNAT-freundlich",
       "profileDual": "Mainnet + testnet",
-      "profileDualSub": "Two nodes Â· wallet on both Â· mine on testnet",
+      "profileDualSub": "Two nodes · wallet on both · mine on testnet",
       "advancedToggle": "Erweiterte Optionen in spÃ¤teren Schritten anzeigen",
       "dataTitle": "Datenverzeichnis & Netzwerk",
       "dataHint": "Go-natives Layout - <code>headers.bin</code>, <code>rawblocks/</code>, <code>indexes/</code> - nicht Core <code>chainstate/</code>.",
@@ -496,7 +496,7 @@
       "networkTitle": "Netzwerk & P2P",
       "networkHint": "KonnektivitÃ¤t, Firewall, UPnP und automatischer Preflight vor der Sync.",
       "networkBoth": "Beides",
-      "networkBothSub": "Eingehend + ausgehend Â· DGR-Relay",
+      "networkBothSub": "Eingehend + ausgehend · DGR-Relay",
       "networkCgnat": "CGNAT",
       "networkClassic": "Classic",
       "preflightP2p": "P2P-Port erreichbar",
@@ -519,7 +519,7 @@
       "finishBackupBanner": "<strong>Wallet-Backup erforderlich</strong> - <code>wallet.json</code> vor Speichern & starten herunterladen",
       "finishPin": "6-stellige Dashboard-PIN (optional)",
       "finishAutostart": "Bei OS-Anmeldung starten",
-      "finishReview": "testnet Â· voll Â· P2P both Â· gebÃ¼ndelt+zstd Â· Wallet an",
+      "finishReview": "testnet · voll · P2P both · gebÃ¼ndelt+zstd · Wallet an",
       "finishStartBtn": "Speichern & Knoten starten"
     },
     "list": {
@@ -551,7 +551,7 @@
       },
       "setupWizard": {
         "cap": "Setup-Assistent",
-        "doge": "5 Schritte Â· Profile Â· Preflight Â· Wallet-Backup",
+        "doge": "5 Schritte · Profile · Preflight · Wallet-Backup",
         "core": "Manuelle Config"
       },
       "blockstepExplorer": {
@@ -586,17 +586,17 @@
       },
       "testnetAddresses": {
         "cap": "Testnet-T-Adressen",
-        "doge": "Reboot-Testnet Â· Digishield Min-Diff",
+        "doge": "Reboot-Testnet · Digishield Min-Diff",
         "core": "Legacy-Testnet"
       },
       "autoUpdate": {
         "cap": "Auto-Update",
-        "doge": "GitHub Releases Â· Web-Banner Â· CLI-Hinweis",
+        "doge": "GitHub Releases · Web-Banner · CLI-Hinweis",
         "core": "Manueller Download"
       },
       "walletBackupCare": {
         "cap": "Wallet-Backup-Pflege",
-        "doge": "Setup-Gate Â· 30-Tage-Erinnerungen Â· SchlÃ¼sselrotation",
+        "doge": "Setup-Gate · 30-Tage-Erinnerungen · SchlÃ¼sselrotation",
         "core": "Betreiber-Verantwortung"
       },
       "osAutostart": {
@@ -611,12 +611,12 @@
       },
       "coreSideBySide": {
         "cap": "Core-Side-by-Side-Sonden",
-        "doge": "Live-Vergleich Â· Cert-Matrix Â· Konsole-Presets",
+        "doge": "Live-Vergleich · Cert-Matrix · Konsole-Presets",
         "core": "Externe Skripte"
       },
       "coreWalletMigration": {
         "cap": "Core-wallet.dat-Migration",
-        "doge": "Native BDB-Sonde Â· Import Â· verschlÃ¼sselte Passphrase Â· Core-RPC-Fallback",
+        "doge": "Native BDB-Sonde · Import · verschlÃ¼sselte Passphrase · Core-RPC-Fallback",
         "core": "Natives wallet.dat-Format"
       },
       "productionCertification": {
@@ -712,7 +712,7 @@
     "readyBodyPrereleasePlain": "Latest pre-release {version} from {source}. Verify SHA256 below before installing.",
     "soonBodyPlain": "No GitHub Release published yet. Build from source below.",
     "buildTitle": "Aus Quellcode bauen",
-    "buildEditorTitle": "bash Â· dogego",
+    "buildEditorTitle": "bash · dogego",
     "buildCode": "git clone https://github.com/qlpqlp/dogego.git\ncd dogego/DogeGo\ngo build -o dogego ./cmd/dogego\n./dogego",
     "buildNote": "Erfordert <a href=\"https://go.dev/dl/\" rel=\"noopener noreferrer\" target=\"_blank\">Go 1.22+</a>. App-Quellcode liegt im Verzeichnis <code>DogeGo/</code>; die Website in <code>docs/</code> im Repo-Root.",
     "copyCode": "Copy",
@@ -766,7 +766,7 @@
     "devGithub": "GitHub",
     "devReleases": "Releases",
     "devNetworks": "Ports & Netzwerke",
-    "copyright": "DogeGo v0.1.0-beta Â· Dogecoin-Knoten Â· dogego.org",
+    "copyright": "DogeGo v0.1.0-beta · Dogecoin-Knoten · dogego.org",
     "disclaimer": "Mainnet-Konsens folgt Core (keine Protokoll-Forks). Native Go-Speicher; optionale Self-Cert im Features-Tab / dogego cert live-soak.",
     "devDocs": "Documentation"
   },

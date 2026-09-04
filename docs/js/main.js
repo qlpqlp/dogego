@@ -264,11 +264,28 @@
   });
 
   (function initDocCards() {
+    function resolveDocHref(raw) {
+      if (!raw) return "";
+      // Legacy hash routes: guide/#/docs/FOO.md → guide/?path=docs%2FFOO.md
+      var m = raw.match(/^(.*\/)?guide\/#\/(.+)$/);
+      if (m) {
+        return (m[1] || "") + "guide/?path=" + encodeURIComponent(m[2]);
+      }
+      m = raw.match(/^#\/(.+)$/);
+      if (m) {
+        return "guide/?path=" + encodeURIComponent(m[1]);
+      }
+      return raw;
+    }
     function go(el) {
-      var href = el.getAttribute("data-doc");
+      var href = resolveDocHref(el.getAttribute("data-doc"));
       if (href) window.location.href = href;
     }
     document.querySelectorAll("[data-doc]").forEach(function (el) {
+      var fixed = resolveDocHref(el.getAttribute("data-doc"));
+      if (fixed && fixed !== el.getAttribute("data-doc")) {
+        el.setAttribute("data-doc", fixed);
+      }
       if (!el.hasAttribute("tabindex")) el.setAttribute("tabindex", "0");
       if (!el.hasAttribute("role")) el.setAttribute("role", "link");
       el.addEventListener("click", function (e) {

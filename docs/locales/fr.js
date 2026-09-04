@@ -67,7 +67,7 @@
     },
     "walletcare": {
       "value": "Soins portefeuille",
-      "label": "Rappels de sauvegarde Â· rotation des clÃ©s"
+      "label": "Rappels de sauvegarde · rotation des clÃ©s"
     }
   },
   "demo": {
@@ -76,7 +76,7 @@
     "full": "complet",
     "mainnet": "mainnet",
     "english": "English",
-    "peersOutIn": "{out} sortants Â· {in} entrants",
+    "peersOutIn": "{out} sortants · {in} entrants",
     "mempoolTx": "{n} tx",
     "blockHeight": "Bloc nÂ°{n}",
     "txProcessedM": "{n} M",
@@ -127,17 +127,17 @@
     "blockstepOpenBlock": "Ouvrir ce bloc",
     "mempoolTitle": "Mempool",
     "mempoolSub": "Politique d'admission, feefilter, limites de paquets, RBF.",
-    "mempoolMeta": "124 tx Â· 0,42 Mo Â· relais min 0,001 DOGE/ko Â· Full RBF dÃ©sactivÃ©",
+    "mempoolMeta": "124 tx · 0,42 Mo · relais min 0,001 DOGE/ko · Full RBF dÃ©sactivÃ©",
     "featuresTitle": "FonctionnalitÃ©s et paritÃ©",
     "featuresSub": "Manifeste RPC en direct et sondes cert opÃ©rateur.",
     "featuresPillAuxpow": "ParitÃ© AuxPoW Core",
     "featuresPillRpc": "180+ mÃ©thodes JSON-RPC",
     "featuresPillMempool": "Corpus mempool (53/53)",
-    "featuresPillPsbt": "PSBT Â· BIP32 Â· HWI",
-    "featuresPillExtensions": "Extensions Â· zkproof-v1",
-    "featuresNote": "ParamÃ¨tres -> Tester connexion Core Â· matrice cert en cache Â· OpenRPC sur <code>/api/openrpc.json</code>",
-    "syncDockMain": "IBD corps Â· mainnet Â· {pct}%",
-    "syncDockMeta": "ConnectÃ©s <strong>{connected}</strong> Â· StockÃ©s <strong>{stored}</strong> Â· Retard <strong>{behind}</strong>",
+    "featuresPillPsbt": "PSBT · BIP32 · HWI",
+    "featuresPillExtensions": "Extensions · zkproof-v1",
+    "featuresNote": "ParamÃ¨tres -> Tester connexion Core · matrice cert en cache · OpenRPC sur <code>/api/openrpc.json</code>",
+    "syncDockMain": "IBD corps · mainnet · {pct}%",
+    "syncDockMeta": "ConnectÃ©s <strong>{connected}</strong> · StockÃ©s <strong>{stored}</strong> · Retard <strong>{behind}</strong>",
     "explainerHead": "Points forts du tableau de bord en direct",
     "caption": "Tableau de bord loopback sur <code>localhost:2013</code> - i18n, banniÃ¨re de mise Ã  jour, dock de sync, Docs intÃ©grÃ©s et onglet FonctionnalitÃ©s opÃ©rateur correspondent au nï¿½ud en cours d'exÃ©cution.",
     "explainer": {
@@ -194,17 +194,17 @@
     "running": "En cours",
     "logAria": "Journal de dÃ©marrage du nï¿½ud",
     "lines": [
-      "DogeGo 0.1.0-beta (1.14.9) Â· Nï¿½ud Dogecoin complet bien plus rapide",
+      "DogeGo 0.1.0-beta (1.14.9) · Nï¿½ud Dogecoin complet bien plus rapide",
       "$ cd DogeGo && ./dogego",
-      "Web UI  http://localhost:2013/  Â·  assistant de config au premier lancement",
+      "Web UI  http://localhost:2013/  ·  assistant de config au premier lancement",
       "JSON-RPC  http://127.0.0.1:22557/  (auth cookie si activÃ©e)",
-      "P2P both Â· max 12 sortants Â· relais DGR auto-configurÃ©",
-      "Stockage : blk*.dat groupÃ©s + zstd Â· index tx compact",
+      "P2P both · max 12 sortants · relais DGR auto-configurÃ©",
+      "Stockage : blk*.dat groupÃ©s + zstd · index tx compact",
       "VÃ©rif. mises Ã  jour : github.com/qlpqlp/dogego/releases (quotidien)",
-      "Portefeuille activÃ© Â· BIP44 HD Â· PIN tableau de bord optionnel",
-      "IBD 68,4 % Â· en-tÃªtes 5 412 884 Â· corps en rattrapage â¬¦",
-      "Dock sync : connectÃ©s 3 701 204 Â· stockÃ©s 3 842 880 Â· pool assist 4",
-      "Onglet Docs intÃ©grÃ© Â· matrice cert FonctionnalitÃ©s Â· presets Console JSON-RPC"
+      "Portefeuille activÃ© · BIP44 HD · PIN tableau de bord optionnel",
+      "IBD 68,4 % · en-tÃªtes 5 412 884 · corps en rattrapage â¬¦",
+      "Dock sync : connectÃ©s 3 701 204 · stockÃ©s 3 842 880 · pool assist 4",
+      "Onglet Docs intÃ©grÃ© · matrice cert FonctionnalitÃ©s · presets Console JSON-RPC"
     ]
   },
   "features": {
@@ -296,7 +296,7 @@
   "extensions": {
     "title": "Official extensions",
     "lead": "Optional catalog packages you install beside the node. They do not fork mainnet consensus. Install from <strong>Settings â†’ Extensions</strong> or the GitHub catalog, then enable.",
-    "footnote": "Author your own packages too. Docs: <a href=\"guide/#/docs/EXTENSIONS.md\">EXTENSIONS.md</a> Â· <a href=\"https://github.com/qlpqlp/dogego/tree/main/DogeGo/extensions/catalog\">catalog on GitHub</a>.",
+    "footnote": "Author your own packages too. Docs: <a href=\"guide/?path=docs%2FEXTENSIONS.md\">EXTENSIONS.md</a> · <a href=\"https://github.com/qlpqlp/dogego/tree/main/DogeGo/extensions/catalog\">catalog on GitHub</a>.",
     "items": {
       "zkl2": {
         "id": "dogego.zkl2",
@@ -459,7 +459,7 @@
     "aria": "AperÃ§u animÃ© de l'assistant de configuration",
     "setupBadge": "config",
     "firstRun": "Premier lancement",
-    "stepKicker": "ï¿½0tape {n} sur 5 Â· {label}",
+    "stepKicker": "ï¿½0tape {n} sur 5 · {label}",
     "steps": {
       "profile": "Profil",
       "data": "DonnÃ©es",
@@ -472,15 +472,15 @@
       "profileTitle": "Choisissez votre configuration",
       "profileHint": "Touchez une carte - chaque profil dÃ©finit rÃ©seau, mode nï¿½ud, portefeuille et dÃ©fauts P2P.",
       "profileTryTestnet": "Essayer testnet",
-      "profileTryTestnetSub": "Nï¿½ud complet Â· portefeuille activÃ© Â· idÃ©al au premier lancement",
+      "profileTryTestnetSub": "Nï¿½ud complet · portefeuille activÃ© · idÃ©al au premier lancement",
       "profileMainnetFull": "Nï¿½ud complet mainnet",
-      "profileMainnetFullSub": "Dogecoin production Â· sync plus longue, validation complÃ¨te",
+      "profileMainnetFullSub": "Dogecoin production · sync plus longue, validation complÃ¨te",
       "profileMainnetWallet": "Mainnet + portefeuille",
-      "profileMainnetWalletSub": "Envoyer/Recevoir Â· PIN tableau de bord 6 chiffres optionnel Ã  la fin",
+      "profileMainnetWalletSub": "Envoyer/Recevoir · PIN tableau de bord 6 chiffres optionnel Ã  la fin",
       "profileLightSpv": "SPV lÃ©ger + portefeuille",
-      "profileLightSpvSub": "En-tÃªtes seuls Â· faible disque Â· compatible CGNAT",
+      "profileLightSpvSub": "En-tÃªtes seuls · faible disque · compatible CGNAT",
       "profileDual": "Mainnet + testnet",
-      "profileDualSub": "Two nodes Â· wallet on both Â· mine on testnet",
+      "profileDualSub": "Two nodes · wallet on both · mine on testnet",
       "advancedToggle": "Afficher les options avancÃ©es aux Ã©tapes suivantes",
       "dataTitle": "RÃ©pertoire de donnÃ©es et rÃ©seau",
       "dataHint": "Disposition native Go - <code>headers.bin</code>, <code>rawblocks/</code>, <code>indexes/</code> - pas <code>chainstate/</code> de Core.",
@@ -496,7 +496,7 @@
       "networkTitle": "RÃ©seau et P2P",
       "networkHint": "ConnectivitÃ©, pare-feu, UPnP et prÃ©vol automatique avant la sync.",
       "networkBoth": "Les deux",
-      "networkBothSub": "Entrant + sortant Â· relais DGR",
+      "networkBothSub": "Entrant + sortant · relais DGR",
       "networkCgnat": "CGNAT",
       "networkClassic": "Classic",
       "preflightP2p": "Port P2P accessible",
@@ -519,7 +519,7 @@
       "finishBackupBanner": "<strong>Sauvegarde portefeuille requise</strong> - tÃ©lÃ©chargez <code>wallet.json</code> avant Enregistrer et dÃ©marrer",
       "finishPin": "PIN tableau de bord 6 chiffres (optionnel)",
       "finishAutostart": "DÃ©marrer Ã  la connexion OS",
-      "finishReview": "testnet Â· complet Â· P2P both Â· groupÃ©+zstd Â· portefeuille activÃ©",
+      "finishReview": "testnet · complet · P2P both · groupÃ©+zstd · portefeuille activÃ©",
       "finishStartBtn": "Enregistrer et dÃ©marrer le nï¿½ud"
     },
     "list": {
@@ -551,7 +551,7 @@
       },
       "setupWizard": {
         "cap": "Assistant de configuration",
-        "doge": "5 Ã©tapes Â· profils Â· prÃ©vol Â· sauvegarde portefeuille",
+        "doge": "5 Ã©tapes · profils · prÃ©vol · sauvegarde portefeuille",
         "core": "Config manuelle"
       },
       "blockstepExplorer": {
@@ -586,17 +586,17 @@
       },
       "testnetAddresses": {
         "cap": "Adresses testnet T",
-        "doge": "Testnet relancÃ© Â· Digishield min-diff",
+        "doge": "Testnet relancÃ© · Digishield min-diff",
         "core": "Testnet hÃ©ritÃ©"
       },
       "autoUpdate": {
         "cap": "Mise Ã  jour auto",
-        "doge": "GitHub Releases Â· banniÃ¨re web Â· notice CLI",
+        "doge": "GitHub Releases · banniÃ¨re web · notice CLI",
         "core": "TÃ©lÃ©chargement manuel"
       },
       "walletBackupCare": {
         "cap": "Soins sauvegarde portefeuille",
-        "doge": "Porte config Â· rappels 30 j Â· rotation clÃ©s",
+        "doge": "Porte config · rappels 30 j · rotation clÃ©s",
         "core": "ResponsabilitÃ© opÃ©rateur"
       },
       "osAutostart": {
@@ -611,12 +611,12 @@
       },
       "coreSideBySide": {
         "cap": "Sondes Core cÃ´te Ã  cÃ´te",
-        "doge": "Compare en direct Â· matrice cert Â· presets Console",
+        "doge": "Compare en direct · matrice cert · presets Console",
         "core": "Scripts externes"
       },
       "coreWalletMigration": {
         "cap": "Migration wallet.dat Core",
-        "doge": "Sonde BDB native Â· import Â· passphrase chiffrÃ©e Â· repli RPC Core",
+        "doge": "Sonde BDB native · import · passphrase chiffrÃ©e · repli RPC Core",
         "core": "Format wallet.dat natif"
       },
       "productionCertification": {
@@ -712,7 +712,7 @@
     "readyBodyPrereleasePlain": "Latest pre-release {version} from {source}. Verify SHA256 below before installing.",
     "soonBodyPlain": "No GitHub Release published yet. Build from source below.",
     "buildTitle": "Compiler depuis les sources",
-    "buildEditorTitle": "bash Â· dogego",
+    "buildEditorTitle": "bash · dogego",
     "buildCode": "git clone https://github.com/qlpqlp/dogego.git\ncd dogego/DogeGo\ngo build -o dogego ./cmd/dogego\n./dogego",
     "buildNote": "NÃ©cessite <a href=\"https://go.dev/dl/\" rel=\"noopener noreferrer\" target=\"_blank\">Go 1.22+</a>. Le code source de l'app est dans le rÃ©pertoire <code>DogeGo/</code> ; le site web est dans <code>docs/</code> Ã  la racine du dÃ©pÃ´t.",
     "copyCode": "Copy",
@@ -766,7 +766,7 @@
     "devGithub": "GitHub",
     "devReleases": "Releases",
     "devNetworks": "Ports et rÃ©seaux",
-    "copyright": "DogeGo v0.1.0-beta Â· Nï¿½ud Dogecoin Â· dogego.org",
+    "copyright": "DogeGo v0.1.0-beta · Nï¿½ud Dogecoin · dogego.org",
     "disclaimer": "Le consensus mainnet suit Core (pas de forks de protocole). Stockage Go natif; auto-cert optionnelle via Features / dogego cert live-soak.",
     "devDocs": "Documentation"
   },

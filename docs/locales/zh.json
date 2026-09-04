@@ -67,7 +67,7 @@
     },
     "walletcare": {
       "value": "é’±åŒ…å…³æ€€",
-      "label": "å¤‡ä»½æé†’ Â· å¯†é’¥è½®æ¢"
+      "label": "å¤‡ä»½æé†’ · å¯†é’¥è½®æ¢"
     }
   },
   "demo": {
@@ -76,7 +76,7 @@
     "full": "full",
     "mainnet": "mainnet",
     "english": "English",
-    "peersOutIn": "å‡ºç«™ {out} Â· å…¥ç«™ {in}",
+    "peersOutIn": "å‡ºç«™ {out} · å…¥ç«™ {in}",
     "mempoolTx": "{n} ç¬”äº¤æ˜“",
     "blockHeight": "åŒºå— #{n}",
     "txProcessedM": "{n}M",
@@ -127,17 +127,17 @@
     "blockstepOpenBlock": "æ‰“å¼€æ­¤åŒºå—",
     "mempoolTitle": "å†…å­˜æ± ",
     "mempoolSub": "å‡†å…¥ç­–ç•¥ã€feefilterã€åŒ…é™åˆ¶ã€RBFã€‚",
-    "mempoolMeta": "124 ç¬”äº¤æ˜“ Â· 0.42 MB Â· æœ€ä½Žä¸­ç»§ 0.001 DOGE/kB Â· Full RBF å…³é—­",
+    "mempoolMeta": "124 ç¬”äº¤æ˜“ · 0.42 MB · æœ€ä½Žä¸­ç»§ 0.001 DOGE/kB · Full RBF å…³é—­",
     "featuresTitle": "åŠŸèƒ½ä¸Žå¯¹ç­‰",
     "featuresSub": "å®žæ—¶ RPC èƒ½åŠ›æ¸…å•ä¸Žè¿ç»´ cert æŽ¢æµ‹ã€‚",
     "featuresPillAuxpow": "AuxPoW Core å¯¹ç­‰",
     "featuresPillRpc": "180+ JSON-RPC æ–¹æ³•",
     "featuresPillMempool": "å†…å­˜æ± è¯­æ–™ (53/53)",
-    "featuresPillPsbt": "PSBT Â· BIP32 Â· HWI",
-    "featuresPillExtensions": "Extensions Â· zkproof-v1",
-    "featuresNote": "è®¾ç½® -> æµ‹è¯• Core è¿žæŽ¥ Â· ç¼“å­˜ cert çŸ©é˜µ Â· OpenRPC ä½äºŽ <code>/api/openrpc.json</code>",
-    "syncDockMain": "åŒºå—ä½“ IBD Â· mainnet Â· {pct}%",
-    "syncDockMeta": "å·²è¿žæŽ¥ <strong>{connected}</strong> Â· å·²å­˜å‚¨ <strong>{stored}</strong> Â· è½åŽ <strong>{behind}</strong>",
+    "featuresPillPsbt": "PSBT · BIP32 · HWI",
+    "featuresPillExtensions": "Extensions · zkproof-v1",
+    "featuresNote": "è®¾ç½® -> æµ‹è¯• Core è¿žæŽ¥ · ç¼“å­˜ cert çŸ©é˜µ · OpenRPC ä½äºŽ <code>/api/openrpc.json</code>",
+    "syncDockMain": "åŒºå—ä½“ IBD · mainnet · {pct}%",
+    "syncDockMeta": "å·²è¿žæŽ¥ <strong>{connected}</strong> · å·²å­˜å‚¨ <strong>{stored}</strong> · è½åŽ <strong>{behind}</strong>",
     "explainerHead": "å®žæ—¶ä»ªè¡¨ç›˜äº®ç‚¹",
     "caption": "çŽ¯å›žä»ªè¡¨ç›˜ä½äºŽ <code>localhost:2013</code> - i18nã€æ›´æ–°æ¨ªå¹…ã€åŒæ­¥ dockã€å†…åµŒ Docs ä¸Žè¿ç»´åŠŸèƒ½æ ‡ç­¾é¡µä¸Žè¿è¡Œä¸­çš„èŠ‚ç‚¹ä¸€è‡´ã€‚",
     "explainer": {
@@ -194,17 +194,17 @@
     "running": "è¿è¡Œä¸­",
     "logAria": "èŠ‚ç‚¹å¯åŠ¨æ—¥å¿—",
     "lines": [
-      "DogeGo 0.1.0-beta (1.14.9) Â· æ›´å¿«çš„ Dogecoin å…¨èŠ‚ç‚¹",
+      "DogeGo 0.1.0-beta (1.14.9) · æ›´å¿«çš„ Dogecoin å…¨èŠ‚ç‚¹",
       "$ cd DogeGo && ./dogego",
-      "Web UI  http://localhost:2013/  Â·  é¦–æ¬¡è¿è¡Œæ‰“å¼€è®¾ç½®å‘å¯¼",
+      "Web UI  http://localhost:2013/  ·  é¦–æ¬¡è¿è¡Œæ‰“å¼€è®¾ç½®å‘å¯¼",
       "JSON-RPC  http://127.0.0.1:22557/  (å¯ç”¨æ—¶ä½¿ç”¨ cookie è®¤è¯)",
-      "P2P both Â· æœ€å¤š 12 å‡ºç«™ Â· DGR ä¸­ç»§è‡ªåŠ¨é…ç½®",
-      "å­˜å‚¨ï¼šbundled blk*.dat + zstd Â· ç´§å‡‘ tx ç´¢å¼•",
+      "P2P both · æœ€å¤š 12 å‡ºç«™ · DGR ä¸­ç»§è‡ªåŠ¨é…ç½®",
+      "å­˜å‚¨ï¼šbundled blk*.dat + zstd · ç´§å‡‘ tx ç´¢å¼•",
       "æ›´æ–°æ£€æŸ¥ï¼šgithub.com/qlpqlp/dogego/releases (æ¯æ—¥)",
-      "é’±åŒ…å·²å¯ç”¨ Â· BIP44 HD Â· ä»ªè¡¨ç›˜ PIN å¯é€‰",
-      "IBD 68.4% Â· å¤´ 5,412,884 Â· åŒºå—ä½“è¿½èµ¶ä¸­ â€¦",
-      "åŒæ­¥ dockï¼šå·²è¿žæŽ¥ 3,701,204 Â· å·²å­˜å‚¨ 3,842,880 Â· ååŠ©æ±  4",
-      "å†…åµŒ Docs æ ‡ç­¾é¡µ Â· åŠŸèƒ½ cert çŸ©é˜µ Â· æŽ§åˆ¶å° JSON-RPC é¢„è®¾"
+      "é’±åŒ…å·²å¯ç”¨ · BIP44 HD · ä»ªè¡¨ç›˜ PIN å¯é€‰",
+      "IBD 68.4% · å¤´ 5,412,884 · åŒºå—ä½“è¿½èµ¶ä¸­ â€¦",
+      "åŒæ­¥ dockï¼šå·²è¿žæŽ¥ 3,701,204 · å·²å­˜å‚¨ 3,842,880 · ååŠ©æ±  4",
+      "å†…åµŒ Docs æ ‡ç­¾é¡µ · åŠŸèƒ½ cert çŸ©é˜µ · æŽ§åˆ¶å° JSON-RPC é¢„è®¾"
     ]
   },
   "features": {
@@ -296,7 +296,7 @@
   "extensions": {
     "title": "Official extensions",
     "lead": "Optional catalog packages you install beside the node. They do not fork mainnet consensus. Install from <strong>Settings â†’ Extensions</strong> or the GitHub catalog, then enable.",
-    "footnote": "Author your own packages too. Docs: <a href=\"guide/#/docs/EXTENSIONS.md\">EXTENSIONS.md</a> Â· <a href=\"https://github.com/qlpqlp/dogego/tree/main/DogeGo/extensions/catalog\">catalog on GitHub</a>.",
+    "footnote": "Author your own packages too. Docs: <a href=\"guide/?path=docs%2FEXTENSIONS.md\">EXTENSIONS.md</a> · <a href=\"https://github.com/qlpqlp/dogego/tree/main/DogeGo/extensions/catalog\">catalog on GitHub</a>.",
     "items": {
       "zkl2": {
         "id": "dogego.zkl2",
@@ -459,7 +459,7 @@
     "aria": "åŠ¨ç”»è®¾ç½®å‘å¯¼é¢„è§ˆ",
     "setupBadge": "setup",
     "firstRun": "é¦–æ¬¡è¿è¡Œ",
-    "stepKicker": "ç¬¬ {n} æ­¥ï¼Œå…± 5 æ­¥ Â· {label}",
+    "stepKicker": "ç¬¬ {n} æ­¥ï¼Œå…± 5 æ­¥ · {label}",
     "steps": {
       "profile": "é…ç½®æ–‡ä»¶",
       "data": "æ•°æ®",
@@ -472,15 +472,15 @@
       "profileTitle": "é€‰æ‹©è®¾ç½®",
       "profileHint": "ç‚¹å‡»å¡ç‰‡ - æ¯ä¸ªé…ç½®æ–‡ä»¶è®¾ç½®ç½‘ç»œã€èŠ‚ç‚¹æ¨¡å¼ã€é’±åŒ…ä¸Ž P2P é»˜è®¤å€¼ã€‚",
       "profileTryTestnet": "è¯•ç”¨ testnet",
-      "profileTryTestnetSub": "å…¨èŠ‚ç‚¹ Â· å¯ç”¨é’±åŒ… Â· é€‚åˆé¦–æ¬¡è¿è¡Œ",
+      "profileTryTestnetSub": "å…¨èŠ‚ç‚¹ · å¯ç”¨é’±åŒ… · é€‚åˆé¦–æ¬¡è¿è¡Œ",
       "profileMainnetFull": "Mainnet å…¨èŠ‚ç‚¹",
-      "profileMainnetFullSub": "ç”Ÿäº§ Dogecoin Â· åŒæ­¥æ›´é•¿ã€å…¨éªŒè¯",
+      "profileMainnetFullSub": "ç”Ÿäº§ Dogecoin · åŒæ­¥æ›´é•¿ã€å…¨éªŒè¯",
       "profileMainnetWallet": "Mainnet + é’±åŒ…",
-      "profileMainnetWalletSub": "å‘é€/æŽ¥æ”¶ Â· å®Œæˆæ—¶å¯é€‰ 6 ä½ä»ªè¡¨ç›˜ PIN",
+      "profileMainnetWalletSub": "å‘é€/æŽ¥æ”¶ · å®Œæˆæ—¶å¯é€‰ 6 ä½ä»ªè¡¨ç›˜ PIN",
       "profileLightSpv": "è½»é‡ SPV + é’±åŒ…",
-      "profileLightSpvSub": "ä»…å¤´ Â· ä½Žç£ç›˜ Â· CGNAT å‹å¥½",
+      "profileLightSpvSub": "ä»…å¤´ · ä½Žç£ç›˜ · CGNAT å‹å¥½",
       "profileDual": "Mainnet + testnet",
-      "profileDualSub": "Two nodes Â· wallet on both Â· mine on testnet",
+      "profileDualSub": "Two nodes · wallet on both · mine on testnet",
       "advancedToggle": "åœ¨åŽç»­æ­¥éª¤æ˜¾ç¤ºé«˜çº§é€‰é¡¹",
       "dataTitle": "æ•°æ®ç›®å½•ä¸Žç½‘ç»œ",
       "dataHint": "Go åŽŸç”Ÿå¸ƒå±€ - <code>headers.bin</code>ã€<code>rawblocks/</code>ã€<code>indexes/</code> - éž Core <code>chainstate/</code>ã€‚",
@@ -496,7 +496,7 @@
       "networkTitle": "ç½‘ç»œä¸Ž P2P",
       "networkHint": "è¿žæŽ¥ã€é˜²ç«å¢™ã€UPnP ä¸ŽåŒæ­¥å‰è‡ªåŠ¨é¢„æ£€ã€‚",
       "networkBoth": "Both",
-      "networkBothSub": "å…¥ç«™ + å‡ºç«™ Â· DGR ä¸­ç»§",
+      "networkBothSub": "å…¥ç«™ + å‡ºç«™ · DGR ä¸­ç»§",
       "networkCgnat": "CGNAT",
       "networkClassic": "Classic",
       "preflightP2p": "P2P ç«¯å£å¯è¾¾",
@@ -519,7 +519,7 @@
       "finishBackupBanner": "<strong>éœ€è¦é’±åŒ…å¤‡ä»½</strong> - åœ¨ä¿å­˜å¹¶å¯åŠ¨å‰ä¸‹è½½ <code>wallet.json</code>",
       "finishPin": "6 ä½ä»ªè¡¨ç›˜ PINï¼ˆå¯é€‰ï¼‰",
       "finishAutostart": "OS ç™»å½•æ—¶å¯åŠ¨",
-      "finishReview": "testnet Â· full Â· P2P both Â· bundled+zstd Â· é’±åŒ…å¼€",
+      "finishReview": "testnet · full · P2P both · bundled+zstd · é’±åŒ…å¼€",
       "finishStartBtn": "ä¿å­˜å¹¶å¯åŠ¨èŠ‚ç‚¹"
     },
     "list": {
@@ -551,7 +551,7 @@
       },
       "setupWizard": {
         "cap": "è®¾ç½®å‘å¯¼",
-        "doge": "5 æ­¥ Â· é…ç½®æ–‡ä»¶ Â· é¢„æ£€ Â· é’±åŒ…å¤‡ä»½",
+        "doge": "5 æ­¥ · é…ç½®æ–‡ä»¶ · é¢„æ£€ · é’±åŒ…å¤‡ä»½",
         "core": "æ‰‹åŠ¨é…ç½®"
       },
       "blockstepExplorer": {
@@ -586,17 +586,17 @@
       },
       "testnetAddresses": {
         "cap": "Testnet T åœ°å€",
-        "doge": "é‡å¯ testnet Â· Digishield min-diff",
+        "doge": "é‡å¯ testnet · Digishield min-diff",
         "core": "æ—§ testnet"
       },
       "autoUpdate": {
         "cap": "è‡ªåŠ¨æ›´æ–°",
-        "doge": "GitHub Releases Â· Web æ¨ªå¹… Â· CLI é€šçŸ¥",
+        "doge": "GitHub Releases · Web æ¨ªå¹… · CLI é€šçŸ¥",
         "core": "æ‰‹åŠ¨ä¸‹è½½"
       },
       "walletBackupCare": {
         "cap": "é’±åŒ…å¤‡ä»½å…³æ€€",
-        "doge": "è®¾ç½®é—¨ç¦ Â· 30 å¤©æé†’ Â· å¯†é’¥è½®æ¢",
+        "doge": "è®¾ç½®é—¨ç¦ · 30 å¤©æé†’ · å¯†é’¥è½®æ¢",
         "core": "è¿ç»´è´£ä»»"
       },
       "osAutostart": {
@@ -611,12 +611,12 @@
       },
       "coreSideBySide": {
         "cap": "Core å¹¶æŽ’æŽ¢æµ‹",
-        "doge": "å®žæ—¶ compare Â· cert çŸ©é˜µ Â· æŽ§åˆ¶å°é¢„è®¾",
+        "doge": "å®žæ—¶ compare · cert çŸ©é˜µ · æŽ§åˆ¶å°é¢„è®¾",
         "core": "å¤–éƒ¨è„šæœ¬"
       },
       "coreWalletMigration": {
         "cap": "Core wallet.dat è¿ç§»",
-        "doge": "åŽŸç”Ÿ BDB æŽ¢æµ‹ Â· å¯¼å…¥ Â· åŠ å¯†å£ä»¤ Â· Core RPC å›žé€€",
+        "doge": "åŽŸç”Ÿ BDB æŽ¢æµ‹ · å¯¼å…¥ · åŠ å¯†å£ä»¤ · Core RPC å›žé€€",
         "core": "åŽŸç”Ÿ wallet.dat æ ¼å¼"
       },
       "productionCertification": {
@@ -712,7 +712,7 @@
     "readyBodyPrereleasePlain": "Latest pre-release {version} from {source}. Verify SHA256 below before installing.",
     "soonBodyPlain": "No GitHub Release published yet. Build from source below.",
     "buildTitle": "ä»Žæºç æž„å»º",
-    "buildEditorTitle": "bash Â· dogego",
+    "buildEditorTitle": "bash · dogego",
     "buildCode": "git clone https://github.com/qlpqlp/dogego.git\ncd dogego/DogeGo\ngo build -o dogego ./cmd/dogego\n./dogego",
     "buildNote": "éœ€è¦ <a href=\"https://go.dev/dl/\" rel=\"noopener noreferrer\" target=\"_blank\">Go 1.22+</a>ã€‚åº”ç”¨æºç ä½äºŽ <code>DogeGo/</code> ç›®å½•ï¼›ç½‘ç«™ä½äºŽä»“åº“æ ¹ç›®å½• <code>docs/</code>ã€‚",
     "copyCode": "Copy",
@@ -766,7 +766,7 @@
     "devGithub": "GitHub",
     "devReleases": "Releases",
     "devNetworks": "ç«¯å£ä¸Žç½‘ç»œ",
-    "copyright": "DogeGo v0.1.0-beta Â· Dogecoin èŠ‚ç‚¹ Â· dogego.org",
+    "copyright": "DogeGo v0.1.0-beta · Dogecoin èŠ‚ç‚¹ · dogego.org",
     "disclaimer": "ä¸»ç½‘å…±è¯†éµå¾ª Coreï¼ˆæ— åè®®åˆ†å‰ï¼‰ã€‚åŽŸç”Ÿ Go å­˜å‚¨ï¼›å¯é€šè¿‡ Features / dogego cert live-soak å¯é€‰è‡ªè¯ã€‚",
     "devDocs": "Documentation"
   },
