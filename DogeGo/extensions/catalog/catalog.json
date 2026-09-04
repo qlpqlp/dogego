@@ -12,7 +12,7 @@
       "homepage": "https://github.com/qlpqlp/dogego",
       "repository": "https://github.com/qlpqlp/dogego/tree/main/DogeGo/extensions/catalog/doginals",
       "download_url": "https://raw.githubusercontent.com/qlpqlp/dogego/main/DogeGo/extensions/catalog/doginals/dist/doginals.zip",
-      "sha256": "6e9bfcd47aa786606238007e7d4934f4cbd6667f9353c4fb4792efb693a1e04a",
+      "sha256": "0b6956527a22d7a05c968ea1705e975f092a8be0a2785ede8d97b8522423287a",
       "downloads": {
         "universal": {
           "download_url": "https://raw.githubusercontent.com/qlpqlp/dogego/main/DogeGo/extensions/catalog/doginals/dist/doginals-universal.zip",
@@ -75,7 +75,7 @@
         "ui_panel",
         "research_bbpow"
       ],
-      "sha256": "8d319df270c357800ecdc411faa1ca14c81692684a8680d2913a421d4493cd60",
+      "sha256": "5729e3c380b9b8428d719124dfaf2bcfb086713a670558ad36e379a3ecd60048",
       "download_url": "https://raw.githubusercontent.com/qlpqlp/dogego/main/DogeGo/extensions/catalog/bbpow/dist/bbpow.zip",
       "downloads": {
         "universal": {
@@ -93,11 +93,11 @@
       "homepage": "https://github.com/qlpqlp/dogego",
       "repository": "https://github.com/qlpqlp/dogego/tree/main/DogeGo/extensions/catalog/zkl2",
       "download_url": "https://raw.githubusercontent.com/qlpqlp/dogego/main/DogeGo/extensions/catalog/zkl2/dist/zkl2.zip",
-      "sha256": "6c1dce43bf7c5c59ba190ab819b4369a23364b6b990e62558ca0b81eec46811c",
+      "sha256": "3e8ca5e889cb3887f392f0056c7f5249449de48b821a05601e96fea37e8a3e91",
       "downloads": {
         "universal": {
           "download_url": "https://raw.githubusercontent.com/qlpqlp/dogego/main/DogeGo/extensions/catalog/zkl2/dist/zkl2-universal.zip",
-          "sha256": "6c1dce43bf7c5c59ba190ab819b4369a23364b6b990e62558ca0b81eec46811c"
+          "sha256": "3e8ca5e889cb3887f392f0056c7f5249449de48b821a05601e96fea37e8a3e91"
         }
       },
       "dogego_min_version": "0.1.0",
@@ -135,11 +135,11 @@
       "homepage": "https://github.com/dogecoinfoundation/radiodoge",
       "repository": "https://github.com/qlpqlp/dogego/tree/main/DogeGo/extensions/catalog/radiodoge",
       "download_url": "https://raw.githubusercontent.com/qlpqlp/dogego/main/DogeGo/extensions/catalog/radiodoge/dist/radiodoge.zip",
-      "sha256": "6b090819f0241bc3a3d61de402a2148802d3f62dc0b86fbf80e74358d8add51b",
+      "sha256": "c576489a03ac6c170bd78a939ce92dc6462df9df7dfe95d8d49ce5747f1aa334",
       "downloads": {
         "universal": {
           "download_url": "https://raw.githubusercontent.com/qlpqlp/dogego/main/DogeGo/extensions/catalog/radiodoge/dist/radiodoge-universal.zip",
-          "sha256": "6b090819f0241bc3a3d61de402a2148802d3f62dc0b86fbf80e74358d8add51b"
+          "sha256": "c576489a03ac6c170bd78a939ce92dc6462df9df7dfe95d8d49ce5747f1aa334"
         }
       },
       "dogego_min_version": "0.1.0",
@@ -168,7 +168,7 @@
       "name": "DogeOS",
       "version": "0.1.0",
       "author": "DogeGo",
-      "description": "DogeOS EVM app-layer bridge: Chikyū testnet RPC, live metrics, MetaMask/Hardhat/Foundry helpers, faucet/explorer links, HTTP API. Mainnet profile ready when published. Does not change Dogecoin L1.",
+      "description": "DogeOS EVM app-layer bridge: Chiky\u016b testnet RPC, live metrics, MetaMask/Hardhat/Foundry helpers, faucet/explorer links, HTTP API. Mainnet profile ready when published. Does not change Dogecoin L1.",
       "homepage": "https://docs.dogeos.com/en/developers",
       "repository": "https://github.com/qlpqlp/dogego/tree/main/DogeGo/extensions/catalog/dogeos",
       "download_url": "https://raw.githubusercontent.com/qlpqlp/dogego/main/DogeGo/extensions/catalog/dogeos/dist/dogeos.zip",
@@ -210,7 +210,7 @@
       "downloads": {
         "universal": {
           "download_url": "https://raw.githubusercontent.com/qlpqlp/dogego/main/DogeGo/extensions/catalog/example-go/dist/hello-universal.zip",
-          "sha256": "ac17355988e377cb99501881971e22c4874c960d5a2ee8bd47692a35fe31f8e7"
+          "sha256": "576109366f64eec967a99e268d93e6889617605d5642da3ba43c4bf59df6cd95"
         }
       },
       "dogego_min_version": "0.1.0",
