@@ -498,102 +498,102 @@
           <p data-i18n="features.lead">DogeGo ships operator tooling, indexing, and modern network modes that Core never bundled, in one Go binary with a browser dashboard.</p>
         </header>
         <div class="feature-grid feature-grid-lg">
-          <article class="feature-card feature-highlight">
+          <article class="feature-card feature-highlight" data-doc="guide/#/docs/RACCOON_G_BUILD.md">
             <span class="material-icons-round feature-icon" aria-hidden="true">shield</span>
             <h3 data-i18n="features.items.pq.title">Post-Quantum commitments</h3>
             <p data-i18n-html="features.items.pq.body">First Dogecoin full node with Phase-1 PQ OP_RETURN carriers (FLC1, DIL2, RCG4). Send with automatic wallet commitments, verify via <code>dogego_verifypqcommitment</code>, and inspect in the explorer.</p>
           </article>
-          <article class="feature-card">
+          <article class="feature-card" data-doc="guide/#/docs/OPERATOR.md">
             <span class="material-icons-round feature-icon" aria-hidden="true">compress</span>
             <h3 data-i18n="features.items.zstd.title">zstd block compression</h3>
             <p data-i18n-html="features.items.zstd.body">Optional zstd on stored block bodies plus a bundled <code>blk*.dat</code> layout. Core keeps raw blocks uncompressed. DogeGo reports compression ratio and disk savings in the dashboard.</p>
           </article>
-          <article class="feature-card">
+          <article class="feature-card" data-doc="guide/#/docs/STANDALONE_NODE_QUICKSTART.md">
             <span class="material-icons-round feature-icon" aria-hidden="true">dns</span>
             <h3 data-i18n="features.items.spv.title">Full node or SPV</h3>
             <p data-i18n="features.items.spv.body">Run headers-first IBD with full validation, or switch to lightweight SPV (headers only) for minimal disk. Same binary, same wizard. Pick your profile on first run.</p>
           </article>
-          <article class="feature-card">
+          <article class="feature-card" data-doc="guide/#/docs/DOGEGO_RELAY_CGNAT.md">
             <span class="material-icons-round feature-icon" aria-hidden="true">satellite_alt</span>
             <h3 data-i18n="features.items.cgnat.title">CGNAT &amp; Starlink relay</h3>
             <p data-i18n-html="features.items.cgnat.body">P2P modes: <code>classic</code>, <code>cgnat</code> (outbound-only), or <code>both</code>. Up to 12 outbound peers relay blocks without inbound port forwarding, built for carrier NAT and Starlink.</p>
           </article>
-          <article class="feature-card">
+          <article class="feature-card" data-doc="guide/#/docs/MAINNET_TESTNET_OPERATIONAL.md">
             <span class="material-icons-round feature-icon" aria-hidden="true">science</span>
             <h3 data-i18n="features.items.testnet.title">Reboot testnet</h3>
             <p data-i18n-html="features.items.testnet.body">Fresh testnet with addresses starting with <strong>T</strong> (for test). Real scrypt PoW like Core (RelaxedPoW off). Digishield min-difficulty helps solo mining when hashrate is low. Port <code>44556</code>.</p>
           </article>
-          <article class="feature-card">
+          <article class="feature-card" data-doc="guide/#/docs/WEB_UI.md">
             <span class="material-icons-round feature-icon" aria-hidden="true">search</span>
             <h3 data-i18n="features.items.search.title">Search everything</h3>
             <p data-i18n="features.items.search.body">Full tx index by default. Search height, block hash, txid, or address from the dashboard. Dogecoin is a public ledger, and DogeGo makes every entry easy to find.</p>
           </article>
-          <article class="feature-card">
+          <article class="feature-card" data-doc="guide/#/docs/WEB_UI.md">
             <span class="material-icons-round feature-icon" aria-hidden="true">dashboard</span>
             <h3 data-i18n="features.items.dashboard.title">Web dashboard</h3>
             <p data-i18n-html="features.items.dashboard.body">Loopback UI at <code>:2013</code>: KPI cards, auto-update banner, sync dock, mempool, analytics, embedded Docs, Features cert matrix, and the five-step setup wizard. No Qt install required.</p>
           </article>
-          <article class="feature-card">
+          <article class="feature-card" data-doc="guide/#/docs/RPC.md">
             <span class="material-icons-round feature-icon" aria-hidden="true">integration_instructions</span>
             <h3 data-i18n="features.items.rpc.title">180+ JSON-RPC methods</h3>
             <p data-i18n-html="features.items.rpc.body">Core-compatible HTTP JSON-RPC with cookie auth, ZMQ notifications, OpenRPC at <code>/api/openrpc.json</code>, and live capability flags in the Features tab.</p>
           </article>
-          <article class="feature-card">
+          <article class="feature-card" data-doc="guide/#/docs/WALLET.md">
             <span class="material-icons-round feature-icon" aria-hidden="true">account_balance_wallet</span>
             <h3 data-i18n="features.items.wallet.title">Built-in HD wallet</h3>
             <p data-i18n="features.items.wallet.body">Send, receive, and history with BIP44 HD wallet, PIN unlock, optional WebAuthn biometrics, coin control, fee hints, and PQ commitment overrides on send.</p>
           </article>
-          <article class="feature-card feature-highlight">
+          <article class="feature-card feature-highlight" data-doc="guide/#/docs/WEB_UI.md">
             <span class="material-icons-round feature-icon" aria-hidden="true">system_update</span>
             <h3 data-i18n="features.items.autoupdate.title">Built-in auto-update</h3>
             <p data-i18n-html="features.items.autoupdate.body">The node checks <a href="https://github.com/qlpqlp/dogego/releases">GitHub Releases</a> daily for semver tags newer than your build. Overview and Settings show a banner with release notes and a direct binary download when a matching platform asset exists.</p>
           </article>
-          <article class="feature-card feature-highlight">
+          <article class="feature-card feature-highlight" data-doc="guide/#/docs/WALLET.md">
             <span class="material-icons-round feature-icon" aria-hidden="true">backup</span>
             <h3 data-i18n="features.items.backup.title">Wallet backup reminders</h3>
             <p data-i18n-html="features.items.backup.body">First-run setup requires downloading <code>wallet.json</code> before start. On Receive, a recurring banner reminds you to back up offline - dismiss for 30 days, or rotate HD keys with an guided sweep to a fresh wallet.</p>
           </article>
-          <article class="feature-card">
+          <article class="feature-card" data-doc="guide/#/docs/DOGEGO_RELAY_CGNAT.md">
             <span class="material-icons-round feature-icon" aria-hidden="true">hub</span>
             <h3 data-i18n="features.items.dgr.title">DogeGo relay CGNAT (DGR)</h3>
             <p data-i18n-html="features.items.dgr.body">QUIC tunnel for peers behind carrier NAT. Wizard and Settings configure <code>dogego_relay_cgnat</code> roles (Off / Client / Operator), TLS cert pinning, relay DNS seeds, and live metrics on <code>GET /api/dgr</code>.</p>
           </article>
-          <article class="feature-card">
+          <article class="feature-card" data-doc="guide/#/docs/MAINNET_TESTNET_OPERATIONAL.md">
             <span class="material-icons-round feature-icon" aria-hidden="true">layers</span>
             <h3 data-i18n="features.items.dual.title">Dual mainnet + testnet</h3>
             <p data-i18n-html="features.items.dual.body">Run both networks from one data folder with the <strong>Mainnet + testnet</strong> wizard profile. Separate <code>mainnet/</code> and <code>testnet/</code> chain dirs, dual dashboards (<code>:2013</code> / <code>:2014</code>), solo mining on testnet only.</p>
           </article>
-          <article class="feature-card feature-highlight">
+          <article class="feature-card feature-highlight" data-doc="guide/#/docs/CORE_OPERATOR_RUNBOOK.md">
             <span class="material-icons-round feature-icon" aria-hidden="true">precision_manufacturing</span>
             <h3 data-i18n="features.items.mining.title">Miner ready (Core parity)</h3>
             <p data-i18n-html="features.items.mining.body"><code>getblocktemplate</code> with Digishield <code>NextBlockBits</code> + BIP22 longpoll, <code>createauxblock</code>/<code>submitauxblock</code> for merge-mining, and reboot-testnet solo mining with mempool txs. Certified live via <code>GET /api/core-mining-probe</code> and <code>dogego cert mining</code>.</p>
           </article>
-          <article class="feature-card">
+          <article class="feature-card" data-doc="guide/#/docs/CORE_PARITY_GAPS.md">
             <span class="material-icons-round feature-icon" aria-hidden="true">bolt</span>
             <h3 data-i18n="features.items.bip152.title">BIP152 compact blocks</h3>
             <p data-i18n-html="features.items.bip152.body">sendcmpct HB negotiation with up to three peers, cmpctblock announce/reconstruct, and getblocktxn fallback. Live probe at <code>GET /api/core-bip152-probe</code>.</p>
           </article>
-          <article class="feature-card">
+          <article class="feature-card" data-doc="guide/#/docs/RPC.md">
             <span class="material-icons-round feature-icon" aria-hidden="true">pending_actions</span>
             <h3 data-i18n="features.items.mempoolPolicy.title">Mempool relay policy</h3>
             <p data-i18n-html="features.items.mempoolPolicy.body">Wizard and Settings expose Core-shaped flags: <code>maxmempool</code>, <code>minrelaytxfee</code>, <code>incrementalrelayfee</code>, package limits, Full RBF, datacarrier, and bare multisig - plus a 58-template offline admission corpus.</p>
           </article>
-          <article class="feature-card">
+          <article class="feature-card" data-doc="guide/#/docs/CORE_OPERATOR_RUNBOOK.md">
             <span class="material-icons-round feature-icon" aria-hidden="true">download_for_offline</span>
             <h3 data-i18n="features.items.ibd.title">Parallel block download</h3>
             <p data-i18n="features.items.ibd.body">Faster, more stable multi-peer IBD: block-assist workers, height striping, auto UTXO dbcache, and Core-style IBD focus so download stays productive through long syncs.</p>
           </article>
-          <article class="feature-card feature-highlight">
+          <article class="feature-card feature-highlight" data-doc="guide/#/docs/EXTENSIONS.md">
             <span class="material-icons-round feature-icon" aria-hidden="true">extension</span>
             <h3 data-i18n="features.items.extensions.title">Modular extension platform</h3>
             <p data-i18n-html="features.items.extensions.body">Install and enable catalog packages without changing Dogecoin consensus: zip or GitHub install, subprocess/wasm hosts, allowlisted permissions, optional <code>wallet_rpc</code>, and host-rendered UI panels. See the <a href="#extensions">Extensions</a> section for each official package.</p>
           </article>
-          <article class="feature-card">
+          <article class="feature-card" data-doc="guide/#/docs/SEGWIT_STATUS.md">
             <span class="material-icons-round feature-icon" aria-hidden="true">verified</span>
             <h3 data-i18n="features.items.segwit.title">SegWit ready</h3>
             <p data-i18n-html="features.items.segwit.body">BIP141 interpreter, witness serialization, and weight/vsize helpers ship today, Core-aligned with Dogecoin Core. CLTV is already active. Softfork follows Core’s schedule; see <a href="https://github.com/qlpqlp/dogego/blob/main/DogeGo/docs/SEGWIT_STATUS.md">SEGWIT_STATUS.md</a> for upgrade effects on nodes and miners.</p>
           </article>
-          <article class="feature-card">
+          <article class="feature-card" data-doc="guide/#/docs/WEB_UI.md">
             <span class="material-icons-round feature-icon" aria-hidden="true">notifications</span>
             <h3 data-i18n="features.items.tray.title">System tray &amp; notifications</h3>
             <p data-i18n="features.items.tray.body">Optional tray icon: open dashboard, check/download/install updates with SHA256 verify, and native OS notifications when a new GitHub release is detected.</p>
@@ -609,29 +609,35 @@
           <p data-i18n-html="extensions.lead">Optional catalog packages you install beside the node. They do not fork mainnet consensus. Install from <strong>Settings → Extensions</strong> or the GitHub catalog, then enable.</p>
         </header>
         <div class="feature-grid feature-grid-lg">
-          <article class="feature-card feature-highlight">
+          <article class="feature-card feature-highlight" data-doc="guide/#/extensions/catalog/zkl2/docs/USER_GUIDE.md">
             <span class="material-icons-round feature-icon" aria-hidden="true">psychology</span>
             <p class="ext-id" data-i18n="extensions.items.zkl2.id">dogego.zkl2</p>
             <h3 data-i18n="extensions.items.zkl2.title">ZK Layer 2</h3>
             <p data-i18n-html="extensions.items.zkl2.body">Submit and sync ZK proofs anchored to confirmed Dogecoin txs over the <code>zkproof-v1</code> P2P overlay. No L1 consensus fork. Mainnet + testnet.</p>
           </article>
-          <article class="feature-card feature-highlight">
+          <article class="feature-card feature-highlight" data-doc="guide/#/extensions/catalog/doginals/docs/USER_GUIDE.md">
             <span class="material-icons-round feature-icon" aria-hidden="true">collections</span>
             <p class="ext-id" data-i18n="extensions.items.doginals.id">dogego.doginals</p>
             <h3 data-i18n="extensions.items.doginals.title">Doginals / DRC-20 L2</h3>
-            <p data-i18n-html="extensions.items.doginals.body">Index L1 Doginals/DRC-20 carriers, mint via allowlisted wallet RPC, and sync off-chain NFT/token metadata among peers (<code>doginals-v1</code>). Mainnet + testnet.</p>
+            <p data-i18n-html="extensions.items.doginals.body">Index L1 Doginals and DRC-20. Mint tokens, images, and files on L2 only. Peers sync via <code>doginals-v1</code>. No consensus change.</p>
           </article>
-          <article class="feature-card feature-highlight">
+          <article class="feature-card feature-highlight" data-doc="guide/#/extensions/catalog/radiodoge/docs/USER_GUIDE.md">
             <span class="material-icons-round feature-icon" aria-hidden="true">cell_tower</span>
             <p class="ext-id" data-i18n="extensions.items.radiodoge.id">dogego.radiodoge</p>
             <h3 data-i18n="extensions.items.radiodoge.title">RadioDoge</h3>
-            <p data-i18n-html="extensions.items.radiodoge.body">Connect a Heltec V3 SoftAP device: broadcast signed txs over LoRa when offline, and relay inbound mesh txs into DogeGo with <code>sendrawtransaction</code> when online. Same HTTP API as Dogecoin Wallet RadioDoge support.</p>
+            <p data-i18n-html="extensions.items.radiodoge.body">Heltec V3 SoftAP: LoRa broadcast when offline, relay mesh txs into DogeGo when online.</p>
           </article>
-          <article class="feature-card">
+          <article class="feature-card feature-highlight" data-doc="guide/#/extensions/catalog/dogeos/docs/USER_GUIDE.md">
+            <span class="material-icons-round feature-icon" aria-hidden="true">hub</span>
+            <p class="ext-id" data-i18n="extensions.items.dogeos.id">dogego.dogeos</p>
+            <h3 data-i18n="extensions.items.dogeos.title">DogeOS</h3>
+            <p data-i18n-html="extensions.items.dogeos.body">EVM bridge to DogeOS Chikyū testnet: live RPC metrics, MetaMask/Hardhat helpers, faucet and explorer links.</p>
+          </article>
+          <article class="feature-card" data-doc="guide/#/extensions/catalog/bbpow/docs/USER_GUIDE.md">
             <span class="material-icons-round feature-icon" aria-hidden="true">currency_bitcoin</span>
             <p class="ext-id" data-i18n="extensions.items.bbpow.id">dogego.bbpow</p>
             <h3 data-i18n="extensions.items.bbpow.title">BBPoW research</h3>
-            <p data-i18n-html="extensions.items.bbpow.body">Testnet-only research toward Bitcoin SHA-256 commitments as a Dogecoin security signal (not AuxPoW, not mainnet consensus). Proof verify RPC and dual-lane difficulty sketch.</p>
+            <p data-i18n-html="extensions.items.bbpow.body">Testnet-only research: Bitcoin SHA-256 commitments as a Dogecoin security signal. Not AuxPoW, not mainnet consensus.</p>
           </article>
         </div>
         <p class="extensions-footnote" data-i18n-html="extensions.footnote">Author your own packages too. Docs: <a href="guide/#/docs/EXTENSIONS.md">EXTENSIONS.md</a> · <a href="https://github.com/qlpqlp/dogego/tree/main/DogeGo/extensions/catalog">catalog on GitHub</a>.</p>
@@ -646,40 +652,40 @@
         </header>
         <h3 class="subsection-title" data-i18n="fullnode.liveHeading">Live in the app &amp; wizard</h3>
         <div class="feature-grid feature-grid-lg fullnode-grid">
-          <article class="feature-card feature-ok">
+          <article class="feature-card feature-ok" data-doc="guide/#/docs/CORE_OPERATOR_RUNBOOK.md">
             <span class="material-icons-round feature-icon" aria-hidden="true">sync</span>
             <h3 data-i18n="fullnode.live.sync.title">Chain sync &amp; IBD</h3>
             <p data-i18n-html="fullnode.live.sync.body">Headers-first sync with parallel body download, auto <code>dbcache</code>, IBD optimize (default on), journal recovery, and a sync dock with recent download rate and assist pool metrics.</p>
           </article>
-          <article class="feature-card feature-ok">
+          <article class="feature-card feature-ok" data-doc="guide/#/docs/ARCHITECTURE.md">
             <span class="material-icons-round feature-icon" aria-hidden="true">gavel</span>
             <h3 data-i18n="fullnode.live.consensus.title">Validation &amp; mempool</h3>
             <p data-i18n-html="fullnode.live.consensus.body">Block/header checks, AuxPoW CAuxPow parity, in-memory UTXO cache with snapshot replay, 58-template mempool admission corpus, BIP125 RBF, feefilter, savemempool/loadmempool.</p>
           </article>
-          <article class="feature-card feature-ok">
+          <article class="feature-card feature-ok" data-doc="guide/#/docs/DOGEGO_RELAY_CGNAT.md">
             <span class="material-icons-round feature-icon" aria-hidden="true">hub</span>
             <h3 data-i18n="fullnode.live.p2p.title">P2P networking</h3>
             <p data-i18n-html="fullnode.live.p2p.body"><code>classic</code> / <code>cgnat</code> / <code>both</code>, UPnP/NAT-PMP, learned addr store, addnode, setban, multi-peer relay, DGR QUIC tunnel, BIP152 v1 compact blocks.</p>
           </article>
-          <article class="feature-card feature-ok">
+          <article class="feature-card feature-ok" data-doc="guide/#/docs/RPC.md">
             <span class="material-icons-round feature-icon" aria-hidden="true">api</span>
             <h3 data-i18n="fullnode.live.rpc.title">JSON-RPC &amp; ZMQ</h3>
             <p data-i18n-html="fullnode.live.rpc.body">180+ methods, cookie auth, getblocktemplate BIP22, mining/aux RPC, estimatesmartfee, ZMQ hash/raw block+tx notifications, OpenRPC and RPC cookbooks in Settings → Tools.</p>
           </article>
-          <article class="feature-card feature-ok">
+          <article class="feature-card feature-ok" data-doc="guide/#/docs/WALLET.md">
             <span class="material-icons-round feature-icon" aria-hidden="true">account_balance_wallet</span>
             <h3 data-i18n="fullnode.live.wallet.title">Wallet &amp; migration</h3>
             <p data-i18n-html="fullnode.live.wallet.body">BIP44 HD per network, wizard backup + optional <code>encryptwallet</code>, fill-to-target <code>keypoolrefill</code>, PSBT/HWI, Core <code>wallet.dat</code> import + pool replay, coin control, Tx Flight, and <code>wallet.db</code> scan index for fast history (auto-rescan when the index lags).</p>
           </article>
-          <article class="feature-card feature-ok">
+          <article class="feature-card feature-ok" data-doc="guide/#/docs/WEB_UI.md">
             <span class="material-icons-round feature-icon" aria-hidden="true">settings</span>
             <h3 data-i18n="fullnode.live.ops.title">Operator UX</h3>
             <p data-i18n-html="fullnode.live.ops.body">Five-step wizard with five profiles, preflight (firewall, ports, CGNAT, founder), OS autostart, GitHub auto-update, 17 live cert web probes (mining GBT/aux), embedded Docs, analytics Pebble sidecar, <code>dogego cert offline</code> gates.</p>
           </article>
-          <article class="feature-card feature-ok">
+          <article class="feature-card feature-ok" data-doc="guide/#/docs/EXTENSIONS.md">
             <span class="material-icons-round feature-icon" aria-hidden="true">extension</span>
             <h3 data-i18n="fullnode.live.extensions.title">Modular extensions</h3>
-            <p data-i18n-html="fullnode.live.extensions.body">Catalog / zip install, subprocess and wasm hosts, runtime permission checks, host-rendered UI panels, and dynamic RPC <code>dogego_ext_&lt;id&gt;_&lt;method&gt;</code>. See <a href="#extensions">Official extensions</a> for ZK L2, Doginals, RadioDoge, and BBPoW.</p>
+            <p data-i18n-html="fullnode.live.extensions.body">Catalog / zip install, subprocess and wasm hosts, runtime permission checks, host-rendered UI panels, and dynamic RPC <code>dogego_ext_&lt;id&gt;_&lt;method&gt;</code>. See <a href="#extensions">Official extensions</a> for ZK L2, Doginals, RadioDoge, DogeOS, and BBPoW.</p>
           </article>
         </div>
       </div>
@@ -692,72 +698,72 @@
           <p data-i18n="care.lead">DogeGo is more than sync and RPC - the loopback dashboard includes everyday tooling Core never shipped in one place.</p>
         </header>
         <div class="care-grid">
-          <article class="care-card">
+          <article class="care-card" data-doc="guide/#/docs/WEB_UI.md">
             <span class="material-icons-round care-icon" aria-hidden="true">system_update_alt</span>
             <h3 data-i18n="care.items.releases.title">Release notifications</h3>
             <p data-i18n-html="care.items.releases.body">Daily update check against the canonical <code>github.com/qlpqlp/dogego</code> repo. CLI prints hints too; dismiss per release from the web UI or <code>POST /api/update/dismiss</code>.</p>
           </article>
-          <article class="care-card">
+          <article class="care-card" data-doc="guide/#/docs/WALLET.md">
             <span class="material-icons-round care-icon" aria-hidden="true">notifications_active</span>
             <h3 data-i18n="care.items.backup.title">Backup nudges every 30 days</h3>
             <p data-i18n-html="care.items.backup.body">Receive tab shows a wallet backup banner until you download a copy or snooze for 30 days. Setup wizard blocks <strong>Save &amp; start</strong> until backup is acknowledged when the wallet is enabled.</p>
           </article>
-          <article class="care-card">
+          <article class="care-card" data-doc="guide/#/docs/WALLET.md">
             <span class="material-icons-round care-icon" aria-hidden="true">sync_lock</span>
             <h3 data-i18n="care.items.rotation.title">HD key rotation</h3>
             <p data-i18n="care.items.rotation.body">One-click prepare → sweep → verify → finalize flow moves your balance to a fresh BIP44 wallet and archives the old keys - with backup required first.</p>
           </article>
-          <article class="care-card">
+          <article class="care-card" data-doc="guide/#/docs/OPERATOR.md">
             <span class="material-icons-round care-icon" aria-hidden="true">login</span>
             <h3 data-i18n="care.items.autostart.title">OS login autostart</h3>
             <p data-i18n-html="care.items.autostart.body">Register at sign-in on Windows (Task Scheduler), Linux (systemd user), or macOS (LaunchAgent). Wizard and Features tab run the same probes as <code>dogego cert autostart</code>.</p>
           </article>
-          <article class="care-card">
+          <article class="care-card" data-doc="guide/#/docs/WEB_UI.md">
             <span class="material-icons-round care-icon" aria-hidden="true">flight_takeoff</span>
             <h3 data-i18n="care.items.txflight.title">Tx Flight send bar</h3>
             <p data-i18n="care.items.txflight.body">Animated progress when you send: signing, broadcast, mempool wait, and confirmation - with one-click jump to History or the block explorer.</p>
           </article>
-          <article class="care-card">
+          <article class="care-card" data-doc="guide/#/docs/WEB_UI.md">
             <span class="material-icons-round care-icon" aria-hidden="true">translate</span>
             <h3 data-i18n="care.items.i18n.title">Six dashboard languages</h3>
             <p data-i18n="care.items.i18n.body">English, Deutsch, Français, Português, 日本語, and 中文 - wizard and dashboard share the same locale picker in the top bar.</p>
           </article>
-          <article class="care-card">
+          <article class="care-card" data-doc="guide/#/docs/WEB_UI.md">
             <span class="material-icons-round care-icon" aria-hidden="true">pin</span>
             <h3 data-i18n="care.items.pin.title">PIN &amp; WebAuthn lock</h3>
             <p data-i18n="care.items.pin.body">Optional 6-digit dashboard PIN on setup or in Settings. Pair with device biometrics (WebAuthn) to unlock Send and wallet views without retyping every time.</p>
           </article>
-          <article class="care-card">
+          <article class="care-card" data-doc="guide/#/docs/DOCUMENTATION.md">
             <span class="material-icons-round care-icon" aria-hidden="true">menu_book</span>
             <h3 data-i18n="care.items.docs.title">Embedded Docs tab</h3>
             <p data-i18n-html="care.items.docs.body">Operator runbooks, integration guides, and repo markdown rendered in-browser via <code>GET /api/docs</code> - no GitHub tab required while you tune the node.</p>
           </article>
-          <article class="care-card">
+          <article class="care-card" data-doc="guide/#/docs/CORE_OPERATOR_RUNBOOK.md">
             <span class="material-icons-round care-icon" aria-hidden="true">verified</span>
             <h3 data-i18n="care.items.cert.title">Live cert matrix</h3>
             <p data-i18n-html="care.items.cert.body">Features tab exposes Core parity counts, OpenRPC at <code>/api/openrpc.json</code>, and seventeen live operator web gates (compare, mempool, mining GBT/aux, autostart, founder, BIP152, IBD convergence, runner readiness, end-to-end, and more).</p>
           </article>
-          <article class="care-card">
+          <article class="care-card" data-doc="guide/#/docs/WEB_UI.md">
             <span class="material-icons-round care-icon" aria-hidden="true">sync</span>
             <h3 data-i18n="care.items.syncdock.title">Fixed sync dock</h3>
             <p data-i18n="care.items.syncdock.body">Core-style footer during IBD: connected vs stored bodies, assist pool, recent download rate, connect lag, ETA, and expandable live logs - always visible while you browse tabs.</p>
           </article>
-          <article class="care-card">
+          <article class="care-card" data-doc="guide/#/docs/OPERATOR.md">
             <span class="material-icons-round care-icon" aria-hidden="true">storage</span>
             <h3 data-i18n="care.items.disk.title">Low disk space guard</h3>
             <p data-i18n-html="care.items.disk.body">Monitors free space on the datadir volume (~every 30s). At <strong>1 GiB or less</strong>, the Overview banner and optional tray/desktop notification warn you, and full block body download <strong>pauses</strong> until more than 1 GiB is free again (auto-resumes after you free or enlarge the disk). Header sync can continue.</p>
           </article>
-          <article class="care-card">
+          <article class="care-card" data-doc="guide/#/docs/OPERATOR.md">
             <span class="material-icons-round care-icon" aria-hidden="true">shield</span>
             <h3 data-i18n="care.items.firewall.title">Firewall &amp; preflight</h3>
             <p data-i18n="care.items.firewall.body">Setup wizard runs automatic checks for ports, CGNAT hints, and optional OS firewall rules. Copy-paste elevated commands appear on Overview when action is needed.</p>
           </article>
-          <article class="care-card">
+          <article class="care-card" data-doc="guide/#/docs/WALLET.md">
             <span class="material-icons-round care-icon" aria-hidden="true">receipt_long</span>
             <h3 data-i18n="care.items.history.title">History that scales</h3>
             <p data-i18n="care.items.history.body">Infinite-scroll transaction feed with server-side search and type filters, CSV export, UTXO-cache fast path for solo miners, and soft refresh that preserves scroll position.</p>
           </article>
-          <article class="care-card">
+          <article class="care-card" data-doc="guide/#/docs/EXTENSIONS.md">
             <span class="material-icons-round care-icon" aria-hidden="true">extension</span>
             <h3 data-i18n="care.items.extensions.title">Extensions catalog</h3>
             <p data-i18n-html="care.items.extensions.body">Settings → Extensions installs packages from GitHub or zip. Enable what you need; wallet access only via authenticated allowlisted RPC when an extension opts in. Browse packages in <a href="#extensions">Official extensions</a>.</p>

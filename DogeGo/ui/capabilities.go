@@ -118,6 +118,7 @@ func roadmapHighlights() []RoadmapHighlight {
 		{Phase: "Extensions", Title: "dogego.zkl2 ZK L2 overlay", Done: true, Summary: "zkproof-v1 P2P sync, Groth16 verify off-L1 (compressed + DIP + inline VK), Pebble store; no consensus fork."},
 		{Phase: "Extensions", Title: "dogego.doginals Doginals/DRC-20 L2", Done: true, Summary: "L1 index + wallet_rpc mint + doginals-v1 P2P asset sync; mainnet + testnet; no consensus fork."},
 		{Phase: "Extensions", Title: "dogego.radiodoge SoftAP bridge", Done: true, Summary: "Heltec V3 SoftAP HTTP: offline LoRa mesh broadcast; online inbound relay via sendrawtransaction."},
+		{Phase: "Extensions", Title: "dogego.dogeos EVM bridge", Done: true, Summary: "DogeOS Chikyū testnet RPC, live metrics, MetaMask/Hardhat helpers, HTTP API; not Dogecoin L1 consensus."},
 		{Phase: "Extensions", Title: "dogego.bbpow BBPoW research", Done: true, Summary: "Testnet-only Bitcoin SHA-256 commitment research verifier; not AuxPoW; not L1 consensus."},
 	}
 }
@@ -214,6 +215,7 @@ func capabilityCategories() []CapabilityCategory {
 				{ID: "pqc", Name: "Post-quantum commitments", Status: "live", Summary: "OP_RETURN FLC1/DIL2/RCG4 + TX_C/TX_R; Raccoon-G = vendored libdogecoin src/raccoon_g (Core PR #8, CGO -tags raccoon_g, no placeholder); GET /api/core-pq-probe; dogego cert pq. Not a consensus fork.", CoreNote: "libdogecoin PQC carrier spec + in-tree raccoon_g.", UITab: "features"},
 				{ID: "extensions", Name: "Extensions platform", Status: "live", Summary: "Catalog/zip install, wasm+subprocess hosts, enable/disable; sidebar Extensions menu; dogego_listextensions + dogego_ext_* RPC.", CoreNote: "Core: no plugin model.", UITab: "extensions"},
 				{ID: "zkl2", Name: "ZK L2 (dogego.zkl2)", Status: "live", Summary: "Optional zkproof-v1 overlay; tx-anchored Groth16 proofs; P2P zkinv/getzkproof; off-L1 verify (no OP_CHECKZKP fork).", CoreNote: "Inspired by Dogecoin #3869; extension-only.", UITab: "settings"},
+				{ID: "dogeos", Name: "DogeOS (dogego.dogeos)", Status: "live", Summary: "EVM app-layer bridge: Chikyū testnet RPC, metrics, developer helpers, /api/ext/dogego.dogeos. Not Dogecoin L1.", CoreNote: "External DogeOS network; extension-only.", UITab: "extensions"},
 				{ID: "bbpow", Name: "BBPoW research (dogego.bbpow)", Status: "experimental", Summary: "Testnet-only: verify Bitcoin SHA-256 commitments as a Dogecoin security signal (BBPoW/CAuxPoW). Not AuxPoW; not L1 consensus (hard-fork territory).", CoreNote: "Research extension only; Bitcoin unchanged.", UITab: "extensions"},
 			},
 		},

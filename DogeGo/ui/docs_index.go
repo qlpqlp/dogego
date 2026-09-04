@@ -167,11 +167,12 @@ func DefaultDocsManifest() DocsManifest {
 		{
 			ID:    "extensions",
 			Title: "Extensions catalog",
-			Body:  "Optional extensions add features beside the full node without changing Dogecoin consensus. Install from Settings → Extensions (catalog, zip, or HTTPS), then enable. Packages ship dogego.extension.json (subprocess or wasm). WebUI panels are host-rendered JSON only (ui_panel / workspace; no HTML injection). Optional wallet_rpc uses allowlisted methods after dashboard unlock.\n\nOfficial packages:\n- dogego.zkl2: zkproof-v1 P2P overlay; tx-anchored Groth16 proofs verified off-L1 (compressed, DIP #3869, or inline verifying_key).\n- dogego.doginals (v0.7.0): L1 P2SH/envelope/OP_RETURN index; signed L2 mint for tokens/images/files via /api/ext/dogego.doginals; wizard UI; doginals-v1 P2P.\n- dogego.radiodoge: Heltec V3 SoftAP HTTP bridge; offline LoRa mesh broadcast; online inbound relay via sendrawtransaction.\n- dogego.bbpow: testnet-only BBPoW research verifier (Bitcoin SHA-256 commitments; not AuxPoW; not L1 consensus).\n\nManager RPC: dogego_listextensions, dogego_enableextension, dogego_instextension. Extension RPC prefix: dogego_ext_<id>_<method>. HTTP: GET /api/extensions/catalog, POST /api/extensions/enable, GET /api/extensions/panel?id=<id>.",
+			Body:  "Optional extensions add features beside the full node without changing Dogecoin consensus. Install from Settings → Extensions (catalog, zip, or HTTPS), then enable. Packages ship dogego.extension.json (subprocess or wasm). WebUI panels are host-rendered JSON only (ui_panel / workspace; no HTML injection). Optional wallet_rpc uses allowlisted methods after dashboard unlock.\n\nOfficial packages:\n- dogego.zkl2: zkproof-v1 P2P overlay; tx-anchored Groth16 proofs verified off-L1 (compressed, DIP #3869, or inline verifying_key).\n- dogego.doginals (v0.8.0): L1 P2SH/envelope/OP_RETURN index; L2-only mint for tokens/images/files/ordinals via /api/ext/dogego.doginals; wizard UI; doginals-v1 P2P.\n- dogego.radiodoge: Heltec V3 SoftAP HTTP bridge; offline LoRa mesh broadcast; online inbound relay via sendrawtransaction.\n- dogego.dogeos: DogeOS EVM app-layer bridge (Chikyū testnet RPC, metrics, Hardhat/MetaMask helpers, /api/ext/dogego.dogeos); not Dogecoin L1.\n- dogego.bbpow: testnet-only BBPoW research verifier (Bitcoin SHA-256 commitments; not AuxPoW; not L1 consensus).\n\nManager RPC: dogego_listextensions, dogego_enableextension, dogego_instextension. Extension RPC prefix: dogego_ext_<id>_<method>. HTTP: GET /api/extensions/catalog, POST /api/extensions/enable, GET /api/extensions/panel?id=<id>.",
 			Terms: []GuideTerm{
 				{Term: "dogego_enableextension dogego.zkl2", Explain: "Enables ZK L2; negotiates zkproof-v1 after verack on P2P peers."},
 				{Term: "dogego_enableextension dogego.doginals", Explain: "Enables Doginals/DRC-20 L2 indexer, extension HTTP API (/api/ext/dogego.doginals/v1), and doginals-v1 overlay."},
 				{Term: "dogego_enableextension dogego.radiodoge", Explain: "Enables SoftAP bridge to RadioDoge Heltec V3 (default http://192.168.4.1)."},
+				{Term: "dogego_enableextension dogego.dogeos", Explain: "Enables DogeOS EVM bridge (Chikyū testnet by default; metrics + helpers + /api/ext/dogego.dogeos/v1)."},
 				{Term: "dogego_enableextension dogego.bbpow", Explain: "Enables BBPoW research verifier (testnet only)."},
 				{Term: "verifying_key_chunks", Explain: "Optional six 80-byte hex chunks (#3869 stack VK layout) on verifyproof/checkzkp; not hashed into proof_hash."},
 				{Term: "data/vk/default.vk", Explain: "Optional snarkjs verifying key under extensions/dogego.zkl2/data/vk/ for full Groth16 pairing."},
@@ -184,6 +185,8 @@ func DefaultDocsManifest() DocsManifest {
 				{Label: "doginals USER_GUIDE", Path: "extensions/catalog/doginals/docs/USER_GUIDE.md"},
 				{Label: "doginals PROTOCOL", Path: "extensions/catalog/doginals/docs/PROTOCOL.md"},
 				{Label: "radiodoge USER_GUIDE", Path: "extensions/catalog/radiodoge/docs/USER_GUIDE.md"},
+				{Label: "dogeos USER_GUIDE", Path: "extensions/catalog/dogeos/docs/USER_GUIDE.md"},
+				{Label: "dogeos EXAMPLES", Path: "extensions/catalog/dogeos/docs/EXAMPLES.md"},
 				{Label: "bbpow USER_GUIDE", Path: "extensions/catalog/bbpow/docs/USER_GUIDE.md"},
 				{Label: "bbpow PROTOCOL", Path: "extensions/catalog/bbpow/docs/PROTOCOL.md"},
 				{Label: "bbpow PLAIN_ENGLISH", Path: "extensions/catalog/bbpow/docs/PLAIN_ENGLISH.md"},

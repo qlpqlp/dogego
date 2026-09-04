@@ -37,10 +37,14 @@ func TestDocsManifestIncludesExtensionsSection(t *testing.T) {
 		if !strings.Contains(s.Body, "dogego.bbpow") {
 			t.Fatal("extensions section missing dogego.bbpow")
 		}
+		if !strings.Contains(s.Body, "dogego.dogeos") {
+			t.Fatal("extensions section missing dogego.dogeos")
+		}
 		wantPaths := []string{
 			"docs/EXTENSIONS.md",
 			"extensions/catalog/radiodoge/docs/USER_GUIDE.md",
 			"extensions/catalog/doginals/docs/USER_GUIDE.md",
+			"extensions/catalog/dogeos/docs/USER_GUIDE.md",
 			"extensions/catalog/bbpow/docs/USER_GUIDE.md",
 		}
 		for _, want := range wantPaths {

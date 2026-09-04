@@ -1,16 +1,27 @@
 # doginals-v1 protocol
 
-Overlay for DogeGo peers that enable `dogego.doginals` (v0.7.0+). Negotiated via host `exthello` / `extack` (same machinery as `zkproof-v1`).
+Overlay for DogeGo peers that enable `dogego.doginals` (v0.8.0+). Negotiated via host `exthello` / `extack` (same machinery as `zkproof-v1`).
 
 ## Goals
 
-- Share **signed off-L1** mints (token / image / file) among DogeGo nodes  
-- Keep **L1 indexing** local (P2SH Doginals, Ord envelopes, OP_RETURN)  
-- Expose **Doginals wallet** read APIs + **content** for wallets  
-- Stay **observe-only** on Dogecoin consensus: no new opcodes, no soft/hard fork  
-- **Mint on L2 when the extension is enabled**; do **not** build L1 P2SH mints (index only)
+- **Mint only on L2**: signed off-L1 records (token / image / file / ordinal)
+- **Index L1 locally**: P2SH Doginals, Ord envelopes, OP_RETURN already on Dogecoin (observe-only)
+- Expose **Doginals wallet** read APIs + **content**
+- Stay **observe-only** on Dogecoin consensus: no new opcodes, no soft/hard fork, **no L1 mint builder**
 
-## Commands
+## Decentralized permissionless sync
+
+No registrar and no required public API. Any operator who runs DogeGo and **enables** this extension can:
+
+1. Index L1 from their own copy of the chain.
+2. Connect to other DogeGo peers (normal P2P).
+3. If both sides enabled Doginals, they negotiate `doginals-v1`.
+4. Exchange inventories and fetch missing signed mints / assets.
+5. **Verify** compact `signmessage` signatures before storing. Unsigned or invalid records are dropped.
+
+Peers you have never met can still send you a mint; you accept it only if the cryptography checks out. You can also run isolated and index L1 only.
+
+### Commands
 
 | Command | Payload | Direction |
 |---------|---------|-----------|
@@ -27,6 +38,8 @@ Receivers **must** verify `record.signature` with Dogecoin `signmessage` rules b
 
 ## L1 indexing (P2SH / envelope / OP_RETURN)
 
+Index only. This extension **does not** create L1 inscriptions.
+
 ### Classic P2SH Doginals ([apezord](https://github.com/apezord/doginals))
 
 Inscription pushdatas in **scriptSig** (redeem path):
@@ -35,7 +48,7 @@ Inscription pushdatas in **scriptSig** (redeem path):
 "ord" | pieces | content-type | (n, data)* …
 ```
 
-Parts may span multiple txs; separators count down to `0`. Indexer assembles pending state keyed by the next P2SH outpoint. **Minting P2SH on L1 is not implemented** — historical and future P2SH reveals are indexed only.
+Parts may span multiple txs; separators count down to `0`. Indexer assembles pending state keyed by the next P2SH outpoint.
 
 ### Witness envelopes
 
@@ -53,7 +66,8 @@ DRC-20 JSON and data carriers (≤80 B typical).
   "p": "doginals-l2",
   "v": 1,
   "op": "mint|deploy|transfer|inscribe",
-  "kind": "token|image|file|nft",
+  "kind": "token|image|file|nft|ordinal",
+  "protocol": "ord",
   "tick": "WOOF",
   "amt": "1000",
   "address": "D…",
@@ -73,16 +87,17 @@ DRC-20 JSON and data carriers (≤80 B typical).
 
 ### Signing
 
-1. Build record with `nonce` + `created_unix` + `content_hash` (body stored separately).  
-2. `sign_message` = canonical JSON of the record **without** `signature` / `recorded_unix`, and **without** `content_b64` when `content_hash` is set.  
-3. Wallet: `signmessage(address, sign_message)` → base64 compact ECDSA.  
+1. Build record with `nonce` + `created_unix` + `content_hash` (body stored separately).
+2. `sign_message` = canonical JSON of the record **without** `signature` / `recorded_unix`, and **without** `content_b64` when `content_hash` is set.
+3. Wallet: `signmessage(address, sign_message)` → base64 compact ECDSA.
 4. Peers: recover pubkey, match P2PKH `address`, check nonce uniqueness, optional body vs `content_hash`.
 
 ### Apply rules
 
-- `kind=token` + `op=mint|deploy` + `amt` → credit L2 balance for `to` (or `address`)  
-- `kind=image|file|nft` → store body; expose via `/mint/{id}/content`  
-- Duplicate `id` or reused `nonce` → reject  
+- `kind=token` + `op=mint|deploy` + `amt` → credit L2 balance for `to` (or `address`)
+- `kind=image|file|nft|ordinal` → store body; expose via `/mint/{id}/content`
+- `kind=ordinal` → also return official Ordinals envelope hex (`protocol=ord`)
+- Duplicate `id` or reused `nonce` → reject
 
 ## L1 inscription record
 
@@ -90,11 +105,11 @@ See USER_GUIDE. Fields include `source` (`p2sh` \| `envelope` \| `opreturn`), `m
 
 ## Address ledger
 
-L1 DRC-20 events and verified L2 token mints update `bal/` + `ah/`.
+L1 DRC-20 events (indexed) and verified L2 token mints update `bal/` + `ah/`.
 
 ## HTTP surface
 
-All under `/api/ext/dogego.doginals/v1/*` via extension `httphandle`. Core only proxies `/api/ext/{id}/…`.
+All under `/api/ext/dogego.doginals/v1/*` via extension `httphandle`. Core only proxies `/api/ext/{id}/…`. POST mint is L2 only.
 
 ## Honesty
 

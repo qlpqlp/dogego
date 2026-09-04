@@ -263,6 +263,27 @@
     }, 0);
   });
 
+  (function initDocCards() {
+    function go(el) {
+      var href = el.getAttribute("data-doc");
+      if (href) window.location.href = href;
+    }
+    document.querySelectorAll("[data-doc]").forEach(function (el) {
+      if (!el.hasAttribute("tabindex")) el.setAttribute("tabindex", "0");
+      if (!el.hasAttribute("role")) el.setAttribute("role", "link");
+      el.addEventListener("click", function (e) {
+        if (e.target.closest("a[href]")) return;
+        go(el);
+      });
+      el.addEventListener("keydown", function (e) {
+        if (e.key === "Enter" || e.key === " ") {
+          e.preventDefault();
+          go(el);
+        }
+      });
+    });
+  })();
+
   (function initCodeReviewBanner() {
     var LS_KEY = "dogego_code_review_banner_v1";
     var banner = document.getElementById("code-review-banner");

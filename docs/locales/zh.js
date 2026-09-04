@@ -1,33 +1,33 @@
 (function(g){g.DogeGoSiteLocaleBundles=g.DogeGoSiteLocaleBundles||{};g.DogeGoSiteLocaleBundles["zh"]={
   "meta": {
-    "title": "DogeGo | 更快的 Dogecoin 全节点",
-    "description": "DogeGo 是用 Go 编写的开源 Dogecoin 全节点，内置 Web 仪表盘、GitHub 自动更新、钱包备份提醒、BlockStep 浏览器、JSON-RPC，以及适用于所有主流平台的二进制文件。"
+    "title": "DogeGo | æ›´å¿«çš„ Dogecoin å…¨èŠ‚ç‚¹",
+    "description": "DogeGo æ˜¯ç”¨ Go ç¼–å†™çš„å¼€æº Dogecoin å…¨èŠ‚ç‚¹ï¼Œå†…ç½® Web ä»ªè¡¨ç›˜ã€GitHub è‡ªåŠ¨æ›´æ–°ã€é’±åŒ…å¤‡ä»½æé†’ã€BlockStep æµè§ˆå™¨ã€JSON-RPCï¼Œä»¥åŠé€‚ç”¨äºŽæ‰€æœ‰ä¸»æµå¹³å°çš„äºŒè¿›åˆ¶æ–‡ä»¶ã€‚"
   },
   "lang": {
-    "aria": "选择语言",
-    "label": "语言"
+    "aria": "é€‰æ‹©è¯­è¨€",
+    "label": "è¯­è¨€"
   },
-  "skip": "跳转到内容",
+  "skip": "è·³è½¬åˆ°å†…å®¹",
   "beta": "Beta",
   "reviewBanner": {
-    "title": "代码正在审查",
-    "body": "DogeGo 处于测试阶段；此代码库正在审查中。行为可能仍会变化。",
-    "dismissAria": "关闭"
+    "title": "ä»£ç æ­£åœ¨å®¡æŸ¥",
+    "body": "DogeGo å¤„äºŽæµ‹è¯•é˜¶æ®µï¼›æ­¤ä»£ç åº“æ­£åœ¨å®¡æŸ¥ä¸­ã€‚è¡Œä¸ºå¯èƒ½ä»ä¼šå˜åŒ–ã€‚",
+    "dismissAria": "å…³é—­"
   },
   "nav": {
-    "home": "DogeGo 首页",
-    "openMenu": "打开菜单",
-    "closeMenu": "关闭菜单",
-    "features": "功能",
+    "home": "DogeGo é¦–é¡µ",
+    "openMenu": "æ‰“å¼€èœå•",
+    "closeMenu": "å…³é—­èœå•",
+    "features": "åŠŸèƒ½",
     "extensions": "Extensions",
     "fullnode": "Full node",
     "roadmap": "Roadmap",
-    "care": "关怀",
+    "care": "å…³æ€€",
     "blockstep": "BlockStep",
-    "setup": "设置",
-    "why": "为何选 DogeGo",
-    "download": "下载",
-    "developers": "开发者",
+    "setup": "è®¾ç½®",
+    "why": "ä¸ºä½•é€‰ DogeGo",
+    "download": "ä¸‹è½½",
+    "developers": "å¼€å‘è€…",
     "foundation": "Dogecoin Foundation",
     "github": "GitHub",
     "menu": "Menu",
@@ -39,221 +39,221 @@
     "docs": "Docs"
   },
   "hero": {
-    "eyebrow": "GitHub 开源",
-    "title": "更快的 Dogecoin 全节点",
-    "lead": "首个支持后量子承诺、zstd 压缩、CGNAT 友好中继的 Dogecoin 全节点，浏览器仪表盘可检查更新、提醒备份钱包，并在应用内提供运维文档。",
-    "download": "下载",
-    "viewGithub": "在 GitHub 查看",
+    "eyebrow": "GitHub å¼€æº",
+    "title": "æ›´å¿«çš„ Dogecoin å…¨èŠ‚ç‚¹",
+    "lead": "é¦–ä¸ªæ”¯æŒåŽé‡å­æ‰¿è¯ºã€zstd åŽ‹ç¼©ã€CGNAT å‹å¥½ä¸­ç»§çš„ Dogecoin å…¨èŠ‚ç‚¹ï¼Œæµè§ˆå™¨ä»ªè¡¨ç›˜å¯æ£€æŸ¥æ›´æ–°ã€æé†’å¤‡ä»½é’±åŒ…ï¼Œå¹¶åœ¨åº”ç”¨å†…æä¾›è¿ç»´æ–‡æ¡£ã€‚",
+    "download": "ä¸‹è½½",
+    "viewGithub": "åœ¨ GitHub æŸ¥çœ‹",
     "note": "Beta: ready to try. Help us test and tune.",
     "releaseNote": ""
   },
   "stats": {
-    "aria": "关键亮点",
+    "aria": "å…³é”®äº®ç‚¹",
     "quantum": {
-      "value": "量子就绪",
-      "label": "后量子承诺"
+      "value": "é‡å­å°±ç»ª",
+      "label": "åŽé‡å­æ‰¿è¯º"
     },
     "testnet": {
-      "value": "T 地址",
-      "label": "全新重启测试网"
+      "value": "T åœ°å€",
+      "label": "å…¨æ–°é‡å¯æµ‹è¯•ç½‘"
     },
     "rpc": {
       "value": "180+",
-      "label": "JSON-RPC 方法"
+      "label": "JSON-RPC æ–¹æ³•"
     },
     "autoupdate": {
-      "value": "自动更新",
-      "label": "GitHub Releases 检查"
+      "value": "è‡ªåŠ¨æ›´æ–°",
+      "label": "GitHub Releases æ£€æŸ¥"
     },
     "walletcare": {
-      "value": "钱包关怀",
-      "label": "备份提醒 · 密钥轮换"
+      "value": "é’±åŒ…å…³æ€€",
+      "label": "å¤‡ä»½æé†’ Â· å¯†é’¥è½®æ¢"
     }
   },
   "demo": {
-    "aria": "DogeGo 仪表盘交互预览",
-    "updateBanner": "有可用更新 - GitHub Releases 上的 DogeGo <strong>0.2.0</strong>",
+    "aria": "DogeGo ä»ªè¡¨ç›˜äº¤äº’é¢„è§ˆ",
+    "updateBanner": "æœ‰å¯ç”¨æ›´æ–° - GitHub Releases ä¸Šçš„ DogeGo <strong>0.2.0</strong>",
     "full": "full",
     "mainnet": "mainnet",
     "english": "English",
-    "peersOutIn": "出站 {out} · 入站 {in}",
-    "mempoolTx": "{n} 笔交易",
-    "blockHeight": "区块 #{n}",
+    "peersOutIn": "å‡ºç«™ {out} Â· å…¥ç«™ {in}",
+    "mempoolTx": "{n} ç¬”äº¤æ˜“",
+    "blockHeight": "åŒºå— #{n}",
     "txProcessedM": "{n}M",
     "blockstepMonths": [
-      "1月",
-      "3月",
-      "6月",
-      "9月",
-      "12月"
+      "1æœˆ",
+      "3æœˆ",
+      "6æœˆ",
+      "9æœˆ",
+      "12æœˆ"
     ],
-    "navWallet": "钱包",
-    "navSend": "发送",
-    "navReceive": "接收",
-    "navHistory": "历史",
-    "navNode": "节点",
-    "navOverview": "概览",
+    "navWallet": "é’±åŒ…",
+    "navSend": "å‘é€",
+    "navReceive": "æŽ¥æ”¶",
+    "navHistory": "åŽ†å²",
+    "navNode": "èŠ‚ç‚¹",
+    "navOverview": "æ¦‚è§ˆ",
     "navBlockStep": "BlockStep",
-    "navSearch": "搜索",
-    "navMempool": "内存池",
-    "navDocs": "文档",
+    "navSearch": "æœç´¢",
+    "navMempool": "å†…å­˜æ± ",
+    "navDocs": "æ–‡æ¡£",
     "navExtensions": "Extensions",
-    "navSettings": "设置",
-    "navAnalytics": "分析",
-    "navFeatures": "功能",
-    "navConsole": "控制台",
-    "overviewTitle": "仪表盘",
-    "overviewSub": "本机实时节点指标。",
-    "searchPlaceholder": "高度、哈希、txid 或地址…",
-    "searchBtn": "搜索",
-    "kpiNodeHealth": "节点健康",
-    "kpiHeaderTip": "头链尖端",
-    "kpiSync": "同步",
-    "kpiMempool": "内存池",
-    "kpiPeers": "节点",
-    "kpiTxProcessed": "已处理交易",
-    "kpiChainDisk": "链磁盘",
+    "navSettings": "è®¾ç½®",
+    "navAnalytics": "åˆ†æž",
+    "navFeatures": "åŠŸèƒ½",
+    "navConsole": "æŽ§åˆ¶å°",
+    "overviewTitle": "ä»ªè¡¨ç›˜",
+    "overviewSub": "æœ¬æœºå®žæ—¶èŠ‚ç‚¹æŒ‡æ ‡ã€‚",
+    "searchPlaceholder": "é«˜åº¦ã€å“ˆå¸Œã€txid æˆ–åœ°å€â€¦",
+    "searchBtn": "æœç´¢",
+    "kpiNodeHealth": "èŠ‚ç‚¹å¥åº·",
+    "kpiHeaderTip": "å¤´é“¾å°–ç«¯",
+    "kpiSync": "åŒæ­¥",
+    "kpiMempool": "å†…å­˜æ± ",
+    "kpiPeers": "èŠ‚ç‚¹",
+    "kpiTxProcessed": "å·²å¤„ç†äº¤æ˜“",
+    "kpiChainDisk": "é“¾ç£ç›˜",
     "chipBundled": "bundled",
     "chipZstd": "zstd",
     "chipTxIndex": "tx index",
     "chipIbdOptimize": "IBD optimize",
     "chipP2pBoth": "P2P both",
     "blockstepTitle": "BlockStep",
-    "blockstepSub": "从 2013 年漫步 Dogecoin 链至今。",
+    "blockstepSub": "ä»Ž 2013 å¹´æ¼«æ­¥ Dogecoin é“¾è‡³ä»Šã€‚",
     "blockstepYear2013": "2013",
-    "blockstepSynced": "已同步",
-    "blockstepRange": "2013 年 12 月至同步尖端",
-    "blockstepYearTip": "尖端",
-    "blockstepOpenBlock": "打开此区块",
-    "mempoolTitle": "内存池",
-    "mempoolSub": "准入策略、feefilter、包限制、RBF。",
-    "mempoolMeta": "124 笔交易 · 0.42 MB · 最低中继 0.001 DOGE/kB · Full RBF 关闭",
-    "featuresTitle": "功能与对等",
-    "featuresSub": "实时 RPC 能力清单与运维 cert 探测。",
-    "featuresPillAuxpow": "AuxPoW Core 对等",
-    "featuresPillRpc": "180+ JSON-RPC 方法",
-    "featuresPillMempool": "内存池语料 (53/53)",
-    "featuresPillPsbt": "PSBT · BIP32 · HWI",
-    "featuresPillExtensions": "Extensions · zkproof-v1",
-    "featuresNote": "设置 -> 测试 Core 连接 · 缓存 cert 矩阵 · OpenRPC 位于 <code>/api/openrpc.json</code>",
-    "syncDockMain": "区块体 IBD · mainnet · {pct}%",
-    "syncDockMeta": "已连接 <strong>{connected}</strong> · 已存储 <strong>{stored}</strong> · 落后 <strong>{behind}</strong>",
-    "explainerHead": "实时仪表盘亮点",
-    "caption": "环回仪表盘位于 <code>localhost:2013</code> - i18n、更新横幅、同步 dock、内嵌 Docs 与运维功能标签页与运行中的节点一致。",
+    "blockstepSynced": "å·²åŒæ­¥",
+    "blockstepRange": "2013 å¹´ 12 æœˆè‡³åŒæ­¥å°–ç«¯",
+    "blockstepYearTip": "å°–ç«¯",
+    "blockstepOpenBlock": "æ‰“å¼€æ­¤åŒºå—",
+    "mempoolTitle": "å†…å­˜æ± ",
+    "mempoolSub": "å‡†å…¥ç­–ç•¥ã€feefilterã€åŒ…é™åˆ¶ã€RBFã€‚",
+    "mempoolMeta": "124 ç¬”äº¤æ˜“ Â· 0.42 MB Â· æœ€ä½Žä¸­ç»§ 0.001 DOGE/kB Â· Full RBF å…³é—­",
+    "featuresTitle": "åŠŸèƒ½ä¸Žå¯¹ç­‰",
+    "featuresSub": "å®žæ—¶ RPC èƒ½åŠ›æ¸…å•ä¸Žè¿ç»´ cert æŽ¢æµ‹ã€‚",
+    "featuresPillAuxpow": "AuxPoW Core å¯¹ç­‰",
+    "featuresPillRpc": "180+ JSON-RPC æ–¹æ³•",
+    "featuresPillMempool": "å†…å­˜æ± è¯­æ–™ (53/53)",
+    "featuresPillPsbt": "PSBT Â· BIP32 Â· HWI",
+    "featuresPillExtensions": "Extensions Â· zkproof-v1",
+    "featuresNote": "è®¾ç½® -> æµ‹è¯• Core è¿žæŽ¥ Â· ç¼“å­˜ cert çŸ©é˜µ Â· OpenRPC ä½äºŽ <code>/api/openrpc.json</code>",
+    "syncDockMain": "åŒºå—ä½“ IBD Â· mainnet Â· {pct}%",
+    "syncDockMeta": "å·²è¿žæŽ¥ <strong>{connected}</strong> Â· å·²å­˜å‚¨ <strong>{stored}</strong> Â· è½åŽ <strong>{behind}</strong>",
+    "explainerHead": "å®žæ—¶ä»ªè¡¨ç›˜äº®ç‚¹",
+    "caption": "çŽ¯å›žä»ªè¡¨ç›˜ä½äºŽ <code>localhost:2013</code> - i18nã€æ›´æ–°æ¨ªå¹…ã€åŒæ­¥ dockã€å†…åµŒ Docs ä¸Žè¿ç»´åŠŸèƒ½æ ‡ç­¾é¡µä¸Žè¿è¡Œä¸­çš„èŠ‚ç‚¹ä¸€è‡´ã€‚",
     "explainer": {
       "overview": {
-        "title": "概览：运维指标 + 搜索",
-        "body": "节点健康 KPI 含 Chart.js 迷你图、链磁盘明细，以及顶部搜索栏（高度、哈希、txid 或地址）。当 release 比当前构建新时显示 GitHub 自动更新横幅。固定同步 dock 显示已连接与已存储区块体、协助池及 IBD 预计时间。",
+        "title": "æ¦‚è§ˆï¼šè¿ç»´æŒ‡æ ‡ + æœç´¢",
+        "body": "èŠ‚ç‚¹å¥åº· KPI å« Chart.js è¿·ä½ å›¾ã€é“¾ç£ç›˜æ˜Žç»†ï¼Œä»¥åŠé¡¶éƒ¨æœç´¢æ ï¼ˆé«˜åº¦ã€å“ˆå¸Œã€txid æˆ–åœ°å€ï¼‰ã€‚å½“ release æ¯”å½“å‰æž„å»ºæ–°æ—¶æ˜¾ç¤º GitHub è‡ªåŠ¨æ›´æ–°æ¨ªå¹…ã€‚å›ºå®šåŒæ­¥ dock æ˜¾ç¤ºå·²è¿žæŽ¥ä¸Žå·²å­˜å‚¨åŒºå—ä½“ã€ååŠ©æ± åŠ IBD é¢„è®¡æ—¶é—´ã€‚",
         "tags": [
-          "自动更新",
-          "迷你图 KPI",
-          "同步 dock",
-          "浏览器搜索"
+          "è‡ªåŠ¨æ›´æ–°",
+          "è¿·ä½ å›¾ KPI",
+          "åŒæ­¥ dock",
+          "æµè§ˆå™¨æœç´¢"
         ]
       },
       "blockstep": {
-        "title": "BlockStep：从创世到尖端的 timeline",
-        "body": "从 2013 年 12 月浏览 Dogecoin 历史至同步尖端。在浏览器中打开任意区块，检查 coinbase 与 PQ OP_RETURN 输出，一键跳转时代。BlockStep 与仪表盘搜索共用同一 tx 索引。",
+        "title": "BlockStepï¼šä»Žåˆ›ä¸–åˆ°å°–ç«¯çš„ timeline",
+        "body": "ä»Ž 2013 å¹´ 12 æœˆæµè§ˆ Dogecoin åŽ†å²è‡³åŒæ­¥å°–ç«¯ã€‚åœ¨æµè§ˆå™¨ä¸­æ‰“å¼€ä»»æ„åŒºå—ï¼Œæ£€æŸ¥ coinbase ä¸Ž PQ OP_RETURN è¾“å‡ºï¼Œä¸€é”®è·³è½¬æ—¶ä»£ã€‚BlockStep ä¸Žä»ªè¡¨ç›˜æœç´¢å…±ç”¨åŒä¸€ tx ç´¢å¼•ã€‚",
         "tags": [
-          "Tx 索引",
-          "Timeline 拖动",
-          "PQ 浏览器"
+          "Tx ç´¢å¼•",
+          "Timeline æ‹–åŠ¨",
+          "PQ æµè§ˆå™¨"
         ]
       },
       "mempool": {
-        "title": "可检查的内内存池策略",
-        "body": "查看等待中的交易及其费率、标准性与 BIP125 RBF 状态。包限制、最低中继费与 Full RBF 与 dogecoinconf.json 中的 Core 标志名一致。配置后可与 Dogecoin Core 实时比对 testmempoolaccept 行。",
+        "title": "å¯æ£€æŸ¥çš„å†…å†…å­˜æ± ç­–ç•¥",
+        "body": "æŸ¥çœ‹ç­‰å¾…ä¸­çš„äº¤æ˜“åŠå…¶è´¹çŽ‡ã€æ ‡å‡†æ€§ä¸Ž BIP125 RBF çŠ¶æ€ã€‚åŒ…é™åˆ¶ã€æœ€ä½Žä¸­ç»§è´¹ä¸Ž Full RBF ä¸Ž dogecoinconf.json ä¸­çš„ Core æ ‡å¿—åä¸€è‡´ã€‚é…ç½®åŽå¯ä¸Ž Dogecoin Core å®žæ—¶æ¯”å¯¹ testmempoolaccept è¡Œã€‚",
         "tags": [
           "BIP125 RBF",
-          "包限制",
-          "Core 对等探测"
+          "åŒ…é™åˆ¶",
+          "Core å¯¹ç­‰æŽ¢æµ‹"
         ]
       },
       "features": {
-        "title": "功能标签页：能力与 cert 矩阵",
-        "body": "实时 RPC 能力清单、OpenRPC 位于 /api/openrpc.json，以及运维 cert 探测（AuxPoW 对等、内存池语料、restart-resume、founder 检查）。设置可测试并排 Core 连接并缓存结果 90 秒。",
+        "title": "åŠŸèƒ½æ ‡ç­¾é¡µï¼šèƒ½åŠ›ä¸Ž cert çŸ©é˜µ",
+        "body": "å®žæ—¶ RPC èƒ½åŠ›æ¸…å•ã€OpenRPC ä½äºŽ /api/openrpc.jsonï¼Œä»¥åŠè¿ç»´ cert æŽ¢æµ‹ï¼ˆAuxPoW å¯¹ç­‰ã€å†…å­˜æ± è¯­æ–™ã€restart-resumeã€founder æ£€æŸ¥ï¼‰ã€‚è®¾ç½®å¯æµ‹è¯•å¹¶æŽ’ Core è¿žæŽ¥å¹¶ç¼“å­˜ç»“æžœ 90 ç§’ã€‚",
         "tags": [
           "OpenRPC",
-          "Core 对比",
-          "运维 cert"
+          "Core å¯¹æ¯”",
+          "è¿ç»´ cert"
         ]
       }
     }
   },
   "console": {
-    "title": "从终端运行",
-    "lead": "DogeGo 是单个 Go 二进制。从 GitHub Releases 下载或从源码构建，然后启动节点。仪表盘与 JSON-RPC 会自动启动。",
-    "step1Title": "下载或构建",
+    "title": "ä»Žç»ˆç«¯è¿è¡Œ",
+    "lead": "DogeGo æ˜¯å•ä¸ª Go äºŒè¿›åˆ¶ã€‚ä»Ž GitHub Releases ä¸‹è½½æˆ–ä»Žæºç æž„å»ºï¼Œç„¶åŽå¯åŠ¨èŠ‚ç‚¹ã€‚ä»ªè¡¨ç›˜ä¸Ž JSON-RPC ä¼šè‡ªåŠ¨å¯åŠ¨ã€‚",
+    "step1Title": "ä¸‹è½½æˆ–æž„å»º",
     "step1Body": "<code>cd DogeGo && go build -o dogego ./cmd/dogego</code>",
-    "step2Title": "启动节点",
-    "step2Body": "<code>./dogego</code> 或 <code>./dogego node -network mainnet</code>",
-    "step3Title": "打开仪表盘",
-    "step3Body": "浏览器访问 <code>localhost:2013</code>。首次运行会打开设置向导。",
-    "note": "P2P user-agent 在网络上宣告 <code>/DogeGo:0.1.0-beta/</code>。不是 Shibetoshi，不是 Core。",
+    "step2Title": "å¯åŠ¨èŠ‚ç‚¹",
+    "step2Body": "<code>./dogego</code> æˆ– <code>./dogego node -network mainnet</code>",
+    "step3Title": "æ‰“å¼€ä»ªè¡¨ç›˜",
+    "step3Body": "æµè§ˆå™¨è®¿é—® <code>localhost:2013</code>ã€‚é¦–æ¬¡è¿è¡Œä¼šæ‰“å¼€è®¾ç½®å‘å¯¼ã€‚",
+    "note": "P2P user-agent åœ¨ç½‘ç»œä¸Šå®£å‘Š <code>/DogeGo:0.1.0-beta/</code>ã€‚ä¸æ˜¯ Shibetoshiï¼Œä¸æ˜¯ Coreã€‚",
     "windowTitle": "dogego node",
-    "running": "运行中",
-    "logAria": "节点启动日志",
+    "running": "è¿è¡Œä¸­",
+    "logAria": "èŠ‚ç‚¹å¯åŠ¨æ—¥å¿—",
     "lines": [
-      "DogeGo 0.1.0-beta (1.14.9) · 更快的 Dogecoin 全节点",
+      "DogeGo 0.1.0-beta (1.14.9) Â· æ›´å¿«çš„ Dogecoin å…¨èŠ‚ç‚¹",
       "$ cd DogeGo && ./dogego",
-      "Web UI  http://localhost:2013/  ·  首次运行打开设置向导",
-      "JSON-RPC  http://127.0.0.1:22557/  (启用时使用 cookie 认证)",
-      "P2P both · 最多 12 出站 · DGR 中继自动配置",
-      "存储：bundled blk*.dat + zstd · 紧凑 tx 索引",
-      "更新检查：github.com/qlpqlp/dogego/releases (每日)",
-      "钱包已启用 · BIP44 HD · 仪表盘 PIN 可选",
-      "IBD 68.4% · 头 5,412,884 · 区块体追赶中 …",
-      "同步 dock：已连接 3,701,204 · 已存储 3,842,880 · 协助池 4",
-      "内嵌 Docs 标签页 · 功能 cert 矩阵 · 控制台 JSON-RPC 预设"
+      "Web UI  http://localhost:2013/  Â·  é¦–æ¬¡è¿è¡Œæ‰“å¼€è®¾ç½®å‘å¯¼",
+      "JSON-RPC  http://127.0.0.1:22557/  (å¯ç”¨æ—¶ä½¿ç”¨ cookie è®¤è¯)",
+      "P2P both Â· æœ€å¤š 12 å‡ºç«™ Â· DGR ä¸­ç»§è‡ªåŠ¨é…ç½®",
+      "å­˜å‚¨ï¼šbundled blk*.dat + zstd Â· ç´§å‡‘ tx ç´¢å¼•",
+      "æ›´æ–°æ£€æŸ¥ï¼šgithub.com/qlpqlp/dogego/releases (æ¯æ—¥)",
+      "é’±åŒ…å·²å¯ç”¨ Â· BIP44 HD Â· ä»ªè¡¨ç›˜ PIN å¯é€‰",
+      "IBD 68.4% Â· å¤´ 5,412,884 Â· åŒºå—ä½“è¿½èµ¶ä¸­ â€¦",
+      "åŒæ­¥ dockï¼šå·²è¿žæŽ¥ 3,701,204 Â· å·²å­˜å‚¨ 3,842,880 Â· ååŠ©æ±  4",
+      "å†…åµŒ Docs æ ‡ç­¾é¡µ Â· åŠŸèƒ½ cert çŸ©é˜µ Â· æŽ§åˆ¶å° JSON-RPC é¢„è®¾"
     ]
   },
   "features": {
-    "title": "超越 Dogecoin Core",
-    "lead": "DogeGo 在一个带浏览器仪表盘的 Go 二进制中提供 Core 从未捆绑的运维工具、索引与现代网络模式。",
+    "title": "è¶…è¶Š Dogecoin Core",
+    "lead": "DogeGo åœ¨ä¸€ä¸ªå¸¦æµè§ˆå™¨ä»ªè¡¨ç›˜çš„ Go äºŒè¿›åˆ¶ä¸­æä¾› Core ä»Žæœªæ†ç»‘çš„è¿ç»´å·¥å…·ã€ç´¢å¼•ä¸ŽçŽ°ä»£ç½‘ç»œæ¨¡å¼ã€‚",
     "items": {
       "pq": {
-        "title": "后量子承诺",
-        "body": "首个支持 Phase-1 PQ OP_RETURN 载体 (FLC1, DIL2, RCG4) 的 Dogecoin 全节点。发送时自动钱包承诺，通过 <code>dogego_verifypqcommitment</code> 验证，并在浏览器中检查。"
+        "title": "åŽé‡å­æ‰¿è¯º",
+        "body": "é¦–ä¸ªæ”¯æŒ Phase-1 PQ OP_RETURN è½½ä½“ (FLC1, DIL2, RCG4) çš„ Dogecoin å…¨èŠ‚ç‚¹ã€‚å‘é€æ—¶è‡ªåŠ¨é’±åŒ…æ‰¿è¯ºï¼Œé€šè¿‡ <code>dogego_verifypqcommitment</code> éªŒè¯ï¼Œå¹¶åœ¨æµè§ˆå™¨ä¸­æ£€æŸ¥ã€‚"
       },
       "zstd": {
-        "title": "zstd 区块压缩",
-        "body": "存储区块体可选 zstd，外加 bundled <code>blk*.dat</code> 布局。Core 保持原始区块未压缩。DogeGo 在仪表盘中报告压缩比与磁盘节省。"
+        "title": "zstd åŒºå—åŽ‹ç¼©",
+        "body": "å­˜å‚¨åŒºå—ä½“å¯é€‰ zstdï¼Œå¤–åŠ  bundled <code>blk*.dat</code> å¸ƒå±€ã€‚Core ä¿æŒåŽŸå§‹åŒºå—æœªåŽ‹ç¼©ã€‚DogeGo åœ¨ä»ªè¡¨ç›˜ä¸­æŠ¥å‘ŠåŽ‹ç¼©æ¯”ä¸Žç£ç›˜èŠ‚çœã€‚"
       },
       "spv": {
-        "title": "全节点或 SPV",
-        "body": "运行 headers-first IBD 全验证，或切换到轻量 SPV（仅头）以最小化磁盘。同一二进制、同一向导。首次运行选择配置文件。"
+        "title": "å…¨èŠ‚ç‚¹æˆ– SPV",
+        "body": "è¿è¡Œ headers-first IBD å…¨éªŒè¯ï¼Œæˆ–åˆ‡æ¢åˆ°è½»é‡ SPVï¼ˆä»…å¤´ï¼‰ä»¥æœ€å°åŒ–ç£ç›˜ã€‚åŒä¸€äºŒè¿›åˆ¶ã€åŒä¸€å‘å¯¼ã€‚é¦–æ¬¡è¿è¡Œé€‰æ‹©é…ç½®æ–‡ä»¶ã€‚"
       },
       "cgnat": {
-        "title": "CGNAT 与 Starlink 中继",
-        "body": "P2P 模式：<code>classic</code>、<code>cgnat</code>（仅出站）或 <code>both</code>。最多 12 个出站节点无需入站端口转发即可中继区块，适用于运营商 NAT 与 Starlink。"
+        "title": "CGNAT ä¸Ž Starlink ä¸­ç»§",
+        "body": "P2P æ¨¡å¼ï¼š<code>classic</code>ã€<code>cgnat</code>ï¼ˆä»…å‡ºç«™ï¼‰æˆ– <code>both</code>ã€‚æœ€å¤š 12 ä¸ªå‡ºç«™èŠ‚ç‚¹æ— éœ€å…¥ç«™ç«¯å£è½¬å‘å³å¯ä¸­ç»§åŒºå—ï¼Œé€‚ç”¨äºŽè¿è¥å•† NAT ä¸Ž Starlinkã€‚"
       },
       "testnet": {
-        "title": "重启测试网",
-        "body": "全新测试网，地址以 <strong>T</strong>（测试）开头。与 Core 一样使用真实 scrypt PoW（RelaxedPoW 关闭）。Digishield 最小难度在低算力时帮助 solo 挖矿。端口 <code>44556</code>。"
+        "title": "é‡å¯æµ‹è¯•ç½‘",
+        "body": "å…¨æ–°æµ‹è¯•ç½‘ï¼Œåœ°å€ä»¥ <strong>T</strong>ï¼ˆæµ‹è¯•ï¼‰å¼€å¤´ã€‚ä¸Ž Core ä¸€æ ·ä½¿ç”¨çœŸå®ž scrypt PoWï¼ˆRelaxedPoW å…³é—­ï¼‰ã€‚Digishield æœ€å°éš¾åº¦åœ¨ä½Žç®—åŠ›æ—¶å¸®åŠ© solo æŒ–çŸ¿ã€‚ç«¯å£ <code>44556</code>ã€‚"
       },
       "search": {
-        "title": "搜索一切",
-        "body": "默认完整 tx 索引。从仪表盘搜索高度、区块哈希、txid 或地址。Dogecoin 是公开账本，DogeGo 让每条记录都易于查找。"
+        "title": "æœç´¢ä¸€åˆ‡",
+        "body": "é»˜è®¤å®Œæ•´ tx ç´¢å¼•ã€‚ä»Žä»ªè¡¨ç›˜æœç´¢é«˜åº¦ã€åŒºå—å“ˆå¸Œã€txid æˆ–åœ°å€ã€‚Dogecoin æ˜¯å…¬å¼€è´¦æœ¬ï¼ŒDogeGo è®©æ¯æ¡è®°å½•éƒ½æ˜“äºŽæŸ¥æ‰¾ã€‚"
       },
       "dashboard": {
-        "title": "Web 仪表盘",
-        "body": "环回 UI 位于 <code>:2013</code>：KPI 卡片、自动更新横幅、同步 dock、内存池、分析、内嵌 Docs、功能 cert 矩阵与五步设置向导。无需安装 Qt。"
+        "title": "Web ä»ªè¡¨ç›˜",
+        "body": "çŽ¯å›ž UI ä½äºŽ <code>:2013</code>ï¼šKPI å¡ç‰‡ã€è‡ªåŠ¨æ›´æ–°æ¨ªå¹…ã€åŒæ­¥ dockã€å†…å­˜æ± ã€åˆ†æžã€å†…åµŒ Docsã€åŠŸèƒ½ cert çŸ©é˜µä¸Žäº”æ­¥è®¾ç½®å‘å¯¼ã€‚æ— éœ€å®‰è£… Qtã€‚"
       },
       "rpc": {
-        "title": "180+ JSON-RPC 方法",
-        "body": "与 Core 兼容的 HTTP JSON-RPC，含 cookie 认证、ZMQ 通知、OpenRPC 位于 <code>/api/openrpc.json</code>，以及功能标签页中的实时能力标志。"
+        "title": "180+ JSON-RPC æ–¹æ³•",
+        "body": "ä¸Ž Core å…¼å®¹çš„ HTTP JSON-RPCï¼Œå« cookie è®¤è¯ã€ZMQ é€šçŸ¥ã€OpenRPC ä½äºŽ <code>/api/openrpc.json</code>ï¼Œä»¥åŠåŠŸèƒ½æ ‡ç­¾é¡µä¸­çš„å®žæ—¶èƒ½åŠ›æ ‡å¿—ã€‚"
       },
       "wallet": {
-        "title": "内置 HD 钱包",
-        "body": "发送、接收与历史记录，支持 BIP44 HD 钱包、PIN 解锁、可选 WebAuthn 生物识别、coin control、费用提示、带 BIP32 派生路径的 PSBT、可选 HWI 外部签名器，以及 Core wallet.dat 迁移（探测 + 原生 BDB 导入，加密文件可通过口令解密）。"
+        "title": "å†…ç½® HD é’±åŒ…",
+        "body": "å‘é€ã€æŽ¥æ”¶ä¸ŽåŽ†å²è®°å½•ï¼Œæ”¯æŒ BIP44 HD é’±åŒ…ã€PIN è§£é”ã€å¯é€‰ WebAuthn ç”Ÿç‰©è¯†åˆ«ã€coin controlã€è´¹ç”¨æç¤ºã€å¸¦ BIP32 æ´¾ç”Ÿè·¯å¾„çš„ PSBTã€å¯é€‰ HWI å¤–éƒ¨ç­¾åå™¨ï¼Œä»¥åŠ Core wallet.dat è¿ç§»ï¼ˆæŽ¢æµ‹ + åŽŸç”Ÿ BDB å¯¼å…¥ï¼ŒåŠ å¯†æ–‡ä»¶å¯é€šè¿‡å£ä»¤è§£å¯†ï¼‰ã€‚"
       },
       "autoupdate": {
-        "title": "内置自动更新",
-        "body": "节点每日检查 <a href=\"https://github.com/qlpqlp/dogego/releases\">GitHub Releases</a> 是否有比当前构建更新的 semver 标签。概览与设置显示带 release 说明的横幅，并在有匹配平台资产时提供直接二进制下载。"
+        "title": "å†…ç½®è‡ªåŠ¨æ›´æ–°",
+        "body": "èŠ‚ç‚¹æ¯æ—¥æ£€æŸ¥ <a href=\"https://github.com/qlpqlp/dogego/releases\">GitHub Releases</a> æ˜¯å¦æœ‰æ¯”å½“å‰æž„å»ºæ›´æ–°çš„ semver æ ‡ç­¾ã€‚æ¦‚è§ˆä¸Žè®¾ç½®æ˜¾ç¤ºå¸¦ release è¯´æ˜Žçš„æ¨ªå¹…ï¼Œå¹¶åœ¨æœ‰åŒ¹é…å¹³å°èµ„äº§æ—¶æä¾›ç›´æŽ¥äºŒè¿›åˆ¶ä¸‹è½½ã€‚"
       },
       "backup": {
-        "title": "钱包备份提醒",
-        "body": "首次运行设置要求在启动前下载 <code>wallet.json</code>。接收页 recurring 横幅提醒离线备份 - 可推迟 30 天，或通过引导 sweep 轮换 HD 密钥到新钱包。"
+        "title": "é’±åŒ…å¤‡ä»½æé†’",
+        "body": "é¦–æ¬¡è¿è¡Œè®¾ç½®è¦æ±‚åœ¨å¯åŠ¨å‰ä¸‹è½½ <code>wallet.json</code>ã€‚æŽ¥æ”¶é¡µ recurring æ¨ªå¹…æé†’ç¦»çº¿å¤‡ä»½ - å¯æŽ¨è¿Ÿ 30 å¤©ï¼Œæˆ–é€šè¿‡å¼•å¯¼ sweep è½®æ¢ HD å¯†é’¥åˆ°æ–°é’±åŒ…ã€‚"
       },
       "dgr": {
         "title": "DogeGo relay CGNAT (DGR)",
@@ -295,8 +295,8 @@
   },
   "extensions": {
     "title": "Official extensions",
-    "lead": "Optional catalog packages you install beside the node. They do not fork mainnet consensus. Install from <strong>Settings → Extensions</strong> or the GitHub catalog, then enable.",
-    "footnote": "Author your own packages too. Docs: <a href=\"guide/#/docs/EXTENSIONS.md\">EXTENSIONS.md</a> · <a href=\"https://github.com/qlpqlp/dogego/tree/main/DogeGo/extensions/catalog\">catalog on GitHub</a>.",
+    "lead": "Optional catalog packages you install beside the node. They do not fork mainnet consensus. Install from <strong>Settings â†’ Extensions</strong> or the GitHub catalog, then enable.",
+    "footnote": "Author your own packages too. Docs: <a href=\"guide/#/docs/EXTENSIONS.md\">EXTENSIONS.md</a> Â· <a href=\"https://github.com/qlpqlp/dogego/tree/main/DogeGo/extensions/catalog\">catalog on GitHub</a>.",
     "items": {
       "zkl2": {
         "id": "dogego.zkl2",
@@ -306,23 +306,28 @@
       "doginals": {
         "id": "dogego.doginals",
         "title": "Doginals / DRC-20 L2",
-        "body": "<strong>v0.4.0</strong> indexes L1 Doginals/DRC-20, tracks address balances, and exposes a Doginals wallet API and signed L2 mint (tokens/images/files) at <code>/api/ext/dogego.doginals/v1/*</code> (extension-owned <code>httphandle</code>; host only proxies <code>/api/ext/{id}/…</code>). Wizard UI (Setup → Sync → Create → API). Mint on Dogecoin via wallet RPC or experimentally off-L1. Peers sync L2 assets over <code>doginals-v1</code>. Mainnet + testnet · no consensus change."
+        "body": "Index L1 Doginals and DRC-20. Mint tokens, images, and files on L2 only. Peers sync via <code>doginals-v1</code>. No consensus change."
       },
       "radiodoge": {
         "id": "dogego.radiodoge",
         "title": "RadioDoge",
-        "body": "Connect a Heltec V3 SoftAP device: broadcast signed txs over LoRa when offline, and relay inbound mesh txs into DogeGo with <code>sendrawtransaction</code> when online. Same HTTP API as Dogecoin Wallet RadioDoge support."
+        "body": "Heltec V3 SoftAP: LoRa broadcast when offline, relay mesh txs into DogeGo when online."
+      },
+      "dogeos": {
+        "id": "dogego.dogeos",
+        "title": "DogeOS",
+        "body": "EVM bridge to DogeOS Chikyū testnet: live RPC metrics, MetaMask/Hardhat helpers, faucet and explorer links."
       },
       "bbpow": {
         "id": "dogego.bbpow",
         "title": "BBPoW research",
-        "body": "Testnet-only research toward Bitcoin SHA-256 commitments as a Dogecoin security signal (not AuxPoW, not mainnet consensus). Proof verify RPC and dual-lane difficulty sketch."
+        "body": "Testnet-only research: Bitcoin SHA-256 commitments as a Dogecoin security signal. Not AuxPoW, not mainnet consensus."
       }
     }
   },
   "fullnode": {
     "title": "Full Dogecoin node - what DogeGo runs today",
-    "lead": "Headers-first IBD、原生 Go 存储、兼容 Core 的 JSON-RPC，以及一体化运维工具。主网共识遵循 Dogecoin Core（无协议分叉）。",
+    "lead": "Headers-first IBDã€åŽŸç”Ÿ Go å­˜å‚¨ã€å…¼å®¹ Core çš„ JSON-RPCï¼Œä»¥åŠä¸€ä½“åŒ–è¿ç»´å·¥å…·ã€‚ä¸»ç½‘å…±è¯†éµå¾ª Dogecoin Coreï¼ˆæ— åè®®åˆ†å‰ï¼‰ã€‚",
     "liveHeading": "Live in the app & wizard",
     "live": {
       "sync": {
@@ -375,60 +380,60 @@
     }
   },
   "care": {
-    "title": "内置运维体验",
-    "lead": "DogeGo 不止同步与 RPC - 环回仪表盘包含 Core 从未集中提供的日常工具。",
+    "title": "å†…ç½®è¿ç»´ä½“éªŒ",
+    "lead": "DogeGo ä¸æ­¢åŒæ­¥ä¸Ž RPC - çŽ¯å›žä»ªè¡¨ç›˜åŒ…å« Core ä»Žæœªé›†ä¸­æä¾›çš„æ—¥å¸¸å·¥å…·ã€‚",
     "items": {
       "releases": {
-        "title": "Release 通知",
-        "body": "每日对 canonical 仓库 <code>github.com/qlpqlp/dogego</code> 检查更新。CLI 也会打印提示；可在 Web UI 或 <code>POST /api/update/dismiss</code> 按 release 关闭。"
+        "title": "Release é€šçŸ¥",
+        "body": "æ¯æ—¥å¯¹ canonical ä»“åº“ <code>github.com/qlpqlp/dogego</code> æ£€æŸ¥æ›´æ–°ã€‚CLI ä¹Ÿä¼šæ‰“å°æç¤ºï¼›å¯åœ¨ Web UI æˆ– <code>POST /api/update/dismiss</code> æŒ‰ release å…³é—­ã€‚"
       },
       "backup": {
-        "title": "每 30 天备份提醒",
-        "body": "接收标签页显示钱包备份横幅，直到下载副本或推迟 30 天。启用钱包时，设置向导会阻止 <strong>保存并启动</strong>，直到确认备份。"
+        "title": "æ¯ 30 å¤©å¤‡ä»½æé†’",
+        "body": "æŽ¥æ”¶æ ‡ç­¾é¡µæ˜¾ç¤ºé’±åŒ…å¤‡ä»½æ¨ªå¹…ï¼Œç›´åˆ°ä¸‹è½½å‰¯æœ¬æˆ–æŽ¨è¿Ÿ 30 å¤©ã€‚å¯ç”¨é’±åŒ…æ—¶ï¼Œè®¾ç½®å‘å¯¼ä¼šé˜»æ­¢ <strong>ä¿å­˜å¹¶å¯åŠ¨</strong>ï¼Œç›´åˆ°ç¡®è®¤å¤‡ä»½ã€‚"
       },
       "rotation": {
-        "title": "HD 密钥轮换",
-        "body": "一键 准备 -> sweep -> 验证 -> 完成 流程将余额移至新 BIP44 钱包并归档旧密钥 - 需先备份。"
+        "title": "HD å¯†é’¥è½®æ¢",
+        "body": "ä¸€é”® å‡†å¤‡ -> sweep -> éªŒè¯ -> å®Œæˆ æµç¨‹å°†ä½™é¢ç§»è‡³æ–° BIP44 é’±åŒ…å¹¶å½’æ¡£æ—§å¯†é’¥ - éœ€å…ˆå¤‡ä»½ã€‚"
       },
       "autostart": {
-        "title": "OS 登录自启动",
-        "body": "在 Windows（任务计划程序）、Linux（systemd user）或 macOS（LaunchAgent）登录时注册。向导与功能标签页运行与 <code>dogego cert autostart</code> 相同的探测。"
+        "title": "OS ç™»å½•è‡ªå¯åŠ¨",
+        "body": "åœ¨ Windowsï¼ˆä»»åŠ¡è®¡åˆ’ç¨‹åºï¼‰ã€Linuxï¼ˆsystemd userï¼‰æˆ– macOSï¼ˆLaunchAgentï¼‰ç™»å½•æ—¶æ³¨å†Œã€‚å‘å¯¼ä¸ŽåŠŸèƒ½æ ‡ç­¾é¡µè¿è¡Œä¸Ž <code>dogego cert autostart</code> ç›¸åŒçš„æŽ¢æµ‹ã€‚"
       },
       "txflight": {
-        "title": "Tx Flight 发送栏",
-        "body": "发送时的动画进度：签名、广播、内存池等待与确认 - 可一键跳转到历史或区块浏览器。"
+        "title": "Tx Flight å‘é€æ ",
+        "body": "å‘é€æ—¶çš„åŠ¨ç”»è¿›åº¦ï¼šç­¾åã€å¹¿æ’­ã€å†…å­˜æ± ç­‰å¾…ä¸Žç¡®è®¤ - å¯ä¸€é”®è·³è½¬åˆ°åŽ†å²æˆ–åŒºå—æµè§ˆå™¨ã€‚"
       },
       "i18n": {
-        "title": "六种仪表盘语言",
-        "body": "English、Deutsch、Français、Português、日本語 与 中文 - 向导与仪表盘共用顶部语言选择器。"
+        "title": "å…­ç§ä»ªè¡¨ç›˜è¯­è¨€",
+        "body": "Englishã€Deutschã€FranÃ§aisã€PortuguÃªsã€æ—¥æœ¬èªž ä¸Ž ä¸­æ–‡ - å‘å¯¼ä¸Žä»ªè¡¨ç›˜å…±ç”¨é¡¶éƒ¨è¯­è¨€é€‰æ‹©å™¨ã€‚"
       },
       "pin": {
-        "title": "PIN 与 WebAuthn 锁定",
-        "body": "设置或设置页可选 6 位仪表盘 PIN。配合设备生物识别 (WebAuthn) 解锁发送与钱包视图，无需每次重输。"
+        "title": "PIN ä¸Ž WebAuthn é”å®š",
+        "body": "è®¾ç½®æˆ–è®¾ç½®é¡µå¯é€‰ 6 ä½ä»ªè¡¨ç›˜ PINã€‚é…åˆè®¾å¤‡ç”Ÿç‰©è¯†åˆ« (WebAuthn) è§£é”å‘é€ä¸Žé’±åŒ…è§†å›¾ï¼Œæ— éœ€æ¯æ¬¡é‡è¾“ã€‚"
       },
       "docs": {
-        "title": "内嵌 Docs 标签页",
-        "body": "运维 runbook、集成指南与仓库 markdown 通过 <code>GET /api/docs</code> 在浏览器渲染 - 调优节点时无需 GitHub 标签页。"
+        "title": "å†…åµŒ Docs æ ‡ç­¾é¡µ",
+        "body": "è¿ç»´ runbookã€é›†æˆæŒ‡å—ä¸Žä»“åº“ markdown é€šè¿‡ <code>GET /api/docs</code> åœ¨æµè§ˆå™¨æ¸²æŸ“ - è°ƒä¼˜èŠ‚ç‚¹æ—¶æ— éœ€ GitHub æ ‡ç­¾é¡µã€‚"
       },
       "cert": {
-        "title": "实时 cert 矩阵",
-        "body": "功能标签页展示 Core 对等计数、OpenRPC 位于 <code>/api/openrpc.json</code>，以及十项实时运维探测（compare、mempool、autostart、founder、restart-resume、end-to-end）。"
+        "title": "å®žæ—¶ cert çŸ©é˜µ",
+        "body": "åŠŸèƒ½æ ‡ç­¾é¡µå±•ç¤º Core å¯¹ç­‰è®¡æ•°ã€OpenRPC ä½äºŽ <code>/api/openrpc.json</code>ï¼Œä»¥åŠåé¡¹å®žæ—¶è¿ç»´æŽ¢æµ‹ï¼ˆcompareã€mempoolã€autostartã€founderã€restart-resumeã€end-to-endï¼‰ã€‚"
       },
       "syncdock": {
-        "title": "固定同步 dock",
-        "body": "IBD 期间 Core 风格底栏：已连接 vs 已存储区块体、协助池、下载速率、连接延迟、ETA 与可展开实时日志 - 浏览标签页时始终可见。"
+        "title": "å›ºå®šåŒæ­¥ dock",
+        "body": "IBD æœŸé—´ Core é£Žæ ¼åº•æ ï¼šå·²è¿žæŽ¥ vs å·²å­˜å‚¨åŒºå—ä½“ã€ååŠ©æ± ã€ä¸‹è½½é€ŸçŽ‡ã€è¿žæŽ¥å»¶è¿Ÿã€ETA ä¸Žå¯å±•å¼€å®žæ—¶æ—¥å¿— - æµè§ˆæ ‡ç­¾é¡µæ—¶å§‹ç»ˆå¯è§ã€‚"
       },
       "disk": {
-        "title": "磁盘空间保护",
-        "body": "监控 datadir 卷的可用空间（约每 30 秒）。当<strong>≤1 GiB</strong>时，Overview 横幅和可选的托盘/桌面通知会提醒你，完整区块体下载会<strong>暂停</strong>，直到可用空间再次超过 1 GiB（释放或扩容磁盘后自动恢复；区块头同步可继续）。"
+        "title": "ç£ç›˜ç©ºé—´ä¿æŠ¤",
+        "body": "ç›‘æŽ§ datadir å·çš„å¯ç”¨ç©ºé—´ï¼ˆçº¦æ¯ 30 ç§’ï¼‰ã€‚å½“<strong>â‰¤1 GiB</strong>æ—¶ï¼ŒOverview æ¨ªå¹…å’Œå¯é€‰çš„æ‰˜ç›˜/æ¡Œé¢é€šçŸ¥ä¼šæé†’ä½ ï¼Œå®Œæ•´åŒºå—ä½“ä¸‹è½½ä¼š<strong>æš‚åœ</strong>ï¼Œç›´åˆ°å¯ç”¨ç©ºé—´å†æ¬¡è¶…è¿‡ 1 GiBï¼ˆé‡Šæ”¾æˆ–æ‰©å®¹ç£ç›˜åŽè‡ªåŠ¨æ¢å¤ï¼›åŒºå—å¤´åŒæ­¥å¯ç»§ç»­ï¼‰ã€‚"
       },
       "firewall": {
-        "title": "防火墙与预检",
-        "body": "设置向导自动检查端口、CGNAT 提示与可选 OS 防火墙规则。需要操作时概览页显示可复制的高权限命令。"
+        "title": "é˜²ç«å¢™ä¸Žé¢„æ£€",
+        "body": "è®¾ç½®å‘å¯¼è‡ªåŠ¨æ£€æŸ¥ç«¯å£ã€CGNAT æç¤ºä¸Žå¯é€‰ OS é˜²ç«å¢™è§„åˆ™ã€‚éœ€è¦æ“ä½œæ—¶æ¦‚è§ˆé¡µæ˜¾ç¤ºå¯å¤åˆ¶çš„é«˜æƒé™å‘½ä»¤ã€‚"
       },
       "history": {
-        "title": "可扩展的历史",
-        "body": "无限滚动交易 feed，含服务端搜索与类型过滤、CSV 导出、solo 矿工 UTXO 缓存 fast path，以及保留滚动位置的软刷新。"
+        "title": "å¯æ‰©å±•çš„åŽ†å²",
+        "body": "æ— é™æ»šåŠ¨äº¤æ˜“ feedï¼Œå«æœåŠ¡ç«¯æœç´¢ä¸Žç±»åž‹è¿‡æ»¤ã€CSV å¯¼å‡ºã€solo çŸ¿å·¥ UTXO ç¼“å­˜ fast pathï¼Œä»¥åŠä¿ç•™æ»šåŠ¨ä½ç½®çš„è½¯åˆ·æ–°ã€‚"
       },
       "extensions": {
         "title": "Extensions catalog",
@@ -437,91 +442,91 @@
     }
   },
   "blockstep": {
-    "title": "BlockStep：有趣地探索 Dogecoin",
-    "lead": "Dogecoin 是公开账本，每个区块与交易都应易于查找。DogeGo 索引链，BlockStep 将其变为交互式 timeline。",
-    "labelGenesis": "创世 2013",
+    "title": "BlockStepï¼šæœ‰è¶£åœ°æŽ¢ç´¢ Dogecoin",
+    "lead": "Dogecoin æ˜¯å…¬å¼€è´¦æœ¬ï¼Œæ¯ä¸ªåŒºå—ä¸Žäº¤æ˜“éƒ½åº”æ˜“äºŽæŸ¥æ‰¾ã€‚DogeGo ç´¢å¼•é“¾ï¼ŒBlockStep å°†å…¶å˜ä¸ºäº¤äº’å¼ timelineã€‚",
+    "labelGenesis": "åˆ›ä¸– 2013",
     "labelHalving": "Joke era",
-    "labelToday": "今天",
-    "labelTip": "尖端",
-    "listSearch": "从概览或浏览器按高度、哈希、txid 或地址搜索",
-    "listTimeline": "BlockStep timeline：从创世拖到尖端，深入任意区块",
-    "listIndex": "扁平 <code>indexes/tx/</code> 索引，非 Core chainstate 布局",
-    "listPq": "PQ 浏览器面板：检查后量子承诺脚本"
+    "labelToday": "ä»Šå¤©",
+    "labelTip": "å°–ç«¯",
+    "listSearch": "ä»Žæ¦‚è§ˆæˆ–æµè§ˆå™¨æŒ‰é«˜åº¦ã€å“ˆå¸Œã€txid æˆ–åœ°å€æœç´¢",
+    "listTimeline": "BlockStep timelineï¼šä»Žåˆ›ä¸–æ‹–åˆ°å°–ç«¯ï¼Œæ·±å…¥ä»»æ„åŒºå—",
+    "listIndex": "æ‰å¹³ <code>indexes/tx/</code> ç´¢å¼•ï¼Œéž Core chainstate å¸ƒå±€",
+    "listPq": "PQ æµè§ˆå™¨é¢æ¿ï¼šæ£€æŸ¥åŽé‡å­æ‰¿è¯ºè„šæœ¬"
   },
   "wizard": {
-    "title": "五步设置向导",
-    "lead": "首次运行在 <code>/setup</code> 打开引导向导。选择配置文件、运行自动预检、配置 bundled+zstd 存储，然后保存（可选 PIN、OS 自启动与钱包备份）。",
-    "aria": "动画设置向导预览",
+    "title": "äº”æ­¥è®¾ç½®å‘å¯¼",
+    "lead": "é¦–æ¬¡è¿è¡Œåœ¨ <code>/setup</code> æ‰“å¼€å¼•å¯¼å‘å¯¼ã€‚é€‰æ‹©é…ç½®æ–‡ä»¶ã€è¿è¡Œè‡ªåŠ¨é¢„æ£€ã€é…ç½® bundled+zstd å­˜å‚¨ï¼Œç„¶åŽä¿å­˜ï¼ˆå¯é€‰ PINã€OS è‡ªå¯åŠ¨ä¸Žé’±åŒ…å¤‡ä»½ï¼‰ã€‚",
+    "aria": "åŠ¨ç”»è®¾ç½®å‘å¯¼é¢„è§ˆ",
     "setupBadge": "setup",
-    "firstRun": "首次运行",
-    "stepKicker": "第 {n} 步，共 5 步 · {label}",
+    "firstRun": "é¦–æ¬¡è¿è¡Œ",
+    "stepKicker": "ç¬¬ {n} æ­¥ï¼Œå…± 5 æ­¥ Â· {label}",
     "steps": {
-      "profile": "配置文件",
-      "data": "数据",
-      "network": "网络",
-      "sync": "同步",
-      "finish": "完成"
+      "profile": "é…ç½®æ–‡ä»¶",
+      "data": "æ•°æ®",
+      "network": "ç½‘ç»œ",
+      "sync": "åŒæ­¥",
+      "finish": "å®Œæˆ"
     },
-    "progressAria": "设置进度",
+    "progressAria": "è®¾ç½®è¿›åº¦",
     "panels": {
-      "profileTitle": "选择设置",
-      "profileHint": "点击卡片 - 每个配置文件设置网络、节点模式、钱包与 P2P 默认值。",
-      "profileTryTestnet": "试用 testnet",
-      "profileTryTestnetSub": "全节点 · 启用钱包 · 适合首次运行",
-      "profileMainnetFull": "Mainnet 全节点",
-      "profileMainnetFullSub": "生产 Dogecoin · 同步更长、全验证",
-      "profileMainnetWallet": "Mainnet + 钱包",
-      "profileMainnetWalletSub": "发送/接收 · 完成时可选 6 位仪表盘 PIN",
-      "profileLightSpv": "轻量 SPV + 钱包",
-      "profileLightSpvSub": "仅头 · 低磁盘 · CGNAT 友好",
+      "profileTitle": "é€‰æ‹©è®¾ç½®",
+      "profileHint": "ç‚¹å‡»å¡ç‰‡ - æ¯ä¸ªé…ç½®æ–‡ä»¶è®¾ç½®ç½‘ç»œã€èŠ‚ç‚¹æ¨¡å¼ã€é’±åŒ…ä¸Ž P2P é»˜è®¤å€¼ã€‚",
+      "profileTryTestnet": "è¯•ç”¨ testnet",
+      "profileTryTestnetSub": "å…¨èŠ‚ç‚¹ Â· å¯ç”¨é’±åŒ… Â· é€‚åˆé¦–æ¬¡è¿è¡Œ",
+      "profileMainnetFull": "Mainnet å…¨èŠ‚ç‚¹",
+      "profileMainnetFullSub": "ç”Ÿäº§ Dogecoin Â· åŒæ­¥æ›´é•¿ã€å…¨éªŒè¯",
+      "profileMainnetWallet": "Mainnet + é’±åŒ…",
+      "profileMainnetWalletSub": "å‘é€/æŽ¥æ”¶ Â· å®Œæˆæ—¶å¯é€‰ 6 ä½ä»ªè¡¨ç›˜ PIN",
+      "profileLightSpv": "è½»é‡ SPV + é’±åŒ…",
+      "profileLightSpvSub": "ä»…å¤´ Â· ä½Žç£ç›˜ Â· CGNAT å‹å¥½",
       "profileDual": "Mainnet + testnet",
-      "profileDualSub": "Two nodes · wallet on both · mine on testnet",
-      "advancedToggle": "在后续步骤显示高级选项",
-      "dataTitle": "数据目录与网络",
-      "dataHint": "Go 原生布局 - <code>headers.bin</code>、<code>rawblocks/</code>、<code>indexes/</code> - 非 Core <code>chainstate/</code>。",
-      "dataDirLabel": "数据目录",
+      "profileDualSub": "Two nodes Â· wallet on both Â· mine on testnet",
+      "advancedToggle": "åœ¨åŽç»­æ­¥éª¤æ˜¾ç¤ºé«˜çº§é€‰é¡¹",
+      "dataTitle": "æ•°æ®ç›®å½•ä¸Žç½‘ç»œ",
+      "dataHint": "Go åŽŸç”Ÿå¸ƒå±€ - <code>headers.bin</code>ã€<code>rawblocks/</code>ã€<code>indexes/</code> - éž Core <code>chainstate/</code>ã€‚",
+      "dataDirLabel": "æ•°æ®ç›®å½•",
       "dataDirValue": "./dogedata",
       "dataTestnet": "Testnet",
-      "dataTestnetSub": "安全沙盒",
+      "dataTestnetSub": "å®‰å…¨æ²™ç›’",
       "dataMainnet": "Mainnet",
-      "dataFullNode": "全节点",
-      "dataFullNodeSub": "头 + 区块体",
+      "dataFullNode": "å…¨èŠ‚ç‚¹",
+      "dataFullNodeSub": "å¤´ + åŒºå—ä½“",
       "dataSpv": "SPV (light)",
-      "dataFoot": "节点留空 -> 自动 DNS + addrman 发现。",
-      "networkTitle": "网络与 P2P",
-      "networkHint": "连接、防火墙、UPnP 与同步前自动预检。",
+      "dataFoot": "èŠ‚ç‚¹ç•™ç©º -> è‡ªåŠ¨ DNS + addrman å‘çŽ°ã€‚",
+      "networkTitle": "ç½‘ç»œä¸Ž P2P",
+      "networkHint": "è¿žæŽ¥ã€é˜²ç«å¢™ã€UPnP ä¸ŽåŒæ­¥å‰è‡ªåŠ¨é¢„æ£€ã€‚",
       "networkBoth": "Both",
-      "networkBothSub": "入站 + 出站 · DGR 中继",
+      "networkBothSub": "å…¥ç«™ + å‡ºç«™ Â· DGR ä¸­ç»§",
       "networkCgnat": "CGNAT",
       "networkClassic": "Classic",
-      "preflightP2p": "P2P 端口可达",
-      "preflightWebui": "Web UI 环回 <code>localhost:2013</code>",
-      "preflightUpnp": "监听时自动 UPnP",
-      "syncTitle": "同步与存储",
-      "syncHint": "推荐默认：bundled <code>blk*.dat</code>、zstd 压缩、紧凑 tx 索引。",
-      "syncBundled": "Bundled 区块存储",
-      "syncZstd": "压缩存储区块 (zstd)",
-      "syncTxIndex": "交易索引",
-      "syncEmbedTx": "在索引中嵌入完整 tx 字节",
-      "syncAnalytics": "分析 sidecar (Pebble)",
+      "preflightP2p": "P2P ç«¯å£å¯è¾¾",
+      "preflightWebui": "Web UI çŽ¯å›ž <code>localhost:2013</code>",
+      "preflightUpnp": "ç›‘å¬æ—¶è‡ªåŠ¨ UPnP",
+      "syncTitle": "åŒæ­¥ä¸Žå­˜å‚¨",
+      "syncHint": "æŽ¨èé»˜è®¤ï¼šbundled <code>blk*.dat</code>ã€zstd åŽ‹ç¼©ã€ç´§å‡‘ tx ç´¢å¼•ã€‚",
+      "syncBundled": "Bundled åŒºå—å­˜å‚¨",
+      "syncZstd": "åŽ‹ç¼©å­˜å‚¨åŒºå— (zstd)",
+      "syncTxIndex": "äº¤æ˜“ç´¢å¼•",
+      "syncEmbedTx": "åœ¨ç´¢å¼•ä¸­åµŒå…¥å®Œæ•´ tx å­—èŠ‚",
+      "syncAnalytics": "åˆ†æž sidecar (Pebble)",
       "syncIbdOptimize": "Optimize initial block download",
       "syncDbcache": "DB cache / UTXO (auto RAM)",
-      "syncOn": "开",
-      "syncOff": "关",
-      "syncFoot": "区块同步 worker：自动（IBD 期间 2-6 个节点）。",
-      "finishTitle": "完成并启动",
-      "finishHint": "仪表盘安全、OS 自启动、钱包备份与配置摘要。",
-      "finishBackupBanner": "<strong>需要钱包备份</strong> - 在保存并启动前下载 <code>wallet.json</code>",
-      "finishPin": "6 位仪表盘 PIN（可选）",
-      "finishAutostart": "OS 登录时启动",
-      "finishReview": "testnet · full · P2P both · bundled+zstd · 钱包开",
-      "finishStartBtn": "保存并启动节点"
+      "syncOn": "å¼€",
+      "syncOff": "å…³",
+      "syncFoot": "åŒºå—åŒæ­¥ workerï¼šè‡ªåŠ¨ï¼ˆIBD æœŸé—´ 2-6 ä¸ªèŠ‚ç‚¹ï¼‰ã€‚",
+      "finishTitle": "å®Œæˆå¹¶å¯åŠ¨",
+      "finishHint": "ä»ªè¡¨ç›˜å®‰å…¨ã€OS è‡ªå¯åŠ¨ã€é’±åŒ…å¤‡ä»½ä¸Žé…ç½®æ‘˜è¦ã€‚",
+      "finishBackupBanner": "<strong>éœ€è¦é’±åŒ…å¤‡ä»½</strong> - åœ¨ä¿å­˜å¹¶å¯åŠ¨å‰ä¸‹è½½ <code>wallet.json</code>",
+      "finishPin": "6 ä½ä»ªè¡¨ç›˜ PINï¼ˆå¯é€‰ï¼‰",
+      "finishAutostart": "OS ç™»å½•æ—¶å¯åŠ¨",
+      "finishReview": "testnet Â· full Â· P2P both Â· bundled+zstd Â· é’±åŒ…å¼€",
+      "finishStartBtn": "ä¿å­˜å¹¶å¯åŠ¨èŠ‚ç‚¹"
     },
     "list": {
-      "i18n": "六种 UI 语言（English、Deutsch、Français、日本語、中文、Português）",
-      "preflight": "自动预检 - 防火墙、端口、CGNAT 提示、重启 testnet 上的 founder 检查",
-      "backup": "完成时钱包备份门禁；接收标签页每 30 天提醒直到下载或关闭",
-      "autostart": "OS 登录自启动，含 <code>dogego cert autostart</code> 对等探测",
+      "i18n": "å…­ç§ UI è¯­è¨€ï¼ˆEnglishã€Deutschã€FranÃ§aisã€æ—¥æœ¬èªžã€ä¸­æ–‡ã€PortuguÃªsï¼‰",
+      "preflight": "è‡ªåŠ¨é¢„æ£€ - é˜²ç«å¢™ã€ç«¯å£ã€CGNAT æç¤ºã€é‡å¯ testnet ä¸Šçš„ founder æ£€æŸ¥",
+      "backup": "å®Œæˆæ—¶é’±åŒ…å¤‡ä»½é—¨ç¦ï¼›æŽ¥æ”¶æ ‡ç­¾é¡µæ¯ 30 å¤©æé†’ç›´åˆ°ä¸‹è½½æˆ–å…³é—­",
+      "autostart": "OS ç™»å½•è‡ªå¯åŠ¨ï¼Œå« <code>dogego cert autostart</code> å¯¹ç­‰æŽ¢æµ‹",
       "dual": "Dual mainnet+testnet profile with shared datadir and separate RPC/dashboard ports",
       "ibd": "IBD optimize on by default; auto dbcache sizes UTXO RAM from free memory",
       "mempool": "Advanced mempool relay policy on finish (maxmempool, min relay, package limits, Full RBF)",
@@ -531,106 +536,106 @@
     }
   },
   "compare": {
-    "title": "运维为何选择 DogeGo",
+    "title": "è¿ç»´ä¸ºä½•é€‰æ‹© DogeGo",
     "lead": "DogeGo is beta. Run it, break things, report what needs tuning. It ships capabilities Core does not (web dashboard, CGNAT relay, analytics, extensions).",
     "headers": {
-      "cap": "能力",
+      "cap": "èƒ½åŠ›",
       "doge": "DogeGo",
       "core": "Dogecoin Core"
     },
     "rows": {
       "browserDashboard": {
-        "cap": "浏览器仪表盘",
-        "doge": "内置于 :2013",
-        "core": "仅 Qt 桌面"
+        "cap": "æµè§ˆå™¨ä»ªè¡¨ç›˜",
+        "doge": "å†…ç½®äºŽ :2013",
+        "core": "ä»… Qt æ¡Œé¢"
       },
       "setupWizard": {
-        "cap": "设置向导",
-        "doge": "5 步 · 配置文件 · 预检 · 钱包备份",
-        "core": "手动配置"
+        "cap": "è®¾ç½®å‘å¯¼",
+        "doge": "5 æ­¥ Â· é…ç½®æ–‡ä»¶ Â· é¢„æ£€ Â· é’±åŒ…å¤‡ä»½",
+        "core": "æ‰‹åŠ¨é…ç½®"
       },
       "blockstepExplorer": {
-        "cap": "BlockStep 浏览器",
-        "doge": "交互式 timeline",
-        "core": "无捆绑浏览器"
+        "cap": "BlockStep æµè§ˆå™¨",
+        "doge": "äº¤äº’å¼ timeline",
+        "core": "æ— æ†ç»‘æµè§ˆå™¨"
       },
       "postQuantum": {
-        "cap": "后量子发送",
-        "doge": "FLC1/DIL2/RCG4 承诺",
-        "core": "不可用"
+        "cap": "åŽé‡å­å‘é€",
+        "doge": "FLC1/DIL2/RCG4 æ‰¿è¯º",
+        "core": "ä¸å¯ç”¨"
       },
       "zstdCompression": {
-        "cap": "zstd 区块压缩",
-        "doge": "可选，含比率指标",
-        "core": "未压缩 blocks/"
+        "cap": "zstd åŒºå—åŽ‹ç¼©",
+        "doge": "å¯é€‰ï¼Œå«æ¯”çŽ‡æŒ‡æ ‡",
+        "core": "æœªåŽ‹ç¼© blocks/"
       },
       "cgnatRelay": {
-        "cap": "CGNAT / Starlink 中继",
-        "doge": "出站多节点模式",
-        "core": "需要入站端口"
+        "cap": "CGNAT / Starlink ä¸­ç»§",
+        "doge": "å‡ºç«™å¤šèŠ‚ç‚¹æ¨¡å¼",
+        "core": "éœ€è¦å…¥ç«™ç«¯å£"
       },
       "spvMode": {
-        "cap": "SPV 模式",
-        "doge": "仅头配置文件",
-        "core": "独立工具"
+        "cap": "SPV æ¨¡å¼",
+        "doge": "ä»…å¤´é…ç½®æ–‡ä»¶",
+        "core": "ç‹¬ç«‹å·¥å…·"
       },
       "analyticsSidecar": {
-        "cap": "分析 sidecar",
-        "doge": "UI 中 Pebble 图表",
-        "core": "外部工具"
+        "cap": "åˆ†æž sidecar",
+        "doge": "UI ä¸­ Pebble å›¾è¡¨",
+        "core": "å¤–éƒ¨å·¥å…·"
       },
       "testnetAddresses": {
-        "cap": "Testnet T 地址",
-        "doge": "重启 testnet · Digishield min-diff",
-        "core": "旧 testnet"
+        "cap": "Testnet T åœ°å€",
+        "doge": "é‡å¯ testnet Â· Digishield min-diff",
+        "core": "æ—§ testnet"
       },
       "autoUpdate": {
-        "cap": "自动更新",
-        "doge": "GitHub Releases · Web 横幅 · CLI 通知",
-        "core": "手动下载"
+        "cap": "è‡ªåŠ¨æ›´æ–°",
+        "doge": "GitHub Releases Â· Web æ¨ªå¹… Â· CLI é€šçŸ¥",
+        "core": "æ‰‹åŠ¨ä¸‹è½½"
       },
       "walletBackupCare": {
-        "cap": "钱包备份关怀",
-        "doge": "设置门禁 · 30 天提醒 · 密钥轮换",
-        "core": "运维责任"
+        "cap": "é’±åŒ…å¤‡ä»½å…³æ€€",
+        "doge": "è®¾ç½®é—¨ç¦ Â· 30 å¤©æé†’ Â· å¯†é’¥è½®æ¢",
+        "core": "è¿ç»´è´£ä»»"
       },
       "osAutostart": {
-        "cap": "OS 自启动",
-        "doge": "登录自启动 + cert 探测",
-        "core": "手动服务设置"
+        "cap": "OS è‡ªå¯åŠ¨",
+        "doge": "ç™»å½•è‡ªå¯åŠ¨ + cert æŽ¢æµ‹",
+        "core": "æ‰‹åŠ¨æœåŠ¡è®¾ç½®"
       },
       "dashboardI18n": {
-        "cap": "仪表盘 i18n",
-        "doge": "向导 + UI 六种语言",
-        "core": "仅英文 Qt"
+        "cap": "ä»ªè¡¨ç›˜ i18n",
+        "doge": "å‘å¯¼ + UI å…­ç§è¯­è¨€",
+        "core": "ä»…è‹±æ–‡ Qt"
       },
       "coreSideBySide": {
-        "cap": "Core 并排探测",
-        "doge": "实时 compare · cert 矩阵 · 控制台预设",
-        "core": "外部脚本"
+        "cap": "Core å¹¶æŽ’æŽ¢æµ‹",
+        "doge": "å®žæ—¶ compare Â· cert çŸ©é˜µ Â· æŽ§åˆ¶å°é¢„è®¾",
+        "core": "å¤–éƒ¨è„šæœ¬"
       },
       "coreWalletMigration": {
-        "cap": "Core wallet.dat 迁移",
-        "doge": "原生 BDB 探测 · 导入 · 加密口令 · Core RPC 回退",
-        "core": "原生 wallet.dat 格式"
+        "cap": "Core wallet.dat è¿ç§»",
+        "doge": "åŽŸç”Ÿ BDB æŽ¢æµ‹ Â· å¯¼å…¥ Â· åŠ å¯†å£ä»¤ Â· Core RPC å›žé€€",
+        "core": "åŽŸç”Ÿ wallet.dat æ ¼å¼"
       },
       "productionCertification": {
-        "cap": "生产认证",
-        "doge": "进行中 (beta)",
-        "core": "已建立"
+        "cap": "ç”Ÿäº§è®¤è¯",
+        "doge": "è¿›è¡Œä¸­ (beta)",
+        "core": "å·²å»ºç«‹"
       }
     }
   },
   "networks": {
-    "title": "网络与端口",
+    "title": "ç½‘ç»œä¸Žç«¯å£",
     "headers": {
-      "service": "服务",
+      "service": "æœåŠ¡",
       "mainnet": "Mainnet",
-      "rebootTestnet": "重启 testnet"
+      "rebootTestnet": "é‡å¯ testnet"
     },
     "rows": {
       "webDashboard": {
-        "service": "Web 仪表盘",
+        "service": "Web ä»ªè¡¨ç›˜",
         "mainnet": "localhost:2013",
         "rebootTestnet": "localhost:2013"
       },
@@ -645,19 +650,19 @@
         "rebootTestnet": ":44556"
       },
       "configFile": {
-        "service": "配置文件",
-        "value": "数据目录中的 dogecoinconf.json"
+        "service": "é…ç½®æ–‡ä»¶",
+        "value": "æ•°æ®ç›®å½•ä¸­çš„ dogecoinconf.json"
       },
       "testnetAddresses": {
-        "service": "Testnet 地址",
-        "value": "重启 testnet：所有 P2PKH 地址以 T 开头（前缀 0x41）"
+        "service": "Testnet åœ°å€",
+        "value": "é‡å¯ testnetï¼šæ‰€æœ‰ P2PKH åœ°å€ä»¥ T å¼€å¤´ï¼ˆå‰ç¼€ 0x41ï¼‰"
       }
     }
   },
   "download": {
-    "title": "下载 DogeGo",
-    "lead": "适用于 Go 支持的每个平台的预构建二进制。",
-    "checkingTitle": "Checking GitHub Releases…",
+    "title": "ä¸‹è½½ DogeGo",
+    "lead": "é€‚ç”¨äºŽ Go æ”¯æŒçš„æ¯ä¸ªå¹³å°çš„é¢„æž„å»ºäºŒè¿›åˆ¶ã€‚",
+    "checkingTitle": "Checking GitHub Releasesâ€¦",
     "checkingBody": "Querying qlpqlp/dogego, dogeorg/dogego, and dogecoinfoundation/dogego for the newest release or pre-release tag.",
     "soonTitle": "Pre-built binaries - available soon",
     "soonBody": "No GitHub Release has been published yet on the configured repos. Build from source below, or watch <a href=\"https://github.com/qlpqlp/dogego\" rel=\"noopener noreferrer\" target=\"_blank\">github.com/qlpqlp/dogego</a> for the first tagged release.",
@@ -675,7 +680,7 @@
     "showLess": "Show less",
     "viewSource": "View source on GitHub",
     "assetsHeading": "Download by platform",
-    "getReleases": "获取 releases",
+    "getReleases": "èŽ·å– releases",
     "platforms": {
       "windows": {
         "name": "Windows",
@@ -694,33 +699,33 @@
         "arch": "amd64"
       }
     },
-    "downloadLink": "下载",
+    "downloadLink": "ä¸‹è½½",
     "sha256Label": "SHA256",
     "copySha": "Copy",
     "copiedSha": "Copied",
     "copyShaAria": "Copy SHA256 checksum",
     "badgeStable": "Stable",
     "badgePrerelease": "Pre-release",
-    "checksumPending": "Loading checksum…",
+    "checksumPending": "Loading checksumâ€¦",
     "checksumUnavailable": "Checksum not published",
     "readyBodyPlain": "Latest {version} from {source}. Verify SHA256 below before installing.",
     "readyBodyPrereleasePlain": "Latest pre-release {version} from {source}. Verify SHA256 below before installing.",
     "soonBodyPlain": "No GitHub Release published yet. Build from source below.",
-    "buildTitle": "从源码构建",
-    "buildEditorTitle": "bash · dogego",
+    "buildTitle": "ä»Žæºç æž„å»º",
+    "buildEditorTitle": "bash Â· dogego",
     "buildCode": "git clone https://github.com/qlpqlp/dogego.git\ncd dogego/DogeGo\ngo build -o dogego ./cmd/dogego\n./dogego",
-    "buildNote": "需要 <a href=\"https://go.dev/dl/\" rel=\"noopener noreferrer\" target=\"_blank\">Go 1.22+</a>。应用源码位于 <code>DogeGo/</code> 目录；网站位于仓库根目录 <code>docs/</code>。",
+    "buildNote": "éœ€è¦ <a href=\"https://go.dev/dl/\" rel=\"noopener noreferrer\" target=\"_blank\">Go 1.22+</a>ã€‚åº”ç”¨æºç ä½äºŽ <code>DogeGo/</code> ç›®å½•ï¼›ç½‘ç«™ä½äºŽä»“åº“æ ¹ç›®å½• <code>docs/</code>ã€‚",
     "copyCode": "Copy",
     "copiedCode": "Copied",
     "copyCodeAria": "Copy build commands",
-    "viewRepo": "查看仓库"
+    "viewRepo": "æŸ¥çœ‹ä»“åº“"
   },
   "developers": {
-    "title": "为开发者打造",
-    "lead": "使用与 Dogecoin Core 相同的 JSON-RPC 结构进行集成。",
+    "title": "ä¸ºå¼€å‘è€…æ‰“é€ ",
+    "lead": "ä½¿ç”¨ä¸Ž Dogecoin Core ç›¸åŒçš„ JSON-RPC ç»“æž„è¿›è¡Œé›†æˆã€‚",
     "openrpc": {
-      "title": "OpenRPC 与 cookbook",
-      "body": "实时能力清单位于 <code>/api/capabilities</code>，OpenRPC 位于 <code>/api/openrpc.json</code>。"
+      "title": "OpenRPC ä¸Ž cookbook",
+      "body": "å®žæ—¶èƒ½åŠ›æ¸…å•ä½äºŽ <code>/api/capabilities</code>ï¼ŒOpenRPC ä½äºŽ <code>/api/openrpc.json</code>ã€‚"
     },
     "extensions": {
       "title": "Extension RPC",
@@ -731,12 +736,12 @@
       "body": "Operator guides, DIPs, extension authoring, and the Bitcoin white paper on the <a href=\"guide/\">public docs site</a> - the same library as the in-app Docs tab."
     },
     "zmq": {
-      "title": "ZMQ 通知",
-      "body": "订阅 hash blocks、hash transactions、raw blocks 与 raw transactions。"
+      "title": "ZMQ é€šçŸ¥",
+      "body": "è®¢é˜… hash blocksã€hash transactionsã€raw blocks ä¸Ž raw transactionsã€‚"
     },
     "auth": {
-      "title": "认证与速率限制",
-      "body": "Cookie 认证、HTTP basic auth、IP 白名单与可配置速率限制。"
+      "title": "è®¤è¯ä¸Žé€ŸçŽ‡é™åˆ¶",
+      "body": "Cookie è®¤è¯ã€HTTP basic authã€IP ç™½åå•ä¸Žå¯é…ç½®é€ŸçŽ‡é™åˆ¶ã€‚"
     }
   },
   "disclaimer": {
@@ -744,25 +749,25 @@
     "body": "DogeGo is a pure-Go Dogecoin full node with Core-compatible consensus, RPC, wallet migration, and mining. It is <strong>beta</strong>: please run it on testnet or mainnet, try the workflows you care about, and tell us what needs tuning. Storage uses DogeGo native layout (not Core LevelDB); optional long-haul self-cert is in the dashboard Features tab (<code>dogego cert live-soak</code>)."
   },
   "footer": {
-    "tagline": "更快的 Dogecoin 全节点，用 Go 编写，从浏览器运维。",
+    "tagline": "æ›´å¿«çš„ Dogecoin å…¨èŠ‚ç‚¹ï¼Œç”¨ Go ç¼–å†™ï¼Œä»Žæµè§ˆå™¨è¿ç»´ã€‚",
     "uaLabel": "P2P user-agent",
-    "uaNote": "在网络上宣告为 DogeGo。不是 Shibetoshi，不是 Core。可选注释：<code>/DogeGo:0.1.0-beta(你的备注)/</code>",
-    "productHeading": "产品",
+    "uaNote": "åœ¨ç½‘ç»œä¸Šå®£å‘Šä¸º DogeGoã€‚ä¸æ˜¯ Shibetoshiï¼Œä¸æ˜¯ Coreã€‚å¯é€‰æ³¨é‡Šï¼š<code>/DogeGo:0.1.0-beta(ä½ çš„å¤‡æ³¨)/</code>",
+    "productHeading": "äº§å“",
     "productFullnode": "Full node",
     "productRoadmap": "Roadmap",
-    "productFeatures": "功能",
-    "productCare": "运维关怀",
+    "productFeatures": "åŠŸèƒ½",
+    "productCare": "è¿ç»´å…³æ€€",
     "productBlockstep": "BlockStep",
-    "productWizard": "设置向导",
+    "productWizard": "è®¾ç½®å‘å¯¼",
     "productVsCore": "vs Core",
-    "productDownload": "下载",
-    "devHeading": "开发者",
+    "productDownload": "ä¸‹è½½",
+    "devHeading": "å¼€å‘è€…",
     "devRpc": "JSON-RPC",
     "devGithub": "GitHub",
     "devReleases": "Releases",
-    "devNetworks": "端口与网络",
-    "copyright": "DogeGo v0.1.0-beta · Dogecoin 节点 · dogego.org",
-    "disclaimer": "主网共识遵循 Core（无协议分叉）。原生 Go 存储；可通过 Features / dogego cert live-soak 可选自证。",
+    "devNetworks": "ç«¯å£ä¸Žç½‘ç»œ",
+    "copyright": "DogeGo v0.1.0-beta Â· Dogecoin èŠ‚ç‚¹ Â· dogego.org",
+    "disclaimer": "ä¸»ç½‘å…±è¯†éµå¾ª Coreï¼ˆæ— åè®®åˆ†å‰ï¼‰ã€‚åŽŸç”Ÿ Go å­˜å‚¨ï¼›å¯é€šè¿‡ Features / dogego cert live-soak å¯é€‰è‡ªè¯ã€‚",
     "devDocs": "Documentation"
   },
   "guide": {
@@ -773,8 +778,8 @@
     "index": "Index",
     "download": "Download DogeGo",
     "loading": "Loading documentation...",
-    "toc": "文档菜单",
-    "tocOpen": "打开文档菜单",
-    "tocClose": "关闭文档菜单"
+    "toc": "æ–‡æ¡£èœå•",
+    "tocOpen": "æ‰“å¼€æ–‡æ¡£èœå•",
+    "tocClose": "å…³é—­æ–‡æ¡£èœå•"
   }
 };})(window);

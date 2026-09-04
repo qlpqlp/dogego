@@ -1,23 +1,34 @@
 # Doginals / DRC-20 L2 - user guide
 
-Extension id: **`dogego.doginals`** (v0.7.0). Overlay protocol: **`doginals-v1`**.
+Extension id: **`dogego.doginals`** (v0.8.0). Overlay protocol: **`doginals-v1`**.
 
-Works on **mainnet and testnet**. Experimental — not a Dogecoin consensus change.
+Works on **mainnet and testnet**. Experimental - not a Dogecoin consensus change.
 
 ## What it does
 
 | Layer | Behavior |
 |-------|----------|
-| **L1 index** | Indexes **classic P2SH Doginals** ([apezord](https://github.com/apezord/doginals) / [booktoshi](https://github.com/booktoshi/doginals)), **Ord envelopes**, and **OP_RETURN**. Classifies **token / image / text / file**, stores media, builds balances + transferable UTXOs. Auto catch-up + soft reorg. |
-| **L2 mint (default)** | When this extension is **enabled**, minting goes to **signed L2** (not Dogecoin). Supports **DRC-20-style tokens**, **images**, and **files**. Each mint is signed with `signmessage` and gossiped to peers. |
-| **L1 mint (optional)** | Advanced: OP_RETURN DRC-20 via `inscribe`. **No P2SH mint builder** — P2SH is index-only. |
+| **L1 index** | Indexes **classic P2SH Doginals** ([apezord](https://github.com/apezord/doginals) / [booktoshi](https://github.com/booktoshi/doginals)), **Ord envelopes**, and **OP_RETURN** that already exist on Dogecoin. Classifies **token / image / text / file**, stores media, builds balances. |
+| **L2 mint (only mint path)** | When this extension is enabled, **all minting is L2**. Tokens, images, files, and Ordinals (`kind=ordinal`, official `ord` envelope). Wallet `signmessage`. Gossiped to peers. **No L1 mint** of Doginals, Ordinals, P2SH, or OP_RETURN. |
 | **Wallet API** | REST under `/api/ext/dogego.doginals/v1/*`. |
-| **UI** | Wizard: Setup → Sync → Create (L2 token / L2 image-file / optional L1) → Wallet API → Browse. |
+| **UI** | Wizard: Setup → Sync → Create (L2 token / L2 image-file / L2 Ordinals) → Wallet API → Browse. |
 
 ## Mental model
 
-> **L1** = anyone can verify from the Dogecoin chain (index P2SH / OP_RETURN / envelopes).  
-> **L2** = wallet-signed mint records synced among Doginals-enabled DogeGo nodes. Verifiable by signature + optional content hash — not L1 consensus.
+> **L1** = observe the Dogecoin chain. This node indexes P2SH / OP_RETURN / Ord envelopes that others already wrote on-chain. It does not write those inscriptions.  
+> **L2** = the only mint this extension offers. Wallet-signed records sync among Doginals-enabled DogeGo nodes. Verifiable by signature + content hash. Not L1 consensus.
+
+## How sync works (decentralized, permissionless)
+
+1. You enable `dogego.doginals` on your DogeGo node. No signup, no registrar, no trusted server.
+2. **L1:** as blocks connect (and via `indexrange` backfill), this node scans txs and stores inscriptions locally. Every node does its own index from the same chain.
+3. **L2:** peers that also enabled the extension negotiate `doginals-v1` over P2P (`exthello` / `extack`), same style as other DogeGo overlays.
+4. On connect and about every 60 seconds, a node may announce inventory: `dinv` (assets) and `dminv` (signed mints).
+5. Neighbors request missing ids (`getdasset` / `getdmint`) and receive `dasset` / `dmint`.
+6. A received mint is **dropped** unless `signmessage` verification succeeds for the P2PKH address, the nonce is unused, and optional `content_hash` matches the body.
+7. Anyone can ignore L2. Only nodes that run this extension participate. Invalid or unsigned gossip never becomes an L1 coin.
+
+That is permissionless among operators: run DogeGo, enable the extension, connect to peers. There is no central indexer you must trust for L2 mints; you verify signatures yourself.
 
 ## Install
 
@@ -29,9 +40,9 @@ Settings → Extensions → Install zip → `dist/doginals-universal.zip` → **
 
 Enable **wallet RPC** in Step 1 and unlock the dashboard wallet for one-click L2 mint signing.
 
-## Create / mint
+## Create / mint (L2 only)
 
-### L2 token (default)
+### L2 token
 
 Wizard **Mint DRC-20 on L2**, or:
 
@@ -48,7 +59,7 @@ Content-Type: application/json
 }
 ```
 
-If wallet RPC is unlocked, the extension signs and commits. Otherwise the response includes `sign_message` — sign with `signmessage`, then:
+If wallet RPC is unlocked, the extension signs and commits. Otherwise the response includes `sign_message` - sign with `signmessage`, then:
 
 ```http
 POST /api/ext/dogego.doginals/v1/mint/commit
@@ -57,25 +68,27 @@ POST /api/ext/dogego.doginals/v1/mint/commit
 
 ### L2 image or file
 
-Wizard **Mint image or file on L2** (file picker), or:
+Wizard **Mint image or file on L2** (Choose file), or POST `/mint` with `kind=image|file` and `content_b64`. Max **4 MiB**.
+
+### L2 Ordinals
+
+Wizard **Mint Ordinals on L2**, or:
 
 ```http
 POST /api/ext/dogego.doginals/v1/mint
 {
-  "kind": "image",
+  "kind": "ordinal",
   "op": "inscribe",
   "address": "D…",
-  "name": "Much Wow #1",
+  "name": "Ordinal #1",
   "content_type": "image/png",
   "content_b64": "<base64 bytes>"
 }
 ```
 
-Max body **4 MiB**. Peers verify `content_hash` + signature before accepting.
+The response includes `envelope_hex`: official `OP_FALSE OP_IF "ord" OP_1 <type> OP_0 <body> OP_ENDIF`. The envelope is stored on L2 with the signed record. This extension does **not** put it in a Dogecoin witness.
 
-### Optional L1 OP_RETURN
-
-Use wizard **Advanced: DRC-20 on L1** or `POST …/inscribe`. Writes to Dogecoin. Prefer L2 when using DogeGo.
+`mintp2sh`, `inscribe`, and `destination=p2sh|opreturn` are **rejected** (mint is L2 only).
 
 ## HTTP API
 
@@ -93,11 +106,10 @@ Base: `https://<node>:2013/api/ext/dogego.doginals/v1` (or `http://` with `-notl
 | GET | `/mints` | Recent signed L2 mints |
 | GET | `/mint/{id}` | One L2 mint |
 | GET | `/mint/{id}/content` | L2 media |
-| POST | `/mint` | L2 mint (token/image/file) — unlock |
+| POST | `/mint` | L2 mint (token/image/file/ordinal) |
 | POST | `/mint/prepare` | Unsigned record + `sign_message` |
 | POST | `/mint/commit` | Commit signed mint |
 | POST | `/mint/l2` | Alias of `/mint` |
-| POST | `/inscribe` | Optional L1 OP_RETURN |
 
 `media_kind`: `token` \| `image` \| `text` \| `json` \| `file`.
 
@@ -111,20 +123,20 @@ Prefix: `dogego_ext_dogego_doginals_<method>`
 | `mintprepare` / `mintcommit` | Two-step external sign flow |
 | `listmints` / `getmint` / `getmintcontent` | L2 mint gallery |
 | `listinscriptions` / `getinscription` / `getcontent` | L1 index + media |
-| `inscribe` | Optional L1 OP_RETURN |
 | `indexrange` | Backfill L1 heights |
 | `getaddress` / `listtokens` / … | Wallet reads |
+| `inscribe` / `mintp2sh` | Disabled (returns L2-only error) |
 
 ## Wallet integration
 
-1. Point the wallet at the node: `/api/ext/dogego.doginals/v1`  
-2. Prefer `POST /mint` for new tokens/images/files when the extension is enabled  
-3. Keep reading L1 inscriptions via `/inscription/…` for classic Doginals already on-chain  
-4. Verify L2 mints by checking `signature` with Dogecoin `verifymessage` against `sign_message` / canonical JSON  
+1. Point the wallet at the node: `/api/ext/dogego.doginals/v1`
+2. Create new tokens/images/files/ordinals with `POST /mint` (L2)
+3. Read historical on-chain Doginals via `/inscription/…`
+4. Verify L2 mints with Dogecoin `verifymessage` against canonical JSON
 
 ## Limits / honesty
 
-- L2 is **not** Dogecoin consensus; anyone can ignore unsigned gossip — only **valid signatures** are accepted  
-- Deep reorgs may need reindex for L1  
-- Requires **txindex** for best address attribution on L1  
-- P2SH multi-part chains are assembled as blocks are indexed  
+- L2 is **not** Dogecoin consensus; only **valid signatures** are accepted
+- Deep reorgs may need reindex for L1
+- Requires **txindex** for best address attribution on L1
+- P2SH multi-part chains are assembled as blocks are indexed

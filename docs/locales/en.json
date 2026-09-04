@@ -285,7 +285,7 @@
       },
       "extensions": {
         "title": "Modular extension platform",
-        "body": "Install and enable catalog packages without changing Dogecoin consensus: zip or GitHub install, subprocess/wasm hosts, allowlisted permissions, optional <code>wallet_rpc</code>, and host-rendered UI panels. <code>dogego.doginals</code> v0.4.0 owns its wallet REST under <code>/api/ext/dogego.doginals/</code>. See the <a href=\"#extensions\">Extensions</a> section for each official package."
+        "body": "Install and enable catalog packages without changing Dogecoin consensus: zip or GitHub install, subprocess/wasm hosts, allowlisted permissions, optional <code>wallet_rpc</code>, and host-rendered UI panels. See <a href=\"#extensions\">Official extensions</a>."
       },
       "segwit": {
         "title": "SegWit ready",
@@ -306,17 +306,22 @@
       "doginals": {
         "id": "dogego.doginals",
         "title": "Doginals / DRC-20 L2",
-        "body": "<strong>v0.4.0</strong> indexes L1 Doginals/DRC-20, tracks address balances, and exposes a Doginals wallet API and signed L2 mint (tokens/images/files) at <code>/api/ext/dogego.doginals/v1/*</code> (extension-owned <code>httphandle</code>; host only proxies <code>/api/ext/{id}/…</code>). Wizard UI (Setup → Sync → Create → API). Mint on Dogecoin via wallet RPC or experimentally off-L1. Peers sync L2 assets over <code>doginals-v1</code>. Mainnet + testnet · no consensus change."
+        "body": "Index L1 Doginals and DRC-20. Mint tokens, images, and files on L2 only. Peers sync via <code>doginals-v1</code>. No consensus change."
       },
       "radiodoge": {
         "id": "dogego.radiodoge",
         "title": "RadioDoge",
-        "body": "Connect a Heltec V3 SoftAP device: broadcast signed txs over LoRa when offline, and relay inbound mesh txs into DogeGo with <code>sendrawtransaction</code> when online. Same HTTP API as Dogecoin Wallet RadioDoge support."
+        "body": "Heltec V3 SoftAP: LoRa broadcast when offline, relay mesh txs into DogeGo when online."
+      },
+      "dogeos": {
+        "id": "dogego.dogeos",
+        "title": "DogeOS",
+        "body": "EVM bridge to DogeOS Chikyū testnet: live RPC metrics, MetaMask/Hardhat helpers, faucet and explorer links."
       },
       "bbpow": {
         "id": "dogego.bbpow",
         "title": "BBPoW research",
-        "body": "Testnet-only research toward Bitcoin SHA-256 commitments as a Dogecoin security signal (not AuxPoW, not mainnet consensus). Proof verify RPC and dual-lane difficulty sketch."
+        "body": "Testnet-only research: Bitcoin SHA-256 commitments as a Dogecoin security signal. Not AuxPoW, not mainnet consensus."
       }
     }
   },
@@ -351,7 +356,7 @@
       },
       "extensions": {
         "title": "Modular extensions",
-        "body": "Catalog / zip install, subprocess and wasm hosts, runtime permission checks, host-rendered UI panels, and dynamic RPC <code>dogego_ext_&lt;id&gt;_&lt;method&gt;</code>. See <a href=\"#extensions\">Official extensions</a> for ZK L2, Doginals, RadioDoge, and BBPoW."
+        "body": "Catalog / zip install, subprocess and wasm hosts, runtime permission checks, host-rendered UI panels, and dynamic RPC <code>dogego_ext_&lt;id&gt;_&lt;method&gt;</code>. See <a href=\"#extensions\">Official extensions</a> for ZK L2, Doginals, RadioDoge, DogeOS, and BBPoW."
       }
     }
   },
@@ -370,7 +375,7 @@
       "mining": "generatetoaddress, createauxblock/submitauxblock, getblocktemplate NextBlockBits + BIP22 longpoll, reboot-testnet solo miner with mempool txs; <code>GET /api/core-mining-probe</code> + <code>dogego cert mining</code>",
       "ui": "Wizard, BlockStep, Features matrix, GitHub auto-update, tray, low-disk banner, local HTTPS, sync dock",
       "pq": "PQ OP_RETURN + carrier (RPC/web send; needs more soak testing)",
-      "extensions": "Modular extensions catalog (wasm/subprocess) plus official ZK L2, Doginals, RadioDoge, and BBPoW packages",
+      "extensions": "Modular extensions catalog (wasm/subprocess) plus official ZK L2, Doginals, RadioDoge, DogeOS, and BBPoW packages",
       "segwit": "SegWit ready: BIP141 machinery Core-aligned (CLTV active)"
     }
   },

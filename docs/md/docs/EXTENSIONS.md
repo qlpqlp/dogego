@@ -151,14 +151,33 @@ dogego-cli dogego_enableextension dogego.radiodoge
 dogego-cli dogego_ext_dogego_radiodoge_probe
 ```
 
+## Catalog: `dogego.dogeos`
+
+**DogeOS** EVM application-layer bridge for [DogeOS](https://docs.dogeos.com/en/developers) (not Dogecoin L1, not Doginals L2):
+
+- **Default network**: Chikyū Testnet (`https://rpc.testnet.dogeos.com/`, chain ID `6281971`)
+- **Mainnet**: placeholder profile until DogeOS publishes RPC + chain ID; custom RPC override anytime
+- **Metrics**: background `eth_chainId` / `eth_blockNumber` / `eth_gasPrice` probes, 15m uptime, latency history
+- **Helpers**: MetaMask add-chain, Hardhat, Foundry, ethers, viem, curl, cast
+- **Tools**: balance, contract check, receipt, block, raw JSON-RPC
+- **HTTP**: `/api/ext/dogego.dogeos/v1/*` via `httphandle`
+
+Package: [extensions/catalog/dogeos/](../extensions/catalog/dogeos/). Build with `build-universal.ps1` / `build-universal.sh`. Docs: [USER_GUIDE](../extensions/catalog/dogeos/docs/USER_GUIDE.md), [EXAMPLES](../extensions/catalog/dogeos/docs/EXAMPLES.md).
+
+```bash
+dogego-cli dogego_instextensionzip path/to/dogeos-universal.zip
+dogego-cli dogego_enableextension dogego.dogeos
+dogego-cli dogego_ext_dogego_dogeos_probe
+```
+
 ## Catalog: `dogego.doginals`
 
-**v0.7.0** beta **Doginals / DRC-20 L2** - overlay protocol **`doginals-v1`**, signed L2 mint + L1 index.
+**v0.8.0** beta **Doginals / DRC-20 L2** - overlay protocol **`doginals-v1`**, signed L2 mint only + L1 index.
 
-- **L1 index**: classic **P2SH Doginals** (apezord/booktoshi) + Ord **envelope** + OP_RETURN; `media_kind` (token/image/text/file); balances + transferable UTXOs (P2SH is **index-only**, no L1 P2SH mint builder)
-- **L2 mint (default when enabled)**: wallet-signed records for **tokens, images, files**; `signmessage` verify-on-receive; gossip `dminv`/`getdmint`/`dmint`
-- **Wallet API**: `GET …/status|tokens|address/…|inscription/…|mints|mint/{id}/content`; `POST …/mint` (+ prepare/commit); optional `POST …/inscribe` for L1 OP_RETURN
-- **UI**: Setup → Sync → Create (L2 token / L2 image-file picker / advanced L1) → Wallet API → Browse
+- **L1 index**: classic **P2SH Doginals** (apezord/booktoshi) + Ord **envelope** + OP_RETURN; `media_kind` (token/image/text/file). Observe-only (no L1 mint).
+- **L2 mint (only mint path)**: wallet-signed records for **tokens, images, files, Ordinals**; `signmessage` verify-on-receive; permissionless gossip `dminv`/`getdmint`/`dmint`
+- **Wallet API**: `GET …/status|tokens|address/…|inscription/…|mints|mint/{id}/content`; `POST …/mint` (+ prepare/commit). L1 write routes disabled.
+- **UI**: Setup → Sync → Create (L2 token / L2 image-file / L2 Ordinals) → Wallet API → Browse
 - **Networks**: mainnet + testnet · **no consensus change**
 
 Package: [extensions/catalog/doginals/](../extensions/catalog/doginals/). Install zip then enable.
@@ -169,8 +188,8 @@ Package: [extensions/catalog/doginals/](../extensions/catalog/doginals/). Instal
 | `dogego_ext_dogego_doginals_listtokens` / `gettoken` / `listbytick` | DRC-20 token index |
 | `dogego_ext_dogego_doginals_getaddress` / `getaddresshistory` | Address balances / history |
 | `dogego_ext_dogego_doginals_geteventsbytxid` | Events by txid |
-| `dogego_ext_dogego_doginals_previewinscription` / `inscribe` | Build / broadcast DRC-20 OP_RETURN |
-| `dogego_ext_dogego_doginals_mintl2` | Experimental off-L1 mint |
+| `dogego_ext_dogego_doginals_previewinscription` | Preview DRC-20 JSON (no L1 broadcast) |
+| `dogego_ext_dogego_doginals_mint` / `mintl2` | L2 mint only |
 | `dogego_ext_dogego_doginals_indexrange` | Scan L1 height window |
 | `dogego_ext_dogego_doginals_putasset` / `getasset` / `listassets` | L2 assets |
 | `dogego_ext_dogego_doginals_getconfig` / `setconfig` | Extension Settings |

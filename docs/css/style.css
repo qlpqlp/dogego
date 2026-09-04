@@ -1650,6 +1650,22 @@ body.site-sidebar-open {
   box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08);
 }
 
+.feature-card[data-doc],
+.care-card[data-doc] {
+  cursor: pointer;
+}
+
+.feature-card[data-doc]:focus-visible,
+.care-card[data-doc]:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+.feature-card[data-doc]:hover,
+.care-card[data-doc]:hover {
+  border-color: rgba(194, 166, 51, 0.55);
+}
+
 .feature-icon {
   font-size: 1.75rem;
   color: var(--accent);

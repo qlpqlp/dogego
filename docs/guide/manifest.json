@@ -99,7 +99,7 @@
       "id": "extensions",
       "title": "Extensions",
       "icon": "extension",
-      "body": "Official catalog packages: ZK L2, Doginals, RadioDoge, BBPoW, plus authoring guides.",
+      "body": "Official catalog packages: ZK L2, Doginals, RadioDoge, DogeOS, BBPoW, plus authoring guides.",
       "links": [
         {
           "label": "Extensions overview",
@@ -128,6 +128,14 @@
         {
           "label": "RadioDoge user guide",
           "path": "extensions/catalog/radiodoge/docs/USER_GUIDE.md"
+        },
+        {
+          "label": "DogeOS user guide",
+          "path": "extensions/catalog/dogeos/docs/USER_GUIDE.md"
+        },
+        {
+          "label": "DogeOS examples",
+          "path": "extensions/catalog/dogeos/docs/EXAMPLES.md"
         },
         {
           "label": "BBPoW user guide",
@@ -265,6 +273,8 @@
     "extensions/catalog/bbpow/docs/PROTOCOL.md",
     "extensions/catalog/bbpow/docs/README.md",
     "extensions/catalog/bbpow/docs/USER_GUIDE.md",
+    "extensions/catalog/dogeos/docs/EXAMPLES.md",
+    "extensions/catalog/dogeos/docs/USER_GUIDE.md",
     "extensions/catalog/doginals/docs/PROTOCOL.md",
     "extensions/catalog/doginals/docs/README.md",
     "extensions/catalog/doginals/docs/USER_GUIDE.md",
@@ -273,5 +283,5 @@
     "extensions/catalog/zkl2/docs/README.md",
     "extensions/catalog/zkl2/docs/USER_GUIDE.md"
   ],
-  "generatedAt": "2026-09-03T11:14:27.513Z"
+  "generatedAt": "2026-09-04T16:59:27.230Z"
 }
